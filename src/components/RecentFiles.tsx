@@ -8,7 +8,7 @@ import {
 } from "@material-ui/core";
 import React from "react";
 
-import { FileData } from "../lib/files";
+import { FileData } from "../lib/scenes";
 import { NoData } from "./NoData";
 
 interface Props {

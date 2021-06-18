@@ -1,10 +1,15 @@
-import { Failure, isFailure, VertexClient } from "@vertexvis/api-client-node";
+import {
+  ApiError,
+  Failure,
+  isFailure,
+  VertexClient,
+} from "@vertexvis/api-client-node";
 import { AxiosResponse } from "axios";
 import type { NextApiResponse } from "next";
 
 import { Config } from "./config";
 
-export async function makeCallAndReturn<T>(
+export async function makeCallRes<T>(
   res: NextApiResponse<T | Failure>,
   apiCall: (client: VertexClient) => Promise<AxiosResponse<T>>
 ): Promise<void> {
@@ -23,15 +28,13 @@ export async function makeCall<T>(
   } catch (error) {
     console.error("Error calling Vertex API", error.data);
     return (
-      error.vertexError?.res ?? {
-        errors: [{ status: "500", title: "Unknown error from Vertex API." }],
-      }
+      error.vertexError?.res ?? toFailure(500, "Unknown error from Vertex API.")
     );
   }
 }
 
 let Client: VertexClient | undefined;
-async function getClient(): Promise<VertexClient> {
+export async function getClient(): Promise<VertexClient> {
   if (Client != null) return Client;
 
   Client = await VertexClient.build({
@@ -46,4 +49,10 @@ async function getClient(): Promise<VertexClient> {
   });
 
   return Client;
+}
+
+export function toFailure(status: number, title: string): Failure {
+  const es = new Set<ApiError>();
+  es.add({ status: status.toString(), title });
+  return { errors: es };
 }

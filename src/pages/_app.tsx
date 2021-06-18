@@ -18,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
     <React.StrictMode>
       <CacheProvider value={cache}>
         <Head>
-          <title>Vertex Starter</title>
+          <title>Vertex Platform Dashboard</title>
           <link rel="icon" href="/favicon-512x512.png" />
           <meta
             name="viewport"

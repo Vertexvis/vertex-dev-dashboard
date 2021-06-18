@@ -1,24 +1,22 @@
-import { Box, Button, Link } from "@material-ui/core";
+import { Box, Link, Tooltip } from "@material-ui/core";
+import { HelpOutline } from "@material-ui/icons";
+import Image from "next/image";
 import React from "react";
 
-interface Props {
-  onOpenSceneClick: () => void;
-}
-
-export function Header({ onOpenSceneClick }: Props): JSX.Element {
+export function Header(): JSX.Element {
   return (
     <Box display="flex" justifyContent="space-between" width="100%">
-      <Button onClick={() => onOpenSceneClick()} variant="contained">
-        Open Scene
-      </Button>
-      <Link
-        href="https://github.com/Vertexvis/vertex-nextjs-starter"
-        rel="noreferrer"
-        style={{ alignSelf: "center" }}
-        target="_blank"
-      >
-        View on GitHub
-      </Link>
+      <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
+      <Tooltip title="Support">
+        <Link
+          href="https://developer.vertexvis.com/support"
+          rel="noreferrer"
+          style={{ alignSelf: "center" }}
+          target="_blank"
+        >
+          <HelpOutline />
+        </Link>
+      </Tooltip>
     </Box>
   );
 }

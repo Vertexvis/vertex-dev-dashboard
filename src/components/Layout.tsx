@@ -4,8 +4,8 @@ import React from "react";
 
 export const BottomDrawerHeight = 0; // If provided, set desired value
 export const DenseToolbarHeight = 48;
-export const LeftDrawerWidth = 0; // If mini-drawer provided, set to 76
-export const RightDrawerWidth = 320; // If not provided, set to 0
+export const LeftDrawerWidth = 240; // If mini-drawer provided, set to 76
+export const RightDrawerWidth = 0; // If not provided, set to 0
 
 interface Props {
   readonly bottomDrawer?: React.ReactNode;
@@ -30,6 +30,7 @@ const AppBar = styled(MuiAppBar, { shouldForwardProp })<{
     margin: 0,
     width: `100%`,
   },
+  zIndex: theme.zIndex.drawer + 1,
   ...(rightDrawerOpen && {
     width: `calc(100% - ${LeftDrawerWidth + RightDrawerWidth}px)`,
     marginRight: RightDrawerWidth,
@@ -44,7 +45,7 @@ const Main = styled("main", { shouldForwardProp })<{
   height: `calc(100% - ${BottomDrawerHeight + toolbarHeight}px)`,
   marginTop: `${toolbarHeight}px`,
   width: `calc(100% - ${LeftDrawerWidth + RightDrawerWidth}px)`,
-  [theme.breakpoints.down("md")]: { width: `100%` },
+  [theme.breakpoints.down("sm")]: { width: `100%` },
   ...(rightDrawerOpen && {
     width: `calc(100% - ${LeftDrawerWidth + RightDrawerWidth}px)`,
   }),
