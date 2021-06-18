@@ -9,20 +9,20 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { getClient, makeCall } from "../../lib/vertex-api";
 
-export interface GetSceneRes {
+export interface Res {
+  readonly status: number;
+}
+
+export interface ErrorRes extends Res {
+  readonly message: string;
+}
+
+export interface GetSceneRes extends Res {
   readonly cursor?: string;
   readonly data: SceneData[];
-  readonly status: number;
 }
 
-interface ErrorRes {
-  readonly message: string;
-  readonly status: number;
-}
-
-interface DeleteRes {
-  readonly status: number;
-}
+type DeleteSceneRes = Res;
 
 interface DeleteBody {
   readonly ids: string[];
@@ -30,7 +30,7 @@ interface DeleteBody {
 
 export default async function handle(
   req: NextApiRequest,
-  res: NextApiResponse<GetSceneRes | DeleteRes | ErrorRes>
+  res: NextApiResponse<GetSceneRes | DeleteSceneRes | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -49,9 +49,10 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
   try {
     const c = await getClient();
     const ps = head(req.query.pageSize);
+    const pc = head(req.query.cursor);
     const r = await getPage(() =>
       c.scenes.getScenes({
-        pageCursor: head(req.query.cursor),
+        pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
       })
     );
@@ -64,7 +65,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
   }
 }
 
-async function del(req: NextApiRequest): Promise<ErrorRes | DeleteRes> {
+async function del(req: NextApiRequest): Promise<ErrorRes | DeleteSceneRes> {
   const b: DeleteBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
   if (!b.ids) return { message: "Invalid body.", status: 400 };
@@ -75,13 +76,7 @@ async function del(req: NextApiRequest): Promise<ErrorRes | DeleteRes> {
   return { status: 200 };
 }
 
-function toErrorRes({
-  failure,
-}: {
-  failure: Failure;
-  res: NextApiResponse<ErrorRes>;
-  status: number;
-}): ErrorRes {
+export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
   const fallback = "Unknown error.";
   const res = { message: fallback, status: 500 };
   if (failure == null || failure.errors == null) return res;

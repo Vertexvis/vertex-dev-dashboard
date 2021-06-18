@@ -1,6 +1,7 @@
 import {
   Checkbox,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -8,16 +9,15 @@ import {
   TablePagination,
   TableRow,
 } from "@material-ui/core";
+import { useRouter } from "next/router";
 import React from "react";
+import useSWR from "swr";
 
-import { Paged, Scene } from "../lib/scenes";
+import { toSceneData as toScenePage } from "../lib/scenes";
+import { ErrorRes, GetSceneRes, isErrorRes } from "../pages/api/scenes";
+import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
-
-interface Props {
-  readonly baseUrl: string;
-  readonly page: Paged<Scene>;
-}
 
 const headCells: readonly HeadCell[] = [
   {
@@ -46,16 +46,53 @@ const headCells: readonly HeadCell[] = [
   },
 ];
 
-export function SceneTable({ baseUrl, page }: Props): JSX.Element {
+async function fetcher(req: RequestInfo) {
+  return (await fetch(req)).json();
+}
+
+function useScenes({
+  cursor,
+  pageSize,
+}: {
+  cursor?: string;
+  pageSize: number;
+}) {
+  return useSWR(
+    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
+    fetcher
+  );
+}
+
+export function SceneTable(): JSX.Element {
+  const pageSize = 1;
+  const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
-  const rowsPerPage = 2;
+  const [privateCursor, setPrivateCursor] = React.useState<
+    string | undefined
+  >();
+  const [cursor, setCursor] = React.useState<string | undefined>();
+  const { data, error } = useScenes({ cursor, pageSize });
+  const router = useRouter();
 
-  function handleSelectAllClick(e: React.ChangeEvent<HTMLInputElement>) {
+  const page = data ? toScenePage(data) : undefined;
+  const pageLength = page ? page.items.length : 0;
+  const emptyRows = pageSize - pageLength;
+  const count = -1;
+
+  React.useEffect(() => {
+    if (page == null) return;
+
+    setPrivateCursor(page.cursor ?? undefined);
+  }, [page]);
+
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+    if (page == null) return;
+
     setSelected(e.target.checked ? page.items.map((n) => n.id) : []);
   }
 
-  function handleClick(_e: React.MouseEvent<unknown>, id: string) {
+  function handleCheck(id: string) {
     const selectedIndex = selected.indexOf(id);
     let upd: readonly string[] = [];
 
@@ -75,23 +112,31 @@ export function SceneTable({ baseUrl, page }: Props): JSX.Element {
     setSelected(upd);
   }
 
+  async function handleClick(sceneId: string) {
+    const json = await (
+      await fetch("/api/stream-keys", {
+        body: JSON.stringify({ sceneId }),
+        method: "POST",
+      })
+    ).json();
+
+    if (isErrorRes(json)) console.error("Error creating stream key.");
+    else router.push(encodeCreds({ streamKey: json.key }));
+  }
+
   function handleChangePage(_e: unknown, n: number) {
+    setCursor(privateCursor);
     setCurPage(n);
   }
 
   async function handleDelete() {
-    await fetch(`${baseUrl}/api/scenes`, {
+    await fetch("/api/scenes", {
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
   }
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
-
-  const emptyRows =
-    curPage > 0
-      ? Math.max(0, (1 + curPage) * rowsPerPage - page.items.length)
-      : 0;
 
   return (
     <Paper sx={{ m: 2 }}>
@@ -101,13 +146,40 @@ export function SceneTable({ baseUrl, page }: Props): JSX.Element {
           <TableHead
             headCells={headCells}
             numSelected={selected.length}
-            onSelectAllClick={handleSelectAllClick}
-            rowCount={page.items.length}
+            onSelectAllClick={handleSelectAll}
+            rowCount={pageLength}
           />
           <TableBody>
-            {page.items
-              .slice(curPage * rowsPerPage, curPage * rowsPerPage + rowsPerPage)
-              .map((row, index) => {
+            {error ? (
+              <TableRow>
+                <TableCell colSpan={headCells.length + 1}>
+                  Error loading data.
+                </TableCell>
+              </TableRow>
+            ) : !page ? (
+              Array(emptyRows)
+                .fill(0)
+                .map((_, i) => (
+                  <TableRow key={i} role="checkbox" tabIndex={-1}>
+                    <TableCell padding="checkbox">
+                      <Checkbox disabled />
+                    </TableCell>
+                    <TableCell component="th" scope="row" padding="none">
+                      <Skeleton />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton />
+                    </TableCell>
+                  </TableRow>
+                ))
+            ) : (
+              page.items.map((row, index) => {
                 const isSel = isSelected(row.id);
                 const labelId = `table-checkbox-${index}`;
 
@@ -118,10 +190,11 @@ export function SceneTable({ baseUrl, page }: Props): JSX.Element {
                     tabIndex={-1}
                     key={row.id}
                     selected={isSel}
+                    onClick={() => handleClick(row.id)}
                   >
                     <TableCell
                       padding="checkbox"
-                      onClick={(e) => handleClick(e, row.id)}
+                      onClick={() => handleCheck(row.id)}
                     >
                       <Checkbox color="primary" checked={isSel} />
                     </TableCell>
@@ -142,9 +215,10 @@ export function SceneTable({ baseUrl, page }: Props): JSX.Element {
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              })
+            )}
             {emptyRows > 0 && (
-              <TableRow style={{ height: 53 * emptyRows }}>
+              <TableRow style={{ height: rowHeight * emptyRows }}>
                 <TableCell colSpan={headCells.length + 1} />
               </TableRow>
             )}
@@ -154,10 +228,11 @@ export function SceneTable({ baseUrl, page }: Props): JSX.Element {
       <TablePagination
         rowsPerPageOptions={[]}
         component="div"
-        count={page.items.length}
-        rowsPerPage={rowsPerPage}
+        count={count}
+        rowsPerPage={pageSize}
         page={curPage}
         onPageChange={handleChangePage}
+        nextIconButtonProps={{ disabled: privateCursor == null }}
       />
     </Paper>
   );

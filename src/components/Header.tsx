@@ -6,7 +6,9 @@ import React from "react";
 export function Header(): JSX.Element {
   return (
     <Box display="flex" justifyContent="space-between" width="100%">
-      <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
+      <Link href="/">
+        <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
+      </Link>
       <Tooltip title="Support">
         <Link
           href="https://developer.vertexvis.com/support"

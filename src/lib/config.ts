@@ -1,6 +1,7 @@
 import { Environment } from "@vertexvis/viewer";
 
 export interface Configuration {
+  readonly clientId: string;
   readonly vertexEnv: Environment;
 }
 
@@ -10,13 +11,8 @@ export interface StreamCredentials {
 }
 
 export const Config: Configuration = {
+  clientId: envVar("VERTEX_CLIENT_ID", ""),
   vertexEnv: envVar("VERTEX_ENV", "platprod") as Environment,
-};
-
-// Vertex Valve
-export const DefaultCredentials: StreamCredentials = {
-  clientId: "08F675C4AACE8C0214362DB5EFD4FACAFA556D463ECA00877CB225157EF58BFA",
-  streamKey: "U9cSWVb7fvS9k-NQcT28uZG6wtm6xmiG0ctU",
 };
 
 export function head<T>(items?: T | T[]): T | undefined {
