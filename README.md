@@ -1,4 +1,4 @@
-# Vertex Platform Dashboard
+# Vertex Dev Dashboard
 ## Run locally in Docker
 
 1. Copy `.env.local.template` to `.env.local` and optionally edit values

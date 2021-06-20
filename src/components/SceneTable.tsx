@@ -14,7 +14,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { toSceneData as toScenePage } from "../lib/scenes";
-import { ErrorRes, GetSceneRes, isErrorRes } from "../pages/api/scenes";
+import { isErrorRes } from "../pages/api/scenes";
 import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
@@ -78,7 +78,6 @@ export function SceneTable(): JSX.Element {
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows = pageSize - pageLength;
-  const count = -1;
 
   React.useEffect(() => {
     if (page == null) return;
@@ -228,7 +227,7 @@ export function SceneTable(): JSX.Element {
       <TablePagination
         rowsPerPageOptions={[]}
         component="div"
-        count={count}
+        count={-1}
         rowsPerPage={pageSize}
         page={curPage}
         onPageChange={handleChangePage}

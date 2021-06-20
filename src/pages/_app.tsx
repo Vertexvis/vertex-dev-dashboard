@@ -18,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
     <React.StrictMode>
       <CacheProvider value={cache}>
         <Head>
-          <title>Vertex Platform Dashboard</title>
+          <title>Vertex Dev Dashboard</title>
           <link rel="icon" href="/favicon-512x512.png" />
           <meta
             name="viewport"
@@ -26,7 +26,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
           />
           <meta
             name="description"
-            content="Quickly and easily build your own digital twin prototype application using the Vertex platform."
+            content="Use the Vertex Dev Dashboard to explore your Vertex platform account."
           />
         </Head>
         <ThemeProvider theme={theme}>
