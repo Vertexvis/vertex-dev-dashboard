@@ -2,13 +2,14 @@ import { AppBar as MuiAppBar, Box, Toolbar } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
 import React from "react";
 
-export const BottomDrawerHeight = 0; // If provided, set desired value
+export const BottomDrawerHeight = 240;
 export const DenseToolbarHeight = 48;
-export const LeftDrawerWidth = 240; // If mini-drawer provided, set to 76
-export const RightDrawerWidth = 320; // If not provided, set to 0
+export const LeftDrawerWidth = 240;
+export const RightDrawerWidth = 320;
 
 interface Props {
   readonly bottomDrawer?: React.ReactNode;
+  readonly bottomDrawerOpen?: boolean;
   readonly children?: React.ReactNode;
   readonly header?: React.ReactNode;
   readonly leftDrawer?: React.ReactNode;
@@ -18,54 +19,64 @@ interface Props {
   readonly rightDrawerOpen?: boolean;
 }
 
+interface DrawerProps {
+  leftDrawerWidth: number;
+  rightDrawerWidth: number;
+}
+
 function shouldForwardProp(prop: PropertyKey): boolean {
   return (
-    prop !== "leftDrawerOpen" &&
-    prop !== "rightDrawerOpen" &&
+    prop !== "bottomDrawerHeight" &&
+    prop !== "leftDrawerWidth" &&
+    prop !== "rightDrawerWidth" &&
     prop !== "toolbarHeight"
   );
 }
 
-const AppBar = styled(MuiAppBar, { shouldForwardProp })<{
-  leftDrawerOpen?: boolean;
-  rightDrawerOpen?: boolean;
-}>(({ leftDrawerOpen, rightDrawerOpen, theme }) => {
-  const ldw = leftDrawerOpen ? LeftDrawerWidth : 0;
-  return {
-    marginLeft: ldw,
-    width: `100%`,
-    [theme.breakpoints.down("md")]: {
-      margin: 0,
+const AppBar = styled(MuiAppBar, { shouldForwardProp })<DrawerProps>(
+  ({ leftDrawerWidth, rightDrawerWidth, theme }) => {
+    return {
+      marginLeft: leftDrawerWidth,
       width: `100%`,
-    },
-    zIndex: theme.zIndex.drawer + 1,
-    ...(rightDrawerOpen && {
-      width: `calc(100% - ${ldw + RightDrawerWidth}px)`,
-      marginRight: RightDrawerWidth,
-    }),
-  };
-});
+      zIndex: theme.zIndex.drawer + 1,
+      ...(rightDrawerWidth > 0 && {
+        marginRight: rightDrawerWidth,
+        width: `calc(100% - ${leftDrawerWidth + rightDrawerWidth}px)`,
+      }),
+      [theme.breakpoints.down("sm")]: {
+        margin: 0,
+        width: `100%`,
+      },
+    };
+  }
+);
 
-const Main = styled("main", { shouldForwardProp })<{
-  leftDrawerOpen?: boolean;
-  rightDrawerOpen?: boolean;
-  toolbarHeight: number;
-}>(({ leftDrawerOpen, rightDrawerOpen, theme, toolbarHeight }) => {
-  const ldw = leftDrawerOpen ? LeftDrawerWidth : 0;
-  return {
-    flexGrow: 1,
-    height: `calc(100% - ${BottomDrawerHeight + toolbarHeight}px)`,
-    marginTop: `${toolbarHeight}px`,
-    width: `calc(100% - ${ldw + RightDrawerWidth}px)`,
-    [theme.breakpoints.down("sm")]: { width: `100%` },
-    ...(rightDrawerOpen && {
-      width: `calc(100% - ${ldw + RightDrawerWidth}px)`,
-    }),
-  };
-});
+const Main = styled("main", { shouldForwardProp })<
+  DrawerProps & { bottomDrawerHeight: number; toolbarHeight: number }
+>(
+  ({
+    bottomDrawerHeight,
+    leftDrawerWidth,
+    rightDrawerWidth,
+    theme,
+    toolbarHeight,
+  }) => {
+    return {
+      flexGrow: 1,
+      height: `calc(100% - ${bottomDrawerHeight + toolbarHeight}px)`,
+      marginTop: `${toolbarHeight}px`,
+      width: `calc(100% - ${leftDrawerWidth}px)`,
+      [theme.breakpoints.down("sm")]: { width: `100%` },
+      ...(rightDrawerWidth > 0 && {
+        width: `calc(100% - ${leftDrawerWidth + rightDrawerWidth}px)`,
+      }),
+    };
+  }
+);
 
 export function Layout({
   bottomDrawer,
+  bottomDrawerOpen = false,
   children,
   header,
   leftDrawer,
@@ -74,30 +85,36 @@ export function Layout({
   rightDrawer,
   rightDrawerOpen = false,
 }: Props): JSX.Element {
+  const bdh = bottomDrawerOpen ? BottomDrawerHeight : 0;
+  const ldw = leftDrawerOpen ? LeftDrawerWidth : 0;
+  const rdw = rightDrawerOpen ? RightDrawerWidth : 0;
+  const tbh = header ? DenseToolbarHeight : 0;
+
   return (
-    <Box height="100vh" display="flex">
+    <Box sx={{ display: "flex", height: "100vh" }}>
       {header && (
         <AppBar
           color="default"
           elevation={1}
-          leftDrawerOpen={leftDrawerOpen}
+          leftDrawerWidth={ldw}
           position="fixed"
-          rightDrawerOpen={rightDrawerOpen}
+          rightDrawerWidth={rdw}
         >
           <Toolbar variant="dense">{header}</Toolbar>
         </AppBar>
       )}
-      {leftDrawer ?? <></>}
+      {leftDrawerOpen && leftDrawer ? leftDrawer : <></>}
       <Main
-        leftDrawerOpen={leftDrawerOpen}
-        rightDrawerOpen={rightDrawerOpen}
-        toolbarHeight={header ? DenseToolbarHeight : 0}
+        bottomDrawerHeight={bdh}
+        leftDrawerWidth={ldw}
+        rightDrawerWidth={rdw}
+        toolbarHeight={tbh}
       >
         {main}
       </Main>
-      {rightDrawer ?? <></>}
+      {rightDrawerOpen && rightDrawer ? rightDrawer : <></>}
       {children ?? <></>}
-      {bottomDrawer ?? <></>}
+      {bottomDrawerOpen && bottomDrawer ? bottomDrawer : <></>}
     </Box>
   );
 }

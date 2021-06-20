@@ -1,3 +1,4 @@
+import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
@@ -6,20 +7,12 @@ import { Header } from "../components/Header";
 import { Layout } from "../components/Layout";
 import { RightDrawer } from "../components/RightDrawer";
 import { Viewer } from "../components/Viewer";
-import { Config, head, StreamCredentials } from "../lib/config";
+import { head, StreamCredentials } from "../lib/config";
 import { Metadata, toMetadata } from "../lib/metadata";
-import { selectByHit as onSelect } from "../lib/scene-items";
+import { selectByHit } from "../lib/scene-items";
 import { useViewer } from "../lib/viewer";
 
-interface Props {
-  readonly clientId: string;
-  readonly vertexEnv: Environment;
-}
-
-export default function SceneViewer({
-  clientId,
-  vertexEnv,
-}: Props): JSX.Element {
+export default function SceneViewer(): JSX.Element {
   const router = useRouter();
   const viewer = useViewer();
   const [credentials, setCredentials] = React.useState<
@@ -31,10 +24,12 @@ export default function SceneViewer({
   React.useEffect(() => {
     if (!router.isReady) return;
 
+    const cId = head(router.query.clientId);
     const sk = head(router.query.streamKey);
+    const ve = head(router.query.vertexEnv);
     setCredentials(
-      sk
-        ? { clientId: head(router.query.clientId) ?? clientId, streamKey: sk }
+      cId && sk && ve
+        ? { clientId: cId, streamKey: sk, vertexEnv: ve as Environment }
         : undefined
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,18 +41,19 @@ export default function SceneViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credentials]);
 
+  async function handleSelect(hit?: vertexvis.protobuf.stream.IHit) {
+    setMetadata(toMetadata({ hit }));
+    await selectByHit({ hit, viewer: viewer.ref.current });
+  }
+
   return router.isReady && credentials ? (
     <Layout
       header={<Header />}
       main={
         viewer.isReady && (
           <Viewer
-            configEnv={vertexEnv}
             credentials={credentials}
-            onSelect={async (hit) => {
-              setMetadata(toMetadata({ hit }));
-              await onSelect({ hit, viewer: viewer.ref.current });
-            }}
+            onSelect={handleSelect}
             viewer={viewer.ref}
           />
         )
@@ -70,21 +66,18 @@ export default function SceneViewer({
   );
 }
 
-export function getServerSideProps(): Promise<{ props: Props }> {
-  return Promise.resolve({
-    props: { clientId: Config.clientId, vertexEnv: Config.vertexEnv },
-  });
-}
-
 export function encodeCreds({
   clientId,
   streamKey,
+  vertexEnv,
 }: {
-  clientId?: string;
+  clientId: string;
   streamKey: string;
+  vertexEnv: Environment;
 }): string {
   const path = "scene-viewer";
-  const cId = clientId ? `clientId=${encodeURIComponent(clientId)}` : undefined;
+  const cId = `clientId=${encodeURIComponent(clientId)}`;
   const sk = `streamKey=${encodeURIComponent(streamKey)}`;
-  return cId ? `${path}/?${cId}&${sk}` : `${path}/?${sk}`;
+  const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
+  return `${path}/?${cId}&${sk}&${ve}`;
 }

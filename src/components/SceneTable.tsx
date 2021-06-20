@@ -9,6 +9,7 @@ import {
   TablePagination,
   TableRow,
 } from "@material-ui/core";
+import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
@@ -18,6 +19,11 @@ import { isErrorRes } from "../pages/api/scenes";
 import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
+
+interface Props {
+  clientId: string;
+  vertexEnv: Environment;
+}
 
 const headCells: readonly HeadCell[] = [
   {
@@ -63,7 +69,7 @@ function useScenes({
   );
 }
 
-export function SceneTable(): JSX.Element {
+export function SceneTable({ clientId, vertexEnv }: Props): JSX.Element {
   const pageSize = 1;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -120,7 +126,7 @@ export function SceneTable(): JSX.Element {
     ).json();
 
     if (isErrorRes(json)) console.error("Error creating stream key.");
-    else router.push(encodeCreds({ streamKey: json.key }));
+    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
   }
 
   function handleChangePage(_e: unknown, n: number) {

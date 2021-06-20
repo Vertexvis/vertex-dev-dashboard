@@ -1,5 +1,6 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
+import { TapEventDetails } from "@vertexvis/viewer/dist/types/interactions/tapEventDetails";
 import {
   JSX as ViewerJSX,
   VertexViewer,
@@ -42,6 +43,7 @@ function UnwrappedViewer({
 }: ViewerProps): JSX.Element {
   return (
     <VertexViewer
+      configEnv={credentials.vertexEnv}
       css={{ height: "100%", width: "100%" }}
       clientId={credentials.clientId}
       ref={viewer}
@@ -65,27 +67,23 @@ function onTap<P extends ViewerProps>(
   WrappedViewer: ViewerComponentType
 ): React.FunctionComponent<P & OnSelectProps> {
   return function Component({ viewer, onSelect, ...props }: P & OnSelectProps) {
-    return (
-      <WrappedViewer
-        viewer={viewer}
-        {...props}
-        onTap={async (e) => {
-          if (props.onTap) props.onTap(e);
+    async function handleTap(e: CustomEvent<TapEventDetails>) {
+      if (props.onTap) props.onTap(e);
 
-          if (!e.defaultPrevented) {
-            const scene = await viewer.current?.scene();
-            const raycaster = scene?.raycaster();
+      if (!e.defaultPrevented) {
+        const scene = await viewer.current?.scene();
+        const raycaster = scene?.raycaster();
 
-            if (raycaster != null) {
-              const res = await raycaster.hitItems(e.detail.position, {
-                includeMetadata: true,
-              });
-              const hit = (res?.hits ?? [])[0];
-              await onSelect(hit);
-            }
-          }
-        }}
-      />
-    );
+        if (raycaster != null) {
+          const res = await raycaster.hitItems(e.detail.position, {
+            includeMetadata: true,
+          });
+          const hit = (res?.hits ?? [])[0];
+          await onSelect(hit);
+        }
+      }
+    }
+
+    return <WrappedViewer viewer={viewer} {...props} onTap={handleTap} />;
   };
 }

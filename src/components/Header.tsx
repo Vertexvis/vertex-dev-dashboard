@@ -1,24 +1,45 @@
-import { Box, Link, Tooltip } from "@material-ui/core";
-import { HelpOutline } from "@material-ui/icons";
+import { Box, IconButton, Link, Tooltip } from "@material-ui/core";
+import { AccountCircleOutlined, HelpOutline } from "@material-ui/icons";
 import Image from "next/image";
 import React from "react";
 
-export function Header(): JSX.Element {
+interface Props {
+  onAccountClick?: () => void;
+}
+
+export function Header({ onAccountClick }: Props): JSX.Element {
   return (
-    <Box display="flex" justifyContent="space-between" width="100%">
+    <Box
+      sx={{
+        alignItems: "center",
+        display: "flex",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
       <Link href="/">
         <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
       </Link>
-      <Tooltip title="Support">
+      <Box>
+        {onAccountClick && (
+          <Tooltip title="Account">
+            <IconButton onClick={() => onAccountClick()}>
+              <AccountCircleOutlined />
+            </IconButton>
+          </Tooltip>
+        )}
         <Link
           href="https://developer.vertexvis.com/support"
           rel="noreferrer"
-          style={{ alignSelf: "center" }}
           target="_blank"
         >
-          <HelpOutline />
+          <Tooltip title="Support">
+            <IconButton>
+              <HelpOutline />
+            </IconButton>
+          </Tooltip>
         </Link>
-      </Tooltip>
+      </Box>
     </Box>
   );
 }
