@@ -4,7 +4,7 @@ import React from "react";
 
 export const BottomDrawerHeight = 240;
 export const DenseToolbarHeight = 48;
-export const LeftDrawerWidth = 240;
+export const LeftDrawerWidth = 300;
 export const RightDrawerWidth = 320;
 
 interface Props {

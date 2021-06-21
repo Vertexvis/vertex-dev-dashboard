@@ -33,13 +33,19 @@ export function LeftDrawer(): JSX.Element {
     >
       <Toolbar variant="dense" />
       <List>
-        <ListItemButton onClick={() => router.push("/")}>
+        <ListItemButton
+          onClick={() => router.push("/")}
+          selected={router.route === "/"}
+        >
           <ListItemIcon>
             <PhotoLibraryOutlined />
           </ListItemIcon>
           <ListItemText primary="Scenes" />
         </ListItemButton>
-        <ListItemButton onClick={() => router.push("/files")}>
+        <ListItemButton
+          onClick={() => router.push("/files")}
+          selected={router.route === "/files"}
+        >
           <ListItemIcon>
             <DescriptionOutlined />
           </ListItemIcon>
