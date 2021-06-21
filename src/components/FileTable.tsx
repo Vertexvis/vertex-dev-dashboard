@@ -9,13 +9,10 @@ import {
   TablePagination,
   TableRow,
 } from "@material-ui/core";
-import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { toSceneData as toScenePage } from "../lib/scenes";
-import { isErrorRes } from "../pages/api/scenes";
-import { encodeCreds } from "../pages/scene-viewer";
+import { toFileData as toScenePage } from "../lib/files";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
@@ -50,7 +47,7 @@ async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useScenes({
+function useFiles({
   cursor,
   pageSize,
 }: {
@@ -58,12 +55,12 @@ function useScenes({
   pageSize: number;
 }) {
   return useSWR(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
+    `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
     fetcher
   );
 }
 
-export function SceneTable(): JSX.Element {
+export function FilesTable(): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -72,8 +69,7 @@ export function SceneTable(): JSX.Element {
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const { data, error } = useScenes({ cursor, pageSize });
-  const router = useRouter();
+  const { data, error } = useFiles({ cursor, pageSize });
 
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
@@ -111,25 +107,13 @@ export function SceneTable(): JSX.Element {
     setSelected(upd);
   }
 
-  async function handleClick(sceneId: string) {
-    const json = await (
-      await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId }),
-        method: "POST",
-      })
-    ).json();
-
-    if (isErrorRes(json)) console.error("Error creating stream key.");
-    else router.push(encodeCreds({ streamKey: json.key }));
-  }
-
   function handleChangePage(_e: unknown, n: number) {
     setCursor(privateCursor);
     setCurPage(n);
   }
 
   async function handleDelete() {
-    await fetch("/api/scenes", {
+    await fetch("/api/files", {
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
@@ -139,7 +123,7 @@ export function SceneTable(): JSX.Element {
 
   return (
     <Paper sx={{ m: 2 }}>
-      <TableToolbar numSelected={selected.length} onDelete={handleDelete} title="Scenes" />
+      <TableToolbar numSelected={selected.length} onDelete={handleDelete} title="Files" />
       <TableContainer>
         <Table>
           <TableHead
@@ -189,7 +173,6 @@ export function SceneTable(): JSX.Element {
                     tabIndex={-1}
                     key={row.id}
                     selected={isSel}
-                    onClick={() => handleClick(row.id)}
                   >
                     <TableCell
                       padding="checkbox"

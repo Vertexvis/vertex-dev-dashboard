@@ -7,7 +7,8 @@ import {
   Toolbar,
 } from "@material-ui/core";
 import { drawerClasses } from "@material-ui/core/Drawer";
-import { BackupTableOutlined } from "@material-ui/icons";
+import { DescriptionOutlined, PhotoLibraryOutlined } from "@material-ui/icons";
+import { useRouter } from "next/router";
 import React from "react";
 
 import { LeftDrawerWidth } from "./Layout";
@@ -15,6 +16,8 @@ import { LeftDrawerWidth } from "./Layout";
 export type Content = "settings" | "instructions" | "parts";
 
 export function LeftDrawer(): JSX.Element {
+  const router = useRouter();
+
   return (
     <Drawer
       anchor="left"
@@ -30,11 +33,17 @@ export function LeftDrawer(): JSX.Element {
     >
       <Toolbar variant="dense" />
       <List>
-        <ListItemButton>
+        <ListItemButton onClick={() => router.push("/")}>
           <ListItemIcon>
-            <BackupTableOutlined />
+            <PhotoLibraryOutlined />
           </ListItemIcon>
           <ListItemText primary="Scenes" />
+        </ListItemButton>
+        <ListItemButton onClick={() => router.push("/files")}>
+          <ListItemIcon>
+            <DescriptionOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Files" />
         </ListItemButton>
       </List>
     </Drawer>
