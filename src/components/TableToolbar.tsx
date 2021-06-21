@@ -6,9 +6,10 @@ import React from "react";
 interface Props {
   readonly numSelected: number;
   readonly onDelete: () => void;
+  readonly title: string;
 }
 
-export const TableToolbar = ({ numSelected, onDelete }: Props): JSX.Element => {
+export const TableToolbar = ({ numSelected, onDelete, title }: Props): JSX.Element => {
   return (
     <Toolbar
       sx={{
@@ -34,7 +35,7 @@ export const TableToolbar = ({ numSelected, onDelete }: Props): JSX.Element => {
         </Typography>
       ) : (
         <Typography sx={{ flex: "1 1 100%" }} variant="h6" component="div">
-          Scenes
+          {title}
         </Typography>
       )}
       {numSelected > 0 && (

@@ -1,5 +1,6 @@
 import { Paper, Typography } from "@material-ui/core";
 import { Environment } from "@vertexvis/viewer";
+import { signIn, useSession } from "next-auth/client";
 import React from "react";
 
 import { Header } from "../components/Header";
@@ -19,20 +20,33 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 }
 
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
+  const [session, loading] = useSession();
+
   return (
-    <Layout
-      header={<Header />}
-      leftDrawer={<LeftDrawer />}
-      leftDrawerOpen
-      main={
-        clientId && vertexEnv ? (
-          <SceneTable clientId={clientId} vertexEnv={vertexEnv} />
-        ) : (
-          <Paper sx={{ m: 2 }}>
-            <Typography>Account credentials required.</Typography>
-          </Paper>
-        )
-      }
-    ></Layout>
+    <>
+      {!loading && !session && (
+        <>
+          Not signed in <br />
+          <button onClick={() => signIn()}>Sign in</button>
+        </>
+      )}
+
+      {!!session && (
+        <Layout
+          header={<Header />}
+          leftDrawer={<LeftDrawer />}
+          leftDrawerOpen
+          main={
+            clientId && vertexEnv ? (
+              <SceneTable clientId={clientId} vertexEnv={vertexEnv} />
+            ) : (
+              <Paper sx={{ m: 2 }}>
+                <Typography>Account credentials required.</Typography>
+              </Paper>
+            )
+          }
+        />
+      )}
+    </>
   );
 }

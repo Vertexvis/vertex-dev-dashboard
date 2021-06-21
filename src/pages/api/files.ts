@@ -1,12 +1,11 @@
 import {
   defined,
   Failure,
+  FileMetadataData,
   getPage,
   head,
-  SceneData,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/client"
 
 import { getClient, makeCall } from "../../lib/vertex-api";
 
@@ -18,12 +17,12 @@ export interface ErrorRes extends Res {
   readonly message: string;
 }
 
-export interface GetSceneRes extends Res {
+export interface GetFilesRes extends Res {
   readonly cursor?: string;
-  readonly data: SceneData[];
+  readonly data: FileMetadataData[];
 }
 
-type DeleteSceneRes = Res;
+type DeleteFileRes = Res;
 
 interface DeleteBody {
   readonly ids: string[];
@@ -31,7 +30,7 @@ interface DeleteBody {
 
 export default async function handle(
   req: NextApiRequest,
-  res: NextApiResponse<GetSceneRes | DeleteSceneRes | ErrorRes>
+  res: NextApiResponse<GetFilesRes | DeleteFileRes | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -46,16 +45,13 @@ export default async function handle(
   return res.status(405).json({ message: "Method not allowed.", status: 405 });
 }
 
-async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
+async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
   try {
     const c = await getClient();
-    const session = await getSession({ req })
-    console.log(`Getting scenes for user:`, session?.user);
-
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
     const r = await getPage(() =>
-      c.scenes.getScenes({
+      c.files.getFiles({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
       })
@@ -69,13 +65,13 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
   }
 }
 
-async function del(req: NextApiRequest): Promise<ErrorRes | DeleteSceneRes> {
+async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
   const b: DeleteBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
   if (!b.ids) return { message: "Invalid body.", status: 400 };
 
   await Promise.all(
-    b.ids.map((id) => makeCall((c) => c.scenes.deleteScene({ id })))
+    b.ids.map((id) => makeCall((c) => c.files.deleteFile({ id })))
   );
   return { status: 200 };
 }
