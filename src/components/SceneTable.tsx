@@ -64,7 +64,7 @@ function useScenes({
 }
 
 export function SceneTable(): JSX.Element {
-  const pageSize = 1;
+  const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);

@@ -6,6 +6,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { AppProps } from "next/app";
 import Head from "next/head";
+import { Provider } from "next-auth/client";
 import React from "react";
 
 import theme from "../lib/theme";
@@ -16,24 +17,26 @@ cache.compat = true;
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
   return (
     <React.StrictMode>
-      <CacheProvider value={cache}>
-        <Head>
-          <title>Vertex Dev Dashboard</title>
-          <link rel="icon" href="/favicon-512x512.png" />
-          <meta
-            name="viewport"
-            content="minimum-scale=1, initial-scale=1, width=device-width"
-          />
-          <meta
-            name="description"
-            content="Use the Vertex Dev Dashboard to explore your Vertex platform account."
-          />
-        </Head>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Component {...pageProps} />
-        </ThemeProvider>
-      </CacheProvider>
+      <Provider session={pageProps.session}>
+        <CacheProvider value={cache}>
+          <Head>
+            <title>Vertex Dev Dashboard</title>
+            <link rel="icon" href="/favicon-512x512.png" />
+            <meta
+              name="viewport"
+              content="minimum-scale=1, initial-scale=1, width=device-width"
+            />
+            <meta
+              name="description"
+              content="Use the Vertex Dev Dashboard to explore your Vertex platform account."
+            />
+          </Head>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Component {...pageProps} />
+          </ThemeProvider>
+        </CacheProvider>
+      </Provider>
     </React.StrictMode>
   );
 }
