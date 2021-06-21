@@ -50,7 +50,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
   try {
     const c = await getClient();
     const session = await getSession({ req });
-    console.log(`Getting scenes for user:`, session?.user);
+    console.log("Getting scenes for", session?.user?.name);
 
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);

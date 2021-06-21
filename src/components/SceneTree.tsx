@@ -20,7 +20,7 @@ export function SceneTree({ configEnv, viewerId }: Props): JSX.Element {
     const row = await ref?.current?.getRowForEvent(event);
     if (row?.node == null) return;
 
-    console.log(
+    console.debug(
       `Selected ${row.node.suppliedId?.value ?? row.node.id?.hex},${
         row.node.name
       }`

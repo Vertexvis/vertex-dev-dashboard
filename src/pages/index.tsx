@@ -70,7 +70,6 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [session, loading] = useSession();
-  console.log(session, !!session);
 
   const handleDrawerOpen = () => {
     setDrawerOpen(true);
