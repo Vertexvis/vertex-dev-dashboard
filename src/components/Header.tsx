@@ -1,10 +1,23 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
-import { Box, Button, Link, Menu, MenuItem } from "@material-ui/core";
+import {
+  Box,
+  Button,
+  IconButton,
+  Link,
+  Menu,
+  MenuItem,
+} from "@material-ui/core";
+import { Menu as MenuIcon } from "@material-ui/icons";
 import Image from "next/image";
 import { signOut, useSession } from "next-auth/client";
 import React from "react";
 
-export function Header(): JSX.Element {
+interface Props {
+  onMenuClick?: () => void;
+  open?: boolean;
+}
+
+export function Header({ onMenuClick, open }: Props): JSX.Element {
   const [session] = useSession();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
@@ -25,9 +38,26 @@ export function Header(): JSX.Element {
         width: "100%",
       }}
     >
-      <Link href="/">
-        <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
-      </Link>
+      <Box
+        sx={{
+          alignItems: "center",
+          display: "flex",
+        }}
+      >
+        {onMenuClick && (
+          <IconButton
+            color="inherit"
+            onClick={onMenuClick}
+            edge="start"
+            sx={{ display: open ? "none" : "block", mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+        <Link href="/">
+          <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
+        </Link>
+      </Box>
       {session && (
         <>
           {!!session.user?.name && !!session.user?.image && (

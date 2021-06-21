@@ -1,7 +1,6 @@
 import React from "react";
 
-import { FilesTable
- } from "../components/FileTable";
+import { FilesTable } from "../components/FileTable";
 import { Header } from "../components/Header";
 import { Layout } from "../components/Layout";
 import { LeftDrawer } from "../components/LeftDrawer";

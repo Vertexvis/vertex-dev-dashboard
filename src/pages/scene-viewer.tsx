@@ -5,12 +5,15 @@ import React from "react";
 
 import { Header } from "../components/Header";
 import { Layout } from "../components/Layout";
-import { RightDrawer } from "../components/RightDrawer";
 import { Viewer } from "../components/Viewer";
+import { ViewerLeftDrawer } from "../components/ViewerLeftDrawer";
+import { ViewerRightDrawer } from "../components/ViewerRightDrawer";
 import { head, StreamCredentials } from "../lib/config";
 import { Metadata, toMetadata } from "../lib/metadata";
 import { selectByHit } from "../lib/scene-items";
 import { useViewer } from "../lib/viewer";
+
+const ViewerId = "vertex-viewer-id";
 
 export default function SceneViewer(): JSX.Element {
   const router = useRouter();
@@ -18,6 +21,7 @@ export default function SceneViewer(): JSX.Element {
   const [credentials, setCredentials] = React.useState<
     StreamCredentials | undefined
   >();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
 
   // Prefer credentials in URL to enable easy scene sharing. If empty, use defaults.
@@ -48,17 +52,32 @@ export default function SceneViewer(): JSX.Element {
 
   return router.isReady && credentials ? (
     <Layout
-      header={<Header />}
+      header={
+        <Header
+          onMenuClick={() => setDrawerOpen(!drawerOpen)}
+          open={drawerOpen}
+        />
+      }
+      leftDrawer={
+        <ViewerLeftDrawer
+          configEnv={credentials.vertexEnv}
+          onClose={() => setDrawerOpen(false)}
+          open={drawerOpen}
+          viewerId={ViewerId}
+        />
+      }
+      leftDrawerOpen={drawerOpen}
       main={
         viewer.isReady && (
           <Viewer
             credentials={credentials}
             onSelect={handleSelect}
             viewer={viewer.ref}
+            viewerId={ViewerId}
           />
         )
       }
-      rightDrawer={<RightDrawer metadata={metadata} />}
+      rightDrawer={<ViewerRightDrawer metadata={metadata} />}
       rightDrawerOpen
     />
   ) : (

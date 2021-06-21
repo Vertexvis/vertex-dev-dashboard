@@ -6,7 +6,7 @@ import {
   SceneData,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/client"
+import { getSession } from "next-auth/client";
 
 import { getClient, makeCall } from "../../lib/vertex-api";
 
@@ -49,7 +49,7 @@ export default async function handle(
 async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
   try {
     const c = await getClient();
-    const session = await getSession({ req })
+    const session = await getSession({ req });
     console.log(`Getting scenes for user:`, session?.user);
 
     const ps = head(req.query.pageSize);

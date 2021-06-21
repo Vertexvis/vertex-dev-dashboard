@@ -15,6 +15,7 @@ import { ViewerSpeedDial } from "./ViewerSpeedDial";
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
+  readonly viewerId: string;
 }
 
 export interface Action {
@@ -39,6 +40,7 @@ export const Viewer = onTap(UnwrappedViewer);
 function UnwrappedViewer({
   credentials,
   viewer,
+  viewerId,
   ...props
 }: ViewerProps): JSX.Element {
   return (
@@ -46,6 +48,7 @@ function UnwrappedViewer({
       configEnv={credentials.vertexEnv}
       css={{ height: "100%", width: "100%" }}
       clientId={credentials.clientId}
+      id={viewerId}
       ref={viewer}
       src={`urn:vertexvis:stream-key:${credentials.streamKey}`}
       {...props}

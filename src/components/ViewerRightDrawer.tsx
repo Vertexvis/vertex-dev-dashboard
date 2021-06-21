@@ -21,7 +21,7 @@ const Title = styled((props) => <Typography variant="body2" {...props} />)(
   () => ({ textTransform: "uppercase" })
 );
 
-export function RightDrawer({ metadata }: Props): JSX.Element {
+export function ViewerRightDrawer({ metadata }: Props): JSX.Element {
   return (
     <Drawer
       anchor="right"

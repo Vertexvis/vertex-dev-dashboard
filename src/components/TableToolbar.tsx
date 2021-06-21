@@ -9,7 +9,11 @@ interface Props {
   readonly title: string;
 }
 
-export const TableToolbar = ({ numSelected, onDelete, title }: Props): JSX.Element => {
+export const TableToolbar = ({
+  numSelected,
+  onDelete,
+  title,
+}: Props): JSX.Element => {
   return (
     <Toolbar
       sx={{

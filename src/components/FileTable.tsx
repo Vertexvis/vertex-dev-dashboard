@@ -47,13 +47,7 @@ async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useFiles({
-  cursor,
-  pageSize,
-}: {
-  cursor?: string;
-  pageSize: number;
-}) {
+function useFiles({ cursor, pageSize }: { cursor?: string; pageSize: number }) {
   return useSWR(
     `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
     fetcher
@@ -123,7 +117,11 @@ export function FilesTable(): JSX.Element {
 
   return (
     <Paper sx={{ m: 2 }}>
-      <TableToolbar numSelected={selected.length} onDelete={handleDelete} title="Files" />
+      <TableToolbar
+        numSelected={selected.length}
+        onDelete={handleDelete}
+        title="Files"
+      />
       <TableContainer>
         <Table>
           <TableHead
