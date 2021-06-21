@@ -5,13 +5,13 @@ import {
   Button,
   Drawer,
   IconButton,
-  Paper,
   Toolbar,
   Typography,
 } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
 import { Close } from "@material-ui/icons";
 import { Environment } from "@vertexvis/viewer";
+import { useRouter } from "next/router";
 import { signIn, useSession } from "next-auth/client";
 import React from "react";
 
@@ -20,6 +20,8 @@ import { LeftDrawer } from "../components/LeftDrawer";
 import { SceneTable } from "../components/SceneTable";
 import { Config } from "../lib/config";
 import { easeOutEntering, sharpLeaving } from "../lib/transitions";
+import { isErrorRes } from "../pages/api/scenes";
+import { encodeCreds } from "../pages/scene-viewer";
 
 interface Props {
   readonly clientId?: string;
@@ -68,47 +70,54 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 }
 
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const router = useRouter();
+  const [sceneId, setSceneId] = React.useState<string | undefined>();
   const [session, loading] = useSession();
 
-  const handleDrawerOpen = () => {
-    setDrawerOpen(true);
-  };
+  function handleDrawerOpen(id: string) {
+    setSceneId(id);
+  }
 
-  const handleDrawerClose = () => {
-    setDrawerOpen(false);
-  };
+  function handleDrawerClose() {
+    setSceneId(undefined);
+  }
+
+  async function handleViewClick() {
+    if (!clientId) return;
+
+    const json = await (
+      await fetch("/api/stream-keys", {
+        body: JSON.stringify({ sceneId }),
+        method: "POST",
+      })
+    ).json();
+
+    if (isErrorRes(json)) console.error("Error creating stream key.");
+    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
+  }
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <AppBar color="default" open={drawerOpen} position="fixed">
+      <AppBar color="default" open={Boolean(sceneId)} position="fixed">
         <Toolbar variant="dense">
           <Header />
         </Toolbar>
       </AppBar>
       {session && <LeftDrawer />}
-      <Main open={drawerOpen}>
+      <Main open={Boolean(sceneId)}>
         <Toolbar variant="dense" />
         {!loading && !session ? (
           <Box sx={{ alignItems: "center", display: "flex", m: 2 }}>
             <Typography sx={{ mr: 2 }}>Sign in required.</Typography>
             <Button onClick={() => signIn()}>Sign in</Button>
           </Box>
-        ) : clientId && vertexEnv ? (
-          <SceneTable
-            clientId={clientId}
-            onClick={handleDrawerOpen}
-            vertexEnv={vertexEnv}
-          />
         ) : (
-          <Paper sx={{ m: 2 }}>
-            <Typography>Account credentials required.</Typography>
-          </Paper>
+          <SceneTable onClick={handleDrawerOpen} />
         )}
       </Main>
       <Drawer
         anchor="right"
-        open={drawerOpen}
+        open={Boolean(sceneId)}
         sx={{
           flexShrink: 0,
           width: DrawerWidth,
@@ -121,7 +130,7 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
             <Close />
           </IconButton>
         </Box>
-        Hey there
+        <Button onClick={handleViewClick}>View</Button>
       </Drawer>
     </Box>
   );

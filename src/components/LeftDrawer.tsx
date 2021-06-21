@@ -24,10 +24,7 @@ export function LeftDrawer(): JSX.Element {
       sx={{
         flexShrink: 0,
         width: LeftDrawerWidth,
-        [`& .${drawerClasses.paper}`]: {
-          width: LeftDrawerWidth,
-          boxSizing: "border-box",
-        },
+        [`& .${drawerClasses.paper}`]: { width: LeftDrawerWidth },
       }}
       variant="permanent"
     >

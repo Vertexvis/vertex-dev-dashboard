@@ -25,6 +25,11 @@ export async function selectByHit({
   if (scene == null) return;
 
   const id = hit?.itemId?.hex;
+  console.debug(
+    `${hit?.itemSuppliedId?.value ?? hit?.itemId?.hex},${
+      hit?.metadata?.partName
+    }`
+  );
   if (id) {
     await scene
       .items((op) => [

@@ -9,21 +9,15 @@ import {
   TablePagination,
   TableRow,
 } from "@material-ui/core";
-import { Environment } from "@vertexvis/viewer";
-import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
 import { toSceneData as toScenePage } from "../lib/scenes";
-import { isErrorRes } from "../pages/api/scenes";
-import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 interface Props {
-  clientId: string;
-  onClick: () => void;
-  vertexEnv: Environment;
+  onClick: (sceneId: string) => void;
 }
 
 const headCells: readonly HeadCell[] = [
@@ -70,11 +64,7 @@ function useScenes({
   );
 }
 
-export function SceneTable({
-  clientId,
-  onClick,
-  vertexEnv,
-}: Props): JSX.Element {
+export function SceneTable({ onClick }: Props): JSX.Element {
   const pageSize = 1;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -84,7 +74,6 @@ export function SceneTable({
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
   const { data, error } = useScenes({ cursor, pageSize });
-  const router = useRouter();
 
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
@@ -122,17 +111,8 @@ export function SceneTable({
     setSelected(upd);
   }
 
-  async function handleClick(sceneId: string) {
-    // onClick();
-    const json = await (
-      await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId }),
-        method: "POST",
-      })
-    ).json();
-
-    if (isErrorRes(json)) console.error("Error creating stream key.");
-    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
+  function handleClick(sceneId: string) {
+    onClick(sceneId);
   }
 
   function handleChangePage(_e: unknown, n: number) {
