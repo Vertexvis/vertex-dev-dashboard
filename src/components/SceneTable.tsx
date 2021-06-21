@@ -22,6 +22,7 @@ import { TableToolbar } from "./TableToolbar";
 
 interface Props {
   clientId: string;
+  onClick: () => void;
   vertexEnv: Environment;
 }
 
@@ -69,7 +70,11 @@ function useScenes({
   );
 }
 
-export function SceneTable({ clientId, vertexEnv }: Props): JSX.Element {
+export function SceneTable({
+  clientId,
+  onClick,
+  vertexEnv,
+}: Props): JSX.Element {
   const pageSize = 1;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -118,6 +123,7 @@ export function SceneTable({ clientId, vertexEnv }: Props): JSX.Element {
   }
 
   async function handleClick(sceneId: string) {
+    // onClick();
     const json = await (
       await fetch("/api/stream-keys", {
         body: JSON.stringify({ sceneId }),
