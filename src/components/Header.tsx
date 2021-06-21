@@ -1,3 +1,4 @@
+/* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
 import { Box, Button, Link, Menu, MenuItem } from "@material-ui/core";
 import Image from "next/image";
 import { signOut, useSession } from "next-auth/client";
@@ -31,12 +32,12 @@ export function Header(): JSX.Element {
         <>
           {!!session.user?.name && !!session.user?.image && (
             <Box display="flex" justifyContent="end" alignItems="center">
-              <img
+              <Image
                 src={session.user?.image}
                 alt={session.user?.name}
                 width={30}
                 height={30}
-                style={{
+                css={{
                   borderRadius: "50%",
                   width: "30px",
                   height: "30px",
