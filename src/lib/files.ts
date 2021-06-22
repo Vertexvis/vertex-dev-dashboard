@@ -5,6 +5,8 @@ export interface File {
   readonly id: string;
   readonly name?: string;
   readonly suppliedId?: string;
+  readonly status: string;
+  readonly uploaded?: string;
 }
 
 export interface Paged<T> {
@@ -20,6 +22,8 @@ export function toFileData(res: GetFilesRes): Paged<File> {
       id: i.id,
       name: i.attributes.name,
       suppliedId: i.attributes.suppliedId,
+      status: i.attributes.status,
+      uploaded: i.attributes.uploaded
     })),
   };
 }

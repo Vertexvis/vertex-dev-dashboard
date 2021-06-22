@@ -28,6 +28,16 @@ interface DeleteBody {
   readonly ids: string[];
 }
 
+interface CreateFileBody {
+  name: string;
+  rootFileName?: string;
+  suppliedId?: string;
+}
+
+export interface CreateFileRes extends Res {
+  id: string;
+}
+
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse<GetFilesRes | DeleteFileRes | ErrorRes>
@@ -42,6 +52,11 @@ export default async function handle(
     return res.status(r.status).json(r);
   }
 
+  if (req.method === "POST") {
+    const r = await create(req);
+    return res.status(r.status).json(r);
+  }
+
   return res.status(405).json({ message: "Method not allowed.", status: 405 });
 }
 
@@ -50,10 +65,13 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
     const c = await getClient();
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
+    const sId = head(req.query.suppliedId);
+
     const r = await getPage(() =>
       c.files.getFiles({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
+        filterSuppliedId: sId
       })
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
@@ -74,6 +92,23 @@ async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
     b.ids.map((id) => makeCall((c) => c.files.deleteFile({ id })))
   );
   return { status: 200 };
+}
+
+async function create(req: NextApiRequest): Promise<ErrorRes | CreateFileRes> {
+  const b: CreateFileBody = JSON.parse(req.body);
+  if (!req.body) return { message: "Body required.", status: 400 };
+
+  const c = await getClient();
+  const res = await c.files.createFile({
+    createFileRequest: {
+      data: {
+        type: "file",
+        attributes: b,
+      },
+    },
+  });
+
+  return { status: 200, id: res.data.data.id };
 }
 
 export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
