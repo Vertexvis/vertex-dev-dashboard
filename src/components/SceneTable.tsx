@@ -1,14 +1,20 @@
 import {
+  Alert,
   Checkbox,
+  CircularProgress,
+  IconButton,
   Paper,
   Skeleton,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TablePagination,
   TableRow,
+  Tooltip,
 } from "@material-ui/core";
+import { VpnKeyOutlined } from "@material-ui/icons";
 import React from "react";
 import useSWR from "swr";
 
@@ -45,6 +51,12 @@ const headCells: readonly HeadCell[] = [
     disablePadding: false,
     label: "Created",
   },
+  {
+    id: "actions",
+    numeric: false,
+    disablePadding: false,
+    label: "Actions",
+  },
 ];
 
 async function fetcher(req: RequestInfo) {
@@ -65,7 +77,7 @@ function useScenes({
 }
 
 export function SceneTable({ onClick }: Props): JSX.Element {
-  const pageSize = 1;
+  const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
@@ -74,6 +86,10 @@ export function SceneTable({ onClick }: Props): JSX.Element {
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
   const { data, error } = useScenes({ cursor, pageSize });
+  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
+    string | undefined
+  >();
 
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
@@ -127,108 +143,154 @@ export function SceneTable({ onClick }: Props): JSX.Element {
     });
   }
 
+  async function handleGetStreamKey(sceneId: string) {
+    setKeyLoadingSceneId(sceneId);
+    const b = await fetch("/api/stream-keys", {
+      body: JSON.stringify({ sceneId }),
+      method: "POST",
+    });
+    const { key } = await b.json();
+    await navigator.clipboard.writeText(key);
+    setKeyLoadingSceneId(undefined);
+    setToastMsg(`Stream key "${key}" copied to clipboard.`);
+  }
+
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
   return (
-    <Paper sx={{ m: 2 }}>
-      <TableToolbar
-        numSelected={selected.length}
-        onDelete={handleDelete}
-        title="Scenes"
-      />
-      <TableContainer>
-        <Table>
-          <TableHead
-            headCells={headCells}
-            numSelected={selected.length}
-            onSelectAllClick={handleSelectAll}
-            rowCount={pageLength}
-          />
-          <TableBody>
-            {error ? (
-              <TableRow>
-                <TableCell colSpan={headCells.length + 1}>
-                  Error loading data.
-                </TableCell>
-              </TableRow>
-            ) : !page ? (
-              Array(emptyRows)
-                .fill(0)
-                .map((_, i) => (
-                  <TableRow key={i} role="checkbox" tabIndex={-1}>
-                    <TableCell padding="checkbox">
-                      <Checkbox disabled />
-                    </TableCell>
-                    <TableCell component="th" scope="row" padding="none">
-                      <Skeleton />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton />
-                    </TableCell>
-                  </TableRow>
-                ))
-            ) : (
-              page.items.map((row, index) => {
-                const isSel = isSelected(row.id);
-                const labelId = `table-checkbox-${index}`;
+    <>
+      <Paper sx={{ m: 2 }}>
+        <TableToolbar
+          numSelected={selected.length}
+          onDelete={handleDelete}
+          title="Scenes"
+        />
+        <TableContainer>
+          <Table>
+            <TableHead
+              headCells={headCells}
+              numSelected={selected.length}
+              onSelectAllClick={handleSelectAll}
+              rowCount={pageLength}
+            />
+            <TableBody>
+              {error ? (
+                <TableRow>
+                  <TableCell colSpan={headCells.length + 1}>
+                    Error loading data.
+                  </TableCell>
+                </TableRow>
+              ) : !page ? (
+                Array(emptyRows)
+                  .fill(0)
+                  .map((_, i) => (
+                    <TableRow key={i} role="checkbox" tabIndex={-1}>
+                      <TableCell padding="checkbox">
+                        <Checkbox disabled />
+                      </TableCell>
+                      <TableCell component="th" scope="row" padding="none">
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                page.items.map((row, index) => {
+                  const isSel = isSelected(row.id);
+                  const labelId = `table-checkbox-${index}`;
 
-                return (
-                  <TableRow
-                    hover
-                    role="checkbox"
-                    tabIndex={-1}
-                    key={row.id}
-                    selected={isSel}
-                    onClick={() => handleClick(row.id)}
-                  >
-                    <TableCell
-                      padding="checkbox"
-                      onClick={() => handleCheck(row.id)}
+                  return (
+                    <TableRow
+                      hover
+                      role="checkbox"
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isSel}
+                      onClick={() => handleClick(row.id)}
                     >
-                      <Checkbox color="primary" checked={isSel} />
-                    </TableCell>
-                    <TableCell
-                      component="th"
-                      id={labelId}
-                      scope="row"
-                      padding="none"
-                    >
-                      {row.name}
-                    </TableCell>
-                    <TableCell>{row.suppliedId}</TableCell>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>
-                      {row.created
-                        ? new Date(row.created).toLocaleString()
-                        : undefined}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-            {emptyRows > 0 && (
-              <TableRow style={{ height: rowHeight * emptyRows }}>
-                <TableCell colSpan={headCells.length + 1} />
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[]}
-        component="div"
-        count={-1}
-        rowsPerPage={pageSize}
-        page={curPage}
-        onPageChange={handleChangePage}
-        nextIconButtonProps={{ disabled: privateCursor == null }}
-      />
-    </Paper>
+                      <TableCell
+                        padding="checkbox"
+                        onClick={() => handleCheck(row.id)}
+                      >
+                        <Checkbox color="primary" checked={isSel} />
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="none"
+                      >
+                        {row.name}
+                      </TableCell>
+                      <TableCell>{row.suppliedId}</TableCell>
+                      <TableCell>{row.id}</TableCell>
+                      <TableCell>
+                        {row.created
+                          ? new Date(row.created).toLocaleString()
+                          : undefined}
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="Generate stream-key">
+                          <>
+                            {keyLoadingSceneId === row.id && (
+                              <CircularProgress size={44} sx={{
+                                position: 'absolute',                                
+                              }} />
+                            )}
+                            <IconButton
+                              aria-label="stream-key"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGetStreamKey(row.id);
+                              }}
+                            >
+                              <VpnKeyOutlined fontSize="small" />
+                            </IconButton>
+                          </>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+              {emptyRows > 0 && (
+                <TableRow style={{ height: rowHeight * emptyRows }}>
+                  <TableCell colSpan={headCells.length + 1} />
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[]}
+          component="div"
+          count={-1}
+          rowsPerPage={pageSize}
+          page={curPage}
+          onPageChange={handleChangePage}
+          nextIconButtonProps={{ disabled: privateCursor == null }}
+        />
+      </Paper>
+      <Snackbar
+        open={!!toastMsg}
+        autoHideDuration={6000}
+        onClose={() => setToastMsg(undefined)}
+      >
+        <Alert onClose={() => setToastMsg(undefined)} severity="success">
+          {toastMsg}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
