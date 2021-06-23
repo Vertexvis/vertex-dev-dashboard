@@ -23,7 +23,7 @@ import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 interface Props {
-  onClick: (sceneId: string) => void;
+  onClick: (s: Scene) => void;
 }
 
 const headCells: readonly HeadCell[] = [
@@ -127,8 +127,8 @@ export function SceneTable({ onClick }: Props): JSX.Element {
     setSelected(upd);
   }
 
-  function handleClick(sceneId: string) {
-    onClick(sceneId);
+  function handleClick(s: Scene) {
+    onClick(s);
   }
 
   function handleChangePage(_e: unknown, n: number) {
@@ -217,7 +217,7 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                       tabIndex={-1}
                       key={row.id}
                       selected={isSel}
-                      onClick={() => handleClick(row.id)}
+                      onClick={() => handleClick(row)}
                     >
                       <TableCell
                         padding="checkbox"
@@ -244,9 +244,12 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                         <Tooltip title="Generate stream-key">
                           <>
                             {keyLoadingSceneId === row.id && (
-                              <CircularProgress size={44} sx={{
-                                position: 'absolute',                                
-                              }} />
+                              <CircularProgress
+                                size={44}
+                                sx={{
+                                  position: "absolute",
+                                }}
+                              />
                             )}
                             <IconButton
                               aria-label="stream-key"

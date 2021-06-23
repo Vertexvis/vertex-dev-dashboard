@@ -26,7 +26,7 @@ export default function CreateFileDialog({
   onClose,
   onFileCreated,
 }: CreateFileDialogProps): JSX.Element {
-  const [file, setFile] = React.useState<File | null | undefined>(null);
+  const [file, setFile] = React.useState<File | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [rootFileName, setRootFileName] = React.useState<string | undefined>();
   const [submitDisabled, setSubmitDisabled] = React.useState<boolean>(true);
@@ -69,24 +69,24 @@ export default function CreateFileDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth={true}>
+    <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Add new File</DialogTitle>
       <DialogContent>
         <TextField
-          margin="normal"
-          id="suppliedId"
-          label="Supplied ID"
-          type="text"
           fullWidth
+          label="Supplied ID"
+          margin="normal"
           onChange={(e) => setSuppliedId(e.target.value)}
+          size="small"
+          type="text"
         />
         <TextField
-          margin="normal"
-          id="rootFileName"
-          label="Root File Name"
-          type="text"
           fullWidth
+          label="Root File Name"
+          margin="normal"
           onChange={(e) => setRootFileName(e.target.value)}
+          size="small"
+          type="text"
         />
 
         <Box sx={{ py: 2, display: "flex" }}>
@@ -98,7 +98,7 @@ export default function CreateFileDialog({
               type="file"
               onChange={(e) => {
                 setSubmitDisabled(false);
-                setFile(e.target?.files?.item(0));
+                setFile(e.target?.files?.item(0) ?? undefined);
               }}
             />
             <Button variant="outlined" component="span">

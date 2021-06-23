@@ -3,8 +3,11 @@ import {
   AppBarProps as MuiAppBarProps,
   Box,
   Button,
+  Checkbox,
   Drawer,
+  FormControlLabel,
   IconButton,
+  TextField,
   Toolbar,
   Typography,
 } from "@material-ui/core";
@@ -19,6 +22,7 @@ import { Header } from "../components/Header";
 import { LeftDrawer } from "../components/LeftDrawer";
 import { SceneTable } from "../components/SceneTable";
 import { Config } from "../lib/config";
+import { Scene } from "../lib/scenes";
 import { easeOutEntering, sharpLeaving } from "../lib/transitions";
 import { isErrorRes } from "../pages/api/scenes";
 import { encodeCreds } from "../pages/scene-viewer";
@@ -33,7 +37,7 @@ interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
-const DrawerWidth = 240;
+const DrawerWidth = 300;
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
@@ -71,15 +75,15 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
   const router = useRouter();
-  const [sceneId, setSceneId] = React.useState<string | undefined>();
+  const [scene, setScene] = React.useState<Scene | undefined>();
   const [session, loading] = useSession();
 
-  function handleDrawerOpen(id: string) {
-    setSceneId(id);
+  function handleDrawerOpen(s: Scene) {
+    setScene(s);
   }
 
   function handleDrawerClose() {
-    setSceneId(undefined);
+    setScene(undefined);
   }
 
   async function handleViewClick() {
@@ -87,7 +91,7 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
 
     const json = await (
       await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId }),
+        body: JSON.stringify({ sceneId: scene.id }),
         method: "POST",
       })
     ).json();
@@ -98,13 +102,13 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <AppBar color="default" open={Boolean(sceneId)} position="fixed">
+      <AppBar color="default" open={Boolean(scene)} position="fixed">
         <Toolbar variant="dense">
           <Header />
         </Toolbar>
       </AppBar>
       {session && <LeftDrawer />}
-      <Main open={Boolean(sceneId)}>
+      <Main open={Boolean(scene)}>
         <Toolbar variant="dense" />
         {!loading && !session ? (
           <Box sx={{ alignItems: "center", display: "flex", m: 2 }}>
@@ -117,7 +121,7 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
       </Main>
       <Drawer
         anchor="right"
-        open={Boolean(sceneId)}
+        open={Boolean(scene)}
         sx={{
           flexShrink: 0,
           width: DrawerWidth,
@@ -130,8 +134,92 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
             <Close />
           </IconButton>
         </Box>
-        <Button onClick={handleViewClick}>View</Button>
+        {scene && (
+          <Box sx={{ mx: 2 }}>
+            <Typography sx={{ mb: 2 }} variant="h5">
+              Scene Details
+            </Typography>
+            <DrawerTextField label="Name" value={scene.name} />
+            <DrawerTextField label="Supplied ID" value={scene.suppliedId} />
+            <DrawerTextField label="ID" value={scene.id} />
+            <DrawerTextField
+              label="Camera"
+              value={JSON.stringify(scene.camera)}
+            />
+            <DrawerTextField label="State" value={scene.state} />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={scene.treeEnabled}
+                  inputProps={{ readOnly: true }}
+                />
+              }
+              label="Tree enabled"
+            />
+
+            {scene.worldOrientation && (
+              <DrawerTextField
+                label="World orientation"
+                value={JSON.stringify(scene.worldOrientation)}
+              />
+            )}
+            {scene.sceneItemCount && (
+              <DrawerTextField
+                label="Scene item count"
+                value={scene.sceneItemCount.toString()}
+              />
+            )}
+            <DrawerTextField
+              label="Created"
+              value={
+                scene.created
+                  ? new Date(scene.created).toLocaleString()
+                  : undefined
+              }
+            />
+            <DrawerTextField
+              label="Modified"
+              value={
+                scene.modified
+                  ? new Date(scene.modified).toLocaleString()
+                  : undefined
+              }
+            />
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+            >
+              {/* <Button onClick={handleViewClick}>Edit</Button> */}
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleViewClick}
+              >
+                View
+              </Button>
+            </Box>
+            {/* <TextField
+            error={invalidClientId}
+            helperText={invalidClientId ? "Client ID too long." : undefined}
+            onChange={handleClientIdChange}
+            value={inputCreds.clientId}
+          /> */}
+          </Box>
+        )}
       </Drawer>
     </Box>
+  );
+}
+
+function DrawerTextField({ label, value }: { label: string; value?: string }) {
+  return (
+    <TextField
+      fullWidth
+      InputProps={{ readOnly: true }}
+      label={label}
+      margin="normal"
+      size="small"
+      type="text"
+      value={value}
+    />
   );
 }
