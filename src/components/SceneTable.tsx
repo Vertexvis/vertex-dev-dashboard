@@ -18,6 +18,7 @@ import { VpnKeyOutlined } from "@material-ui/icons";
 import React from "react";
 import useSWR from "swr";
 
+import { Scene } from "../lib/scenes";
 import { toSceneData as toScenePage } from "../lib/scenes";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";

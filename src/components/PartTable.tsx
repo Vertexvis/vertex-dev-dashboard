@@ -16,10 +16,12 @@ import React from "react";
 import useSWR from "swr";
 
 import { toPartData as toPartPage } from "../lib/parts";
+import PartRow from "./PartRow";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 const headCells: readonly HeadCell[] = [
+  { id: "expand", numeric: false, disablePadding: true, label: "" },
   {
     id: "name",
     numeric: false,
@@ -185,6 +187,9 @@ export function PartsTable(): JSX.Element {
                   .fill(0)
                   .map((_, i) => (
                     <TableRow key={i} role="checkbox" tabIndex={-1}>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
                       <TableCell padding="checkbox">
                         <Checkbox disabled />
                       </TableCell>
@@ -203,40 +208,14 @@ export function PartsTable(): JSX.Element {
                     </TableRow>
                   ))
               ) : (
-                page.items.map((row, index) => {
-                  const isSel = isSelected(row.id);
-                  const labelId = `table-checkbox-${index}`;
-
+                page.items.map((row) => {
                   return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
+                    <PartRow
                       key={row.id}
-                      selected={isSel}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={() => handleCheck(row.id)}
-                      >
-                        <Checkbox color="primary" checked={isSel} />
-                      </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>
-                        {row.created
-                          ? new Date(row.created).toLocaleString()
-                          : undefined}
-                      </TableCell>
-                    </TableRow>
+                      isSelected={isSelected(row.id)}
+                      onSelected={handleCheck}
+                      part={row}
+                    />
                   );
                 })
               )}
