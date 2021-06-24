@@ -1,33 +1,27 @@
 import {
-  Alert,
+  Box,
   Checkbox,
-  CircularProgress,
-  IconButton,
   Paper,
   Skeleton,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TablePagination,
   TableRow,
-  Tooltip,
+  TextField,
 } from "@material-ui/core";
-import { VpnKeyOutlined } from "@material-ui/icons";
+import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { Scene } from "../lib/scenes";
-import { toSceneData as toScenePage } from "../lib/scenes";
+import { toPartData as toPartPage } from "../lib/parts";
+import PartRow from "./PartRow";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
-interface Props {
-  onClick: (s: Scene) => void;
-}
-
 const headCells: readonly HeadCell[] = [
+  { id: "expand", numeric: false, disablePadding: true, label: "" },
   {
     id: "name",
     numeric: false,
@@ -52,49 +46,51 @@ const headCells: readonly HeadCell[] = [
     disablePadding: false,
     label: "Created",
   },
-  {
-    id: "actions",
-    numeric: false,
-    disablePadding: false,
-    label: "Actions",
-  },
 ];
 
 async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useScenes({
+function useParts({
   cursor,
   pageSize,
+  suppliedId,
 }: {
   cursor?: string;
   pageSize: number;
+  suppliedId?: string;
 }) {
   return useSWR(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
+    `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
+      suppliedId ? `&suppliedId=${suppliedId}` : ""
+    }`,
     fetcher
   );
 }
 
-export function SceneTable({ onClick }: Props): JSX.Element {
+export function PartsTable(): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
+  const [suppliedId, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >();
   const [privateCursor, setPrivateCursor] = React.useState<
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const { data, error } = useScenes({ cursor, pageSize });
-  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
-  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
-    string | undefined
-  >();
+  const { data, error } = useParts({ cursor, pageSize, suppliedId });
 
-  const page = data ? toScenePage(data) : undefined;
+  const page = data ? toPartPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows = pageSize - pageLength;
+
+  const debouncedSetSuppliedIdFilter = React.useMemo(
+    () => debounce(setSuppliedIdFilter, 300),
+    []
+  );
 
   React.useEffect(() => {
     if (page == null) return;
@@ -128,32 +124,16 @@ export function SceneTable({ onClick }: Props): JSX.Element {
     setSelected(upd);
   }
 
-  function handleClick(s: Scene) {
-    onClick(s);
-  }
-
   function handleChangePage(_e: unknown, n: number) {
     setCursor(privateCursor);
     setCurPage(n);
   }
 
   async function handleDelete() {
-    await fetch("/api/scenes", {
+    await fetch("/api/parts", {
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
-  }
-
-  async function handleGetStreamKey(sceneId: string) {
-    setKeyLoadingSceneId(sceneId);
-    const b = await fetch("/api/stream-keys", {
-      body: JSON.stringify({ sceneId }),
-      method: "POST",
-    });
-    const { key } = await b.json();
-    await navigator.clipboard.writeText(key);
-    setKeyLoadingSceneId(undefined);
-    setToastMsg(`Stream key "${key}" copied to clipboard.`);
   }
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
@@ -164,8 +144,29 @@ export function SceneTable({ onClick }: Props): JSX.Element {
         <TableToolbar
           numSelected={selected.length}
           onDelete={handleDelete}
-          title="Scenes"
+          title="Parts"
         />
+        <Box
+          sx={{
+            px: { sm: 2 },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            variant="standard"
+            size="small"
+            margin="normal"
+            id="suppliedIdFilter"
+            label="Supplied ID Filter"
+            type="text"
+            onChange={(e) => {
+              debouncedSetSuppliedIdFilter(e.target.value);
+            }}
+            sx={{ mt: 0 }}
+          />
+        </Box>
         <TableContainer>
           <Table>
             <TableHead
@@ -186,6 +187,9 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                   .fill(0)
                   .map((_, i) => (
                     <TableRow key={i} role="checkbox" tabIndex={-1}>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
                       <TableCell padding="checkbox">
                         <Checkbox disabled />
                       </TableCell>
@@ -201,70 +205,17 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                       <TableCell>
                         <Skeleton />
                       </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
                     </TableRow>
                   ))
               ) : (
-                page.items.map((row, index) => {
-                  const isSel = isSelected(row.id);
-                  const labelId = `table-checkbox-${index}`;
-
+                page.items.map((row) => {
                   return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
+                    <PartRow
                       key={row.id}
-                      selected={isSel}
-                      onClick={() => handleClick(row)}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={() => handleCheck(row.id)}
-                      >
-                        <Checkbox color="primary" checked={isSel} />
-                      </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>
-                        {row.created
-                          ? new Date(row.created).toLocaleString()
-                          : undefined}
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="Generate stream-key">
-                          <>
-                            {keyLoadingSceneId === row.id && (
-                              <CircularProgress
-                                size={44}
-                                sx={{
-                                  position: "absolute",
-                                }}
-                              />
-                            )}
-                            <IconButton
-                              aria-label="stream-key"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGetStreamKey(row.id);
-                              }}
-                            >
-                              <VpnKeyOutlined fontSize="small" />
-                            </IconButton>
-                          </>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
+                      isSelected={isSelected(row.id)}
+                      onSelected={handleCheck}
+                      part={row}
+                    />
                   );
                 })
               )}
@@ -286,15 +237,6 @@ export function SceneTable({ onClick }: Props): JSX.Element {
           nextIconButtonProps={{ disabled: privateCursor == null }}
         />
       </Paper>
-      <Snackbar
-        open={!!toastMsg}
-        autoHideDuration={6000}
-        onClose={() => setToastMsg(undefined)}
-      >
-        <Alert onClose={() => setToastMsg(undefined)} severity="success">
-          {toastMsg}
-        </Alert>
-      </Snackbar>
     </>
   );
 }
