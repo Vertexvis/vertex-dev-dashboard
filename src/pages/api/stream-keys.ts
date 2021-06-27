@@ -27,8 +27,9 @@ export default async function handle(
 async function post(
   req: NextApiRequest
 ): Promise<ErrorRes | CreateStreamKeyRes> {
-  const b: CreateBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
+
+  const b: CreateBody = JSON.parse(req.body);
   if (!b.sceneId) return { message: "Invalid body.", status: 400 };
 
   const r = await makeCall((c) =>

@@ -2,6 +2,7 @@ import {
   defined,
   Failure,
   head,
+  logError,
   PartRevisionData,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -48,7 +49,7 @@ async function get(
 
     return { data: r.data.data, status: 200 };
   } catch (error) {
-    console.error("Error calling Vertex API", error);
+    logError(error);
     return error.vertexError?.res
       ? toErrorRes(error.vertexError?.res)
       : { message: "Unknown error from Vertex API.", status: 500 };

@@ -4,6 +4,7 @@ import {
   FileMetadataData,
   getPage,
   head,
+  logError,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -76,7 +77,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
   } catch (error) {
-    console.error("Error calling Vertex API", error);
+    logError(error);
     return error.vertexError?.res
       ? toErrorRes(error.vertexError?.res)
       : { message: "Unknown error from Vertex API.", status: 500 };
@@ -84,8 +85,9 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
 }
 
 async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
-  const b: DeleteBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
+
+  const b: DeleteBody = JSON.parse(req.body);
   if (!b.ids) return { message: "Invalid body.", status: 400 };
 
   await Promise.all(
@@ -95,9 +97,9 @@ async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
 }
 
 async function create(req: NextApiRequest): Promise<ErrorRes | CreateFileRes> {
-  const b: CreateFileBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
 
+  const b: CreateFileBody = JSON.parse(req.body);
   const c = await getClient();
   const res = await c.files.createFile({
     createFileRequest: {

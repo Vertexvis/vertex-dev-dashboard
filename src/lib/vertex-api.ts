@@ -2,6 +2,7 @@ import {
   ApiError,
   Failure,
   isFailure,
+  logError,
   VertexClient,
 } from "@vertexvis/api-client-node";
 import { AxiosResponse } from "axios";
@@ -26,7 +27,7 @@ export async function makeCall<T>(
     const c = await getClient();
     return (await apiCall(c)).data;
   } catch (error) {
-    console.error("Error calling Vertex API", error.data);
+    logError(error);
     return (
       error.vertexError?.res ?? toFailure(500, "Unknown error from Vertex API.")
     );

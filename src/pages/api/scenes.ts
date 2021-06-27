@@ -3,7 +3,10 @@ import {
   Failure,
   getPage,
   head,
+  logError,
   SceneData,
+  ScenesApiUpdateSceneRequest,
+  UpdateSceneRequestDataAttributes,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -22,11 +25,16 @@ export interface GetSceneRes extends Res {
   readonly data: SceneData[];
 }
 
-type DeleteSceneRes = Res;
-
-interface DeleteBody {
+interface DeleteSceneReq {
   readonly ids: string[];
 }
+
+type DeleteSceneRes = Res;
+
+export type UpdateSceneReq = Pick<ScenesApiUpdateSceneRequest, "id"> &
+  Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId">;
+
+type UpdateSceneRes = Res;
 
 export default async function handle(
   req: NextApiRequest,
@@ -39,6 +47,11 @@ export default async function handle(
 
   if (req.method === "DELETE") {
     const r = await del(req);
+    return res.status(r.status).json(r);
+  }
+
+  if (req.method === "PATCH") {
+    const r = await upd(req);
     return res.status(r.status).json(r);
   }
 
@@ -58,7 +71,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
   } catch (error) {
-    console.error("Error calling Vertex API", error);
+    logError(error);
     return error.vertexError?.res
       ? toErrorRes(error.vertexError?.res)
       : { message: "Unknown error from Vertex API.", status: 500 };
@@ -66,12 +79,28 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetSceneRes> {
 }
 
 async function del(req: NextApiRequest): Promise<ErrorRes | DeleteSceneRes> {
-  const b: DeleteBody = JSON.parse(req.body);
   if (!req.body) return { message: "Body required.", status: 400 };
+
+  const b: DeleteSceneReq = JSON.parse(req.body);
   if (!b.ids) return { message: "Invalid body.", status: 400 };
 
   await Promise.all(
     b.ids.map((id) => makeCall((c) => c.scenes.deleteScene({ id })))
+  );
+  return { status: 200 };
+}
+
+async function upd(req: NextApiRequest): Promise<ErrorRes | UpdateSceneRes> {
+  if (!req.body) return { message: "Body required.", status: 400 };
+
+  const { id, name, suppliedId }: UpdateSceneReq = JSON.parse(req.body);
+  await makeCall((c) =>
+    c.scenes.updateScene({
+      id,
+      updateSceneRequest: {
+        data: { attributes: { name, suppliedId }, type: "scene" },
+      },
+    })
   );
   return { status: 200 };
 }

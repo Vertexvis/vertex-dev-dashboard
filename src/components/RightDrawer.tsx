@@ -1,13 +1,8 @@
 import {
   Box,
   Button,
-  Checkbox,
   Drawer,
-  FormControlLabel,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -16,11 +11,11 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Close } from "@material-ui/icons";
-import { Vector3 } from "@vertexvis/geometry";
 import React from "react";
 import { useForm } from "react-hook-form";
 
 import { Scene } from "../lib/scenes";
+import { UpdateSceneReq } from "../pages/api/scenes";
 import { DrawerWidth } from "../pages/index";
 import { Input } from "./Input";
 import { VectorTable } from "./VectorTable";
@@ -32,10 +27,7 @@ interface Props {
   onClose: () => void;
 }
 
-interface FormData {
-  name?: string;
-  suppliedId?: string;
-}
+type FormData = Omit<UpdateSceneReq, "id">;
 
 export function RightDrawer({
   editing,
@@ -48,8 +40,13 @@ export function RightDrawer({
     defaultValues,
   });
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  async function onSubmit(data: FormData) {
+    console.debug(
+      await fetch("/api/scenes", {
+        body: JSON.stringify({ id: scene?.id, ...data }),
+        method: "PATCH",
+      })
+    );
     onClose();
   }
 
@@ -79,15 +76,9 @@ export function RightDrawer({
       {scene && editing ? (
         <Box sx={{ mx: 2, mb: 2 }}>
           <form onSubmit={handleSubmit(onSubmit)}>
+            <Input<FormData> control={control} label="Name" name="name" />
             <Input<FormData>
               control={control}
-              defaultValue={scene.name}
-              label="Name"
-              name="name"
-            />
-            <Input<FormData>
-              control={control}
-              defaultValue={scene.suppliedId}
               label="Supplied ID"
               name="suppliedId"
             />
@@ -285,20 +276,3 @@ export function RightDrawer({
     </Drawer>
   );
 }
-
-// function Vector({
-//   label,
-//   vector,
-// }: {
-//   label: string;
-//   vector: Vector3.Vector3;
-// }): JSX.Element {
-//   return (
-//     <>
-//       <Typography sx={{ my: 1 }}>{label}</Typography>
-//       <Input label="X" name={`${label}-x`} value={vector.x} />
-//       <Input label="Y" name={`${label}-y`} value={vector.y} />
-//       <Input label="Z" name={`${label}-z`} value={vector.z} />
-//     </>
-//   );
-// }
