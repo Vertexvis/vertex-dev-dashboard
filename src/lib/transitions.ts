@@ -1,8 +1,8 @@
 import { Theme } from "@material-ui/core/styles";
 
 interface Transition {
-  easing: string;
-  duration: number;
+  readonly easing: string;
+  readonly duration: number;
 }
 
 export function sharpLeaving(theme: Theme): Transition {

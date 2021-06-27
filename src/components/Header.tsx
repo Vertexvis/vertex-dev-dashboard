@@ -13,8 +13,8 @@ import { signOut, useSession } from "next-auth/client";
 import React from "react";
 
 interface Props {
-  onMenuClick?: () => void;
-  open?: boolean;
+  readonly onMenuClick?: () => void;
+  readonly open?: boolean;
 }
 
 export function Header({ onMenuClick, open }: Props): JSX.Element {

@@ -20,8 +20,8 @@ interface Props {
 }
 
 interface DrawerProps {
-  leftDrawerWidth: number;
-  rightDrawerWidth: number;
+  readonly leftDrawerWidth: number;
+  readonly rightDrawerWidth: number;
 }
 
 function shouldForwardProp(prop: PropertyKey): boolean {

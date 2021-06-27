@@ -1,8 +1,8 @@
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 
 export interface Metadata {
-  partName?: string;
-  properties: Properties;
+  readonly partName?: string;
+  readonly properties: Properties;
 }
 
 interface Properties {

@@ -3,41 +3,32 @@ import {
   AppBarProps as MuiAppBarProps,
   Box,
   Button,
-  Checkbox,
-  Drawer,
-  FormControlLabel,
-  IconButton,
-  TextField,
   Toolbar,
   Typography,
 } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
-import { Close } from "@material-ui/icons";
 import { Environment } from "@vertexvis/viewer";
-import { useRouter } from "next/router";
 import { signIn, useSession } from "next-auth/client";
 import React from "react";
 
 import { Header } from "../components/Header";
 import { LeftDrawer } from "../components/LeftDrawer";
+import { RightDrawer } from "../components/RightDrawer";
 import { SceneTable } from "../components/SceneTable";
 import { Config } from "../lib/config";
 import { Scene } from "../lib/scenes";
 import { easeOutEntering, sharpLeaving } from "../lib/transitions";
-import { isErrorRes } from "../pages/api/scenes";
-import { encodeCreds } from "../pages/scene-viewer";
 
 interface Props {
   readonly clientId?: string;
-  readonly clientSecret?: string;
   readonly vertexEnv: Environment;
 }
 
 interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
+  readonly open?: boolean;
 }
 
-const DrawerWidth = 300;
+export const DrawerWidth = 300;
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
@@ -74,7 +65,6 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 }
 
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
-  const router = useRouter();
   const [scene, setScene] = React.useState<Scene | undefined>();
   const [session, loading] = useSession();
 
@@ -84,20 +74,6 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
 
   function handleDrawerClose() {
     setScene(undefined);
-  }
-
-  async function handleViewClick() {
-    if (!clientId) return;
-
-    const json = await (
-      await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId: scene.id }),
-        method: "POST",
-      })
-    ).json();
-
-    if (isErrorRes(json)) console.error("Error creating stream key.");
-    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
   }
 
   return (
@@ -116,110 +92,15 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
             <Button onClick={() => signIn()}>Sign in</Button>
           </Box>
         ) : (
-          <SceneTable onClick={handleDrawerOpen} />
+          <SceneTable
+            clientId={clientId}
+            onClick={handleDrawerOpen}
+            scene={scene}
+            vertexEnv={vertexEnv}
+          />
         )}
       </Main>
-      <Drawer
-        anchor="right"
-        open={Boolean(scene)}
-        sx={{
-          flexShrink: 0,
-          width: DrawerWidth,
-          "& .MuiDrawer-paper": { width: DrawerWidth },
-        }}
-        variant="persistent"
-      >
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <IconButton onClick={handleDrawerClose}>
-            <Close />
-          </IconButton>
-        </Box>
-        {scene && (
-          <Box sx={{ mx: 2 }}>
-            <Typography sx={{ mb: 2 }} variant="h5">
-              Scene Details
-            </Typography>
-            <DrawerTextField label="Name" value={scene.name} />
-            <DrawerTextField label="Supplied ID" value={scene.suppliedId} />
-            <DrawerTextField label="ID" value={scene.id} />
-            <DrawerTextField
-              label="Camera"
-              value={JSON.stringify(scene.camera)}
-            />
-            <DrawerTextField label="State" value={scene.state} />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={scene.treeEnabled}
-                  inputProps={{ readOnly: true }}
-                />
-              }
-              label="Tree enabled"
-            />
-
-            {scene.worldOrientation && (
-              <DrawerTextField
-                label="World orientation"
-                value={JSON.stringify(scene.worldOrientation)}
-              />
-            )}
-            {scene.sceneItemCount && (
-              <DrawerTextField
-                label="Scene item count"
-                value={scene.sceneItemCount.toString()}
-              />
-            )}
-            <DrawerTextField
-              label="Created"
-              value={
-                scene.created
-                  ? new Date(scene.created).toLocaleString()
-                  : undefined
-              }
-            />
-            <DrawerTextField
-              label="Modified"
-              value={
-                scene.modified
-                  ? new Date(scene.modified).toLocaleString()
-                  : undefined
-              }
-            />
-            <Box
-              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
-            >
-              {/* <Button onClick={handleViewClick}>Edit</Button> */}
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleViewClick}
-              >
-                View
-              </Button>
-            </Box>
-            {/* <TextField
-            error={invalidClientId}
-            helperText={invalidClientId ? "Client ID too long." : undefined}
-            onChange={handleClientIdChange}
-            value={inputCreds.clientId}
-          /> */}
-          </Box>
-        )}
-      </Drawer>
+      <RightDrawer handleClose={handleDrawerClose} scene={scene} />
     </Box>
-  );
-}
-
-function DrawerTextField({ label, value }: { label: string; value?: string }) {
-  return (
-    <TextField
-      fullWidth
-      InputProps={{ readOnly: true }}
-      label={label}
-      margin="normal"
-      size="small"
-      type="text"
-      value={value}
-    />
   );
 }

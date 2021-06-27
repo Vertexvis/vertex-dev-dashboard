@@ -14,17 +14,24 @@ import {
   TableRow,
   Tooltip,
 } from "@material-ui/core";
-import { VpnKeyOutlined } from "@material-ui/icons";
+import { VisibilityOutlined, VpnKeyOutlined } from "@material-ui/icons";
+import { Environment } from "@vertexvis/viewer";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
 import { Scene } from "../lib/scenes";
 import { toSceneData as toScenePage } from "../lib/scenes";
+import { isErrorRes } from "../pages/api/scenes";
+import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 interface Props {
-  onClick: (s: Scene) => void;
+  readonly clientId?: string;
+  readonly onClick: (s: Scene) => void;
+  readonly scene?: Scene;
+  readonly vertexEnv: Environment;
 }
 
 const headCells: readonly HeadCell[] = [
@@ -77,7 +84,12 @@ function useScenes({
   );
 }
 
-export function SceneTable({ onClick }: Props): JSX.Element {
+export function SceneTable({
+  clientId,
+  onClick,
+  scene,
+  vertexEnv,
+}: Props): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -92,9 +104,10 @@ export function SceneTable({ onClick }: Props): JSX.Element {
     string | undefined
   >();
 
+  const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = pageSize - pageLength;
+  const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
 
   React.useEffect(() => {
     if (page == null) return;
@@ -142,6 +155,20 @@ export function SceneTable({ onClick }: Props): JSX.Element {
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
+  }
+
+  async function handleViewClick() {
+    if (!clientId || scene == null) return;
+
+    const json = await (
+      await fetch("/api/stream-keys", {
+        body: JSON.stringify({ sceneId: scene.id }),
+        method: "POST",
+      })
+    ).json();
+
+    if (isErrorRes(json)) console.error("Error creating stream key.");
+    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
   }
 
   async function handleGetStreamKey(sceneId: string) {
@@ -242,16 +269,14 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                           : undefined}
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Generate stream-key">
-                          <>
-                            {keyLoadingSceneId === row.id && (
-                              <CircularProgress
-                                size={44}
-                                sx={{
-                                  position: "absolute",
-                                }}
-                              />
-                            )}
+                        <>
+                          {keyLoadingSceneId === row.id && (
+                            <CircularProgress
+                              size={44}
+                              sx={{ position: "absolute" }}
+                            />
+                          )}
+                          <Tooltip title="Generate stream key">
                             <IconButton
                               aria-label="stream-key"
                               onClick={(e) => {
@@ -261,7 +286,12 @@ export function SceneTable({ onClick }: Props): JSX.Element {
                             >
                               <VpnKeyOutlined fontSize="small" />
                             </IconButton>
-                          </>
+                          </Tooltip>
+                        </>
+                        <Tooltip title="View scene">
+                          <IconButton onClick={() => handleViewClick()}>
+                            <VisibilityOutlined />
+                          </IconButton>
                         </Tooltip>
                       </TableCell>
                     </TableRow>

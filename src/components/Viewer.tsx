@@ -19,9 +19,9 @@ interface ViewerProps extends ViewerJSX.VertexViewer {
 }
 
 export interface Action {
-  icon: React.ReactNode;
-  name: string;
-  onClick: () => void;
+  readonly icon: React.ReactNode;
+  readonly name: string;
+  readonly onClick: () => void;
 }
 
 type ViewerComponentType = React.ComponentType<

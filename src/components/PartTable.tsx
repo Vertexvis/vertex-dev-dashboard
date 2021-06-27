@@ -85,7 +85,7 @@ export function PartsTable(): JSX.Element {
 
   const page = data ? toPartPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = pageSize - pageLength;
+  const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),

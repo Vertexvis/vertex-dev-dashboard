@@ -7,7 +7,11 @@ import {
   Toolbar,
 } from "@material-ui/core";
 import { drawerClasses } from "@material-ui/core/Drawer";
-import { DescriptionOutlined, LocalLibraryOutlined,PhotoLibraryOutlined } from "@material-ui/icons";
+import {
+  DescriptionOutlined,
+  LocalLibraryOutlined,
+  PhotoLibraryOutlined,
+} from "@material-ui/icons";
 import { useRouter } from "next/router";
 import React from "react";
 
@@ -56,7 +60,7 @@ export function LeftDrawer(): JSX.Element {
             <LocalLibraryOutlined />
           </ListItemIcon>
           <ListItemText primary="Parts Library" />
-        </ListItemButton>        
+        </ListItemButton>
       </List>
     </Drawer>
   );

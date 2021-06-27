@@ -19,9 +19,9 @@ import { Part } from "../lib/parts";
 import { GetPartRevisionsRes } from "../pages/api/part-revisions";
 
 interface PartRowProps {
-  part: Part;
-  isSelected: boolean;
-  onSelected: (id: string) => void;
+  readonly part: Part;
+  readonly isSelected: boolean;
+  readonly onSelected: (id: string) => void;
 }
 
 export default function PartRow({

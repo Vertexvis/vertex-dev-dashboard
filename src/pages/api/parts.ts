@@ -56,7 +56,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetPartsRes> {
       c.parts.getParts({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
-        filterSuppliedId: sId
+        filterSuppliedId: sId,
       })
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
@@ -78,7 +78,6 @@ async function del(req: NextApiRequest): Promise<ErrorRes | DeletePartRes> {
   );
   return { status: 200 };
 }
-
 
 export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
   const fallback = "Unknown error.";

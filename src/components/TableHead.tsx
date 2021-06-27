@@ -16,9 +16,7 @@ export interface HeadCell {
 interface Props {
   readonly headCells: readonly HeadCell[];
   readonly numSelected: number;
-  readonly onSelectAllClick: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
+  readonly onSelectAllClick: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readonly rowCount: number;
 }
 

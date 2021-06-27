@@ -29,13 +29,13 @@ interface DeleteBody {
 }
 
 interface CreateFileBody {
-  name: string;
-  rootFileName?: string;
-  suppliedId?: string;
+  readonly name: string;
+  readonly rootFileName?: string;
+  readonly suppliedId?: string;
 }
 
 export interface CreateFileRes extends Res {
-  id: string;
+  readonly id: string;
 }
 
 export default async function handle(
@@ -71,7 +71,7 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
       c.files.getFiles({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
-        filterSuppliedId: sId
+        filterSuppliedId: sId,
       })
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
