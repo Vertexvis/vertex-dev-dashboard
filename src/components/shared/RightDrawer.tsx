@@ -14,9 +14,9 @@ import { Close } from "@material-ui/icons";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-import { Scene } from "../lib/scenes";
-import { UpdateSceneReq } from "../pages/api/scenes";
-import { DrawerWidth } from "../pages/index";
+import { Scene } from "../../lib/scenes";
+import { UpdateSceneReq } from "../../pages/api/scenes";
+import { DrawerWidth } from "../../pages/index";
 import { Input } from "./Input";
 import { VectorTable } from "./VectorTable";
 
@@ -41,12 +41,10 @@ export function RightDrawer({
   });
 
   async function onSubmit(data: FormData) {
-    console.debug(
-      await fetch("/api/scenes", {
-        body: JSON.stringify({ id: scene?.id, ...data }),
-        method: "PATCH",
-      })
-    );
+    await fetch("/api/scenes", {
+      body: JSON.stringify({ id: scene?.id, ...data }),
+      method: "PATCH",
+    });
     onClose();
   }
 

@@ -14,7 +14,7 @@ interface Props {
   readonly viewerId: string;
 }
 
-export function ViewerLeftDrawer({
+export function LeftDrawer({
   configEnv,
   onClose,
   open,

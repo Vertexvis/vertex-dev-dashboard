@@ -9,8 +9,7 @@ import {
 } from "@material-ui/core";
 import React from "react";
 
-import { Metadata } from "../lib/metadata";
-import { NoData } from "./NoData";
+import { Metadata } from "../../lib/metadata";
 
 interface Props {
   readonly metadata?: Metadata;
@@ -46,5 +45,13 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
         </TableBody>
       </Table>
     </TableContainer>
+  );
+}
+
+function NoData(): JSX.Element {
+  return (
+    <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+      No data
+    </Typography>
   );
 }

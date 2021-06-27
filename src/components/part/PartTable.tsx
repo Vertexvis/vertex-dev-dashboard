@@ -15,11 +15,11 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { SwrProps } from "../lib/paging";
-import { toPartPage as toPartPage } from "../lib/parts";
+import { SwrProps } from "../../lib/paging";
+import { toPartPage as toPartPage } from "../../lib/parts";
+import { HeadCell, TableHead } from "../shared/TableHead";
+import { TableToolbar } from "../shared/TableToolbar";
 import PartRow from "./PartRow";
-import { HeadCell, TableHead } from "./TableHead";
-import { TableToolbar } from "./TableToolbar";
 
 const headCells: readonly HeadCell[] = [
   { id: "expand", disablePadding: true, label: "" },

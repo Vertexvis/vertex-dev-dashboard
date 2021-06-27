@@ -1,9 +1,9 @@
 import React from "react";
 
-import { Header } from "../components/Header";
-import { Layout } from "../components/Layout";
-import { LeftDrawer } from "../components/LeftDrawer";
-import { PartsTable } from "../components/PartTable";
+import { PartsTable } from "../components/part/PartTable";
+import { Header } from "../components/shared/Header";
+import { LeftDrawer } from "../components/shared/LeftDrawer";
+import { Layout } from "../components/viewer/Layout";
 
 export default function Parts(): JSX.Element {
   return (

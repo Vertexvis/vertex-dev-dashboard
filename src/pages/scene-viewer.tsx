@@ -3,11 +3,11 @@ import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
 
-import { Header } from "../components/Header";
-import { Layout } from "../components/Layout";
-import { Viewer } from "../components/Viewer";
-import { ViewerLeftDrawer } from "../components/ViewerLeftDrawer";
-import { ViewerRightDrawer } from "../components/ViewerRightDrawer";
+import { Header } from "../components/shared/Header";
+import { Layout } from "../components/viewer/Layout";
+import { LeftDrawer } from "../components/viewer/LeftDrawer";
+import { RightDrawer } from "../components/viewer/RightDrawer";
+import { Viewer } from "../components/viewer/Viewer";
 import { head, StreamCredentials } from "../lib/config";
 import { Metadata, toMetadata } from "../lib/metadata";
 import { selectByHit } from "../lib/scene-items";
@@ -59,7 +59,7 @@ export default function SceneViewer(): JSX.Element {
         />
       }
       leftDrawer={
-        <ViewerLeftDrawer
+        <LeftDrawer
           configEnv={credentials.vertexEnv}
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
@@ -77,7 +77,7 @@ export default function SceneViewer(): JSX.Element {
           />
         )
       }
-      rightDrawer={<ViewerRightDrawer metadata={metadata} />}
+      rightDrawer={<RightDrawer metadata={metadata} />}
       rightDrawerOpen
     />
   ) : (

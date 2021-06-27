@@ -11,10 +11,10 @@ import { Environment } from "@vertexvis/viewer";
 import { signIn, useSession } from "next-auth/client";
 import React from "react";
 
-import { Header } from "../components/Header";
-import { LeftDrawer } from "../components/LeftDrawer";
-import { RightDrawer } from "../components/RightDrawer";
-import { SceneTable } from "../components/SceneTable";
+import { SceneTable } from "../components/scene/SceneTable";
+import { Header } from "../components/shared/Header";
+import { LeftDrawer } from "../components/shared/LeftDrawer";
+import { RightDrawer } from "../components/shared/RightDrawer";
 import { Config } from "../lib/config";
 import { Scene } from "../lib/scenes";
 import { easeOutEntering, sharpLeaving } from "../lib/transitions";

@@ -9,7 +9,7 @@ import {
 } from "@vertexvis/viewer-react";
 import React from "react";
 
-import { StreamCredentials } from "../lib/config";
+import { StreamCredentials } from "../../lib/config";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
 
 interface ViewerProps extends ViewerJSX.VertexViewer {

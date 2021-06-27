@@ -1,9 +1,9 @@
 import React from "react";
 
-import { FilesTable } from "../components/FileTable";
-import { Header } from "../components/Header";
-import { Layout } from "../components/Layout";
-import { LeftDrawer } from "../components/LeftDrawer";
+import { FilesTable } from "../components/file/FileTable";
+import { Header } from "../components/shared/Header";
+import { LeftDrawer } from "../components/shared/LeftDrawer";
+import { Layout } from "../components/viewer/Layout";
 
 export default function Files(): JSX.Element {
   return (

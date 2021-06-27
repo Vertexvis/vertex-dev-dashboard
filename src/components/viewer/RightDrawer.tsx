@@ -9,7 +9,7 @@ import { styled } from "@material-ui/core/styles";
 import { ExpandMore } from "@material-ui/icons";
 import React from "react";
 
-import { Metadata } from "../lib/metadata";
+import { Metadata } from "../../lib/metadata";
 import { RightDrawerWidth } from "./Layout";
 import { MetadataProperties } from "./MetadataProperties";
 
@@ -21,7 +21,7 @@ const Title = styled((props) => <Typography variant="body2" {...props} />)(
   () => ({ textTransform: "uppercase" })
 );
 
-export function ViewerRightDrawer({ metadata }: Props): JSX.Element {
+export function RightDrawer({ metadata }: Props): JSX.Element {
   return (
     <Drawer
       anchor="right"

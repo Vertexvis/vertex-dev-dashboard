@@ -13,7 +13,7 @@ import { CloudUploadOutlined } from "@material-ui/icons";
 import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
 import React from "react";
 
-import { CreateFileRes } from "../pages/api/files";
+import { CreateFileRes } from "../../pages/api/files";
 
 interface CreateFileDialogProps {
   readonly open: boolean;

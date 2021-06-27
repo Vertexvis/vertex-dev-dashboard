@@ -1,8 +1,8 @@
 import {
   Alert,
+  Box,
+  Button,
   Checkbox,
-  CircularProgress,
-  IconButton,
   Paper,
   Skeleton,
   Snackbar,
@@ -12,80 +12,65 @@ import {
   TableContainer,
   TablePagination,
   TableRow,
-  Tooltip,
+  TextField,
 } from "@material-ui/core";
-import {
-  EditOutlined,
-  VisibilityOutlined,
-  VpnKeyOutlined,
-} from "@material-ui/icons";
-import { Environment } from "@vertexvis/viewer";
-import { useRouter } from "next/router";
+import { Add } from "@material-ui/icons";
+import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { isErrorRes } from "../lib/api";
-import { SwrProps } from "../lib/paging";
-import { Scene, toScenePage } from "../lib/scenes";
-import { encodeCreds } from "../pages/scene-viewer";
-import { HeadCell, TableHead } from "./TableHead";
-import { TableToolbar } from "./TableToolbar";
-
-interface Props {
-  readonly clientId?: string;
-  readonly onClick: (s: Scene) => void;
-  readonly onEditClick: (s: Scene) => void;
-  readonly scene?: Scene;
-  readonly vertexEnv: Environment;
-}
+import { toFilePage as toFilePage } from "../../lib/files";
+import { SwrProps } from "../../lib/paging";
+import { HeadCell, TableHead } from "../shared/TableHead";
+import { TableToolbar } from "../shared/TableToolbar";
+import CreateFileDialog from "./CreateFileDialog";
 
 const headCells: readonly HeadCell[] = [
   { id: "name", disablePadding: true, label: "Name" },
   { id: "supplied-id", label: "Supplied ID" },
-  { id: "state", label: "State" },
+  { id: "status", label: "Status" },
   { id: "id", label: "ID" },
   { id: "created", label: "Created" },
-  { id: "actions", label: "Actions" },
+  { id: "uploaded", label: "Uploaded" },
 ];
 
 async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
+function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
+    `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
     }`,
     fetcher
   );
 }
 
-export function SceneTable({
-  clientId,
-  onClick,
-  onEditClick,
-  scene,
-  vertexEnv,
-}: Props): JSX.Element {
+export function FilesTable(): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
+  const [suppliedId, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >();
+  const [showDialog, setShowDialog] = React.useState(false);
   const [privateCursor, setPrivateCursor] = React.useState<
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const { data, error } = useScenes({ cursor, pageSize });
-  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
-  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
-    string | undefined
-  >();
+  const [showToast, setShowToast] = React.useState<boolean>(false);
+  const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
 
-  const router = useRouter();
-  const page = data ? toScenePage(data) : undefined;
+  const page = data ? toFilePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
+
+  const debouncedSetSuppliedIdFilter = React.useMemo(
+    () => debounce(setSuppliedIdFilter, 300),
+    []
+  );
 
   React.useEffect(() => {
     if (page == null) return;
@@ -119,50 +104,16 @@ export function SceneTable({
     setSelected(upd);
   }
 
-  function handleClick(s: Scene) {
-    onClick(s);
-  }
-
   function handleChangePage(_e: unknown, n: number) {
     setCursor(privateCursor);
     setCurPage(n);
   }
 
   async function handleDelete() {
-    await fetch("/api/scenes", {
+    await fetch("/api/files", {
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
-  }
-
-  function handleEditClick(s: Scene) {
-    onEditClick(s);
-  }
-
-  async function handleViewClick() {
-    if (!clientId || scene == null) return;
-
-    const json = await (
-      await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId: scene.id }),
-        method: "POST",
-      })
-    ).json();
-
-    if (isErrorRes(json)) console.error("Error creating stream key.");
-    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
-  }
-
-  async function handleGetStreamKey(sceneId: string) {
-    setKeyLoadingSceneId(sceneId);
-    const b = await fetch("/api/stream-keys", {
-      body: JSON.stringify({ sceneId }),
-      method: "POST",
-    });
-    const { key } = await b.json();
-    await navigator.clipboard.writeText(key);
-    setKeyLoadingSceneId(undefined);
-    setToastMsg(`Stream key "${key}" copied to clipboard.`);
   }
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
@@ -173,8 +124,37 @@ export function SceneTable({
         <TableToolbar
           numSelected={selected.length}
           onDelete={handleDelete}
-          title="Scenes"
+          title="Files"
         />
+        <Box
+          sx={{
+            px: { sm: 2 },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            variant="standard"
+            size="small"
+            margin="normal"
+            id="suppliedIdFilter"
+            label="Supplied ID Filter"
+            type="text"
+            onChange={(e) => {
+              debouncedSetSuppliedIdFilter(e.target.value);
+            }}
+            sx={{ mt: 0 }}
+          />
+          <Button
+            key="upload"
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setShowDialog(true)}
+          >
+            New
+          </Button>
+        </Box>
         <TableContainer>
           <Table>
             <TableHead
@@ -230,7 +210,6 @@ export function SceneTable({
                       tabIndex={-1}
                       key={row.id}
                       selected={isSel}
-                      onClick={() => handleClick(row)}
                     >
                       <TableCell
                         padding="checkbox"
@@ -247,7 +226,7 @@ export function SceneTable({
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.state}</TableCell>
+                      <TableCell>{row.status}</TableCell>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>
                         {row.created
@@ -255,40 +234,9 @@ export function SceneTable({
                           : undefined}
                       </TableCell>
                       <TableCell>
-                        <>
-                          {keyLoadingSceneId === row.id && (
-                            <CircularProgress
-                              size={44}
-                              sx={{ position: "absolute" }}
-                            />
-                          )}
-                          <Tooltip title="Generate stream key">
-                            <IconButton
-                              aria-label="stream-key"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGetStreamKey(row.id);
-                              }}
-                            >
-                              <VpnKeyOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                        <Tooltip title="View scene">
-                          <IconButton onClick={() => handleViewClick()}>
-                            <VisibilityOutlined />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit scene">
-                          <IconButton
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(row);
-                            }}
-                          >
-                            <EditOutlined />
-                          </IconButton>
-                        </Tooltip>
+                        {row.uploaded
+                          ? new Date(row.uploaded).toLocaleString()
+                          : undefined}
                       </TableCell>
                     </TableRow>
                   );
@@ -312,13 +260,22 @@ export function SceneTable({
           nextIconButtonProps={{ disabled: privateCursor == null }}
         />
       </Paper>
+      <CreateFileDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        onFileCreated={() => {
+          setShowDialog(false);
+          setShowToast(true);
+          mutate();
+        }}
+      />
       <Snackbar
-        open={!!toastMsg}
+        open={showToast}
         autoHideDuration={6000}
-        onClose={() => setToastMsg(undefined)}
+        onClose={() => setShowToast(false)}
       >
-        <Alert onClose={() => setToastMsg(undefined)} severity="success">
-          {toastMsg}
+        <Alert onClose={() => setShowToast(false)} severity="success">
+          File created!
         </Alert>
       </Snackbar>
     </>
