@@ -1,13 +1,10 @@
 import { PartData, PartDataAttributes } from "@vertexvis/api-client-node";
 
-import { GetPartsRes } from "../pages/api/parts";
-import { Paged } from "./paging";
+import { GetRes } from "./api";
+import { Paged, toPage } from "./paging";
 
 export type Part = Pick<PartData, "id"> & PartDataAttributes;
 
-export function toPartData(res: GetPartsRes): Paged<Part> {
-  return {
-    cursor: res.cursor ?? null,
-    items: res.data.map((i) => ({ ...i.attributes, id: i.id })),
-  };
+export function toPartPage(res: GetRes<PartData>): Paged<Part> {
+  return toPage<PartData, PartDataAttributes>(res);
 }

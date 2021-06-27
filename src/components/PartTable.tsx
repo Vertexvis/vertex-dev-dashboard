@@ -15,52 +15,25 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { toPartData as toPartPage } from "../lib/parts";
+import { SwrProps } from "../lib/paging";
+import { toPartPage as toPartPage } from "../lib/parts";
 import PartRow from "./PartRow";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 const headCells: readonly HeadCell[] = [
-  { id: "expand", numeric: false, disablePadding: true, label: "" },
-  {
-    id: "name",
-    numeric: false,
-    disablePadding: true,
-    label: "Name",
-  },
-  {
-    id: "supplied-id",
-    numeric: false,
-    disablePadding: false,
-    label: "Supplied ID",
-  },
-  {
-    id: "id",
-    numeric: false,
-    disablePadding: false,
-    label: "ID",
-  },
-  {
-    id: "created",
-    numeric: false,
-    disablePadding: false,
-    label: "Created",
-  },
+  { id: "expand", disablePadding: true, label: "" },
+  { id: "name", disablePadding: true, label: "Name" },
+  { id: "supplied-id", label: "Supplied ID" },
+  { id: "id", label: "ID" },
+  { id: "created", label: "Created" },
 ];
 
 async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useParts({
-  cursor,
-  pageSize,
-  suppliedId,
-}: {
-  cursor?: string;
-  pageSize: number;
-  suppliedId?: string;
-}) {
+function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""

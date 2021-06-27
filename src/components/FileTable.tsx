@@ -19,63 +19,26 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { toFileData as toFilePage } from "../lib/files";
+import { toFilePage as toFilePage } from "../lib/files";
+import { SwrProps } from "../lib/paging";
 import CreateFileDialog from "./CreateFileDialog";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
 
 const headCells: readonly HeadCell[] = [
-  {
-    id: "name",
-    numeric: false,
-    disablePadding: true,
-    label: "Name",
-  },
-  {
-    id: "supplied-id",
-    numeric: false,
-    disablePadding: false,
-    label: "Supplied ID",
-  },
-  {
-    id: "status",
-    numeric: false,
-    disablePadding: false,
-    label: "Status",
-  },
-  {
-    id: "id",
-    numeric: false,
-    disablePadding: false,
-    label: "ID",
-  },
-  {
-    id: "created",
-    numeric: false,
-    disablePadding: false,
-    label: "Created",
-  },
-  {
-    id: "uploaded",
-    numeric: false,
-    disablePadding: false,
-    label: "Uploaded",
-  },
+  { id: "name", disablePadding: true, label: "Name" },
+  { id: "supplied-id", label: "Supplied ID" },
+  { id: "status", label: "Status" },
+  { id: "id", label: "ID" },
+  { id: "created", label: "Created" },
+  { id: "uploaded", label: "Uploaded" },
 ];
 
 async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useFiles({
-  cursor,
-  pageSize,
-  suppliedId,
-}: {
-  cursor?: string;
-  pageSize: number;
-  suppliedId?: string;
-}) {
+function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""

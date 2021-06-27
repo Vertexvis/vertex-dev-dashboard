@@ -24,9 +24,9 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { Scene } from "../lib/scenes";
-import { toSceneData as toScenePage } from "../lib/scenes";
-import { isErrorRes } from "../pages/api/scenes";
+import { isErrorRes } from "../lib/api";
+import { SwrProps } from "../lib/paging";
+import { Scene, toScenePage } from "../lib/scenes";
 import { encodeCreds } from "../pages/scene-viewer";
 import { HeadCell, TableHead } from "./TableHead";
 import { TableToolbar } from "./TableToolbar";
@@ -40,57 +40,23 @@ interface Props {
 }
 
 const headCells: readonly HeadCell[] = [
-  {
-    id: "name",
-    numeric: false,
-    disablePadding: true,
-    label: "Name",
-  },
-  {
-    id: "supplied-id",
-    numeric: false,
-    disablePadding: false,
-    label: "Supplied ID",
-  },
-  {
-    id: "state",
-    numeric: false,
-    disablePadding: false,
-    label: "State",
-  },
-  {
-    id: "id",
-    numeric: false,
-    disablePadding: false,
-    label: "ID",
-  },
-  {
-    id: "created",
-    numeric: false,
-    disablePadding: false,
-    label: "Created",
-  },
-  {
-    id: "actions",
-    numeric: false,
-    disablePadding: false,
-    label: "Actions",
-  },
+  { id: "name", disablePadding: true, label: "Name" },
+  { id: "supplied-id", label: "Supplied ID" },
+  { id: "state", label: "State" },
+  { id: "id", label: "ID" },
+  { id: "created", label: "Created" },
+  { id: "actions", label: "Actions" },
 ];
 
 async function fetcher(req: RequestInfo) {
   return (await fetch(req)).json();
 }
 
-function useScenes({
-  cursor,
-  pageSize,
-}: {
-  cursor?: string;
-  pageSize: number;
-}) {
+function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`,
+    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
+      suppliedId ? `&suppliedId=${suppliedId}` : ""
+    }`,
     fetcher
   );
 }

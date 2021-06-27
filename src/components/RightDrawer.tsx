@@ -21,10 +21,10 @@ import { Input } from "./Input";
 import { VectorTable } from "./VectorTable";
 
 interface Props {
-  editing: boolean;
-  scene?: Scene;
-  open: boolean;
-  onClose: () => void;
+  readonly editing: boolean;
+  readonly scene?: Scene;
+  readonly open: boolean;
+  readonly onClose: () => void;
 }
 
 type FormData = Omit<UpdateSceneReq, "id">;

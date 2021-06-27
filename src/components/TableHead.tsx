@@ -7,10 +7,10 @@ import {
 import React from "react";
 
 export interface HeadCell {
-  readonly disablePadding: boolean;
+  readonly disablePadding?: boolean;
   readonly id: string;
   readonly label: string;
-  readonly numeric: boolean;
+  readonly numeric?: boolean;
 }
 
 interface Props {

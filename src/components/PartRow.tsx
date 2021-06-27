@@ -14,7 +14,7 @@ import React from "react";
 
 import { Paged } from "../lib/paging";
 import { PartRevision } from "../lib/part-revisions";
-import { toPartRevisionData as toPartRevisionPage } from "../lib/part-revisions";
+import { toPartRevisionPage as toPartRevisionPage } from "../lib/part-revisions";
 import { Part } from "../lib/parts";
 import { GetPartRevisionsRes } from "../pages/api/part-revisions";
 

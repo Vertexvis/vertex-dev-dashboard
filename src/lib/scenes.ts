@@ -1,13 +1,10 @@
 import { SceneData, SceneDataAttributes } from "@vertexvis/api-client-node";
 
-import { GetSceneRes } from "../pages/api/scenes";
-import { Paged } from "./paging";
+import { GetRes } from "./api";
+import { Paged, toPage } from "./paging";
 
 export type Scene = Pick<SceneData, "id"> & SceneDataAttributes;
 
-export function toSceneData(res: GetSceneRes): Paged<Scene> {
-  return {
-    cursor: res.cursor ?? null,
-    items: res.data.map((i) => ({ ...i.attributes, id: i.id })),
-  };
+export function toScenePage(res: GetRes<SceneData>): Paged<Scene> {
+  return toPage<SceneData, SceneDataAttributes>(res);
 }
