@@ -65,26 +65,35 @@ export function getServerSideProps(): Promise<{ props: Props }> {
 }
 
 export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
+  const [editing, setEditing] = React.useState<boolean>(false);
   const [scene, setScene] = React.useState<Scene | undefined>();
   const [session, loading] = useSession();
+  const drawerOpen = Boolean(scene);
 
-  function handleDrawerOpen(s: Scene) {
+  function handleClick(s: Scene) {
     setScene(s);
+    setEditing(false);
   }
 
-  function handleDrawerClose() {
+  function handleEditClick(s: Scene) {
+    setScene(s);
+    setEditing(true);
+  }
+
+  function handleClose() {
     setScene(undefined);
+    setEditing(false);
   }
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <AppBar color="default" open={Boolean(scene)} position="fixed">
+      <AppBar color="default" open={drawerOpen} position="fixed">
         <Toolbar variant="dense">
           <Header />
         </Toolbar>
       </AppBar>
       {session && <LeftDrawer />}
-      <Main open={Boolean(scene)}>
+      <Main open={drawerOpen}>
         <Toolbar variant="dense" />
         {!loading && !session ? (
           <Box sx={{ alignItems: "center", display: "flex", m: 2 }}>
@@ -94,13 +103,19 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
         ) : (
           <SceneTable
             clientId={clientId}
-            onClick={handleDrawerOpen}
+            onClick={handleClick}
+            onEditClick={handleEditClick}
             scene={scene}
             vertexEnv={vertexEnv}
           />
         )}
       </Main>
-      <RightDrawer handleClose={handleDrawerClose} scene={scene} />
+      <RightDrawer
+        editing={editing}
+        onClose={handleClose}
+        open={drawerOpen}
+        scene={scene}
+      />
     </Box>
   );
 }

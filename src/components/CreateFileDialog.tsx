@@ -118,7 +118,9 @@ export default function CreateFileDialog({
         <LinearProgress />
       </Fade>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={{ mr: 2 }}>
+          Cancel
+        </Button>
         <Button
           disabled={submitDisabled}
           startIcon={<CloudUploadOutlined />}

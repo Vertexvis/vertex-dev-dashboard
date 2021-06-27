@@ -1,7 +1,13 @@
 import {
   Box,
+  Button,
+  Checkbox,
   Drawer,
+  FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -10,23 +16,51 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Close } from "@material-ui/icons";
+import { Vector3 } from "@vertexvis/geometry";
 import React from "react";
+import { useForm } from "react-hook-form";
 
 import { Scene } from "../lib/scenes";
 import { DrawerWidth } from "../pages/index";
+import { Input } from "./Input";
 import { VectorTable } from "./VectorTable";
 
-export function RightDrawer({
-  handleClose,
-  scene,
-}: {
+interface Props {
+  editing: boolean;
   scene?: Scene;
-  handleClose: () => void;
-}): JSX.Element {
+  open: boolean;
+  onClose: () => void;
+}
+
+interface FormData {
+  name?: string;
+  suppliedId?: string;
+}
+
+export function RightDrawer({
+  editing,
+  onClose,
+  open,
+  scene,
+}: Props): JSX.Element {
+  const defaultValues = scene;
+  const { control, handleSubmit, reset } = useForm<FormData>({
+    defaultValues,
+  });
+
+  function onSubmit(data: FormData) {
+    console.log(data);
+    onClose();
+  }
+
+  React.useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
+
   return (
     <Drawer
       anchor="right"
-      open={Boolean(scene)}
+      open={open}
       sx={{
         flexShrink: 0,
         width: DrawerWidth,
@@ -34,16 +68,86 @@ export function RightDrawer({
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <IconButton onClick={handleClose}>
+      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Typography sx={{ my: 2, mx: 2 }} variant="h5">
+          {editing ? "Edit Scene" : "Scene Details"}
+        </Typography>
+        <IconButton onClick={onClose} sx={{ mr: 2 }}>
           <Close />
         </IconButton>
       </Box>
-      {scene && (
-        <Box>
-          <Typography sx={{ mb: 2, mx: 2 }} variant="h5">
-            Scene Details
-          </Typography>
+      {scene && editing ? (
+        <Box sx={{ mx: 2, mb: 2 }}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Input<FormData>
+              control={control}
+              defaultValue={scene.name}
+              label="Name"
+              name="name"
+            />
+            <Input<FormData>
+              control={control}
+              defaultValue={scene.suppliedId}
+              label="Supplied ID"
+              name="suppliedId"
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                my: 2,
+              }}
+            >
+              <Button onClick={onClose} sx={{ mr: 2 }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained">
+                Update
+              </Button>
+            </Box>
+          </form>
+          {/*
+            <InputLabel id="select-label">State</InputLabel>
+            <Select
+              labelId="select-label"
+              size="small"
+              sx={{ width: "100%" }}
+              value={scene.state}
+            >
+              <MenuItem value="draft">Draft</MenuItem>
+              <MenuItem value="ready">Ready</MenuItem>
+              <MenuItem value="commit">Commit</MenuItem>
+            </Select>
+            <FormControlLabel
+              control={<Checkbox checked={scene.treeEnabled} size="small" />}
+              label="Tree enabled"
+            />
+            {scene.camera && (
+              <>
+                <Vector
+                  label="Camera position"
+                  vector={scene.camera.position}
+                />
+                <Vector label="Camera lookAt" vector={scene.camera.lookAt} />
+                <Vector label="Camera up" vector={scene.camera.up} />
+              </>
+            )}
+            {scene.worldOrientation && (
+              <>
+                <Vector
+                  label="World orientation up"
+                  vector={scene.worldOrientation.up}
+                />
+                <Vector
+                  label="World orientation front"
+                  vector={scene.worldOrientation.front}
+                />
+              </>
+            )}
+          </Form> */}
+        </Box>
+      ) : scene ? (
+        <>
           <TableContainer>
             <Table size="small" style={{ whiteSpace: "nowrap" }}>
               <TableBody>
@@ -174,8 +278,27 @@ export function RightDrawer({
               </TableBody>
             </Table>
           </TableContainer>
-        </Box>
+        </>
+      ) : (
+        <></>
       )}
     </Drawer>
   );
 }
+
+// function Vector({
+//   label,
+//   vector,
+// }: {
+//   label: string;
+//   vector: Vector3.Vector3;
+// }): JSX.Element {
+//   return (
+//     <>
+//       <Typography sx={{ my: 1 }}>{label}</Typography>
+//       <Input label="X" name={`${label}-x`} value={vector.x} />
+//       <Input label="Y" name={`${label}-y`} value={vector.y} />
+//       <Input label="Z" name={`${label}-z`} value={vector.z} />
+//     </>
+//   );
+// }

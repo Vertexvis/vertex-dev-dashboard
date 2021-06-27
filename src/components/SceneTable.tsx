@@ -14,7 +14,11 @@ import {
   TableRow,
   Tooltip,
 } from "@material-ui/core";
-import { VisibilityOutlined, VpnKeyOutlined } from "@material-ui/icons";
+import {
+  EditOutlined,
+  VisibilityOutlined,
+  VpnKeyOutlined,
+} from "@material-ui/icons";
 import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
@@ -30,6 +34,7 @@ import { TableToolbar } from "./TableToolbar";
 interface Props {
   readonly clientId?: string;
   readonly onClick: (s: Scene) => void;
+  readonly onEditClick: (s: Scene) => void;
   readonly scene?: Scene;
   readonly vertexEnv: Environment;
 }
@@ -46,6 +51,12 @@ const headCells: readonly HeadCell[] = [
     numeric: false,
     disablePadding: false,
     label: "Supplied ID",
+  },
+  {
+    id: "state",
+    numeric: false,
+    disablePadding: false,
+    label: "State",
   },
   {
     id: "id",
@@ -87,6 +98,7 @@ function useScenes({
 export function SceneTable({
   clientId,
   onClick,
+  onEditClick,
   scene,
   vertexEnv,
 }: Props): JSX.Element {
@@ -155,6 +167,10 @@ export function SceneTable({
       body: JSON.stringify({ ids: selected }),
       method: "DELETE",
     });
+  }
+
+  function handleEditClick(s: Scene) {
+    onEditClick(s);
   }
 
   async function handleViewClick() {
@@ -231,6 +247,9 @@ export function SceneTable({
                       <TableCell>
                         <Skeleton />
                       </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
                     </TableRow>
                   ))
               ) : (
@@ -262,6 +281,7 @@ export function SceneTable({
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
+                      <TableCell>{row.state}</TableCell>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>
                         {row.created
@@ -291,6 +311,16 @@ export function SceneTable({
                         <Tooltip title="View scene">
                           <IconButton onClick={() => handleViewClick()}>
                             <VisibilityOutlined />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit scene">
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(row);
+                            }}
+                          >
+                            <EditOutlined />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
