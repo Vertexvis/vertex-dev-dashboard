@@ -1,40 +1,48 @@
-import { isFailure } from "@vertexvis/api-client-node";
+import {
+  isFailure,
+  StreamKeysApiCreateSceneStreamKeyRequest,
+} from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
+import {
+  BodyRequired,
+  ErrorRes,
+  InvalidBody,
+  MethodNotAllowed,
+  Res,
+  toErrorRes,
+} from "../../lib/api";
 import { makeCall } from "../../lib/vertex-api";
-import { ErrorRes, Res, toErrorRes } from "./scenes";
 
 export interface CreateStreamKeyRes extends Res {
   readonly key: string;
 }
 
-interface CreateBody {
-  readonly sceneId: string;
-}
+type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, "id">;
 
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse<CreateStreamKeyRes | ErrorRes>
 ): Promise<void> {
   if (req.method === "POST") {
-    const r = await post(req);
+    const r = await create(req);
     return res.status(r.status).json(r);
   }
 
-  return res.status(405).json({ message: "Method not allowed.", status: 405 });
+  return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
 }
 
-async function post(
+async function create(
   req: NextApiRequest
 ): Promise<ErrorRes | CreateStreamKeyRes> {
-  if (!req.body) return { message: "Body required.", status: 400 };
+  if (!req.body) return BodyRequired;
 
-  const b: CreateBody = JSON.parse(req.body);
-  if (!b.sceneId) return { message: "Invalid body.", status: 400 };
+  const b: CreateStreamKeyReq = JSON.parse(req.body);
+  if (!b.id) return InvalidBody;
 
   const r = await makeCall((c) =>
     c.streamKeys.createSceneStreamKey({
-      id: b.sceneId,
+      id: b.id,
       createStreamKeyRequest: {
         data: { type: "stream-key", attributes: { expiry: 31536000 } },
       },

@@ -1,6 +1,5 @@
 import {
-  defined,
-  Failure,
+  CreateFileRequestDataAttributes,
   FileMetadataData,
   getPage,
   head,
@@ -8,40 +7,26 @@ import {
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
+import {
+  BodyRequired,
+  DeleteReq,
+  ErrorRes,
+  GetRes,
+  InvalidBody,
+  MethodNotAllowed,
+  Res,
+  ServerError,
+  toErrorRes,
+} from "../../lib/api";
 import { getClient, makeCall } from "../../lib/vertex-api";
 
-export interface Res {
-  readonly status: number;
-}
+type CreateFileReq = CreateFileRequestDataAttributes;
 
-export interface ErrorRes extends Res {
-  readonly message: string;
-}
-
-export interface GetFilesRes extends Res {
-  readonly cursor?: string;
-  readonly data: FileMetadataData[];
-}
-
-type DeleteFileRes = Res;
-
-interface DeleteBody {
-  readonly ids: string[];
-}
-
-interface CreateFileBody {
-  readonly name: string;
-  readonly rootFileName?: string;
-  readonly suppliedId?: string;
-}
-
-export interface CreateFileRes extends Res {
-  readonly id: string;
-}
+export type CreateFileRes = Res & Pick<FileMetadataData, "id">;
 
 export default async function handle(
   req: NextApiRequest,
-  res: NextApiResponse<GetFilesRes | DeleteFileRes | ErrorRes>
+  res: NextApiResponse<GetRes<FileMetadataData> | Res | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -58,10 +43,12 @@ export default async function handle(
     return res.status(r.status).json(r);
   }
 
-  return res.status(405).json({ message: "Method not allowed.", status: 405 });
+  return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
 }
 
-async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
+async function get(
+  req: NextApiRequest
+): Promise<ErrorRes | GetRes<FileMetadataData>> {
   try {
     const c = await getClient();
     const ps = head(req.query.pageSize);
@@ -80,15 +67,15 @@ async function get(req: NextApiRequest): Promise<ErrorRes | GetFilesRes> {
     logError(error);
     return error.vertexError?.res
       ? toErrorRes(error.vertexError?.res)
-      : { message: "Unknown error from Vertex API.", status: 500 };
+      : ServerError;
   }
 }
 
-async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
-  if (!req.body) return { message: "Body required.", status: 400 };
+async function del(req: NextApiRequest): Promise<ErrorRes | Res> {
+  if (!req.body) return BodyRequired;
 
-  const b: DeleteBody = JSON.parse(req.body);
-  if (!b.ids) return { message: "Invalid body.", status: 400 };
+  const b: DeleteReq = JSON.parse(req.body);
+  if (!b.ids) return InvalidBody;
 
   await Promise.all(
     b.ids.map((id) => makeCall((c) => c.files.deleteFile({ id })))
@@ -97,39 +84,13 @@ async function del(req: NextApiRequest): Promise<ErrorRes | DeleteFileRes> {
 }
 
 async function create(req: NextApiRequest): Promise<ErrorRes | CreateFileRes> {
-  if (!req.body) return { message: "Body required.", status: 400 };
+  if (!req.body) return BodyRequired;
 
-  const b: CreateFileBody = JSON.parse(req.body);
+  const b: CreateFileReq = JSON.parse(req.body);
   const c = await getClient();
   const res = await c.files.createFile({
-    createFileRequest: {
-      data: {
-        type: "file",
-        attributes: b,
-      },
-    },
+    createFileRequest: { data: { type: "file", attributes: b } },
   });
 
   return { status: 200, id: res.data.data.id };
-}
-
-export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
-  const fallback = "Unknown error.";
-  const res = { message: fallback, status: 500 };
-  if (failure == null || failure.errors == null) return res;
-
-  const es = [...failure.errors];
-  if (es == null || es.length === 0) return res;
-
-  return {
-    message: es[0].title ?? fallback,
-    status: parseInt(es[0].status ?? "500", 10),
-  };
-}
-
-export function isErrorRes(obj?: {
-  message?: string;
-  status?: number;
-}): obj is ErrorRes {
-  return defined(obj) && defined(obj.message) && defined(obj.status);
 }

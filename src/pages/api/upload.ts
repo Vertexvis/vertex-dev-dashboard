@@ -2,14 +2,13 @@ import multer from "multer";
 import type { NextApiResponse } from "next";
 import nextConnect from "next-connect";
 
+import { MethodNotAllowed } from "../../lib/api";
 import VertexAPIStorageEngine from "../../lib/multer/api-storage-engine";
 
 const ONE_MB = 1000000;
 
 const upload = multer({
-  limits: {
-    fileSize: ONE_MB * 500,
-  },
+  limits: { fileSize: ONE_MB * 500 },
   storage: VertexAPIStorageEngine,
 });
 
@@ -22,8 +21,8 @@ const apiRoute = nextConnect({
       .json({ error: `Sorry something Happened! ${error.message}` });
   },
 
-  onNoMatch(req, res: NextApiResponse) {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+  onNoMatch(_, res: NextApiResponse) {
+    res.status(MethodNotAllowed.status).json(MethodNotAllowed);
   },
 });
 

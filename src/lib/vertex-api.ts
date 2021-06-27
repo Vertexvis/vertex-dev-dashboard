@@ -8,6 +8,7 @@ import {
 import { AxiosResponse } from "axios";
 import type { NextApiResponse } from "next";
 
+import { ErrorRes, ServerError } from "./api";
 import { Config } from "./config";
 
 export async function makeCallRes<T>(
@@ -16,7 +17,7 @@ export async function makeCallRes<T>(
 ): Promise<void> {
   const result = await makeCall(apiCall);
   return isFailure(result)
-    ? res.status(500).json(result)
+    ? res.status(ServerError.status).json(result)
     : res.status(200).json(result);
 }
 
@@ -28,9 +29,7 @@ export async function makeCall<T>(
     return (await apiCall(c)).data;
   } catch (error) {
     logError(error);
-    return (
-      error.vertexError?.res ?? toFailure(500, "Unknown error from Vertex API.")
-    );
+    return error.vertexError?.res ?? toFailure(ServerError);
   }
 }
 
@@ -52,8 +51,8 @@ export async function getClient(): Promise<VertexClient> {
   return Client;
 }
 
-export function toFailure(status: number, title: string): Failure {
+export function toFailure({ message, status }: ErrorRes): Failure {
   const es = new Set<ApiError>();
-  es.add({ status: status.toString(), title });
+  es.add({ status: status.toString(), title: message });
   return { errors: es };
 }
