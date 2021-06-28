@@ -1,4 +1,12 @@
-import { getPage, head, logError, PartData } from "@vertexvis/api-client-node";
+import {
+  CreatePartRequestDataAttributes,
+  FileRelationshipDataTypeEnum,
+  getPage,
+  head,
+  logError,
+  PartData,
+  QueuedJobData,
+} from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
 import {
@@ -14,6 +22,15 @@ import {
 } from "../../lib/api";
 import { getClient, makeCall } from "../../lib/vertex-api";
 
+export type CreatePartBody = Pick<
+  CreatePartRequestDataAttributes,
+  "suppliedId" | "suppliedRevisionId" | "indexMetadata"
+> & {
+  fileId: string;
+};
+
+export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
+
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse<GetRes<PartData> | Res | ErrorRes>
@@ -25,6 +42,11 @@ export default async function handle(
 
   if (req.method === "DELETE") {
     const r = await del(req);
+    return res.status(r.status).json(r);
+  }
+
+  if (req.method === "POST") {
+    const r = await create(req);
     return res.status(r.status).json(r);
   }
 
@@ -64,4 +86,32 @@ async function del(req: NextApiRequest): Promise<ErrorRes | Res> {
     b.ids.map((id) => makeCall((c) => c.parts.deletePart({ id })))
   );
   return { status: 200 };
+}
+
+async function create(req: NextApiRequest): Promise<ErrorRes | CreatePartRes> {
+  const b: CreatePartBody = JSON.parse(req.body);
+  if (!req.body) return InvalidBody;
+
+  const c = await getClient();
+  const res = await c.parts.createPart({
+    createPartRequest: {
+      data: {
+        type: "part",
+        attributes: {
+          suppliedId: b.suppliedId,
+          suppliedRevisionId: b.suppliedRevisionId,
+        },
+        relationships: {
+          source: {
+            data: {
+              type: FileRelationshipDataTypeEnum.File,
+              id: b.fileId,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return { status: 200, id: res.data.data.id };
 }

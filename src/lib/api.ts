@@ -57,3 +57,7 @@ export function isErrorRes(obj?: {
 }): obj is ErrorRes {
   return defined(obj) && defined(obj.message) && defined(obj.status);
 }
+
+export async function fetcher(req: RequestInfo): Promise<any> { //eslint-disable-line
+  return (await fetch(req)).json();
+}

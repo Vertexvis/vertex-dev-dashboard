@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Checkbox,
   Paper,
   Skeleton,
@@ -11,16 +12,21 @@ import {
   TableRow,
   TextField,
 } from "@material-ui/core";
+import { Add } from "@material-ui/icons";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
+import { fetcher } from "../../lib/api";
+import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
-import { toPartPage as toPartPage } from "../../lib/parts";
+import { toPartPage } from "../../lib/parts";
 import { DataLoadError } from "../shared/DataLoadError";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
+import CreatePartDialog from "./CreatePartDialog";
 import PartRow from "./PartRow";
+import { QueuedTranslationsTable } from "./QueuedTranslationsTable";
 
 const headCells: readonly HeadCell[] = [
   { id: "expand", disablePadding: true, label: "" },
@@ -30,16 +36,13 @@ const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created" },
 ];
 
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
-}
-
 function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
     }`,
-    fetcher
+    fetcher,
+    { refreshInterval: 30000 }
   );
 }
 
@@ -55,6 +58,8 @@ export function PartTable(): JSX.Element {
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
+  const [showDialog, setShowDialog] = React.useState(false);
+
   const { data, error } = useParts({ cursor, pageSize, suppliedId });
 
   const page = data ? toPartPage(data) : undefined;
@@ -114,6 +119,21 @@ export function PartTable(): JSX.Element {
 
   return (
     <>
+      <Box sx={{ display: "flex" }}>
+        <QueuedTranslationsTable
+          title="Running Translations"
+          refreshInterval={10000}
+          status="running"
+        />
+        <QueuedTranslationsTable
+          title="Recently Failed Translations"
+          refreshInterval={30000}
+          status="error"
+          filter={(row) =>
+            dateDiffInDays(new Date(row.created), new Date()) <= 7
+          }
+        />
+      </Box>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.length}
@@ -140,6 +160,13 @@ export function PartTable(): JSX.Element {
             }}
             sx={{ mt: 0 }}
           />
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setShowDialog(true)}
+          >
+            New
+          </Button>
         </Box>
         <TableContainer>
           <Table>
@@ -207,6 +234,14 @@ export function PartTable(): JSX.Element {
           nextIconButtonProps={{ disabled: privateCursor == null }}
         />
       </Paper>
+      <CreatePartDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        onPartCreated={(id) => {
+          console.log("Queued translation initiated: " + id);
+          setShowDialog(false);
+        }}
+      />
     </>
   );
 }

@@ -24,7 +24,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { isErrorRes } from "../../lib/api";
+import { fetcher,isErrorRes } from "../../lib/api";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
@@ -49,10 +49,6 @@ const headCells: readonly HeadCell[] = [
   { id: "actions", label: "Actions" },
 ];
 
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
-}
-
 function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
@@ -66,7 +62,6 @@ export function SceneTable({
   clientId,
   onClick,
   onEditClick,
-  scene,
   vertexEnv,
 }: Props): JSX.Element {
   const pageSize = 50;
@@ -140,17 +135,17 @@ export function SceneTable({
     onEditClick(s);
   }
 
-  async function handleViewClick() {
-    if (!clientId || scene == null) return;
+  async function handleViewClick(sceneId: string) {
+    if (!clientId) return;
 
     const json = await (
       await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId: scene.id }),
+        body: JSON.stringify({ id: sceneId }),
         method: "POST",
       })
     ).json();
 
-    if (isErrorRes(json)) console.error("Error creating stream key.");
+    if (isErrorRes(json)) console.error("Error creating stream key.", json);
     else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
   }
 
@@ -255,7 +250,7 @@ export function SceneTable({
                         <>
                           {keyLoadingSceneId === row.id && (
                             <CircularProgress
-                              size={44}
+                              size={36}
                               sx={{ position: "absolute" }}
                             />
                           )}
@@ -272,7 +267,12 @@ export function SceneTable({
                           </Tooltip>
                         </>
                         <Tooltip title="View scene">
-                          <IconButton onClick={() => handleViewClick()}>
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewClick(row.id);
+                            }}
+                          >
                             <VisibilityOutlined />
                           </IconButton>
                         </Tooltip>

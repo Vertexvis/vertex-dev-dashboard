@@ -16,7 +16,7 @@ import React from "react";
 import { GetRes } from "../../lib/api";
 import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
-import { toPartRevisionPage as toPartRevisionPage } from "../../lib/part-revisions";
+import { toPartRevisionPage } from "../../lib/part-revisions";
 import { Part } from "../../lib/parts";
 
 interface PartRowProps {
