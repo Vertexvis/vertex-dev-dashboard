@@ -17,6 +17,7 @@ import useSWR from "swr";
 
 import { SwrProps } from "../../lib/paging";
 import { toPartPage as toPartPage } from "../../lib/parts";
+import { DataLoadError } from "../shared/DataLoadError";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import PartRow from "./PartRow";
@@ -42,7 +43,7 @@ function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-export function PartsTable(): JSX.Element {
+export function PartTable(): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -150,11 +151,7 @@ export function PartsTable(): JSX.Element {
             />
             <TableBody>
               {error ? (
-                <TableRow>
-                  <TableCell colSpan={headCells.length + 1}>
-                    Error loading data.
-                  </TableCell>
-                </TableRow>
+                <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
                 Array(emptyRows)
                   .fill(0)

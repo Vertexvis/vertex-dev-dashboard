@@ -28,6 +28,7 @@ import { isErrorRes } from "../../lib/api";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
+import { DataLoadError } from "../shared/DataLoadError";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 
@@ -185,11 +186,7 @@ export function SceneTable({
             />
             <TableBody>
               {error ? (
-                <TableRow>
-                  <TableCell colSpan={headCells.length + 1}>
-                    Error loading data.
-                  </TableCell>
-                </TableRow>
+                <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
                 Array(emptyRows)
                   .fill(0)

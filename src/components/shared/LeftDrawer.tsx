@@ -15,7 +15,7 @@ import {
 import { useRouter } from "next/router";
 import React from "react";
 
-import { LeftDrawerWidth } from "../viewer/Layout";
+import { LeftDrawerWidth } from "../shared/Layout";
 
 export type Content = "settings" | "instructions" | "parts";
 

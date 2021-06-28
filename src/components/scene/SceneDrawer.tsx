@@ -16,9 +16,9 @@ import { useForm } from "react-hook-form";
 
 import { Scene } from "../../lib/scenes";
 import { UpdateSceneReq } from "../../pages/api/scenes";
-import { DrawerWidth } from "../../pages/index";
-import { Input } from "./Input";
-import { VectorTable } from "./VectorTable";
+import { Input } from "../shared/Input";
+import { RightDrawerWidth } from "../shared/Layout";
+import { VectorTable } from "../shared/VectorTable";
 
 interface Props {
   readonly editing: boolean;
@@ -29,7 +29,7 @@ interface Props {
 
 type FormData = Omit<UpdateSceneReq, "id">;
 
-export function RightDrawer({
+export function SceneDrawer({
   editing,
   onClose,
   open,
@@ -58,8 +58,8 @@ export function RightDrawer({
       open={open}
       sx={{
         flexShrink: 0,
-        width: DrawerWidth,
-        "& .MuiDrawer-paper": { width: DrawerWidth },
+        width: RightDrawerWidth,
+        "& .MuiDrawer-paper": { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
