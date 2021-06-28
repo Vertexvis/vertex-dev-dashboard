@@ -19,12 +19,13 @@ import {
   VisibilityOutlined,
   VpnKeyOutlined,
 } from "@material-ui/icons";
+import { SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { fetcher,isErrorRes } from "../../lib/api";
+import { ErrorRes, fetcher, GetRes, isErrorRes } from "../../lib/api";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
@@ -50,7 +51,7 @@ const headCells: readonly HeadCell[] = [
 ];
 
 function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
-  return useSWR(
+  return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
     }`,

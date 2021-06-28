@@ -39,7 +39,7 @@ export default function CreatePartDialog({
     string | undefined
   >();
   const [submitDisabled, setSubmitDisabled] = React.useState(true);
-  const {data} = useFiles();
+  const { data } = useFiles();
   const files = data ? toFilePage(data) : undefined;
 
   function checkSubmit() {
@@ -74,7 +74,10 @@ export default function CreatePartDialog({
     <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Create Part</DialogTitle>
       <DialogContent>
-        <FormControl component="fieldset" sx={{ height: 300, width: "100%", overflow: 'auto' }}>
+        <FormControl
+          component="fieldset"
+          sx={{ height: 300, width: "100%", overflow: "auto" }}
+        >
           <FormLabel component="legend">Recent Files</FormLabel>
           <RadioGroup
             aria-label="files"
