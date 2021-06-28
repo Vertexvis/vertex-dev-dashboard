@@ -140,17 +140,17 @@ export function SceneTable({
     onEditClick(s);
   }
 
-  async function handleViewClick() {
-    if (!clientId || scene == null) return;
+  async function handleViewClick(sceneId: string) {
+    if (!clientId) return;
 
     const json = await (
       await fetch("/api/stream-keys", {
-        body: JSON.stringify({ sceneId: scene.id }),
+        body: JSON.stringify({ id: sceneId }),
         method: "POST",
       })
     ).json();
 
-    if (isErrorRes(json)) console.error("Error creating stream key.");
+    if (isErrorRes(json)) console.error("Error creating stream key.", json);
     else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
   }
 
@@ -255,7 +255,7 @@ export function SceneTable({
                         <>
                           {keyLoadingSceneId === row.id && (
                             <CircularProgress
-                              size={44}
+                              size={36}
                               sx={{ position: "absolute" }}
                             />
                           )}
@@ -272,7 +272,12 @@ export function SceneTable({
                           </Tooltip>
                         </>
                         <Tooltip title="View scene">
-                          <IconButton onClick={() => handleViewClick()}>
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewClick(row.id);
+                            }}
+                          >
                             <VisibilityOutlined />
                           </IconButton>
                         </Tooltip>
