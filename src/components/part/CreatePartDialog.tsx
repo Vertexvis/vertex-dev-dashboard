@@ -11,12 +11,11 @@ import {
   RadioGroup,
   TextField,
 } from "@material-ui/core";
-import { FileMetadataData } from "@vertexvis/api-client-node";
 import React from "react";
+import useSWR from "swr";
 
-import { GetRes } from "../../lib/api";
+import { fetcher } from "../../lib/api";
 import { toFilePage } from "../../lib/files";
-import { File } from "../../lib/files";
 import { CreatePartBody, CreatePartRes } from "../../pages/api/parts";
 
 interface CreatePartDialogProps {
@@ -25,69 +24,57 @@ interface CreatePartDialogProps {
   readonly onPartCreated: (queuedTranslationId: string) => void;
 }
 
+function useFiles() {
+  return useSWR(`/api/files?pageSize=25`, fetcher);
+}
+
 export default function CreatePartDialog({
   open,
   onClose,
   onPartCreated,
 }: CreatePartDialogProps): JSX.Element {
   const [file, setFile] = React.useState<string | undefined>();
-  const [files, setFiles] = React.useState<File[] | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [suppliedRevisionId, setSuppliedRevisionId] = React.useState<
     string | undefined
   >();
-  const [submitDisabled, setSubmitDisabled] = React.useState<boolean>(true);
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      const result = await fetch(`/api/files?pageSize=25`).then((r) =>
-        r.json()
-      );
-      const res = (await result) as GetRes<FileMetadataData>;
-
-      setFiles(toFilePage(res).items);
-    };
-
-    fetchData();
-  }, []);
+  const [submitDisabled, setSubmitDisabled] = React.useState(true);
+  const {data} = useFiles();
+  const files = data ? toFilePage(data) : undefined;
 
   function checkSubmit() {
-    if (file && suppliedId && suppliedRevisionId) {
-      setSubmitDisabled(false);
-    } else {
-      setSubmitDisabled(true);
-    }
+    setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
   }
 
   async function handleSubmit() {
-    if (file && suppliedId && suppliedRevisionId) {
-      setSubmitDisabled(true);
+    if (!file || !suppliedId || !suppliedRevisionId) return;
 
-      const attrs: CreatePartBody = {
-        fileId: file,
-        suppliedId,
-        suppliedRevisionId,
-      };
+    setSubmitDisabled(true);
 
-      const partRes = (await (
-        await fetch("/api/parts", {
-          method: "POST",
-          body: JSON.stringify(attrs),
-        })
-      ).json()) as unknown as CreatePartRes;
+    const attrs: CreatePartBody = {
+      fileId: file,
+      suppliedId,
+      suppliedRevisionId,
+    };
 
-      onPartCreated(partRes.queuedTranslationId);
-      setFile(undefined);
-      setSuppliedId(undefined);
-      setSuppliedRevisionId(undefined);
-    }
+    const partRes = (await (
+      await fetch("/api/parts", {
+        method: "POST",
+        body: JSON.stringify(attrs),
+      })
+    ).json()) as unknown as CreatePartRes;
+
+    onPartCreated(partRes.id);
+    setFile(undefined);
+    setSuppliedId(undefined);
+    setSuppliedRevisionId(undefined);
   }
 
   return (
     <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Create Part</DialogTitle>
       <DialogContent>
-        <FormControl component="fieldset" sx={{ height: 300, width: "100%" }}>
+        <FormControl component="fieldset" sx={{ height: 300, width: "100%", overflow: 'auto' }}>
           <FormLabel component="legend">Recent Files</FormLabel>
           <RadioGroup
             aria-label="files"
@@ -98,7 +85,7 @@ export default function CreatePartDialog({
             }}
           >
             {files &&
-              files.map((f) => {
+              files?.items.map((f) => {
                 return (
                   <FormControlLabel
                     key={f.id}

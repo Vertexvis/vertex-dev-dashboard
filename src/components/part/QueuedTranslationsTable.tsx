@@ -13,6 +13,7 @@ import {
 import React from "react";
 import useSWR from "swr";
 
+import { fetcher } from "../../lib/api";
 import { QueuedJob, toQueuedJobPage } from "../../lib/queued-jobs";
 
 interface QueuedTranslationsTableProps {
@@ -20,10 +21,6 @@ interface QueuedTranslationsTableProps {
   readonly refreshInterval?: number;
   readonly title: string;
   readonly filter?: (arg0: QueuedJob) => boolean;
-}
-
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
 }
 
 function useRunningTranslations(status: string, refreshInterval: number) {
@@ -47,13 +44,7 @@ export function QueuedTranslationsTable({
 
   if (items) {
     return (
-      <TableContainer
-        sx={{
-          mb: 2,
-          m: 2,
-        }}
-        component={Paper}
-      >
+      <TableContainer sx={{ m: 2 }} component={Paper}>
         <Box
           sx={{
             p: 2,

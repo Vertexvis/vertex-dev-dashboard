@@ -17,6 +17,7 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
+import { fetcher } from "../../lib/api";
 import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
@@ -34,10 +35,6 @@ const headCells: readonly HeadCell[] = [
   { id: "id", label: "ID" },
   { id: "created", label: "Created" },
 ];
-
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
-}
 
 function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(

@@ -19,7 +19,8 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { toFilePage as toFilePage } from "../../lib/files";
+import { fetcher } from "../../lib/api";
+import { toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { HeadCell, TableHead } from "../shared/TableHead";
@@ -34,10 +35,6 @@ export const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created" },
   { id: "uploaded", label: "Uploaded" },
 ];
-
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
-}
 
 function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(

@@ -24,7 +24,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { isErrorRes } from "../../lib/api";
+import { fetcher,isErrorRes } from "../../lib/api";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
@@ -49,10 +49,6 @@ const headCells: readonly HeadCell[] = [
   { id: "actions", label: "Actions" },
 ];
 
-async function fetcher(req: RequestInfo) {
-  return (await fetch(req)).json();
-}
-
 function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
@@ -66,7 +62,6 @@ export function SceneTable({
   clientId,
   onClick,
   onEditClick,
-  scene,
   vertexEnv,
 }: Props): JSX.Element {
   const pageSize = 50;

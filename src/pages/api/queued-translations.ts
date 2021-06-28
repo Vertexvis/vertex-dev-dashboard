@@ -16,11 +16,6 @@ import {
 } from "../../lib/api";
 import { getClient } from "../../lib/vertex-api";
 
-export interface GetQueuedTranslationsRes extends Res {
-  readonly cursor?: string;
-  readonly data: QueuedJobData[];
-}
-
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse<GetRes<QueuedJobData> | Res | ErrorRes>

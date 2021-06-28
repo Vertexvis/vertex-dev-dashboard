@@ -1,9 +1,11 @@
 import {
+  CreatePartRequestDataAttributes,
   FileRelationshipDataTypeEnum,
   getPage,
   head,
   logError,
   PartData,
+  QueuedJobData,
 } from "@vertexvis/api-client-node";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -20,21 +22,14 @@ import {
 } from "../../lib/api";
 import { getClient, makeCall } from "../../lib/vertex-api";
 
-export interface GetPartsRes extends Res {
-  readonly cursor?: string;
-  readonly data: PartData[];
-}
-
-export interface CreatePartBody {
-  suppliedId: string;
-  suppliedRevisionId: string;
+export type CreatePartBody = Pick<
+  CreatePartRequestDataAttributes,
+  "suppliedId" | "suppliedRevisionId" | "indexMetadata"
+> & {
   fileId: string;
-  indexMetadata?: boolean;
-}
+};
 
-export interface CreatePartRes extends Res {
-  queuedTranslationId: string;
-}
+export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
 
 export default async function handle(
   req: NextApiRequest,
@@ -95,7 +90,7 @@ async function del(req: NextApiRequest): Promise<ErrorRes | Res> {
 
 async function create(req: NextApiRequest): Promise<ErrorRes | CreatePartRes> {
   const b: CreatePartBody = JSON.parse(req.body);
-  if (!req.body) return { message: "Body required.", status: 400 };
+  if (!req.body) return InvalidBody;
 
   const c = await getClient();
   const res = await c.parts.createPart({
@@ -118,5 +113,5 @@ async function create(req: NextApiRequest): Promise<ErrorRes | CreatePartRes> {
     },
   });
 
-  return { status: 200, queuedTranslationId: res.data.data.id };
+  return { status: 200, id: res.data.data.id };
 }
