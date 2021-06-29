@@ -15,6 +15,7 @@ import useSWR from "swr";
 
 import { fetcher } from "../../lib/api";
 import { QueuedJob, toQueuedJobPage } from "../../lib/queued-jobs";
+import { SkeletonBody } from "../shared/SkeletonBody";
 
 interface QueuedTranslationsTableProps {
   readonly status: string;
@@ -42,57 +43,55 @@ export function QueuedTranslationsTable({
   const page = data ? toQueuedJobPage(data) : undefined;
   const items = filter ? page?.items.filter(filter) : page?.items;
 
-  if (items) {
-    return (
-      <TableContainer sx={{ m: 2 }} component={Paper}>
-        <Box
-          sx={{
-            p: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h6">{title}</Typography>
-          {isValidating && <CircularProgress size={16} />}
-        </Box>
+  return (
+    <TableContainer sx={{ m: 2 }} component={Paper}>
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6">{title}</Typography>
+        {isValidating && <CircularProgress size={16} />}
+      </Box>
 
-        {items?.length === 0 && (
-          <Typography align="center">No {status} translations.</Typography>
-        )}
+      <Table aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell>ID</TableCell>
+            <TableCell>Created</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {!data && (
+            <SkeletonBody
+              numCellsPerRow={2}
+              numRows={3}
+              includeCheckbox={false}
+            />
+          )}
 
-        {items && !!items.length && (
-          <Table aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Created</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items?.map((row) => (
-                <TableRow
-                  key={row.id}
-                  sx={{
-                    "&:last-child td": {
-                      borderBottom: 0,
-                    },
-                  }}
-                >
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>
-                    {row.created
-                      ? new Date(row.created).toLocaleString()
-                      : undefined}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </TableContainer>
-    );
-  }
-
-  return <></>;
+          {items?.map((row) => (
+            <TableRow
+              key={row.id}
+              sx={{
+                "&:last-child td": {
+                  borderBottom: 0,
+                },
+              }}
+            >
+              <TableCell>{row.id}</TableCell>
+              <TableCell>
+                {row.created
+                  ? new Date(row.created).toLocaleString()
+                  : undefined}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 }

@@ -1,9 +1,7 @@
 import {
   Box,
   Button,
-  Checkbox,
   Paper,
-  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -22,6 +20,7 @@ import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
 import { DataLoadError } from "../shared/DataLoadError";
+import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreatePartDialog from "./CreatePartDialog";
@@ -64,7 +63,7 @@ export function PartTable(): JSX.Element {
 
   const page = data ? toPartPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
+  const emptyRows = privateCursor ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
@@ -180,30 +179,11 @@ export function PartTable(): JSX.Element {
               {error ? (
                 <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
-                Array(emptyRows)
-                  .fill(0)
-                  .map((_, i) => (
-                    <TableRow key={i} role="checkbox" tabIndex={-1}>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell padding="checkbox">
-                        <Checkbox disabled />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                    </TableRow>
-                  ))
+                <SkeletonBody
+                  numCellsPerRow={6}
+                  numRows={emptyRows}
+                  includeCheckbox={true}
+                />
               ) : (
                 page.items.map((row) => {
                   return (
