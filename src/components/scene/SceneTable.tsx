@@ -4,7 +4,6 @@ import {
   CircularProgress,
   IconButton,
   Paper,
-  Skeleton,
   Snackbar,
   Table,
   TableBody,
@@ -30,6 +29,7 @@ import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
 import { DataLoadError } from "../shared/DataLoadError";
+import {SkeletonBody} from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 
@@ -82,7 +82,7 @@ export function SceneTable({
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
+  const emptyRows = privateCursor ? 0 : pageSize - pageLength;
 
   React.useEffect(() => {
     if (page == null) return;
@@ -184,33 +184,11 @@ export function SceneTable({
               {error ? (
                 <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
-                Array(emptyRows)
-                  .fill(0)
-                  .map((_, i) => (
-                    <TableRow key={i} role="checkbox" tabIndex={-1}>
-                      <TableCell padding="checkbox">
-                        <Checkbox disabled />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                    </TableRow>
-                  ))
+                <SkeletonBody
+                  numCellsPerRow={7}
+                  numRows={emptyRows}
+                  includeCheckbox={true}
+                />
               ) : (
                 page.items.map((row, index) => {
                   const isSel = isSelected(row.id);

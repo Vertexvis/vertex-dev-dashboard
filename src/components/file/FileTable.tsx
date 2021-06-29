@@ -4,7 +4,6 @@ import {
   Button,
   Checkbox,
   Paper,
-  Skeleton,
   Snackbar,
   Table,
   TableBody,
@@ -23,6 +22,7 @@ import { fetcher } from "../../lib/api";
 import { toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
+import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreateFileDialog from "./CreateFileDialog";
@@ -58,12 +58,12 @@ export function FilesTable(): JSX.Element {
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const [showToast, setShowToast] = React.useState<boolean>(false);
+  const [showToast, setShowToast] = React.useState(false);
   const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
 
   const page = data ? toFilePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = privateCursor == null ? 0 : pageSize - pageLength;
+  const emptyRows = privateCursor ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
@@ -165,33 +165,11 @@ export function FilesTable(): JSX.Element {
               {error ? (
                 <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
-                Array(emptyRows)
-                  .fill(0)
-                  .map((_, i) => (
-                    <TableRow key={i} role="checkbox" tabIndex={-1}>
-                      <TableCell padding="checkbox">
-                        <Checkbox disabled />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton />
-                      </TableCell>
-                    </TableRow>
-                  ))
+                <SkeletonBody
+                  numCellsPerRow={7}
+                  numRows={emptyRows}
+                  includeCheckbox={true}
+                />
               ) : (
                 page.items.map((row, index) => {
                   const isSel = isSelected(row.id);
