@@ -14,6 +14,7 @@ import { Close } from "@material-ui/icons";
 import React from "react";
 import { useForm } from "react-hook-form";
 
+import { toLocaleString } from "../../lib/dates";
 import { Scene } from "../../lib/scenes";
 import { UpdateSceneReq } from "../../pages/api/scenes";
 import { Input } from "../shared/Input";
@@ -176,9 +177,7 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Created</Typography>
                     <Typography variant="body2">
-                      {scene.created
-                        ? new Date(scene.created).toLocaleString()
-                        : undefined}
+                      {toLocaleString(scene.created)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -186,9 +185,7 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Modified</Typography>
                     <Typography variant="body2">
-                      {scene.modified
-                        ? new Date(scene.modified).toLocaleString()
-                        : undefined}
+                      {toLocaleString(scene.modified)}
                     </Typography>
                   </TableCell>
                 </TableRow>

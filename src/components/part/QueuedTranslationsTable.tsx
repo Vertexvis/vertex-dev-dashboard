@@ -14,6 +14,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { fetcher } from "../../lib/api";
+import { toLocaleString } from "../../lib/dates";
 import { QueuedJob, toQueuedJobPage } from "../../lib/queued-jobs";
 import { SkeletonBody } from "../shared/SkeletonBody";
 
@@ -83,11 +84,7 @@ export function QueuedTranslationsTable({
               }}
             >
               <TableCell>{row.id}</TableCell>
-              <TableCell>
-                {row.created
-                  ? new Date(row.created).toLocaleString()
-                  : undefined}
-              </TableCell>
+              <TableCell>{toLocaleString(row.created)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -128,9 +128,7 @@ export function PartTable(): JSX.Element {
           title="Recently Failed Translations"
           refreshInterval={30000}
           status="error"
-          filter={(row) =>
-            dateDiffInDays(new Date(row.created), new Date()) <= 7
-          }
+          filter={(row) => dateDiffInDays(new Date(row.created)) <= 7}
         />
       </Box>
       <Paper sx={{ m: 2 }}>

@@ -25,11 +25,12 @@ import React from "react";
 import useSWR from "swr";
 
 import { ErrorRes, fetcher, GetRes, isErrorRes } from "../../lib/api";
+import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
 import { DataLoadError } from "../shared/DataLoadError";
-import {SkeletonBody} from "../shared/SkeletonBody";
+import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 
@@ -220,11 +221,7 @@ export function SceneTable({
                       <TableCell>{row.suppliedId}</TableCell>
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.id}</TableCell>
-                      <TableCell>
-                        {row.created
-                          ? new Date(row.created).toLocaleString()
-                          : undefined}
-                      </TableCell>
+                      <TableCell>{toLocaleString(row.created)}</TableCell>
                       <TableCell>
                         <>
                           {keyLoadingSceneId === row.id && (

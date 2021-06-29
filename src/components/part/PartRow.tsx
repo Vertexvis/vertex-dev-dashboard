@@ -14,6 +14,7 @@ import { PartRevisionData } from "@vertexvis/api-client-node";
 import React from "react";
 
 import { GetRes } from "../../lib/api";
+import { toLocaleString } from "../../lib/dates";
 import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartRevisionPage } from "../../lib/part-revisions";
@@ -76,9 +77,7 @@ export default function PartRow({
         <TableCell>{row.name}</TableCell>
         <TableCell>{row.suppliedId}</TableCell>
         <TableCell>{row.id}</TableCell>
-        <TableCell>
-          {row.created ? new Date(row.created).toLocaleString() : undefined}
-        </TableCell>
+        <TableCell>{toLocaleString(row.created)}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell
@@ -110,11 +109,7 @@ export default function PartRow({
                     >
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
-                      <TableCell>
-                        {r.created
-                          ? new Date(row.created).toLocaleString()
-                          : undefined}
-                      </TableCell>
+                      <TableCell>{toLocaleString(row.created)}</TableCell>
                     </TableRow>
                   ))}
               </TableBody>

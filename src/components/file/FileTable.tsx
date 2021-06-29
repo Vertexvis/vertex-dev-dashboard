@@ -19,6 +19,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { fetcher } from "../../lib/api";
+import { toLocaleString } from "../../lib/dates";
 import { toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -200,16 +201,8 @@ export function FilesTable(): JSX.Element {
                       <TableCell>{row.suppliedId}</TableCell>
                       <TableCell>{row.status}</TableCell>
                       <TableCell>{row.id}</TableCell>
-                      <TableCell>
-                        {row.created
-                          ? new Date(row.created).toLocaleString()
-                          : undefined}
-                      </TableCell>
-                      <TableCell>
-                        {row.uploaded
-                          ? new Date(row.uploaded).toLocaleString()
-                          : undefined}
-                      </TableCell>
+                      <TableCell>{toLocaleString(row.created)}</TableCell>
+                      <TableCell>{toLocaleString(row.uploaded)}</TableCell>
                     </TableRow>
                   );
                 })
