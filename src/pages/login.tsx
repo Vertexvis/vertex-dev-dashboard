@@ -2,8 +2,12 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
   FormLabel,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   TextField,
   Typography,
 } from "@material-ui/core";
@@ -19,6 +23,7 @@ export default function Login(): JSX.Element {
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [env, setEnv] = React.useState("platdev");
   const router = useRouter();
 
   const invalidId = id != null && id.length !== IdLength;
@@ -33,7 +38,7 @@ export default function Login(): JSX.Element {
 
     const res = await (
       await fetch("/api/login", {
-        body: JSON.stringify({ id, secret }),
+        body: JSON.stringify({ id, secret, env }),
         method: "POST",
       })
     ).json();
@@ -52,7 +57,7 @@ export default function Login(): JSX.Element {
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
-          height: "375px",
+          height: "430px",
           width: "430px",
           m: 4,
           p: 6,
@@ -90,6 +95,20 @@ export default function Login(): JSX.Element {
           size="small"
           type="password"
         />
+
+        <FormControl fullWidth sx={{ mt: 2 }}>
+          <InputLabel id="environment">Environment</InputLabel>
+          <Select
+            labelId="environment"
+            id="environment"
+            value={env}
+            label="Environment"
+            onChange={(e) => setEnv(e.target.value)}
+          >
+            <MenuItem value="platdev">platdev</MenuItem>
+            <MenuItem value="platstaing">platstaging</MenuItem>
+          </Select>
+        </FormControl>
 
         <Button
           sx={{ mt: 2 }}
