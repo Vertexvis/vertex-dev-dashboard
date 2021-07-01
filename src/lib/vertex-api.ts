@@ -13,9 +13,9 @@ import type { NextApiResponse } from "next";
 import { Session } from "next-iron-session";
 
 import { ErrorRes, ServerError } from "./api";
-import { Config } from "./config";
 import {
   CredsKey,
+  EnvKey,
   OAuthCredentials,
   SessionToken,
   TokenKey,
@@ -23,10 +23,10 @@ import {
 
 const TenMinsInMs = 600_000;
 
-const basePath =
-  Config.vertexEnv === "platprod"
+const basePath = (env: string) =>
+  env === "platprod"
     ? "https://platform.vertexvis.com"
-    : `https://platform.${Config.vertexEnv}.vertexvis.io`;
+    : `https://platform.${env}.vertexvis.io`;
 
 export async function makeCallRes<T>(
   res: NextApiResponse<T | Failure>,
@@ -51,15 +51,16 @@ export async function makeCall<T>(
 
 export async function getToken(
   id: string,
-  secret: string
+  secret: string,
+  env: string
 ): Promise<OAuth2Token> {
   const auth = new Oauth2Api(
     new Configuration({
-      basePath,
+      basePath: basePath(env),
       username: id,
       password: secret,
     }),
-    basePath
+    basePath(env)
   );
 
   return (await auth.createToken({ grantType: "client_credentials" })).data;
@@ -68,10 +69,11 @@ export async function getToken(
 export async function getClientWithCreds(
   id: string,
   secret: string,
+  env: string,
   token: OAuth2Token
 ): Promise<VertexClient> {
   const client = await VertexClient.build({
-    basePath,
+    basePath: basePath(env),
     client: {
       id,
       secret,
@@ -87,10 +89,11 @@ export async function getClientFromSession(
 ): Promise<VertexClient> {
   const token = session.get(TokenKey) as SessionToken;
   const creds = session.get(CredsKey) as OAuthCredentials;
+  const env = session.get(EnvKey) as string;
 
   const expiresIn = token.expiration - Date.now();
   if (expiresIn < TenMinsInMs) {
-    const newToken = await getToken(creds.id, creds.secret);
+    const newToken = await getToken(creds.id, creds.secret, env);
     const newExpiration = Date.now() + newToken.expires_in * 1000;
 
     session.set(TokenKey, {
@@ -98,13 +101,13 @@ export async function getClientFromSession(
       expiration: newExpiration,
     });
 
-    return getClientWithCreds(creds.id, creds.secret, {
+    return getClientWithCreds(creds.id, creds.secret, env, {
       ...newToken,
       expires_in: newExpiration,
     });
   }
 
-  return getClientWithCreds(creds.id, creds.secret, {
+  return getClientWithCreds(creds.id, creds.secret, env, {
     ...token.token,
     expires_in: expiresIn,
   });

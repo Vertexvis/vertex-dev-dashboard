@@ -8,8 +8,6 @@ import {
 } from "next";
 import { Handler, Session, withIronSession } from "next-iron-session";
 
-import { Config } from "../lib/config";
-
 export const COOKIE_ATTRIBURES = {
   password: process.env.COOKIE_SECRET || "",
   cookieName: "sess",
@@ -22,6 +20,7 @@ export const COOKIE_ATTRIBURES = {
 
 export const CredsKey = "creds";
 export const TokenKey = "token";
+export const EnvKey = "env";
 
 export type SessionToken = {
   readonly token: OAuth2Token;
@@ -61,10 +60,12 @@ export function serverSidePropsHandler({
 }): GetServerSidePropsResult<CommonProps> {
   const token: SessionToken | undefined = req.session.get(TokenKey);
   const creds: OAuthCredentials | undefined = req.session.get(CredsKey);
+  const vertexEnv: Environment =
+    req.session.get(EnvKey) || ("platdev" as Environment);
 
   if (!req.session || !creds || !token) {
     return { redirect: { statusCode: 302, destination: "/login" } };
   }
 
-  return { props: { clientId: creds.id, vertexEnv: Config.vertexEnv } };
+  return { props: { clientId: creds.id, vertexEnv } };
 }
