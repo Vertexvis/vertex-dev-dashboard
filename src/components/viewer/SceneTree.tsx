@@ -5,9 +5,14 @@ import React from "react";
 interface Props {
   readonly configEnv: Environment;
   readonly viewerId: string;
+  readonly selectedItemdId?: string;
 }
 
-export function SceneTree({ configEnv, viewerId }: Props): JSX.Element {
+export function SceneTree({
+  configEnv,
+  viewerId,
+  selectedItemdId,
+}: Props): JSX.Element {
   const ref = React.useRef<HTMLVertexSceneTreeElement>(null);
 
   React.useEffect(() => {
@@ -15,6 +20,11 @@ export function SceneTree({ configEnv, viewerId }: Props): JSX.Element {
     effectRef?.addEventListener("click", clickRow);
     return () => effectRef?.removeEventListener("click", clickRow);
   }, [ref]);
+
+  React.useEffect(() => {
+    const effectRef = ref.current;
+    if (selectedItemdId) effectRef?.scrollToItem(selectedItemdId);
+  }, [selectedItemdId]);
 
   const clickRow = async (event: MouseEvent | PointerEvent): Promise<void> => {
     const row = await ref?.current?.getRowForEvent(event);

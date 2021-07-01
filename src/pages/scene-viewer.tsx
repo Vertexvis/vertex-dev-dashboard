@@ -21,6 +21,7 @@ export default function SceneViewer(): JSX.Element {
   const [credentials, setCredentials] = React.useState<
     StreamCredentials | undefined
   >();
+  const [selectedItemId, setSelectedItemId] = React.useState<string | undefined>();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
 
@@ -47,6 +48,7 @@ export default function SceneViewer(): JSX.Element {
 
   async function handleSelect(hit?: vertexvis.protobuf.stream.IHit) {
     setMetadata(toMetadata({ hit }));
+    setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
     await selectByHit({ hit, viewer: viewer.ref.current });
   }
 
@@ -64,6 +66,7 @@ export default function SceneViewer(): JSX.Element {
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
           viewerId={ViewerId}
+          selectedItemdId={selectedItemId}
         />
       }
       leftDrawerOpen={drawerOpen}

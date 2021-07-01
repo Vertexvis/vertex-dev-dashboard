@@ -12,6 +12,7 @@ interface Props {
   readonly onClose: () => void;
   readonly open: boolean;
   readonly viewerId: string;
+  readonly selectedItemdId?: string;
 }
 
 export function LeftDrawer({
@@ -19,6 +20,7 @@ export function LeftDrawer({
   onClose,
   open,
   viewerId,
+  selectedItemdId,
 }: Props): JSX.Element {
   return (
     <Drawer
@@ -43,7 +45,11 @@ export function LeftDrawer({
         </IconButton>
       </Box>
       <Divider />
-      <SceneTree configEnv={configEnv} viewerId={viewerId} />
+      <SceneTree
+        configEnv={configEnv}
+        viewerId={viewerId}
+        selectedItemdId={selectedItemdId}
+      />
     </Drawer>
   );
 }
