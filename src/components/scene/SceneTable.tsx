@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Checkbox,
   CircularProgress,
   IconButton,
@@ -11,6 +12,7 @@ import {
   TableContainer,
   TablePagination,
   TableRow,
+  TextField,
   Tooltip,
 } from "@material-ui/core";
 import {
@@ -20,6 +22,7 @@ import {
 } from "@material-ui/icons";
 import { SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
+import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
@@ -73,8 +76,11 @@ export function SceneTable({
   const [privateCursor, setPrivateCursor] = React.useState<
     string | undefined
   >();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<
+  string | undefined
+>();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const { data, error } = useScenes({ cursor, pageSize });
+  const { data, error } = useScenes({ cursor, pageSize, suppliedId });
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
     string | undefined
@@ -84,6 +90,11 @@ export function SceneTable({
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows = privateCursor ? 0 : pageSize - pageLength;
+
+  const debouncedSetSuppliedIdFilter = React.useMemo(
+    () => debounce(setSuppliedIdFilter, 300),
+    []
+  );
 
   React.useEffect(() => {
     if (page == null) return;
@@ -173,6 +184,27 @@ export function SceneTable({
           onDelete={handleDelete}
           title="Scenes"
         />
+                <Box
+          sx={{
+            px: { sm: 2 },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            variant="standard"
+            size="small"
+            margin="normal"
+            id="suppliedIdFilter"
+            label="Supplied ID Filter"
+            type="text"
+            onChange={(e) => {
+              debouncedSetSuppliedIdFilter(e.target.value);
+            }}
+            sx={{ mt: 0 }}
+          />
+        </Box>
         <TableContainer>
           <Table>
             <TableHead

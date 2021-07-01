@@ -54,10 +54,13 @@ async function get(
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
+    const sId = head(req.query.suppliedId);
+
     const r = await getPage(() =>
       c.scenes.getScenes({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
+        filterSuppliedId: sId
       })
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };
