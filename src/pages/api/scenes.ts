@@ -60,7 +60,7 @@ async function get(
       c.scenes.getScenes({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
-        filterSuppliedId: sId
+        filterSuppliedId: sId,
       })
     );
     return { cursor: r.cursor, data: r.page.data, status: 200 };

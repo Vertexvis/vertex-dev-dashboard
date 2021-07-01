@@ -33,6 +33,7 @@ import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
 import { DataLoadError } from "../shared/DataLoadError";
+import { DefaultPageSize } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -69,7 +70,7 @@ export function SceneTable({
   onEditClick,
   vertexEnv,
 }: Props): JSX.Element {
-  const pageSize = 50;
+  const pageSize = DefaultPageSize;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
@@ -77,8 +78,8 @@ export function SceneTable({
     string | undefined
   >();
   const [suppliedId, setSuppliedIdFilter] = React.useState<
-  string | undefined
->();
+    string | undefined
+  >();
   const [cursor, setCursor] = React.useState<string | undefined>();
   const { data, error } = useScenes({ cursor, pageSize, suppliedId });
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
@@ -184,7 +185,7 @@ export function SceneTable({
           onDelete={handleDelete}
           title="Scenes"
         />
-                <Box
+        <Box
           sx={{
             px: { sm: 2 },
             display: "flex",

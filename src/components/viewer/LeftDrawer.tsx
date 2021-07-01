@@ -76,15 +76,15 @@ export function LeftDrawer({
             </IconButton>
           </Tooltip>
           <Tooltip title="Collapse All">
-          <IconButton
-            sx={{ width: "36px" }}
-            onClick={() => {
-              setCollapseAll(true);
-              setExpandAll(false);
-            }}
-          >
-            <CollapseAll />
-          </IconButton>
+            <IconButton
+              sx={{ width: "36px" }}
+              onClick={() => {
+                setCollapseAll(true);
+                setExpandAll(false);
+              }}
+            >
+              <CollapseAll />
+            </IconButton>
           </Tooltip>
         </Box>
         <IconButton onClick={onClose}>

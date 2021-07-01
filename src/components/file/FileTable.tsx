@@ -23,6 +23,7 @@ import { toLocaleString } from "../../lib/dates";
 import { toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
+import { DefaultPageSize } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -47,7 +48,7 @@ function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
 }
 
 export function FilesTable(): JSX.Element {
-  const pageSize = 50;
+  const pageSize = DefaultPageSize;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);

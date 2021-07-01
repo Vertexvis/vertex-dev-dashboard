@@ -82,7 +82,11 @@ export default function CreatePartDialog({
     <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Create Part</DialogTitle>
       <DialogContent>
-        {targetFileId && <Typography><strong>File:</strong> {targetFileName}</Typography>}
+        {targetFileId && (
+          <Typography>
+            <strong>File:</strong> {targetFileName}
+          </Typography>
+        )}
         {!targetFileId && (
           <FormControl
             component="fieldset"

@@ -21,6 +21,7 @@ interface AppBarProps extends MuiAppBarProps {
   readonly open?: boolean;
 }
 
+export const DefaultPageSize = 25;
 export const LeftDrawerWidth = 300;
 export const RightDrawerWidth = 300;
 

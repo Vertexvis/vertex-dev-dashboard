@@ -21,6 +21,7 @@ import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
 import { DataLoadError } from "../shared/DataLoadError";
+import { DefaultPageSize } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -51,7 +52,7 @@ const maybeQueryParam = (
 ): string | undefined => (Array.isArray(target) ? target[0] : target);
 
 export function PartTable(): JSX.Element {
-  const pageSize = 50;
+  const pageSize = DefaultPageSize;
   const rowHeight = 53;
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);

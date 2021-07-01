@@ -21,7 +21,9 @@ export default function SceneViewer(): JSX.Element {
   const [credentials, setCredentials] = React.useState<
     StreamCredentials | undefined
   >();
-  const [selectedItemId, setSelectedItemId] = React.useState<string | undefined>();
+  const [selectedItemId, setSelectedItemId] = React.useState<
+    string | undefined
+  >();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
 
