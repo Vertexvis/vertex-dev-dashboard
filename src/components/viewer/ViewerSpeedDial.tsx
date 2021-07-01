@@ -1,5 +1,5 @@
 import { SpeedDial, SpeedDialAction } from "@material-ui/core";
-import { ZoomOutMap } from "@material-ui/icons";
+import { FileCopy,ZoomOutMap } from "@material-ui/icons";
 
 import { Action, AnimationDurationMs } from "./Viewer";
 
@@ -13,6 +13,22 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
       icon: <ZoomOutMap />,
       name: "Fit all",
       onClick: () => fitAll(),
+    },
+    {
+      icon: <FileCopy />,
+      name: "Copy Camera",
+      onClick: async () => {
+        const c = (await viewer.current?.scene())?.camera();
+        if (c) {
+          await navigator.clipboard.writeText(
+            JSON.stringify({
+              position: c?.position,
+              up: c?.up,
+              lookAt: c?.lookAt,
+            })
+          );
+        }
+      },
     },
   ];
 
