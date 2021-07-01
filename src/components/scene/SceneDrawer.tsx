@@ -8,9 +8,10 @@ import {
   TableCell,
   TableContainer,
   TableRow,
+  Tooltip,
   Typography,
 } from "@material-ui/core";
-import { Close } from "@material-ui/icons";
+import { Close, FileCopyOutlined } from "@material-ui/icons";
 import React from "react";
 import { useForm } from "react-hook-form";
 
@@ -47,6 +48,10 @@ export function SceneDrawer({
       method: "PATCH",
     });
     onClose();
+  }
+
+  function copyCamera() {
+    navigator.clipboard.writeText(JSON.stringify(scene?.camera));
   }
 
   React.useEffect(() => {
@@ -192,7 +197,21 @@ export function SceneDrawer({
                 {scene.camera && (
                   <TableRow>
                     <TableCell>
-                      <Typography variant="subtitle2">Camera</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography variant="subtitle2">Camera</Typography>
+                        <Tooltip title="Copy camera JSON">
+                          <IconButton onClick={copyCamera}>
+                            <FileCopyOutlined />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+
                       <Table size="small">
                         <TableBody>
                           <TableRow>
