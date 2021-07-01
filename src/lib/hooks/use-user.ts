@@ -3,13 +3,14 @@ import { useEffect } from "react";
 import useSWR from "swr";
 
 interface UseUserResponse {
-  /* eslint-disable */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly user: any;
   readonly mutate: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: any,
     shouldRevalidate?: boolean | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<any>;
-  /* eslint-enable */
 }
 
 export default function useUser({

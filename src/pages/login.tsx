@@ -18,27 +18,30 @@ export default function Login(): JSX.Element {
   const [id, setId] = React.useState<string | undefined>();
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState("");
   const router = useRouter();
 
   const invalidId = id != null && id.length !== IdLength;
   // In platdev, secrets can be 36-charaters
   const invalidSecret =
-    secret != null && secret.length < SecretLength && secret.length > 36;
+    secret != null && (secret.length < SecretLength || secret.length > 36);
 
   async function handleSubmit() {
     if (!id || !secret) return;
 
     setLoading(true);
 
-    const res = await fetch("/api/login", {
-      body: JSON.stringify({ id, secret }),
-      method: "POST",
-    });
+    const res = await (
+      await fetch("/api/login", {
+        body: JSON.stringify({ id, secret }),
+        method: "POST",
+      })
+    ).json();
 
-    const ok = (await res.json()).status === 200;
-    if (ok) {
-      router.push("/");
-    }
+    if (res.status === 401) {
+      setError("Invalid credentials.");
+      setLoading(false);
+    } else if (res.status === 200) router.push("/");
   }
 
   return (
@@ -97,6 +100,11 @@ export default function Login(): JSX.Element {
           {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
           <Box>Sign In</Box>
         </Button>
+        {error && (
+          <Typography sx={{ my: 2 }} variant="body2">
+            {error}
+          </Typography>
+        )}
       </Paper>
     </Box>
   );

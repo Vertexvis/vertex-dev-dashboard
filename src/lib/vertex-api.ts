@@ -14,7 +14,12 @@ import { Session } from "next-iron-session";
 
 import { ErrorRes, ServerError } from "./api";
 import { Config } from "./config";
-import { OAuthCredentials, SessionToken } from "./with-session";
+import {
+  CredsKey,
+  OAuthCredentials,
+  SessionToken,
+  TokenKey,
+} from "./with-session";
 
 const TenMinsInMs = 600_000;
 
@@ -80,15 +85,15 @@ export async function getClientWithCreds(
 export async function getClientFromSession(
   session: Session
 ): Promise<VertexClient> {
-  const token = session.get("token") as SessionToken;
-  const creds = session.get("creds") as OAuthCredentials;
+  const token = session.get(TokenKey) as SessionToken;
+  const creds = session.get(CredsKey) as OAuthCredentials;
 
   const expiresIn = token.expiration - Date.now();
   if (expiresIn < TenMinsInMs) {
     const newToken = await getToken(creds.id, creds.secret);
     const newExpiration = Date.now() + newToken.expires_in * 1000;
 
-    session.set("token", {
+    session.set(TokenKey, {
       token: newToken,
       expiration: newExpiration,
     });

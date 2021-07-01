@@ -27,7 +27,7 @@ export type CreatePartReq = Pick<
   CreatePartRequestDataAttributes,
   "suppliedId" | "suppliedRevisionId" | "indexMetadata"
 > & {
-  fileId: string;
+  readonly fileId: string;
 };
 
 export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
@@ -102,7 +102,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
         attributes: {
           suppliedId: b.suppliedId,
           suppliedRevisionId: b.suppliedRevisionId,
-          indexMetadata: b.indexMetadata
+          indexMetadata: b.indexMetadata,
         },
         relationships: {
           source: {

@@ -20,6 +20,9 @@ export const COOKIE_ATTRIBURES = {
   },
 };
 
+export const CredsKey = "creds";
+export const TokenKey = "token";
+
 export type SessionToken = {
   readonly token: OAuth2Token;
   readonly expiration: number;
@@ -31,7 +34,7 @@ export type OAuthCredentials = {
 };
 
 // optionally add stronger typing for next-specific implementation
-export type NextIronRequest = NextApiRequest & { session: Session };
+export type NextIronRequest = NextApiRequest & { readonly session: Session };
 
 const withSession = (
   handler: Handler<NextIronRequest, NextApiResponse>
@@ -56,22 +59,12 @@ export function serverSidePropsHandler({
 }: {
   req: NextIronRequest;
 }): GetServerSidePropsResult<CommonProps> {
-  const token = req.session.get("token") as SessionToken;
-  const creds = req.session.get("creds") as OAuthCredentials;
+  const token: SessionToken | undefined = req.session.get(TokenKey);
+  const creds: OAuthCredentials | undefined = req.session.get(CredsKey);
 
-  if (!req.session || !token) {
-    return {
-      redirect: {
-        statusCode: 302,
-        destination: "/login",
-      },
-    };
+  if (!req.session || !creds || !token) {
+    return { redirect: { statusCode: 302, destination: "/login" } };
   }
 
-  return {
-    props: {
-      clientId: creds.id as string,
-      vertexEnv: Config.vertexEnv,
-    },
-  };
+  return { props: { clientId: creds.id, vertexEnv: Config.vertexEnv } };
 }

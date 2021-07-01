@@ -2,7 +2,7 @@ import { TableCell, TableRow } from "@material-ui/core";
 import React from "react";
 
 interface NewType {
-  colSpan: number;
+  readonly colSpan: number;
 }
 
 export function DataLoadError({ colSpan }: NewType): JSX.Element {
