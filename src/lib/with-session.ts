@@ -11,7 +11,7 @@ import { Handler, Session, withIronSession } from "next-iron-session";
 import { Config } from "../lib/config";
 
 export const COOKIE_ATTRIBURES = {
-  password: "5903c50f32dc41f43987112d7d7a0a556102a5a1966aa4beb648e48c33b9d3a7",
+  password: process.env.COOKIE_SECRET || "",
   cookieName: "sess",
   cookieOptions: {
     // the next line allows to use the session in non-https environments like

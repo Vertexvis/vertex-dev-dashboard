@@ -78,8 +78,11 @@ export default function CreatePartDialog({
           component="fieldset"
           sx={{ height: 300, width: "100%", overflow: "auto" }}
         >
-          <FormLabel component="legend">Recent Files</FormLabel>
+          <FormLabel htmlFor="files-list" component="legend">
+            Recent Files
+          </FormLabel>
           <RadioGroup
+            id="files-list"
             aria-label="files"
             name="radio-buttons-group"
             onChange={(e) => {

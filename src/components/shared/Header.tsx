@@ -1,7 +1,8 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
-import { Box, IconButton, Link } from "@material-ui/core";
+import { Box, Button, IconButton, Link } from "@material-ui/core";
 import { Menu as MenuIcon } from "@material-ui/icons";
 import Image from "next/image";
+import { useRouter } from 'next/router';
 
 interface Props {
   readonly onMenuClick?: () => void;
@@ -9,6 +10,13 @@ interface Props {
 }
 
 export function Header({ onMenuClick, open }: Props): JSX.Element {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await fetch('/api/logout');
+    router.push('/login');
+  }
+
   return (
     <Box
       sx={{
@@ -37,6 +45,9 @@ export function Header({ onMenuClick, open }: Props): JSX.Element {
         <Link href="/">
           <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
         </Link>
+      </Box>
+      <Box sx={{ ml: "auto" }}>
+        <Button onClick={handleSignOut}>Sign Out</Button>
       </Box>
     </Box>
   );

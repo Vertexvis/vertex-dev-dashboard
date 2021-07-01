@@ -16,6 +16,8 @@ import { ErrorRes, ServerError } from "./api";
 import { Config } from "./config";
 import { OAuthCredentials, SessionToken } from "./with-session";
 
+const TenMinsInMs = 600_000;
+
 const basePath =
   Config.vertexEnv === "platprod"
     ? "https://platform.vertexvis.com"
@@ -40,21 +42,6 @@ export async function makeCall<T>(
     logError(error);
     return error.vertexError?.res ?? toFailure(ServerError);
   }
-}
-
-let Client: VertexClient | undefined;
-export async function getClient(): Promise<VertexClient> {
-  if (Client != null) return Client;
-
-  Client = await VertexClient.build({
-    basePath,
-    client: {
-      id: process.env.VERTEX_CLIENT_ID ?? "",
-      secret: process.env.VERTEX_CLIENT_SECRET ?? "",
-    },
-  });
-
-  return Client;
 }
 
 export async function getToken(
@@ -90,13 +77,29 @@ export async function getClientWithCreds(
   return client;
 }
 
-export function getClientFromSession(session: Session): Promise<VertexClient> {
+export async function getClientFromSession(session: Session): Promise<VertexClient> {
   const token = session.get("token") as SessionToken;
   const creds = session.get("creds") as OAuthCredentials;
 
+  const expiresIn = token.expiration - Date.now()
+  if (expiresIn < TenMinsInMs) {
+    const newToken = await getToken(creds.id, creds.secret);
+    const newExpiration = Date.now() + newToken.expires_in * 1000;
+
+    session.set("token", {
+      token: newToken,
+      expiration: newExpiration,
+    });
+
+    return getClientWithCreds(creds.id, creds.secret, {
+      ...newToken,
+      expires_in: newExpiration
+    });
+  }
+
   return getClientWithCreds(creds.id, creds.secret, {
     ...token.token,
-    expires_in: token.expiration - Date.now()
+    expires_in: expiresIn
   });
 }
 
