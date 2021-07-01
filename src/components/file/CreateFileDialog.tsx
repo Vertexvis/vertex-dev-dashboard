@@ -1,16 +1,19 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Fade,
+  FormControlLabel,
   LinearProgress,
   TextField,
 } from "@material-ui/core";
 import { CloudUploadOutlined } from "@material-ui/icons";
 import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
+import { useRouter } from "next/router";
 import React from "react";
 
 import { CreateFileRes } from "../../pages/api/files";
@@ -29,8 +32,10 @@ export default function CreateFileDialog({
   const [file, setFile] = React.useState<File | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [rootFileName, setRootFileName] = React.useState<string | undefined>();
-  const [submitDisabled, setSubmitDisabled] = React.useState<boolean>(true);
+  const [submitDisabled, setSubmitDisabled] = React.useState(true);
+  const [createPart, setCreatePart] = React.useState(true);
   const [progress, setProgress] = React.useState<boolean>(false);
+  const router = useRouter();
 
   async function handleUpload() {
     if (file) {
@@ -61,6 +66,11 @@ export default function CreateFileDialog({
       });
 
       onFileCreated(fileRes.id);
+
+      if (createPart) {
+        router.push(`/parts?create=${fileRes.id}&n=${file?.name}`);
+      }
+
       setFile(undefined);
       setSuppliedId(undefined);
       setRootFileName(undefined);
@@ -107,6 +117,15 @@ export default function CreateFileDialog({
           </label>
           {!!file && <span style={{ marginLeft: "auto" }}>{file?.name}</span>}
         </Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              defaultChecked
+              onChange={(e) => setCreatePart(e.target.checked)}
+            />
+          }
+          label="Create Part After Upload"
+        />
       </DialogContent>
       <Fade
         in={progress}

@@ -12,6 +12,7 @@ import {
 } from "@material-ui/core";
 import { Add } from "@material-ui/icons";
 import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -45,6 +46,10 @@ function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
+const maybeQueryParam = (
+  target: string | string[] | undefined
+): string | undefined => (Array.isArray(target) ? target[0] : target);
+
 export function PartTable(): JSX.Element {
   const pageSize = 50;
   const rowHeight = 53;
@@ -57,7 +62,9 @@ export function PartTable(): JSX.Element {
     string | undefined
   >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const [showDialog, setShowDialog] = React.useState(false);
+  const router = useRouter();
+
+  const [showDialog, setShowDialog] = React.useState(!!router.query.create);
 
   const { data, error } = useParts({ cursor, pageSize, suppliedId });
 
@@ -219,6 +226,8 @@ export function PartTable(): JSX.Element {
           console.log("Queued translation initiated: " + id);
           setShowDialog(false);
         }}
+        targetFileId={maybeQueryParam(router.query.create)}
+        targetFileName={maybeQueryParam(router.query.n)}
       />
     </>
   );
