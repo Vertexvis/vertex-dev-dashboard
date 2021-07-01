@@ -11,6 +11,7 @@ import {
   Radio,
   RadioGroup,
   TextField,
+  Typography,
 } from "@material-ui/core";
 import React from "react";
 import useSWR from "swr";
@@ -23,6 +24,8 @@ interface CreatePartDialogProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly onPartCreated: (queuedTranslationId: string) => void;
+  readonly targetFileId?: string;
+  readonly targetFileName?: string;
 }
 
 function useFiles() {
@@ -33,8 +36,10 @@ export default function CreatePartDialog({
   open,
   onClose,
   onPartCreated,
+  targetFileId,
+  targetFileName,
 }: CreatePartDialogProps): JSX.Element {
-  const [file, setFile] = React.useState<string | undefined>();
+  const [file, setFile] = React.useState(targetFileId);
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [indexMetadata, setIndexMetadata] = React.useState(true);
   const [suppliedRevisionId, setSuppliedRevisionId] = React.useState<
@@ -57,7 +62,7 @@ export default function CreatePartDialog({
       fileId: file,
       suppliedId,
       suppliedRevisionId,
-      indexMetadata
+      indexMetadata,
     };
 
     const partRes = (await (
@@ -77,35 +82,39 @@ export default function CreatePartDialog({
     <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Create Part</DialogTitle>
       <DialogContent>
-        <FormControl
-          component="fieldset"
-          sx={{ height: 300, width: "100%", overflow: "auto" }}
-        >
-          <FormLabel htmlFor="files-list" component="legend">
-            Recent Files
-          </FormLabel>
-          <RadioGroup
-            id="files-list"
-            aria-label="files"
-            name="radio-buttons-group"
-            onChange={(e) => {
-              setFile(e.target.value);
-              checkSubmit();
-            }}
+        {targetFileId && <Typography><strong>File:</strong> {targetFileName}</Typography>}
+        {!targetFileId && (
+          <FormControl
+            component="fieldset"
+            sx={{ height: 300, width: "100%", overflow: "auto" }}
           >
-            {files &&
-              files?.items.map((f) => {
-                return (
-                  <FormControlLabel
-                    key={f.id}
-                    value={f.id}
-                    control={<Radio />}
-                    label={f.name}
-                  />
-                );
-              })}
-          </RadioGroup>
-        </FormControl>
+            <FormLabel htmlFor="files-list" component="legend">
+              Recent Files
+            </FormLabel>
+            <RadioGroup
+              id="files-list"
+              aria-label="files"
+              name="radio-buttons-group"
+              onChange={(e) => {
+                setFile(e.target.value);
+                checkSubmit();
+              }}
+            >
+              {files &&
+                files?.items.map((f) => {
+                  return (
+                    <FormControlLabel
+                      key={f.id}
+                      value={f.id}
+                      control={<Radio />}
+                      label={f.name}
+                    />
+                  );
+                })}
+            </RadioGroup>
+          </FormControl>
+        )}
+
         <TextField
           fullWidth
           required
