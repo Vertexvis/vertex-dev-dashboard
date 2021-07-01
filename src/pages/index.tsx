@@ -1,22 +1,15 @@
-import { Environment } from "@vertexvis/viewer";
 import React from "react";
 
 import { SceneDrawer } from "../components/scene/SceneDrawer";
 import { SceneTable } from "../components/scene/SceneTable";
 import { Layout } from "../components/shared/Layout";
-import { Config } from "../lib/config";
 import { Scene } from "../lib/scenes";
+import { CommonProps, defaultSSP } from "../lib/with-session";
 
-interface Props {
-  readonly clientId?: string;
-  readonly vertexEnv: Environment;
-}
-
-export function getServerSideProps(): Promise<{ props: Props }> {
-  return Promise.resolve({ props: Config });
-}
-
-export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
+export default function Home({
+  clientId,
+  vertexEnv,
+}: CommonProps): JSX.Element {
   const [editing, setEditing] = React.useState<boolean>(false);
   const [scene, setScene] = React.useState<Scene | undefined>();
   const drawerOpen = Boolean(scene);
@@ -59,3 +52,5 @@ export default function Home({ clientId, vertexEnv }: Props): JSX.Element {
     />
   );
 }
+
+export const getServerSideProps = defaultSSP;

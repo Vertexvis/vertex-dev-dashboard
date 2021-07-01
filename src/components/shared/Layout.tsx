@@ -5,13 +5,12 @@ import {
   Toolbar,
 } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
-import { useSession } from "next-auth/client";
-import React from "react";
 
+import useUser from "../../lib/hooks/use-user";
 import { easeOutEntering, sharpLeaving } from "../../lib/transitions";
 import { Header } from "./Header";
 import { LeftDrawer } from "./LeftDrawer";
-import { SignInRequired } from "./SignInRequired";
+
 
 interface Props {
   readonly main: React.ReactNode;
@@ -64,7 +63,7 @@ export function Layout({
   rightDrawer,
   rightDrawerOpen,
 }: Props): JSX.Element {
-  const [session] = useSession();
+  const {user} = useUser({ redirectTo: "/login" })
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -76,7 +75,7 @@ export function Layout({
       <LeftDrawer />
       <Main open={rightDrawerOpen}>
         <Toolbar variant="dense" />
-        {session != null ? main : <SignInRequired />}
+        {user && (main)}
       </Main>
       {rightDrawer}
     </Box>

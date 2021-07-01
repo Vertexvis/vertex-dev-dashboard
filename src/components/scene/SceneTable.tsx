@@ -154,7 +154,7 @@ export function SceneTable({
   async function handleGetStreamKey(sceneId: string) {
     setKeyLoadingSceneId(sceneId);
     const b = await fetch("/api/stream-keys", {
-      body: JSON.stringify({ sceneId }),
+      body: JSON.stringify({ id: sceneId }),
       method: "POST",
     });
     const { key } = await b.json();
