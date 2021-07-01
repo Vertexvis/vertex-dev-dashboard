@@ -11,16 +11,20 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import React from "react";
 
+const IdLength = 64;
+const SecretLength = 26;
+
 export default function Login(): JSX.Element {
   const [id, setId] = React.useState<string | undefined>();
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
 
+  const invalidId = id != null && id.length !== IdLength;
+  const invalidSecret = secret != null && secret.length !== SecretLength;
+
   async function handleSubmit() {
-    if (!id || !secret) {
-      return;
-    }
+    if (!id || !secret) return;
 
     setLoading(true);
 
@@ -54,9 +58,13 @@ export default function Login(): JSX.Element {
           <Image src="/vertex-logo.svg" alt="Vertex" width="50" height="50" />
         </Box>
 
-        <FormLabel component="legend">Enter your API key and secret</FormLabel>
+        <FormLabel component="legend">Enter your API credentials</FormLabel>
         <TextField
+          error={invalidId}
           fullWidth
+          helperText={
+            invalidId ? `${IdLength}-character client ID required.` : undefined
+          }
           label="Client ID"
           margin="normal"
           onChange={(e) => setId(e.target.value)}
@@ -64,12 +72,18 @@ export default function Login(): JSX.Element {
           type="text"
         />
         <TextField
+          error={invalidSecret}
           fullWidth
+          helperText={
+            invalidSecret
+              ? `${SecretLength}-character client secret required.`
+              : undefined
+          }
           label="Client Secret"
           margin="normal"
           onChange={(e) => setSecret(e.target.value)}
           size="small"
-          type="text"
+          type="password"
         />
 
         <Button

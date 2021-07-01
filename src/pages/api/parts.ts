@@ -23,7 +23,7 @@ import {
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
-export type CreatePartBody = Pick<
+export type CreatePartReq = Pick<
   CreatePartRequestDataAttributes,
   "suppliedId" | "suppliedRevisionId" | "indexMetadata"
 > & {
@@ -91,7 +91,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 }
 
 async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
-  const b: CreatePartBody = JSON.parse(req.body);
+  const b: CreatePartReq = JSON.parse(req.body);
   if (!req.body) return InvalidBody;
 
   const c = await getClientFromSession(req.session);

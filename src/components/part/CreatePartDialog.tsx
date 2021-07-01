@@ -16,7 +16,7 @@ import useSWR from "swr";
 
 import { fetcher } from "../../lib/api";
 import { toFilePage } from "../../lib/files";
-import { CreatePartBody, CreatePartRes } from "../../pages/api/parts";
+import { CreatePartReq, CreatePartRes } from "../../pages/api/parts";
 
 interface CreatePartDialogProps {
   readonly open: boolean;
@@ -51,7 +51,7 @@ export default function CreatePartDialog({
 
     setSubmitDisabled(true);
 
-    const attrs: CreatePartBody = {
+    const attrs: CreatePartReq = {
       fileId: file,
       suppliedId,
       suppliedRevisionId,

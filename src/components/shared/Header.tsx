@@ -26,12 +26,7 @@ export function Header({ onMenuClick, open }: Props): JSX.Element {
         width: "100%",
       }}
     >
-      <Box
-        sx={{
-          alignItems: "center",
-          display: "flex",
-        }}
-      >
+      <Box sx={{ alignItems: "center", display: "flex" }}>
         {onMenuClick && (
           <IconButton
             color="inherit"

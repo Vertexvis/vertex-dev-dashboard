@@ -4,7 +4,7 @@ import { MethodNotAllowed } from "../../lib/api";
 import { getToken } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
-export type LoginBody = {
+export type LoginReq = {
   id: string;
   secret: string;
 };
@@ -14,7 +14,7 @@ export default withSession(async function (
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    const b: LoginBody = JSON.parse(req.body);
+    const b: LoginReq = JSON.parse(req.body);
     const token = await getToken(b.id, b.secret);
 
     req.session.set("creds", {
