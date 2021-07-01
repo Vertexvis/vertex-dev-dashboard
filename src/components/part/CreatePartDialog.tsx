@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -35,6 +36,7 @@ export default function CreatePartDialog({
 }: CreatePartDialogProps): JSX.Element {
   const [file, setFile] = React.useState<string | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
+  const [indexMetadata, setIndexMetadata] = React.useState(true);
   const [suppliedRevisionId, setSuppliedRevisionId] = React.useState<
     string | undefined
   >();
@@ -55,6 +57,7 @@ export default function CreatePartDialog({
       fileId: file,
       suppliedId,
       suppliedRevisionId,
+      indexMetadata
     };
 
     const partRes = (await (
@@ -126,6 +129,15 @@ export default function CreatePartDialog({
           }}
           size="small"
           type="text"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              defaultChecked
+              onChange={(e) => setIndexMetadata(e.target.checked)}
+            />
+          }
+          label="Index Metadata"
         />
       </DialogContent>
       <DialogActions>

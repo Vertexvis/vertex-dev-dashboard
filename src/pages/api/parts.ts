@@ -102,6 +102,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
         attributes: {
           suppliedId: b.suppliedId,
           suppliedRevisionId: b.suppliedRevisionId,
+          indexMetadata: b.indexMetadata
         },
         relationships: {
           source: {
