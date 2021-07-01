@@ -4,7 +4,7 @@ import useSWR from "swr";
 
 interface UseUserResponse {
   /* eslint-disable */
-  readonly user: any;  
+  readonly user: any;
   readonly mutate: (
     data?: any,
     shouldRevalidate?: boolean | undefined

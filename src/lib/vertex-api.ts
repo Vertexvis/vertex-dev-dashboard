@@ -77,11 +77,13 @@ export async function getClientWithCreds(
   return client;
 }
 
-export async function getClientFromSession(session: Session): Promise<VertexClient> {
+export async function getClientFromSession(
+  session: Session
+): Promise<VertexClient> {
   const token = session.get("token") as SessionToken;
   const creds = session.get("creds") as OAuthCredentials;
 
-  const expiresIn = token.expiration - Date.now()
+  const expiresIn = token.expiration - Date.now();
   if (expiresIn < TenMinsInMs) {
     const newToken = await getToken(creds.id, creds.secret);
     const newExpiration = Date.now() + newToken.expires_in * 1000;
@@ -93,13 +95,13 @@ export async function getClientFromSession(session: Session): Promise<VertexClie
 
     return getClientWithCreds(creds.id, creds.secret, {
       ...newToken,
-      expires_in: newExpiration
+      expires_in: newExpiration,
     });
   }
 
   return getClientWithCreds(creds.id, creds.secret, {
     ...token.token,
-    expires_in: expiresIn
+    expires_in: expiresIn,
   });
 }
 

@@ -12,7 +12,7 @@ import {
   Res,
   toErrorRes,
 } from "../../lib/api";
-import { getClientFromSession,makeCall } from "../../lib/vertex-api";
+import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
 export interface CreateStreamKeyRes extends Res {

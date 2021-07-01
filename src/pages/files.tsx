@@ -8,4 +8,4 @@ export default function Files(): JSX.Element {
   return <Layout main={<FilesTable />} />;
 }
 
-export const getServerSideProps = defaultSSP
+export const getServerSideProps = defaultSSP;

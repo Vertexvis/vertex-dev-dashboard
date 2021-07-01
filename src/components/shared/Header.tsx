@@ -2,7 +2,7 @@
 import { Box, Button, IconButton, Link } from "@material-ui/core";
 import { Menu as MenuIcon } from "@material-ui/icons";
 import Image from "next/image";
-import { useRouter } from 'next/router';
+import { useRouter } from "next/router";
 
 interface Props {
   readonly onMenuClick?: () => void;
@@ -13,8 +13,8 @@ export function Header({ onMenuClick, open }: Props): JSX.Element {
   const router = useRouter();
 
   async function handleSignOut() {
-    await fetch('/api/logout');
-    router.push('/login');
+    await fetch("/api/logout");
+    router.push("/login");
   }
 
   return (

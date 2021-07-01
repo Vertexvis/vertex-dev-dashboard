@@ -21,14 +21,14 @@ export const COOKIE_ATTRIBURES = {
 };
 
 export type SessionToken = {
-  readonly token: OAuth2Token,
-  readonly expiration: number
-}
+  readonly token: OAuth2Token;
+  readonly expiration: number;
+};
 
 export type OAuthCredentials = {
   readonly id: string;
   readonly secret: string;
-}
+};
 
 // optionally add stronger typing for next-specific implementation
 export type NextIronRequest = NextApiRequest & { session: Session };
@@ -55,7 +55,7 @@ export function serverSidePropsHandler({
   req,
 }: {
   req: NextIronRequest;
-}): GetServerSidePropsResult<CommonProps> {  
+}): GetServerSidePropsResult<CommonProps> {
   const token = req.session.get("token") as SessionToken;
   const creds = req.session.get("creds") as OAuthCredentials;
 

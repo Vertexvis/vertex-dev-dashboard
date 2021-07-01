@@ -1,8 +1,4 @@
-import {
-  head,
-  logError,
-  PartRevisionData,
-} from "@vertexvis/api-client-node";
+import { head, logError, PartRevisionData } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import {

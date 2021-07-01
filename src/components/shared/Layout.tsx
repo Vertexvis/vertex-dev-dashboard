@@ -11,7 +11,6 @@ import { easeOutEntering, sharpLeaving } from "../../lib/transitions";
 import { Header } from "./Header";
 import { LeftDrawer } from "./LeftDrawer";
 
-
 interface Props {
   readonly main: React.ReactNode;
   readonly rightDrawer?: React.ReactNode;
@@ -63,7 +62,7 @@ export function Layout({
   rightDrawer,
   rightDrawerOpen,
 }: Props): JSX.Element {
-  const {user} = useUser({ redirectTo: "/login" })
+  const { user } = useUser({ redirectTo: "/login" });
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -75,7 +74,7 @@ export function Layout({
       <LeftDrawer />
       <Main open={rightDrawerOpen}>
         <Toolbar variant="dense" />
-        {user && (main)}
+        {user && main}
       </Main>
       {rightDrawer}
     </Box>

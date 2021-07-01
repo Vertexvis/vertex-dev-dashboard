@@ -52,7 +52,7 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-})
+});
 
 async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
   try {
