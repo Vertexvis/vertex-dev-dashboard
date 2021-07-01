@@ -1,5 +1,5 @@
 import { SpeedDial, SpeedDialAction } from "@material-ui/core";
-import { FileCopy,ZoomOutMap } from "@material-ui/icons";
+import { FileCopy, ZoomOutMap } from "@material-ui/icons";
 
 import { Action, AnimationDurationMs } from "./Viewer";
 
