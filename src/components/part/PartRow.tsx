@@ -63,11 +63,7 @@ export default function PartRow({
         sx={{ "& > *": { borderBottom: "unset" } }}
       >
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
           </IconButton>
         </TableCell>
@@ -92,7 +88,7 @@ export default function PartRow({
             <Typography variant="subtitle1" gutterBottom component="div">
               Revisions
             </Typography>
-            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>

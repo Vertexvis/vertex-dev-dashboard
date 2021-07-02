@@ -17,7 +17,7 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
     },
     {
       icon: <FileCopyOutlined />,
-      name: "Copy Camera",
+      name: "Copy camera",
       onClick: async () => {
         const c = (await viewer.current?.scene())?.camera();
         if (c) {

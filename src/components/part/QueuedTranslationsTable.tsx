@@ -58,7 +58,7 @@ export function QueuedTranslationsTable({
         {isValidating && <CircularProgress size={16} />}
       </Box>
 
-      <Table aria-label="simple table">
+      <Table>
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>

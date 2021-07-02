@@ -265,7 +265,6 @@ export function SceneTable({
                           )}
                           <Tooltip title="Generate stream key">
                             <IconButton
-                              aria-label="stream-key"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleGetStreamKey(row.id);

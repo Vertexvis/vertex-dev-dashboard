@@ -97,7 +97,6 @@ export default function CreatePartDialog({
             </FormLabel>
             <RadioGroup
               id="files-list"
-              aria-label="files"
               name="radio-buttons-group"
               onChange={(e) => {
                 setFile(e.target.value);
