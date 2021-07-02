@@ -1,6 +1,8 @@
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { ColorMaterial, Components } from "@vertexvis/viewer";
 
+import { AnimationDurationMs } from "../components/viewer/Viewer";
+
 const SelectColor = {
   ...ColorMaterial.create(255, 255, 0),
   glossiness: 4,
@@ -15,6 +17,18 @@ interface SelectByHitReq extends Req {
   readonly hit?: vertexvis.protobuf.stream.IHit;
 }
 
+export async function fitAll({ viewer }: Req): Promise<void> {
+  if (viewer == null) return;
+
+  const scene = await viewer.scene();
+  if (scene == null) return;
+
+  await scene
+    ?.camera()
+    .viewAll()
+    .render({ animation: { milliseconds: AnimationDurationMs } });
+}
+
 export async function selectByHit({
   hit,
   viewer,
@@ -25,11 +39,6 @@ export async function selectByHit({
   if (scene == null) return;
 
   const id = hit?.itemId?.hex;
-  console.debug(
-    `${hit?.itemSuppliedId?.value ?? hit?.itemId?.hex},${
-      hit?.metadata?.partName
-    }`
-  );
   if (id) {
     await scene
       .items((op) => [

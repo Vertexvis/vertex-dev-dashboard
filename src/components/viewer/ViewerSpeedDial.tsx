@@ -1,7 +1,8 @@
 import { SpeedDial, SpeedDialAction } from "@material-ui/core";
-import { FileCopy, ZoomOutMap } from "@material-ui/icons";
+import { FileCopyOutlined, ZoomOutMapOutlined } from "@material-ui/icons";
 
-import { Action, AnimationDurationMs } from "./Viewer";
+import { fitAll } from "../../lib/scene-items";
+import { Action } from "./Viewer";
 
 interface Props {
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
@@ -10,12 +11,12 @@ interface Props {
 export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
   const actions: Action[] = [
     {
-      icon: <ZoomOutMap />,
+      icon: <ZoomOutMapOutlined />,
       name: "Fit all",
-      onClick: () => fitAll(),
+      onClick: () => fitAll({ viewer: viewer.current }),
     },
     {
-      icon: <FileCopy />,
+      icon: <FileCopyOutlined />,
       name: "Copy Camera",
       onClick: async () => {
         const c = (await viewer.current?.scene())?.camera();
@@ -31,13 +32,6 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
       },
     },
   ];
-
-  async function fitAll(): Promise<void> {
-    (await viewer.current?.scene())
-      ?.camera()
-      .viewAll()
-      .render({ animation: { milliseconds: AnimationDurationMs } });
-  }
 
   return (
     <SpeedDial

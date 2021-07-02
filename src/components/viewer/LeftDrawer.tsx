@@ -15,6 +15,7 @@ interface Props {
   readonly selectedItemdId?: string;
 }
 
+const IconWidth = "36px";
 const ExpandAll = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -60,13 +61,13 @@ export function LeftDrawer({
           alignItems: "center",
           display: "flex",
           justifyContent: "space-between",
-          py: 1,
+          py: 0.5,
         }}
       >
         <Box>
           <Tooltip title="Expand All">
             <IconButton
-              sx={{ width: "36px" }}
+              sx={{ width: IconWidth }}
               onClick={() => {
                 setExpandAll(true);
                 setCollapseAll(false);
@@ -77,7 +78,7 @@ export function LeftDrawer({
           </Tooltip>
           <Tooltip title="Collapse All">
             <IconButton
-              sx={{ width: "36px" }}
+              sx={{ width: IconWidth }}
               onClick={() => {
                 setCollapseAll(true);
                 setExpandAll(false);
