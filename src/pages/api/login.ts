@@ -1,4 +1,5 @@
 import { OAuth2Token } from "@vertexvis/api-client-node";
+import { Environment } from "@vertexvis/viewer";
 import { NextApiResponse } from "next";
 
 import { ErrorRes, MethodNotAllowed, Res } from "../../lib/api";
@@ -15,7 +16,7 @@ import withSession, {
 export interface LoginReq {
   readonly id: string;
   readonly secret: string;
-  readonly env: string;
+  readonly env: Environment;
 }
 
 export default withSession(async function (

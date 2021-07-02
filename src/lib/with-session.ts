@@ -32,7 +32,7 @@ export const CredsKey = "creds";
 export const TokenKey = "token";
 export const EnvKey = "env";
 export const CookieAttributes: SessionOptions = {
-  password: process.env.COOKIE_SECRET_PLATDEV || "",
+  password: process.env.COOKIE_SECRET || "",
   cookieName: CookieName,
   cookieOptions: {
     // Allow session use in non-https environments like localhost
