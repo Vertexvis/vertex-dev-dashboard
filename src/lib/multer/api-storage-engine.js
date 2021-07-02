@@ -1,11 +1,11 @@
 import * as ironSession from "next-iron-session";
 
 import { getClientFromSession } from "../vertex-api";
-import { COOKIE_ATTRIBURES } from "../with-session";
+import { CookieAttributes } from "../with-session";
 
 const VertexAPIStorageEngine = {
   _handleFile: async function (req, file, cb) {
-    await ironSession.applySession(req, null, COOKIE_ATTRIBURES);
+    await ironSession.applySession(req, null, CookieAttributes);
 
     const id = req.query.f;
     const client = await getClientFromSession(req.session);

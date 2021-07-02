@@ -1,4 +1,3 @@
-// this file is a wrapper with defaults to be used in both API routes and `getServerSideProps` functions
 import { OAuth2Token } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import {
@@ -6,21 +5,17 @@ import {
   NextApiRequest,
   NextApiResponse,
 } from "next";
-import { Handler, Session, withIronSession } from "next-iron-session";
+import {
+  Handler,
+  Session,
+  SessionOptions,
+  withIronSession,
+} from "next-iron-session";
 
-export const COOKIE_ATTRIBURES = {
-  password: process.env.COOKIE_SECRET || "",
-  cookieName: "sess",
-  cookieOptions: {
-    // the next line allows to use the session in non-https environments like
-    // Next.js dev mode (http://localhost:3000)
-    secure: process.env.NODE_ENV === "production",
-  },
-};
-
-export const CredsKey = "creds";
-export const TokenKey = "token";
-export const EnvKey = "env";
+export interface CommonProps {
+  readonly clientId: string;
+  readonly vertexEnv: Environment;
+}
 
 export type SessionToken = {
   readonly token: OAuth2Token;
@@ -32,38 +27,42 @@ export type OAuthCredentials = {
   readonly secret: string;
 };
 
-// optionally add stronger typing for next-specific implementation
+export const CookieName = "sess";
+export const CredsKey = "creds";
+export const TokenKey = "token";
+export const EnvKey = "env";
+export const CookieAttributes: SessionOptions = {
+  password: process.env.COOKIE_SECRET_PLATDEV || "",
+  cookieName: CookieName,
+  cookieOptions: {
+    // Allow session use in non-https environments like localhost
+    secure: process.env.NODE_ENV === "production",
+  },
+};
+
 export type NextIronRequest = NextApiRequest & { readonly session: Session };
 
-const withSession = (
+export default function withSession(
   handler: Handler<NextIronRequest, NextApiResponse>
-): Handler<NextApiRequest, NextApiResponse> => {
-  return withIronSession(handler, COOKIE_ATTRIBURES);
-};
+): Handler<NextApiRequest, NextApiResponse> {
+  return withIronSession(handler, CookieAttributes);
+}
 
-export default withSession;
-
-export type CommonProps = {
-  readonly clientId: string;
-  readonly vertexEnv: Environment;
-};
-
-export const defaultSSP = withIronSession(
+export const defaultServerSideProps = withIronSession(
   serverSidePropsHandler,
-  COOKIE_ATTRIBURES
+  CookieAttributes
 );
 
 export function serverSidePropsHandler({
-  req,
+  req: { session },
 }: {
   req: NextIronRequest;
 }): GetServerSidePropsResult<CommonProps> {
-  const token: SessionToken | undefined = req.session.get(TokenKey);
-  const creds: OAuthCredentials | undefined = req.session.get(CredsKey);
-  const vertexEnv: Environment =
-    req.session.get(EnvKey) || ("platdev" as Environment);
+  const token: SessionToken | undefined = session.get(TokenKey);
+  const creds: OAuthCredentials | undefined = session.get(CredsKey);
+  const vertexEnv: Environment = session.get(EnvKey) || "platdev";
 
-  if (!req.session || !creds || !token) {
+  if (!session || !creds || !token) {
     return { redirect: { statusCode: 302, destination: "/login" } };
   }
 

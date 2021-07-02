@@ -4,7 +4,7 @@ import { SceneDrawer } from "../components/scene/SceneDrawer";
 import { SceneTable } from "../components/scene/SceneTable";
 import { Layout } from "../components/shared/Layout";
 import { Scene } from "../lib/scenes";
-import { CommonProps, defaultSSP } from "../lib/with-session";
+import { CommonProps } from "../lib/with-session";
 
 export default function Home({
   clientId,
@@ -52,5 +52,3 @@ export default function Home({
     />
   );
 }
-
-export const getServerSideProps = defaultSSP;
