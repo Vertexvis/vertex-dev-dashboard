@@ -106,7 +106,7 @@ export default function Login(): JSX.Element {
             onChange={(e) => setEnv(e.target.value)}
           >
             <MenuItem value="platdev">platdev</MenuItem>
-            <MenuItem value="platstaing">platstaging</MenuItem>
+            <MenuItem value="platstaging">platstaging</MenuItem>
           </Select>
         </FormControl>
 
