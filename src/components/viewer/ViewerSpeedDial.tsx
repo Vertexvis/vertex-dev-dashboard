@@ -13,12 +13,12 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
     {
       icon: <ZoomOutMapOutlined />,
       label: "Fit all",
-      onClick: () => fitAll({ viewer: viewer.current }),
+      onSelect: () => fitAll({ viewer: viewer.current }),
     },
     {
       icon: <FileCopyOutlined />,
       label: "Copy camera",
-      onClick: () => copySceneViewCamera({ viewer: viewer.current }),
+      onSelect: () => copySceneViewCamera({ viewer: viewer.current }),
     },
   ];
 
@@ -34,7 +34,7 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
           key={action.label}
           icon={action.icon}
           tooltipTitle={action.label}
-          onClick={() => action.onClick()}
+          onClick={() => action.onSelect()}
         />
       ))}
     </SpeedDial>
