@@ -17,6 +17,15 @@ interface SelectByHitReq extends Req {
   readonly hit?: vertexvis.protobuf.stream.IHit;
 }
 
+export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
+  if (viewer == null) return;
+
+  const scene = await viewer.scene();
+  if (scene == null) return;
+
+  await navigator.clipboard.writeText(JSON.stringify(scene.camera()));
+}
+
 export async function fitAll({ viewer }: Req): Promise<void> {
   if (viewer == null) return;
 

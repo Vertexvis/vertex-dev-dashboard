@@ -21,7 +21,7 @@ import { RightDrawer } from "../components/viewer/RightDrawer";
 import { Viewer } from "../components/viewer/Viewer";
 import { head, StreamCredentials } from "../lib/config";
 import { Metadata, toMetadata } from "../lib/metadata";
-import { fitAll, selectByHit } from "../lib/scene-items";
+import { copySceneViewCamera, fitAll, selectByHit } from "../lib/scene-items";
 import useMousePosition, { MousePosition } from "../lib/useMousePosition";
 import { useViewer } from "../lib/viewer";
 
@@ -58,7 +58,7 @@ export default function SceneViewer(): JSX.Element {
     {
       icon: <FileCopyOutlined fontSize="small" />,
       label: "Copy camera",
-      onClick: () => console.log("Clicked copy-camera"),
+      onClick: () => copySceneViewCamera({ viewer: viewer.ref.current }),
     },
   ];
 

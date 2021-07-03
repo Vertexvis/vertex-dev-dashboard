@@ -20,7 +20,7 @@ interface ViewerProps extends ViewerJSX.VertexViewer {
 
 export interface Action {
   readonly icon: React.ReactNode;
-  readonly name: string;
+  readonly label: string;
   readonly onClick: () => void;
 }
 

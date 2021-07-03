@@ -1,7 +1,7 @@
 import { SpeedDial, SpeedDialAction } from "@material-ui/core";
 import { FileCopyOutlined, ZoomOutMapOutlined } from "@material-ui/icons";
 
-import { fitAll } from "../../lib/scene-items";
+import { copySceneViewCamera, fitAll } from "../../lib/scene-items";
 import { Action } from "./Viewer";
 
 interface Props {
@@ -12,24 +12,13 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
   const actions: Action[] = [
     {
       icon: <ZoomOutMapOutlined />,
-      name: "Fit all",
+      label: "Fit all",
       onClick: () => fitAll({ viewer: viewer.current }),
     },
     {
       icon: <FileCopyOutlined />,
-      name: "Copy camera",
-      onClick: async () => {
-        const c = (await viewer.current?.scene())?.camera();
-        if (c) {
-          await navigator.clipboard.writeText(
-            JSON.stringify({
-              position: c?.position,
-              up: c?.up,
-              lookAt: c?.lookAt,
-            })
-          );
-        }
-      },
+      label: "Copy camera",
+      onClick: () => copySceneViewCamera({ viewer: viewer.current }),
     },
   ];
 
@@ -42,9 +31,9 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
     >
       {actions.map((action) => (
         <SpeedDialAction
-          key={action.name}
+          key={action.label}
           icon={action.icon}
-          tooltipTitle={action.name}
+          tooltipTitle={action.label}
           onClick={() => action.onClick()}
         />
       ))}
