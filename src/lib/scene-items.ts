@@ -23,7 +23,8 @@ export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
   const scene = await viewer.scene();
   if (scene == null) return;
 
-  await navigator.clipboard.writeText(JSON.stringify(scene.camera()));
+  const { lookAt, position, up } = scene.camera();
+  await navigator.clipboard.writeText(JSON.stringify({ position, up, lookAt }));
 }
 
 export async function fitAll({ viewer }: Req): Promise<void> {
