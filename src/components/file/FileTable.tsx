@@ -109,6 +109,7 @@ export function FilesTable(): JSX.Element {
   }
 
   async function handleDelete() {
+    setSelected(new Set());
     await fetch("/api/files", {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
@@ -171,10 +172,8 @@ export function FilesTable(): JSX.Element {
                   rowHeight={DefaultRowHeight}
                 />
               ) : (
-                page.items.map((row, index) => {
+                page.items.map((row) => {
                   const isSel = selected.has(row.id);
-                  const labelId = `table-checkbox-${index}`;
-
                   return (
                     <TableRow
                       hover
@@ -189,12 +188,7 @@ export function FilesTable(): JSX.Element {
                       >
                         <Checkbox color="primary" checked={isSel} />
                       </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
+                      <TableCell component="th" scope="row" padding="none">
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>

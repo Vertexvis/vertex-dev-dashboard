@@ -1,4 +1,9 @@
-import { head, logError, PartRevisionData } from "@vertexvis/api-client-node";
+import {
+  getPage,
+  head,
+  logError,
+  PartRevisionData,
+} from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import {
@@ -31,12 +36,13 @@ async function get(
     const ps = head(req.query.pageSize);
     const pId = head(req.query.partId);
 
-    const r = await c.partRevisions.getPartRevisions({
-      id: pId,
-      pageSize: ps ? parseInt(ps, 10) : 10,
-    });
-
-    return { data: r.data.data, status: 200 };
+    const { cursors, page } = await getPage(() =>
+      c.partRevisions.getPartRevisions({
+        id: pId,
+        pageSize: ps ? parseInt(ps, 10) : 10,
+      })
+    );
+    return { cursors, data: page.data, status: 200 };
   } catch (error) {
     logError(error);
     return error.vertexError?.res

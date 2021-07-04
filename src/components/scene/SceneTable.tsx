@@ -137,6 +137,7 @@ export function SceneTable({
   }
 
   async function handleDelete() {
+    setSelected(new Set());
     await fetch("/api/scenes", {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",

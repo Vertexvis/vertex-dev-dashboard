@@ -38,14 +38,14 @@ async function get(
     const pc = head(req.query.cursor);
     const status = head(req.query.status);
 
-    const r = await getPage(() =>
+    const { cursors, page } = await getPage(() =>
       c.translationInspections.getQueuedTranslations({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
         filterStatus: status,
       })
     );
-    return { cursors: r.cursors, data: r.page.data, status: 200 };
+    return { cursors, data: page.data, status: 200 };
   } catch (error) {
     logError(error);
     return error.vertexError?.res

@@ -113,6 +113,7 @@ export function PartTable(): JSX.Element {
   }
 
   async function handleDelete() {
+    setSelected(new Set());
     await fetch("/api/parts", {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",

@@ -61,14 +61,14 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
     const pc = head(req.query.cursor);
     const sId = head(req.query.suppliedId);
 
-    const r = await getPage(() =>
+    const { cursors, page } = await getPage(() =>
       c.parts.getParts({
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
         filterSuppliedId: sId,
       })
     );
-    return { cursors: r.cursors, data: r.page.data, status: 200 };
+    return { cursors, data: page.data, status: 200 };
   } catch (error) {
     logError(error);
     return error.vertexError?.res
