@@ -107,7 +107,7 @@ export function FilesTable(): JSX.Element {
 
   async function handleDelete() {
     await fetch("/api/files", {
-      body: JSON.stringify({ ids: selected }),
+      body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
   }
