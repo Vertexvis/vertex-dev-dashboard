@@ -124,13 +124,16 @@ export function SceneTable({
     onClick(s);
   }
 
-  function handleChangePage(_e: unknown, n: number) {
-    if (curPage < n) {
-      setPrev({ ...prev, [n - 1]: cursors?.self });
+  function handleChangePage(
+    _: React.MouseEvent<HTMLButtonElement> | null,
+    num: number
+  ) {
+    if (curPage < num) {
+      setPrev({ ...prev, [num - 1]: cursors?.self });
       setCursor(cursors?.next);
     }
-    if (curPage > n) setCursor(prev[n]);
-    setCurPage(n);
+    if (curPage > num) setCursor(prev[num]);
+    setCurPage(num);
   }
 
   async function handleDelete() {
