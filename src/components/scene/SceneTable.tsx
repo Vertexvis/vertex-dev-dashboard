@@ -20,7 +20,7 @@ import {
   VisibilityOutlined,
   VpnKeyOutlined,
 } from "@material-ui/icons";
-import { SceneData } from "@vertexvis/api-client-node";
+import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
@@ -33,7 +33,7 @@ import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
 import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize } from "../shared/Layout";
+import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -71,26 +71,27 @@ export function SceneTable({
   vertexEnv,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const rowHeight = 53;
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
-  const [privateCursor, setPrivateCursor] = React.useState<
-    string | undefined
-  >();
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
   const [cursor, setCursor] = React.useState<string | undefined>();
-  const { data, error } = useScenes({ cursor, pageSize, suppliedId });
-  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
     string | undefined
   >();
+  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
+    {}
+  );
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [suppliedId, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >();
+  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
+  const { data, error } = useScenes({ cursor, pageSize, suppliedId });
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = privateCursor ? 0 : pageSize - pageLength;
+  const emptyRows =
+    cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
@@ -100,31 +101,21 @@ export function SceneTable({
   React.useEffect(() => {
     if (page == null) return;
 
-    setPrivateCursor(page.cursor ?? undefined);
+    setCursors(page.cursors ?? undefined);
   }, [page]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
 
-    setSelected(e.target.checked ? page.items.map((n) => n.id) : []);
+    const upd = new Set<string>();
+    if (e.target.checked) page.items.map((n) => upd.add(n.id));
+    setSelected(upd);
   }
 
   function handleCheck(id: string) {
-    const selectedIndex = selected.indexOf(id);
-    let upd: readonly string[] = [];
-
-    if (selectedIndex === -1) {
-      upd = upd.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      upd = upd.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      upd = upd.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      upd = upd.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
+    const upd = new Set(selected);
+    if (selected.has(id)) upd.delete(id);
+    else upd.add(id);
 
     setSelected(upd);
   }
@@ -134,7 +125,11 @@ export function SceneTable({
   }
 
   function handleChangePage(_e: unknown, n: number) {
-    setCursor(privateCursor);
+    if (curPage < n) {
+      setPrev({ ...prev, [n - 1]: cursors?.self });
+      setCursor(cursors?.next);
+    }
+    if (curPage > n) setCursor(prev[n]);
     setCurPage(n);
   }
 
@@ -175,13 +170,11 @@ export function SceneTable({
     setToastMsg(`Stream key "${key}" copied to clipboard.`);
   }
 
-  const isSelected = (name: string) => selected.indexOf(name) !== -1;
-
   return (
     <>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
-          numSelected={selected.length}
+          numSelected={selected.size}
           onDelete={handleDelete}
           title="Scenes"
         />
@@ -210,7 +203,7 @@ export function SceneTable({
           <Table>
             <TableHead
               headCells={headCells}
-              numSelected={selected.length}
+              numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
               rowCount={pageLength}
             />
@@ -219,14 +212,14 @@ export function SceneTable({
                 <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
                 <SkeletonBody
-                  numCellsPerRow={7}
-                  numRows={emptyRows}
                   includeCheckbox={true}
+                  numCellsPerRow={7}
+                  numRows={pageSize - pageLength}
+                  rowHeight={DefaultRowHeight}
                 />
               ) : (
-                page.items.map((row, index) => {
-                  const isSel = isSelected(row.id);
-                  const labelId = `table-checkbox-${index}`;
+                page.items.map((row) => {
+                  const isSel = selected.has(row.id);
 
                   return (
                     <TableRow
@@ -239,16 +232,14 @@ export function SceneTable({
                     >
                       <TableCell
                         padding="checkbox"
-                        onClick={() => handleCheck(row.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCheck(row.id);
+                        }}
                       >
                         <Checkbox color="primary" checked={isSel} />
                       </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
+                      <TableCell component="th" scope="row" padding="none">
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
@@ -300,7 +291,7 @@ export function SceneTable({
                 })
               )}
               {emptyRows > 0 && (
-                <TableRow style={{ height: rowHeight * emptyRows }}>
+                <TableRow sx={{ height: DefaultRowHeight * emptyRows }}>
                   <TableCell colSpan={headCells.length + 1} />
                 </TableRow>
               )}
@@ -314,7 +305,7 @@ export function SceneTable({
           rowsPerPage={pageSize}
           page={curPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: privateCursor == null }}
+          nextIconButtonProps={{ disabled: cursors?.next == null }}
         />
       </Paper>
       <Snackbar

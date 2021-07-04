@@ -27,9 +27,7 @@ export default function Login(): JSX.Element {
   const router = useRouter();
 
   const invalidId = id != null && id.length !== IdLength;
-  // In platdev, secrets can be 36-charaters
-  const invalidSecret =
-    secret != null && (secret.length < SecretLength || secret.length > 36);
+  const invalidSecret = secret != null && secret.length !== SecretLength;
 
   async function handleSubmit() {
     if (!id || !secret) return;

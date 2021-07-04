@@ -1,60 +1,53 @@
 import { Checkbox, Skeleton, TableCell, TableRow } from "@material-ui/core";
 import React from "react";
 
-interface SkeletonBodyProps {
-  readonly numRows: number;
+interface Props {
+  readonly includeCheckbox: boolean;
   readonly numCellsPerRow: number;
-  readonly includeCheckbox: boolean;
+  readonly numRows: number;
+  readonly rowHeight: number;
 }
 
-interface SkeletonRowProps {
-  readonly numCells: number;
-  readonly includeCheckbox: boolean;
-}
-
-export function SkeletonRow(props: SkeletonRowProps): JSX.Element {
-  const renderCells = (): JSX.Element[] => {
-    const items = [];
-    const cells = props.includeCheckbox ? props.numCells - 1 : props.numCells;
-    for (let i = 0; i < cells; i++) {
-      items.push(
-        <TableCell key={i}>
-          <Skeleton />
-        </TableCell>
-      );
-    }
-
-    return items;
-  };
-
+export function SkeletonBody({
+  includeCheckbox,
+  numCellsPerRow,
+  numRows,
+  rowHeight,
+}: Props): JSX.Element {
   return (
-    <TableRow
-      role={props.includeCheckbox ? "checkbox" : undefined}
-      tabIndex={-1}
-    >
-      <TableCell padding={props.includeCheckbox ? "checkbox" : undefined}>
-        {props.includeCheckbox ? <Checkbox disabled /> : <Skeleton />}
-      </TableCell>
-      {renderCells()}
-    </TableRow>
+    <>
+      {Array(numRows)
+        .fill(0)
+        .map((_, i) => (
+          <SkeletonRow
+            key={i}
+            includeCheckbox={includeCheckbox}
+            numCellsPerRow={numCellsPerRow}
+            rowHeight={rowHeight}
+          />
+        ))}
+    </>
   );
 }
 
-export function SkeletonBody(props: SkeletonBodyProps): JSX.Element {
-  const renderRows = (): JSX.Element[] => {
-    const items = [];
-    for (let i = 0; i < props.numRows - 1; i++) {
-      items.push(
-        <SkeletonRow
-          key={i}
-          includeCheckbox={props.includeCheckbox}
-          numCells={props.numCellsPerRow}
-        />
-      );
-    }
-
-    return items;
-  };
-
-  return <>{renderRows()}</>;
+function SkeletonRow({
+  includeCheckbox,
+  numCellsPerRow,
+  rowHeight,
+}: Omit<Props, "numRows">): JSX.Element {
+  const role = includeCheckbox ? "checkbox" : undefined;
+  return (
+    <TableRow role={role} tabIndex={-1} sx={{ height: rowHeight }}>
+      <TableCell padding={role}>
+        {includeCheckbox ? <Checkbox disabled /> : <Skeleton />}
+      </TableCell>
+      {Array(includeCheckbox ? numCellsPerRow - 1 : numCellsPerRow)
+        .fill(0)
+        .map((_, i) => (
+          <TableCell key={i}>
+            <Skeleton />
+          </TableCell>
+        ))}
+    </TableRow>
+  );
 }

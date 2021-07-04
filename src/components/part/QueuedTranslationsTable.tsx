@@ -48,10 +48,10 @@ export function QueuedTranslationsTable({
     <TableContainer sx={{ m: 2 }} component={Paper}>
       <Box
         sx={{
-          p: 2,
+          alignItems: "center",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          p: 2,
         }}
       >
         <Typography variant="h6">{title}</Typography>
@@ -66,27 +66,28 @@ export function QueuedTranslationsTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {!data && (
+          {!data ? (
             <SkeletonBody
-              numCellsPerRow={2}
-              numRows={3}
               includeCheckbox={false}
+              numCellsPerRow={2}
+              numRows={5}
+              rowHeight={53}
             />
-          )}
-
-          {items?.map((row) => (
-            <TableRow
-              key={row.id}
-              sx={{
-                "&:last-child td": {
-                  borderBottom: 0,
-                },
-              }}
-            >
-              <TableCell>{row.id}</TableCell>
-              <TableCell>{toLocaleString(row.created)}</TableCell>
+          ) : items && items.length > 0 ? (
+            items.map((row) => (
+              <TableRow
+                key={row.id}
+                sx={{ "&:last-child td": { borderBottom: 0 } }}
+              >
+                <TableCell>{row.id}</TableCell>
+                <TableCell>{toLocaleString(row.created)}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={2}>No data</TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </TableContainer>

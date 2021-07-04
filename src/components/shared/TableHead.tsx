@@ -7,6 +7,7 @@ import {
 import React from "react";
 
 export interface HeadCell {
+  readonly beforeCheckbox?: boolean;
   readonly disablePadding?: boolean;
   readonly id: string;
   readonly label: string;
@@ -29,6 +30,7 @@ export function TableHead({
   return (
     <MuiTableHead>
       <TableRow>
+        {renderHeadCells(headCells.filter((hc) => hc.beforeCheckbox))}
         <TableCell padding="checkbox">
           <Checkbox
             color="primary"
@@ -37,16 +39,19 @@ export function TableHead({
             onChange={onSelectAllClick}
           />
         </TableCell>
-        {headCells.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align={headCell.numeric ? "right" : "left"}
-            padding={headCell.disablePadding ? "none" : "normal"}
-          >
-            {headCell.label}
-          </TableCell>
-        ))}
+        {renderHeadCells(headCells.filter((hc) => !hc.beforeCheckbox))}
       </TableRow>
     </MuiTableHead>
   );
+}
+function renderHeadCells(cells: readonly HeadCell[]): JSX.Element[] {
+  return cells.map((hc) => (
+    <TableCell
+      key={hc.id}
+      align={hc.numeric ? "right" : "left"}
+      padding={hc.disablePadding ? "none" : "normal"}
+    >
+      {hc.label}
+    </TableCell>
+  ));
 }

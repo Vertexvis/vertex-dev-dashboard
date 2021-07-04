@@ -22,6 +22,7 @@ interface AppBarProps extends MuiAppBarProps {
 }
 
 export const DefaultPageSize = 25;
+export const DefaultRowHeight = 72;
 export const LeftDrawerWidth = 300;
 export const RightDrawerWidth = 300;
 

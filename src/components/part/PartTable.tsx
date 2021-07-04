@@ -11,6 +11,7 @@ import {
   TextField,
 } from "@material-ui/core";
 import { Add } from "@material-ui/icons";
+import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
@@ -21,7 +22,7 @@ import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
 import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize } from "../shared/Layout";
+import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -30,8 +31,8 @@ import PartRow from "./PartRow";
 import { QueuedTranslationsTable } from "./QueuedTranslationsTable";
 
 const headCells: readonly HeadCell[] = [
-  { id: "expand", disablePadding: true, label: "" },
-  { id: "name", disablePadding: true, label: "Name" },
+  { id: "expand", label: "", beforeCheckbox: true },
+  { id: "name", label: "Name" },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "id", label: "ID" },
   { id: "created", label: "Created" },
@@ -52,26 +53,25 @@ const maybeQueryParam = (
 ): string | undefined => (Array.isArray(target) ? target[0] : target);
 
 export function PartTable(): JSX.Element {
+  const router = useRouter();
   const pageSize = DefaultPageSize;
-  const rowHeight = 53;
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [curPage, setCurPage] = React.useState(0);
+  const [cursor, setCursor] = React.useState<string | undefined>();
+  const [cursors, setCursors] = React.useState<Cursors | undefined>();
+  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
+    {}
+  );
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [showDialog, setShowDialog] = React.useState(!!router.query.create);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
-  const [privateCursor, setPrivateCursor] = React.useState<
-    string | undefined
-  >();
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const router = useRouter();
-
-  const [showDialog, setShowDialog] = React.useState(!!router.query.create);
 
   const { data, error } = useParts({ cursor, pageSize, suppliedId });
-
   const page = data ? toPartPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
-  const emptyRows = privateCursor ? 0 : pageSize - pageLength;
+  const emptyRows =
+    cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
@@ -81,37 +81,31 @@ export function PartTable(): JSX.Element {
   React.useEffect(() => {
     if (page == null) return;
 
-    setPrivateCursor(page.cursor ?? undefined);
+    setCursors(page.cursors ?? undefined);
   }, [page]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
 
-    setSelected(e.target.checked ? page.items.map((n) => n.id) : []);
+    const upd = new Set<string>();
+    if (e.target.checked) page.items.map((n) => upd.add(n.id));
+    setSelected(upd);
   }
 
   function handleCheck(id: string) {
-    const selectedIndex = selected.indexOf(id);
-    let upd: readonly string[] = [];
-
-    if (selectedIndex === -1) {
-      upd = upd.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      upd = upd.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      upd = upd.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      upd = upd.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
+    const upd = new Set(selected);
+    if (selected.has(id)) upd.delete(id);
+    else upd.add(id);
 
     setSelected(upd);
   }
 
   function handleChangePage(_e: unknown, n: number) {
-    setCursor(privateCursor);
+    if (curPage < n) {
+      setPrev({ ...prev, [n - 1]: cursors?.self });
+      setCursor(cursors?.next);
+    }
+    if (curPage > n) setCursor(prev[n]);
     setCurPage(n);
   }
 
@@ -121,8 +115,6 @@ export function PartTable(): JSX.Element {
       method: "DELETE",
     });
   }
-
-  const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
   return (
     <>
@@ -141,7 +133,7 @@ export function PartTable(): JSX.Element {
       </Box>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
-          numSelected={selected.length}
+          numSelected={selected.size}
           onDelete={handleDelete}
           title="Parts"
         />
@@ -177,7 +169,7 @@ export function PartTable(): JSX.Element {
           <Table>
             <TableHead
               headCells={headCells}
-              numSelected={selected.length}
+              numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
               rowCount={pageLength}
             />
@@ -186,16 +178,17 @@ export function PartTable(): JSX.Element {
                 <DataLoadError colSpan={headCells.length + 1} />
               ) : !page ? (
                 <SkeletonBody
-                  numCellsPerRow={6}
-                  numRows={emptyRows}
                   includeCheckbox={true}
+                  numCellsPerRow={6}
+                  numRows={pageSize - pageLength}
+                  rowHeight={DefaultRowHeight}
                 />
               ) : (
                 page.items.map((row) => {
                   return (
                     <PartRow
                       key={row.id}
-                      isSelected={isSelected(row.id)}
+                      isSelected={selected.has(row.id)}
                       onSelected={handleCheck}
                       part={row}
                     />
@@ -203,7 +196,7 @@ export function PartTable(): JSX.Element {
                 })
               )}
               {emptyRows > 0 && (
-                <TableRow style={{ height: rowHeight * emptyRows }}>
+                <TableRow style={{ height: DefaultRowHeight * emptyRows }}>
                   <TableCell colSpan={headCells.length + 1} />
                 </TableRow>
               )}
@@ -217,7 +210,7 @@ export function PartTable(): JSX.Element {
           rowsPerPage={pageSize}
           page={curPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: privateCursor == null }}
+          nextIconButtonProps={{ disabled: cursors?.next == null }}
         />
       </Paper>
       <CreatePartDialog

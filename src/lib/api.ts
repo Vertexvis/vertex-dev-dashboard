@@ -1,4 +1,4 @@
-import { defined, Failure } from "@vertexvis/api-client-node";
+import { Cursors, defined, Failure } from "@vertexvis/api-client-node";
 
 export interface DeleteReq {
   readonly ids: string[];
@@ -9,7 +9,7 @@ export interface ErrorRes extends Res {
 }
 
 export interface GetRes<T> extends Res {
-  readonly cursor?: string;
+  readonly cursors: Cursors;
   readonly data: T[];
 }
 

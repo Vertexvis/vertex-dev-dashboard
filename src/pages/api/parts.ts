@@ -68,7 +68,7 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
         filterSuppliedId: sId,
       })
     );
-    return { cursor: r.cursor, data: r.page.data, status: 200 };
+    return { cursors: r.cursors, data: r.page.data, status: 200 };
   } catch (error) {
     logError(error);
     return error.vertexError?.res
