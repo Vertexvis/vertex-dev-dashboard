@@ -50,13 +50,6 @@ export default function CreatePartDialog({
   const files = data ? toFilePage(data) : undefined;
 
   React.useEffect(() => {
-    console.log(
-      "checkSubmit",
-      !file,
-      !suppliedId,
-      !suppliedRevisionId,
-      !file || !suppliedId || !suppliedRevisionId
-    );
     setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
   }, [file, suppliedId, suppliedRevisionId]);
 
