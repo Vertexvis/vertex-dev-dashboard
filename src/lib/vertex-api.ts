@@ -8,17 +8,17 @@ import {
   OAuth2Token,
   VertexClient,
 } from "@vertexvis/api-client-node";
+import assert from "assert";
 import { AxiosResponse } from "axios";
 import type { NextApiResponse } from "next";
 import { Session } from "next-iron-session";
 
 import { ErrorRes, ServerError } from "./api";
 import {
-  CredsKey,
-  EnvKey,
-  OAuthCredentials,
-  SessionToken,
-  TokenKey,
+  getCreds,
+  getEnv,
+  getToken as getSessionToken,
+  setToken,
 } from "./with-session";
 
 const TenMinsInMs = 600_000;
@@ -87,20 +87,19 @@ export async function getClientWithCreds(
 export async function getClientFromSession(
   session: Session
 ): Promise<VertexClient> {
-  const token = session.get(TokenKey) as SessionToken;
-  const creds = session.get(CredsKey) as OAuthCredentials;
-  const env = session.get(EnvKey) as string;
+  const creds = getCreds(session);
+  const env = getEnv(session);
+  const token = getSessionToken(session);
+  assert(creds != null);
+  assert(env != null);
+  assert(token != null);
 
   const expiresIn = token.expiration - Date.now();
   if (expiresIn < TenMinsInMs) {
     const newToken = await getToken(creds.id, creds.secret, env);
     const newExpiration = Date.now() + newToken.expires_in * 1000;
 
-    session.set(TokenKey, {
-      token: newToken,
-      expiration: newExpiration,
-    });
-
+    setToken(session, { token: newToken, expiration: newExpiration });
     return getClientWithCreds(creds.id, creds.secret, env, {
       ...newToken,
       expires_in: newExpiration,

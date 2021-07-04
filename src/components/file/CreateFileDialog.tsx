@@ -38,44 +38,44 @@ export default function CreateFileDialog({
   const router = useRouter();
 
   async function handleUpload() {
-    if (file) {
-      setSubmitDisabled(true);
-      setProgress(true);
+    if (file == null) return;
 
-      const attrs: CreateFileRequestDataAttributes = { name: file?.name };
-      if (suppliedId) {
-        attrs.suppliedId = suppliedId;
-      }
-      if (rootFileName) {
-        attrs.rootFileName = rootFileName;
-      }
+    setSubmitDisabled(true);
+    setProgress(true);
 
-      const fileRes = (await (
-        await fetch("/api/files", {
-          method: "POST",
-          body: JSON.stringify(attrs),
-        })
-      ).json()) as unknown as CreateFileRes;
-
-      const formData = new FormData();
-      formData.append("file", file as Blob);
-
-      await fetch(`/api/upload?f=${fileRes.id}`, {
-        method: "POST",
-        body: formData,
-      });
-
-      onFileCreated(fileRes.id);
-
-      if (createPart) {
-        router.push(`/parts?create=${fileRes.id}&n=${file?.name}`);
-      }
-
-      setFile(undefined);
-      setSuppliedId(undefined);
-      setRootFileName(undefined);
-      setProgress(false);
+    const attrs: CreateFileRequestDataAttributes = { name: file?.name };
+    if (suppliedId) {
+      attrs.suppliedId = suppliedId;
     }
+    if (rootFileName) {
+      attrs.rootFileName = rootFileName;
+    }
+
+    const fileRes: CreateFileRes = await (
+      await fetch("/api/files", {
+        method: "POST",
+        body: JSON.stringify(attrs),
+      })
+    ).json();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    await fetch(`/api/upload?f=${fileRes.id}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    onFileCreated(fileRes.id);
+
+    if (createPart) {
+      router.push(`/parts?create=${fileRes.id}&n=${file?.name}`);
+    }
+
+    setFile(undefined);
+    setSuppliedId(undefined);
+    setRootFileName(undefined);
+    setProgress(false);
   }
 
   return (

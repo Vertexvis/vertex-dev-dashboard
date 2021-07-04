@@ -5,12 +5,12 @@ import { NextApiResponse } from "next";
 import { ErrorRes, MethodNotAllowed, Res } from "../../lib/api";
 import { getToken } from "../../lib/vertex-api";
 import withSession, {
-  CredsKey,
-  EnvKey,
   NextIronRequest,
   OAuthCredentials,
   SessionToken,
-  TokenKey,
+  setCreds,
+  setEnv,
+  setToken,
 } from "../../lib/with-session";
 
 export interface LoginReq {
@@ -38,9 +38,9 @@ export default withSession(async function (
       token,
       expiration: Date.now() + token.expires_in * 1000,
     };
-    req.session.set(CredsKey, creds);
-    req.session.set(TokenKey, sessionToken);
-    req.session.set(EnvKey, b.env);
+    setCreds(req.session, creds);
+    setEnv(req.session, b.env);
+    setToken(req.session, sessionToken);
 
     await req.session.save();
 

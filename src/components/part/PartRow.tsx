@@ -10,10 +10,8 @@ import {
   Typography,
 } from "@material-ui/core";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@material-ui/icons";
-import { PartRevisionData } from "@vertexvis/api-client-node";
 import React from "react";
 
-import { GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
@@ -41,10 +39,7 @@ export default function PartRow({
   React.useEffect(() => {
     const fetchData = async () => {
       const result = await fetch(`/api/part-revisions?partId=${part.id}`);
-
-      const j = (await result.json()) as GetRes<PartRevisionData>;
-
-      setRevisions(toPartRevisionPage(j));
+      setRevisions(toPartRevisionPage(await result.json()));
     };
 
     if (open) {

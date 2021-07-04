@@ -33,10 +33,10 @@ export default function SceneViewer(): JSX.Element {
 
     const cId = head(router.query.clientId);
     const sk = head(router.query.streamKey);
-    const ve = head(router.query.vertexEnv);
+    const ve = head(router.query.vertexEnv) as Environment;
     setCredentials(
       cId && sk && ve
-        ? { clientId: cId, streamKey: sk, vertexEnv: ve as Environment }
+        ? { clientId: cId, streamKey: sk, vertexEnv: ve }
         : undefined
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

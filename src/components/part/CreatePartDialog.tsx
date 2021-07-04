@@ -49,12 +49,21 @@ export default function CreatePartDialog({
   const { data } = useFiles();
   const files = data ? toFilePage(data) : undefined;
 
-  function checkSubmit() {
+  React.useEffect(() => {
+    console.log(
+      "checkSubmit",
+      !file,
+      !suppliedId,
+      !suppliedRevisionId,
+      !file || !suppliedId || !suppliedRevisionId
+    );
     setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
-  }
+  }, [file, suppliedId, suppliedRevisionId]);
 
   async function handleSubmit() {
-    if (!file || !suppliedId || !suppliedRevisionId) return;
+    if (!file || !suppliedId || !suppliedRevisionId) {
+      return;
+    }
 
     setSubmitDisabled(true);
 
@@ -65,12 +74,12 @@ export default function CreatePartDialog({
       indexMetadata,
     };
 
-    const partRes = (await (
+    const partRes: CreatePartRes = await (
       await fetch("/api/parts", {
         method: "POST",
         body: JSON.stringify(attrs),
       })
-    ).json()) as unknown as CreatePartRes;
+    ).json();
 
     onPartCreated(partRes.id);
     setFile(undefined);
@@ -98,10 +107,7 @@ export default function CreatePartDialog({
             <RadioGroup
               id="files-list"
               name="radio-buttons-group"
-              onChange={(e) => {
-                setFile(e.target.value);
-                checkSubmit();
-              }}
+              onChange={(e) => setFile(e.target.value)}
             >
               {files &&
                 files?.items.map((f) => {
@@ -123,10 +129,7 @@ export default function CreatePartDialog({
           required
           label="Supplied ID"
           margin="normal"
-          onChange={(e) => {
-            setSuppliedId(e.target.value);
-            checkSubmit();
-          }}
+          onChange={(e) => setSuppliedId(e.target.value)}
           size="small"
           type="text"
         />
@@ -135,10 +138,7 @@ export default function CreatePartDialog({
           required
           label="Supplied Revision ID"
           margin="normal"
-          onChange={(e) => {
-            setSuppliedRevisionId(e.target.value);
-            checkSubmit();
-          }}
+          onChange={(e) => setSuppliedRevisionId(e.target.value)}
           size="small"
           type="text"
         />

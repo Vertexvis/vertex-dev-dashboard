@@ -27,10 +27,10 @@ export type OAuthCredentials = {
   readonly secret: string;
 };
 
-export const CookieName = "sess";
-export const CredsKey = "creds";
-export const TokenKey = "token";
-export const EnvKey = "env";
+const CookieName = "sess";
+const CredsKey = "creds";
+const TokenKey = "token";
+const EnvKey = "env";
 export const CookieAttributes: SessionOptions = {
   password: process.env.COOKIE_SECRET || "",
   cookieName: CookieName,
@@ -67,4 +67,28 @@ export function serverSidePropsHandler({
   }
 
   return { props: { clientId: creds.id, vertexEnv } };
+}
+
+export function getCreds(session: Session): OAuthCredentials | undefined {
+  return session.get(CredsKey);
+}
+
+export function getEnv(session: Session): Environment | undefined {
+  return session.get(EnvKey);
+}
+
+export function getToken(session: Session): SessionToken | undefined {
+  return session.get(TokenKey);
+}
+
+export function setCreds(session: Session, val: OAuthCredentials): void {
+  session.set(CredsKey, val);
+}
+
+export function setEnv(session: Session, val: Environment): void {
+  session.set(EnvKey, val);
+}
+
+export function setToken(session: Session, val: SessionToken): void {
+  session.set(TokenKey, val);
 }
