@@ -1,4 +1,5 @@
-import { Cursors } from "../../../vertex-api-client-node";
+import { Cursors } from "@vertexvis/api-client-node";
+
 import { GetRes } from "./api";
 
 export interface Paged<T> {
