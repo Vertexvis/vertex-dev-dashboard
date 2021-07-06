@@ -64,7 +64,7 @@ function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-export function SceneTable({
+export default function SceneTable({
   clientId,
   onClick,
   onEditClick,

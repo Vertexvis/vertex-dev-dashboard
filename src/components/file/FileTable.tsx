@@ -48,7 +48,7 @@ function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-export function FilesTable(): JSX.Element {
+export default function FilesTable(): JSX.Element {
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();

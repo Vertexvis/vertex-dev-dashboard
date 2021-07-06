@@ -52,7 +52,7 @@ const maybeQueryParam = (
   target: string | string[] | undefined
 ): string | undefined => (Array.isArray(target) ? target[0] : target);
 
-export function PartTable(): JSX.Element {
+export default function PartTable(): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);

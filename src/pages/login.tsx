@@ -51,14 +51,15 @@ export default function Login(): JSX.Element {
     <Box sx={{ display: "flex", height: "100vh", justifyContent: "center" }}>
       <Paper
         sx={{
-          display: "flex",
           alignItems: "center",
+          display: "flex",
           justifyContent: "center",
           flexDirection: "column",
-          height: "430px",
-          width: "430px",
-          m: 4,
-          p: 6,
+          maxHeight: "500px",
+          minWidth: "30%",
+          mx: 2,
+          my: 4,
+          p: 4,
         }}
       >
         <Typography variant="h6">Vertex Dev Dashboard</Typography>
@@ -97,11 +98,12 @@ export default function Login(): JSX.Element {
         <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="environment">Environment</InputLabel>
           <Select
-            labelId="environment"
             id="environment"
-            value={env}
+            labelId="environment"
             label="Environment"
             onChange={(e) => setEnv(e.target.value)}
+            size="small"
+            value={env}
           >
             <MenuItem value="platdev">platdev</MenuItem>
             <MenuItem value="platstaging">platstaging</MenuItem>
@@ -117,11 +119,10 @@ export default function Login(): JSX.Element {
           {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
           <Box>Sign In</Box>
         </Button>
-        {error && (
-          <Typography sx={{ my: 2 }} variant="body2">
-            {error}
-          </Typography>
-        )}
+
+        <Typography sx={{ my: 2 }} variant="body2">
+          {error}
+        </Typography>
       </Paper>
     </Box>
   );

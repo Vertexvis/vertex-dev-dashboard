@@ -1,10 +1,14 @@
+import dynamic from "next/dynamic";
 import React from "react";
 
 import { SceneDrawer } from "../components/scene/SceneDrawer";
-import { SceneTable } from "../components/scene/SceneTable";
 import { Layout } from "../components/shared/Layout";
 import { Scene } from "../lib/scenes";
 import { CommonProps, defaultServerSideProps } from "../lib/with-session";
+
+const SceneTable = dynamic(() => import("../components/scene/SceneTable"), {
+  ssr: false,
+});
 
 export default function Home({
   clientId,
