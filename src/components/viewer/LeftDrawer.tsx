@@ -1,7 +1,7 @@
 import { Box, Divider, Drawer, IconButton, Tooltip } from "@material-ui/core";
 import { drawerClasses } from "@material-ui/core/Drawer";
 import { ChevronLeft } from "@material-ui/icons";
-import { Environment } from "@vertexvis/viewer/dist/types/config/environment";
+import { Environment } from "@vertexvis/viewer";
 import React from "react";
 
 import { LeftDrawerWidth } from "./Layout";

@@ -1,4 +1,4 @@
-import { Environment } from "@vertexvis/viewer/dist/types/config/environment";
+import { Environment } from "@vertexvis/viewer";
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
 

@@ -10,7 +10,7 @@ import {
 } from "@material-ui/core";
 import { FileCopyOutlined, ZoomOutMapOutlined } from "@material-ui/icons";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { TapEventDetails } from "@vertexvis/viewer/dist/types/interactions/tapEventDetails";
+import { TapEventDetails } from "@vertexvis/viewer";
 import {
   JSX as ViewerJSX,
   VertexViewer,
