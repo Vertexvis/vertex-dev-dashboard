@@ -8,7 +8,11 @@ import {
   ListItemText,
   TextField,
 } from "@material-ui/core";
-import { FileCopyOutlined, ZoomOutMapOutlined } from "@material-ui/icons";
+import {
+  CameraAltOutlined,
+  FileCopyOutlined,
+  ZoomOutMapOutlined,
+} from "@material-ui/icons";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { TapEventDetails } from "@vertexvis/viewer";
 import {
@@ -22,6 +26,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
 import { copySceneViewCamera, fitAll } from "../../lib/scene-items";
+import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
 
 interface Option {
@@ -34,6 +39,7 @@ interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
   readonly viewerId: string;
+  readonly onViewStateCreated: () => void;
 }
 
 export interface Action {
@@ -59,10 +65,12 @@ function UnwrappedViewer({
   credentials,
   viewer,
   viewerId,
+  onViewStateCreated,
   ...props
 }: ViewerProps): JSX.Element {
   const ref = React.useRef<HTMLElement>(null);
   const [key, setKey] = React.useState(Date.now());
+  const [createViewState, setCreateViewState] = React.useState(false);
 
   useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
@@ -86,6 +94,11 @@ function UnwrappedViewer({
       icon: <FileCopyOutlined fontSize="small" />,
       label: "Copy camera",
       onSelect: () => copySceneViewCamera({ viewer: viewer.current }),
+    },
+    {
+      icon: <CameraAltOutlined fontSize="small" />,
+      label: "Create View State",
+      onSelect: () => setCreateViewState(true),
     },
   ];
 
@@ -149,8 +162,20 @@ function UnwrappedViewer({
         />
       </VertexViewerToolbar>
       <VertexViewerToolbar placement="bottom-right">
-        <ViewerSpeedDial viewer={viewer} />
+        <ViewerSpeedDial
+          viewer={viewer}
+          onCreateSceneViewState={() => setCreateViewState(true)}
+        />
       </VertexViewerToolbar>
+      <CreateSceneViewStateDialog
+        viewer={viewer}
+        open={createViewState}
+        onViewStateCreated={() => {
+          setCreateViewState(false);
+          onViewStateCreated();
+        }}
+        onClose={() => setCreateViewState(false)}
+      />
     </VertexViewer>
   );
 }

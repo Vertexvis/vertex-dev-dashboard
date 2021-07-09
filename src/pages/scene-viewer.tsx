@@ -1,19 +1,29 @@
+import { SceneViewStateData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
+import useSWR from "swr";
 
 import { Header } from "../components/shared/Header";
 import { Layout } from "../components/viewer/Layout";
 import { LeftDrawer } from "../components/viewer/LeftDrawer";
 import { RightDrawer } from "../components/viewer/RightDrawer";
 import { Viewer } from "../components/viewer/Viewer";
+import { ErrorRes, fetcher, GetRes } from "../lib/api";
 import { head, StreamCredentials } from "../lib/config";
 import { Metadata, toMetadata } from "../lib/metadata";
-import { selectByHit } from "../lib/scene-items";
+import { applySceneViewState,selectByHit } from "../lib/scene-items";
 import { useViewer } from "../lib/viewer";
 
 const ViewerId = "vertex-viewer-id";
+
+function useSceneViewStates({ viewId }: { viewId?: string }) {
+  return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
+    viewId ? `/api/scene-view-states?view=${viewId}` : null,
+    fetcher
+  );
+}
 
 export default function SceneViewer(): JSX.Element {
   const router = useRouter();
@@ -26,6 +36,8 @@ export default function SceneViewer(): JSX.Element {
   >();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
+  const [viewId, setViewId] = React.useState<string | undefined>();
+  const { data, mutate } = useSceneViewStates({ viewId });
 
   // Prefer credentials in URL to enable easy scene sharing. If empty, use defaults.
   React.useEffect(() => {
@@ -34,6 +46,7 @@ export default function SceneViewer(): JSX.Element {
     const cId = head(router.query.clientId);
     const sk = head(router.query.streamKey);
     const ve = head(router.query.vertexEnv) as Environment;
+
     setCredentials(
       cId && sk && ve
         ? { clientId: cId, streamKey: sk, vertexEnv: ve }
@@ -48,6 +61,17 @@ export default function SceneViewer(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credentials]);
 
+  React.useEffect(() => {
+    if (viewer.ref.current && !viewId) {
+      viewer.ref.current.addEventListener("sceneReady", async () => {
+        if (viewer.ref.current) {
+          const scene = await viewer.ref.current.scene();
+          setViewId(scene.sceneViewId);
+        }
+      });
+    }
+  }, [viewer.ref, viewer.ref.current, viewId]); // eslint-disable-line
+
   async function handleSelect(hit?: vertexvis.protobuf.stream.IHit) {
     console.debug({
       hitNormal: hit?.hitNormal,
@@ -59,6 +83,10 @@ export default function SceneViewer(): JSX.Element {
     setMetadata(toMetadata({ hit }));
     setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
     await selectByHit({ hit, viewer: viewer.ref.current });
+  }
+
+  function handleViewStateSelected(id: string) {
+    applySceneViewState({ id, viewer: viewer.ref.current });
   }
 
   return router.isReady && credentials ? (
@@ -86,10 +114,17 @@ export default function SceneViewer(): JSX.Element {
             onSelect={handleSelect}
             viewer={viewer.ref}
             viewerId={ViewerId}
+            onViewStateCreated={mutate}
           />
         )
       }
-      rightDrawer={<RightDrawer metadata={metadata} />}
+      rightDrawer={
+        <RightDrawer
+          metadata={metadata}
+          sceneViewStates={data?.data}
+          onViewStateSelected={handleViewStateSelected}
+        />
+      }
       rightDrawerOpen
     />
   ) : (
