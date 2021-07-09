@@ -1,14 +1,22 @@
 import { SpeedDial, SpeedDialAction } from "@material-ui/core";
-import { FileCopyOutlined, ZoomOutMapOutlined } from "@material-ui/icons";
+import {
+  CameraAltOutlined,
+  FileCopyOutlined,
+  ZoomOutMapOutlined,
+} from "@material-ui/icons";
 
 import { copySceneViewCamera, fitAll } from "../../lib/scene-items";
 import { Action } from "./Viewer";
 
 interface Props {
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
+  readonly onCreateSceneViewState: () => void;
 }
 
-export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
+export function ViewerSpeedDial({
+  viewer,
+  onCreateSceneViewState,
+}: Props): JSX.Element {
   const actions: Action[] = [
     {
       icon: <ZoomOutMapOutlined />,
@@ -19,6 +27,11 @@ export function ViewerSpeedDial({ viewer }: Props): JSX.Element {
       icon: <FileCopyOutlined />,
       label: "Copy camera",
       onSelect: () => copySceneViewCamera({ viewer: viewer.current }),
+    },
+    {
+      icon: <CameraAltOutlined fontSize="small" />,
+      label: "Create View State",
+      onSelect: onCreateSceneViewState,
     },
   ];
 

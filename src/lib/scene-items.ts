@@ -17,6 +17,10 @@ interface SelectByHitReq extends Req {
   readonly hit?: vertexvis.protobuf.stream.IHit;
 }
 
+interface ApplySceneViewStateReq extends Req {
+  readonly id: string;
+}
+
 export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
   if (viewer == null) return;
 
@@ -59,4 +63,15 @@ export async function selectByHit({
   } else {
     await scene.items((op) => op.where((q) => q.all()).deselect()).execute();
   }
+}
+
+export async function applySceneViewState({
+  id,
+  viewer,
+}: ApplySceneViewStateReq): Promise<void> {
+  if (viewer == null) return;
+  const scene = await viewer.scene();
+  if (scene == null) return;
+
+  await scene.applySceneViewState(id);
 }
