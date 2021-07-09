@@ -1,4 +1,5 @@
 import {
+  Button,
   Checkbox,
   Collapse,
   IconButton,
@@ -9,7 +10,7 @@ import {
   TableRow,
   Typography,
 } from "@material-ui/core";
-import { KeyboardArrowDown, KeyboardArrowUp } from "@material-ui/icons";
+import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@material-ui/icons";
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
@@ -22,12 +23,14 @@ interface PartRowProps {
   readonly part: Part;
   readonly isSelected: boolean;
   readonly onSelected: (id: string) => void;
+  readonly onCreteSceneFromRevision: (id: string) => void;
 }
 
 export default function PartRow({
   part,
   isSelected,
   onSelected,
+  onCreteSceneFromRevision,
 }: PartRowProps): JSX.Element {
   const row = part;
   const [open, setOpen] = React.useState<boolean>(false);
@@ -74,7 +77,6 @@ export default function PartRow({
         <TableCell
           colSpan={6}
           sx={{
-            backgroundColor: "rgba(33, 150, 243, 0.08)",
             pb: 0,
             pt: 0,
           }}
@@ -89,6 +91,7 @@ export default function PartRow({
                   <TableCell>ID</TableCell>
                   <TableCell>Supplied ID</TableCell>
                   <TableCell>Created</TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -101,6 +104,15 @@ export default function PartRow({
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
+                      <TableCell align="right">
+                        <Button
+                          color="secondary"
+                          startIcon={<Add />}
+                          onClick={() => onCreteSceneFromRevision(r.id)}
+                        >
+                          New Scene
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>

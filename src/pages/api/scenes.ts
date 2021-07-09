@@ -1,10 +1,14 @@
 import {
+  CreateSceneRequestDataAttributes,
   getPage,
   head,
   logError,
+  PartDataRelationshipsPartRevisionsTypeEnum,
+  QueuedJobData,
   SceneData,
   ScenesApiUpdateSceneRequest,
   UpdateSceneRequestDataAttributes,
+  UpdateSceneRequestDataAttributesStateEnum,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
@@ -21,6 +25,15 @@ import {
 } from "../../lib/api";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
+
+export type CreateSceneReq = Pick<
+  CreateSceneRequestDataAttributes,
+  "suppliedId" | "name"
+> & {
+  readonly revisionId: string;
+};
+
+export type CreateSceneRes = Pick<QueuedJobData, "id"> & Res;
 
 export type UpdateSceneReq = Pick<ScenesApiUpdateSceneRequest, "id"> &
   Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId">;
@@ -41,6 +54,11 @@ export default withSession(async function handle(
 
   if (req.method === "PATCH") {
     const r = await upd(req);
+    return res.status(r.status).json(r);
+  }
+
+  if (req.method === "POST") {
+    const r = await create(req);
     return res.status(r.status).json(r);
   }
 
@@ -99,4 +117,63 @@ async function upd(req: NextIronRequest): Promise<ErrorRes | Res> {
     })
   );
   return { status: 200 };
+}
+
+async function create(
+  req: NextIronRequest
+): Promise<ErrorRes | CreateSceneRes> {
+  const b: CreateSceneReq = JSON.parse(req.body);
+  if (!req.body) return InvalidBody;
+
+  const { suppliedId, name, revisionId }: CreateSceneReq = b;
+
+  const c = await getClientFromSession(req.session);
+  const s = await c.scenes.createScene({
+    createSceneRequest: {
+      data: {
+        type: "scene",
+        attributes: {
+          name,
+          suppliedId,
+          treeEnabled: true,
+        },
+      },
+    },
+  });
+
+  const sceneId = s.data.data.id;
+
+  const res = await c.sceneItems.createSceneItem({
+    id: sceneId,
+    createSceneItemRequest: {
+      data: {
+        type: "scene-item",
+        attributes: {},
+        relationships: {
+          source: {
+            data: {
+              type: PartDataRelationshipsPartRevisionsTypeEnum.PartRevision,
+              id: revisionId,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  await makeCall(() =>
+    c.scenes.updateScene({
+      id: sceneId,
+      updateSceneRequest: {
+        data: {
+          attributes: {
+            state: UpdateSceneRequestDataAttributesStateEnum.Commit,
+          },
+          type: "scene",
+        },
+      },
+    })
+  );
+
+  return { status: 200, id: res.data.data.id };
 }
