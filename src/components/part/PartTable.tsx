@@ -1,7 +1,9 @@
 import {
+  Alert,
   Box,
   Button,
   Paper,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -27,6 +29,7 @@ import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreatePartDialog from "./CreatePartDialog";
+import CreateSceneDialog from "./CreateSceneDialog";
 import PartRow from "./PartRow";
 import { QueuedTranslationsTable } from "./QueuedTranslationsTable";
 
@@ -58,11 +61,18 @@ export default function PartTable(): JSX.Element {
   const [curPage, setCurPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
+  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
     {}
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [showDialog, setShowDialog] = React.useState(!!router.query.create);
+  const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
+    !!router.query.create
+  );
+  const [targetRevisionId, setTargetRevisionId] = React.useState<
+    string | undefined
+  >();
+
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
@@ -164,7 +174,7 @@ export default function PartTable(): JSX.Element {
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => setShowDialog(true)}
+            onClick={() => setShowCreatePartDialog(true)}
           >
             New
           </Button>
@@ -195,6 +205,7 @@ export default function PartTable(): JSX.Element {
                       isSelected={selected.has(row.id)}
                       onSelected={handleCheck}
                       part={row}
+                      onCreteSceneFromRevision={setTargetRevisionId}
                     />
                   );
                 })
@@ -218,15 +229,34 @@ export default function PartTable(): JSX.Element {
         />
       </Paper>
       <CreatePartDialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
+        open={showCreatePartDialog}
+        onClose={() => setShowCreatePartDialog(false)}
         onPartCreated={(id) => {
-          console.log("Queued translation initiated: " + id);
-          setShowDialog(false);
+          setToastMsg(`Translation initiated. Job ID: ${id}`);          
+          setShowCreatePartDialog(false);
         }}
         targetFileId={maybeQueryParam(router.query.create)}
         targetFileName={maybeQueryParam(router.query.n)}
       />
+
+      <CreateSceneDialog
+        open={!!targetRevisionId}
+        onClose={() => setTargetRevisionId(undefined)}
+        onSceneQueued={(id) => {
+          setToastMsg(`Scene created. Root item job ID: ${id}`);
+          setTargetRevisionId(undefined);
+        }}
+        targetRevisionId={targetRevisionId}
+      />
+      <Snackbar
+        open={!!toastMsg}
+        autoHideDuration={6000}
+        onClose={() => setToastMsg(undefined)}
+      >
+        <Alert onClose={() => setToastMsg(undefined)} severity="success">
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </>
   );
 }
