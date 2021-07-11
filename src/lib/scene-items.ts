@@ -1,3 +1,4 @@
+import { Vector3 } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { ColorMaterial, Components } from "@vertexvis/viewer";
 
@@ -29,6 +30,15 @@ export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
 
   const { lookAt, position, up } = scene.camera();
   await navigator.clipboard.writeText(JSON.stringify({ position, up, lookAt }));
+}
+
+export async function getCamera({ viewer }: Req): Promise<{ lookAt: Vector3, position: Vector3, up: Vector3} | undefined> {
+  if (viewer == null) return;
+
+  const scene = await viewer.scene();
+  if (scene == null) return;
+
+  return scene.camera();
 }
 
 export async function fitAll({ viewer }: Req): Promise<void> {

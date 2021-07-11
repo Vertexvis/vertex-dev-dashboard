@@ -36,7 +36,7 @@ export type CreateSceneReq = Pick<
 export type CreateSceneRes = Pick<QueuedJobData, "id"> & Res;
 
 export type UpdateSceneReq = Pick<ScenesApiUpdateSceneRequest, "id"> &
-  Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId">;
+  Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId" | "camera">;
 
 export default withSession(async function handle(
   req: NextIronRequest,
@@ -106,13 +106,13 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 async function upd(req: NextIronRequest): Promise<ErrorRes | Res> {
   if (!req.body) return BodyRequired;
 
-  const { id, name, suppliedId }: UpdateSceneReq = JSON.parse(req.body);
+  const { id, name, suppliedId, camera }: UpdateSceneReq = JSON.parse(req.body);
   const c = await getClientFromSession(req.session);
   await makeCall(() =>
     c.scenes.updateScene({
       id,
       updateSceneRequest: {
-        data: { attributes: { name, suppliedId }, type: "scene" },
+        data: { attributes: { name, suppliedId, camera }, type: "scene" },
       },
     })
   );

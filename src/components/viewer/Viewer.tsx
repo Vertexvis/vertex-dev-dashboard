@@ -1,16 +1,19 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
 import {
+  Alert,
   Autocomplete,
   AutocompleteCloseReason,
   ClickAwayListener,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Snackbar,
   TextField,
 } from "@material-ui/core";
 import {
   CameraAltOutlined,
   FileCopyOutlined,
+  SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
 } from "@material-ui/icons";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
@@ -21,11 +24,13 @@ import {
   VertexViewerToolbar,
   VertexViewerViewCube,
 } from "@vertexvis/viewer-react";
+import { useRouter } from "next/router";
 import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
-import { copySceneViewCamera, fitAll } from "../../lib/scene-items";
+import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
+import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
 
@@ -71,6 +76,8 @@ function UnwrappedViewer({
   const ref = React.useRef<HTMLElement>(null);
   const [key, setKey] = React.useState(Date.now());
   const [createViewState, setCreateViewState] = React.useState(false);
+  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const router = useRouter();
 
   useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
@@ -82,6 +89,30 @@ function UnwrappedViewer({
 
   function handleClose() {
     setKey(Date.now());
+  }
+
+  async function handleUpdateBaseCamera() {
+    const { sceneId } = router.query;
+    const parsedSceneId = Array.isArray(sceneId) ? sceneId[0] : sceneId || "";
+    const camera = await getCamera({ viewer: viewer.current });
+
+    if (camera) {
+      const req: UpdateSceneReq = {
+        id: parsedSceneId,
+        camera: {
+          position: camera.position,
+          lookAt: camera.lookAt,
+          up: camera.up,
+        },
+      };
+
+      await fetch("/api/scenes", {
+        body: JSON.stringify(req),
+        method: "PATCH",
+      });
+
+      setToastMsg("Base scene camera updated.");
+    }
   }
 
   const options: Option[] = [
@@ -99,6 +130,11 @@ function UnwrappedViewer({
       icon: <CameraAltOutlined fontSize="small" />,
       label: "Create View State",
       onSelect: () => setCreateViewState(true),
+    },
+    {
+      icon: <SystemUpdateAltOutlined fontSize="small" />,
+      label: "Update base scene with current camera",
+      onSelect: handleUpdateBaseCamera,
     },
   ];
 
@@ -165,6 +201,7 @@ function UnwrappedViewer({
         <ViewerSpeedDial
           viewer={viewer}
           onCreateSceneViewState={() => setCreateViewState(true)}
+          onUpdateBaseCamera={handleUpdateBaseCamera}
         />
       </VertexViewerToolbar>
       <CreateSceneViewStateDialog
@@ -176,6 +213,15 @@ function UnwrappedViewer({
         }}
         onClose={() => setCreateViewState(false)}
       />
+      <Snackbar
+        open={!!toastMsg}
+        autoHideDuration={6000}
+        onClose={() => setToastMsg(undefined)}
+      >
+        <Alert onClose={() => setToastMsg(undefined)} severity="success">
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </VertexViewer>
   );
 }

@@ -5,16 +5,16 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { Header } from "../components/shared/Header";
-import { Layout } from "../components/viewer/Layout";
-import { LeftDrawer } from "../components/viewer/LeftDrawer";
-import { RightDrawer } from "../components/viewer/RightDrawer";
-import { Viewer } from "../components/viewer/Viewer";
-import { ErrorRes, fetcher, GetRes } from "../lib/api";
-import { head, StreamCredentials } from "../lib/config";
-import { Metadata, toMetadata } from "../lib/metadata";
-import { applySceneViewState,selectByHit } from "../lib/scene-items";
-import { useViewer } from "../lib/viewer";
+import { Header } from "../../components/shared/Header";
+import { Layout } from "../../components/viewer/Layout";
+import { LeftDrawer } from "../../components/viewer/LeftDrawer";
+import { RightDrawer } from "../../components/viewer/RightDrawer";
+import { Viewer } from "../../components/viewer/Viewer";
+import { ErrorRes, fetcher, GetRes } from "../../lib/api";
+import { head, StreamCredentials } from "../../lib/config";
+import { Metadata, toMetadata } from "../../lib/metadata";
+import { applySceneViewState, selectByHit } from "../../lib/scene-items";
+import { useViewer } from "../../lib/viewer";
 
 const ViewerId = "vertex-viewer-id";
 
@@ -54,12 +54,6 @@ export default function SceneViewer(): JSX.Element {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
-
-  // On credentials changes, update URL.
-  React.useEffect(() => {
-    if (credentials) router.push(encodeCreds(credentials));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [credentials]);
 
   React.useEffect(() => {
     if (viewer.ref.current && !viewId) {
@@ -136,12 +130,14 @@ export function encodeCreds({
   clientId,
   streamKey,
   vertexEnv,
+  sceneId,
 }: {
   clientId: string;
   streamKey: string;
   vertexEnv: Environment;
+  sceneId?: string;
 }): string {
-  const path = "scene-viewer";
+  const path = `scene-viewer/${sceneId ? sceneId : "unknown"}`;
   const cId = `clientId=${encodeURIComponent(clientId)}`;
   const sk = `streamKey=${encodeURIComponent(streamKey)}`;
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;

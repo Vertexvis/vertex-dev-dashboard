@@ -2,6 +2,7 @@ import { SpeedDial, SpeedDialAction } from "@material-ui/core";
 import {
   CameraAltOutlined,
   FileCopyOutlined,
+  SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
 } from "@material-ui/icons";
 
@@ -11,11 +12,13 @@ import { Action } from "./Viewer";
 interface Props {
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
   readonly onCreateSceneViewState: () => void;
+  readonly onUpdateBaseCamera: () => void;
 }
 
 export function ViewerSpeedDial({
   viewer,
   onCreateSceneViewState,
+  onUpdateBaseCamera
 }: Props): JSX.Element {
   const actions: Action[] = [
     {
@@ -32,6 +35,11 @@ export function ViewerSpeedDial({
       icon: <CameraAltOutlined fontSize="small" />,
       label: "Create View State",
       onSelect: onCreateSceneViewState,
+    },
+    {
+      icon: <SystemUpdateAltOutlined fontSize="small" />,
+      label: "Update base scene with current camera",
+      onSelect: onUpdateBaseCamera,
     },
   ];
 
