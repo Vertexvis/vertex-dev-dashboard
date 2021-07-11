@@ -9,13 +9,15 @@ import {
 } from "@material-ui/core";
 import React from "react";
 
+import { MergeSceneReq, MergeSceneRes } from "../../pages/api/merged-scenes";
 import { CreateSceneReq, CreateSceneRes } from "../../pages/api/scenes";
 
 interface CreateSceneDialogProps {
   readonly open: boolean;
   readonly onClose: () => void;
-  readonly onSceneQueued: (queuedSceneItemId: string) => void;
+  readonly onSceneQueued: (queuedSceneItemIds: string[]) => void;
   readonly targetRevisionId?: string;
+  readonly scenesToMerge?: string[];
 }
 
 export default function CreateSceneDialog({
@@ -23,6 +25,7 @@ export default function CreateSceneDialog({
   onClose,
   targetRevisionId,
   onSceneQueued,
+  scenesToMerge,
 }: CreateSceneDialogProps): JSX.Element {
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [name, setName] = React.useState<string | undefined>();
@@ -45,19 +48,56 @@ export default function CreateSceneDialog({
         })
       ).json();
 
-      onSceneQueued(sceneRes.id);
+      onSceneQueued([sceneRes.id]);
+      setSuppliedId(undefined);
+      setName(undefined);
+    }
+
+    if (scenesToMerge) {
+      setSubmitDisabled(true);
+
+      const attrs: MergeSceneReq = {
+        suppliedId,
+        name,
+        sceneIds: scenesToMerge,
+      };
+
+      const sceneRes: MergeSceneRes = await (
+        await fetch("/api/merged-scenes", {
+          method: "POST",
+          body: JSON.stringify(attrs),
+        })
+      ).json();
+
+      onSceneQueued(sceneRes.queuedItemIds);
       setSuppliedId(undefined);
       setName(undefined);
     }
   }
 
+  console.log(scenesToMerge);
+
   return (
     <Dialog fullWidth onClose={onClose} open={open}>
-      <DialogTitle>Create Scene From Revision</DialogTitle>
+      <DialogTitle>Create Scene</DialogTitle>
       <DialogContent>
-        <Typography>
-          <strong>Revision:</strong> {targetRevisionId}
-        </Typography>
+        {targetRevisionId && (
+          <Typography>
+            <strong>Revision:</strong> {targetRevisionId}
+          </Typography>
+        )}
+
+        {scenesToMerge && (
+          <Typography>
+            <span>Merge Scenes:</span>
+
+            <ul>
+              {scenesToMerge.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </Typography>
+        )}
 
         <TextField
           fullWidth

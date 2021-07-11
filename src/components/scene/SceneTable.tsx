@@ -1,6 +1,7 @@
 import {
   Alert,
   Box,
+  Button,
   Checkbox,
   CircularProgress,
   IconButton,
@@ -17,6 +18,7 @@ import {
 } from "@material-ui/core";
 import {
   EditOutlined,
+  MergeTypeOutlined,
   VisibilityOutlined,
   VpnKeyOutlined,
 } from "@material-ui/icons";
@@ -32,6 +34,7 @@ import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer";
+import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -72,6 +75,7 @@ export default function SceneTable({
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);
+  const [showMergeScene, setShowMergeScene] = React.useState(false);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
@@ -181,6 +185,16 @@ export default function SceneTable({
           numSelected={selected.size}
           onDelete={handleDelete}
           title="Scenes"
+          customActions={[
+            <>
+              <Button
+                startIcon={<MergeTypeOutlined />}
+                onClick={() => setShowMergeScene(true)}
+              >
+                Merge
+              </Button>
+            </>,
+          ]}
         />
         <Box
           sx={{
@@ -321,6 +335,15 @@ export default function SceneTable({
           {toastMsg}
         </Alert>
       </Snackbar>
+      <CreateSceneDialog
+        open={showMergeScene}
+        onClose={() => setShowMergeScene(false)}
+        onSceneQueued={() => {
+          setToastMsg("Building merged scene. Check back shortly.");
+          setShowMergeScene(false);
+        }}
+        scenesToMerge={Array.from(selected)}
+      />
     </>
   );
 }
