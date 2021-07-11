@@ -7,12 +7,14 @@ interface Props {
   readonly numSelected: number;
   readonly onDelete: () => void;
   readonly title: string;
+  readonly customActions?: React.ReactNode;
 }
 
 export const TableToolbar = ({
   numSelected,
   onDelete,
   title,
+  customActions,
 }: Props): JSX.Element => {
   return (
     <Toolbar
@@ -42,6 +44,7 @@ export const TableToolbar = ({
           {title}
         </Typography>
       )}
+      {numSelected > 1 && !!customActions ? customActions : <></>}
       {numSelected > 0 && (
         <Tooltip title="Delete">
           <IconButton onClick={() => onDelete()}>

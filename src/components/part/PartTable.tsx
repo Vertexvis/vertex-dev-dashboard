@@ -23,13 +23,13 @@ import { fetcher } from "../../lib/api";
 import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
+import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreatePartDialog from "./CreatePartDialog";
-import CreateSceneDialog from "./CreateSceneDialog";
 import PartRow from "./PartRow";
 import { QueuedTranslationsTable } from "./QueuedTranslationsTable";
 
@@ -242,8 +242,8 @@ export default function PartTable(): JSX.Element {
       <CreateSceneDialog
         open={!!targetRevisionId}
         onClose={() => setTargetRevisionId(undefined)}
-        onSceneQueued={(id) => {
-          setToastMsg(`Scene created. Root item job ID: ${id}`);
+        onSceneQueued={(ids) => {
+          setToastMsg(`Scene created. Root item job ID: ${ids[0]}`);
           setTargetRevisionId(undefined);
         }}
         targetRevisionId={targetRevisionId}
