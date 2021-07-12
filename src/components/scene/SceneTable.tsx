@@ -33,7 +33,7 @@ import { ErrorRes, fetcher, GetRes, isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
-import { encodeCreds } from "../../pages/scene-viewer";
+import { encodeCreds } from "../../pages/scene-viewer/[sceneId]";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -163,7 +163,7 @@ export default function SceneTable({
     ).json();
 
     if (isErrorRes(json)) console.error("Error creating stream key.", json);
-    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv }));
+    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId }));
   }
 
   async function handleGetStreamKey(sceneId: string) {

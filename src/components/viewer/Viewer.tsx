@@ -1,16 +1,19 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
 import {
+  Alert,
   Autocomplete,
   AutocompleteCloseReason,
   ClickAwayListener,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Snackbar,
   TextField,
 } from "@material-ui/core";
 import {
   CameraAltOutlined,
   FileCopyOutlined,
+  SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
 } from "@material-ui/icons";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
@@ -21,19 +24,15 @@ import {
   VertexViewerToolbar,
   VertexViewerViewCube,
 } from "@vertexvis/viewer-react";
+import { useRouter } from "next/router";
 import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
-import { copySceneViewCamera, fitAll } from "../../lib/scene-items";
+import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
+import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
-
-interface Option {
-  readonly icon: React.ReactNode;
-  readonly label: string;
-  readonly onSelect: () => void;
-}
 
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
@@ -71,6 +70,8 @@ function UnwrappedViewer({
   const ref = React.useRef<HTMLElement>(null);
   const [key, setKey] = React.useState(Date.now());
   const [createViewState, setCreateViewState] = React.useState(false);
+  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const router = useRouter();
 
   useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
@@ -84,7 +85,31 @@ function UnwrappedViewer({
     setKey(Date.now());
   }
 
-  const options: Option[] = [
+  async function handleUpdateBaseCamera() {
+    const { sceneId } = router.query;
+    const parsedSceneId = Array.isArray(sceneId) ? sceneId[0] : sceneId || "";
+    const camera = await getCamera({ viewer: viewer.current });
+
+    if (camera) {
+      const req: UpdateSceneReq = {
+        id: parsedSceneId,
+        camera: {
+          position: camera.position,
+          lookAt: camera.lookAt,
+          up: camera.up,
+        },
+      };
+
+      await fetch("/api/scenes", {
+        body: JSON.stringify(req),
+        method: "PATCH",
+      });
+
+      setToastMsg("Base scene camera updated.");
+    }
+  }
+
+  const actions: Action[] = [
     {
       icon: <ZoomOutMapOutlined fontSize="small" />,
       label: "Fit All",
@@ -100,6 +125,11 @@ function UnwrappedViewer({
       label: "Create View State",
       onSelect: () => setCreateViewState(true),
     },
+    {
+      icon: <SystemUpdateAltOutlined fontSize="small" />,
+      label: "Update base scene with current camera",
+      onSelect: handleUpdateBaseCamera,
+    },
   ];
 
   return (
@@ -114,7 +144,7 @@ function UnwrappedViewer({
     >
       <VertexViewerToolbar placement="top-left">
         <ClickAwayListener onClickAway={handleClose}>
-          <Autocomplete<Option>
+          <Autocomplete<Action>
             key={key}
             onChange={(e, v) => {
               if (v == null) return;
@@ -130,7 +160,7 @@ function UnwrappedViewer({
             onClose={(_, reason: AutocompleteCloseReason) => {
               if (reason === "escape") handleClose();
             }}
-            options={options}
+            options={actions}
             size="small"
             renderInput={(params) => (
               <TextField
@@ -162,10 +192,7 @@ function UnwrappedViewer({
         />
       </VertexViewerToolbar>
       <VertexViewerToolbar placement="bottom-right">
-        <ViewerSpeedDial
-          viewer={viewer}
-          onCreateSceneViewState={() => setCreateViewState(true)}
-        />
+        <ViewerSpeedDial actions={actions} />
       </VertexViewerToolbar>
       <CreateSceneViewStateDialog
         viewer={viewer}
@@ -176,6 +203,15 @@ function UnwrappedViewer({
         }}
         onClose={() => setCreateViewState(false)}
       />
+      <Snackbar
+        open={!!toastMsg}
+        autoHideDuration={6000}
+        onClose={() => setToastMsg(undefined)}
+      >
+        <Alert onClose={() => setToastMsg(undefined)} severity="success">
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </VertexViewer>
   );
 }
