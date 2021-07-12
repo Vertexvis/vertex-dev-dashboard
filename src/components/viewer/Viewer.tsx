@@ -34,12 +34,6 @@ import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
 
-interface Option {
-  readonly icon: React.ReactNode;
-  readonly label: string;
-  readonly onSelect: () => void;
-}
-
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
@@ -115,7 +109,7 @@ function UnwrappedViewer({
     }
   }
 
-  const options: Option[] = [
+  const actions: Action[] = [
     {
       icon: <ZoomOutMapOutlined fontSize="small" />,
       label: "Fit All",
@@ -150,7 +144,7 @@ function UnwrappedViewer({
     >
       <VertexViewerToolbar placement="top-left">
         <ClickAwayListener onClickAway={handleClose}>
-          <Autocomplete<Option>
+          <Autocomplete<Action>
             key={key}
             onChange={(e, v) => {
               if (v == null) return;
@@ -166,7 +160,7 @@ function UnwrappedViewer({
             onClose={(_, reason: AutocompleteCloseReason) => {
               if (reason === "escape") handleClose();
             }}
-            options={options}
+            options={actions}
             size="small"
             renderInput={(params) => (
               <TextField
@@ -198,11 +192,7 @@ function UnwrappedViewer({
         />
       </VertexViewerToolbar>
       <VertexViewerToolbar placement="bottom-right">
-        <ViewerSpeedDial
-          viewer={viewer}
-          onCreateSceneViewState={() => setCreateViewState(true)}
-          onUpdateBaseCamera={handleUpdateBaseCamera}
-        />
+        <ViewerSpeedDial actions={actions} />
       </VertexViewerToolbar>
       <CreateSceneViewStateDialog
         viewer={viewer}
