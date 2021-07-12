@@ -88,7 +88,7 @@ async function create(
           name: b.name,
         },
         relationships: {
-          sceneView: {
+          source: {
             data: {
               type: SceneViewRelationshipDataTypeEnum.SceneView,
               id: b.viewId,

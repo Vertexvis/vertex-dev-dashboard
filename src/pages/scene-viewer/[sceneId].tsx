@@ -55,17 +55,6 @@ export default function SceneViewer(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
-  React.useEffect(() => {
-    if (viewer.ref.current && !viewId) {
-      viewer.ref.current.addEventListener("sceneReady", async () => {
-        if (viewer.ref.current) {
-          const scene = await viewer.ref.current.scene();
-          setViewId(scene.sceneViewId);
-        }
-      });
-    }
-  }, [viewer.ref, viewer.ref.current, viewId]); // eslint-disable-line
-
   async function handleSelect(hit?: vertexvis.protobuf.stream.IHit) {
     console.debug({
       hitNormal: hit?.hitNormal,
@@ -109,6 +98,10 @@ export default function SceneViewer(): JSX.Element {
             viewer={viewer.ref}
             viewerId={ViewerId}
             onViewStateCreated={mutate}
+            onSceneReady={async () => {
+              const scene = await viewer.ref.current?.scene();
+              if (scene) setViewId(scene.sceneViewId);
+            }}
           />
         )
       }
