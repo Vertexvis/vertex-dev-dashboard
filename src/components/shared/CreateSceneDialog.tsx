@@ -75,8 +75,6 @@ export default function CreateSceneDialog({
     }
   }
 
-  console.log(scenesToMerge);
-
   return (
     <Dialog fullWidth onClose={onClose} open={open}>
       <DialogTitle>Create Scene</DialogTitle>
