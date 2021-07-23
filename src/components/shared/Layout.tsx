@@ -49,8 +49,8 @@ export const Main = styled("main", {
   const { create } = theme.transitions;
   return {
     flexGrow: 1,
-    maxWidth: `calc(100% - ${LeftDrawerWidth}px)`,
     marginRight: -RightDrawerWidth,
+    maxWidth: `calc(100% - ${LeftDrawerWidth}px)`,
     transition: create("margin", sharpLeaving(theme)),
     ...(open && {
       marginRight: 0,
