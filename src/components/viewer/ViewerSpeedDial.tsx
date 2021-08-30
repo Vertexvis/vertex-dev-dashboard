@@ -6,10 +6,8 @@ interface Props {
   readonly actions: Action[];
 }
 
-export function ViewerSpeedDial({
-  actions
-}: Props): JSX.Element {
-return (
+export function ViewerSpeedDial({ actions }: Props): JSX.Element {
+  return (
     <SpeedDial
       ariaLabel="Viewer toolbar"
       hidden={true}

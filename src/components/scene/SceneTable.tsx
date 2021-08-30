@@ -163,7 +163,10 @@ export default function SceneTable({
     ).json();
 
     if (isErrorRes(json)) console.error("Error creating stream key.", json);
-    else router.push(encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId }));
+    else
+      router.push(
+        encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId })
+      );
   }
 
   async function handleGetStreamKey(sceneId: string) {

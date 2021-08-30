@@ -232,7 +232,7 @@ export default function PartTable(): JSX.Element {
         open={showCreatePartDialog}
         onClose={() => setShowCreatePartDialog(false)}
         onPartCreated={(id) => {
-          setToastMsg(`Translation initiated. Job ID: ${id}`);          
+          setToastMsg(`Translation initiated. Job ID: ${id}`);
           setShowCreatePartDialog(false);
         }}
         targetFileId={maybeQueryParam(router.query.create)}

@@ -36,9 +36,7 @@ export default withSession(async function handle(
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
 });
 
-async function create(
-  req: NextIronRequest
-): Promise<ErrorRes | MergeSceneRes> {
+async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
   const b: MergeSceneReq = JSON.parse(req.body);
   if (!req.body) return InvalidBody;
 

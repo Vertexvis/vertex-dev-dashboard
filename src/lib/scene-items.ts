@@ -32,7 +32,11 @@ export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
   await navigator.clipboard.writeText(JSON.stringify({ position, up, lookAt }));
 }
 
-export async function getCamera({ viewer }: Req): Promise<{ lookAt: Vector3, position: Vector3, up: Vector3} | undefined> {
+export async function getCamera({
+  viewer,
+}: Req): Promise<
+  { lookAt: Vector3; position: Vector3; up: Vector3 } | undefined
+> {
   if (viewer == null) return;
 
   const scene = await viewer.scene();
