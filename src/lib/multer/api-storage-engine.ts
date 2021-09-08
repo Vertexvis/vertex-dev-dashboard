@@ -1,4 +1,4 @@
-import { head } from "@vertexvis/api-client-node";
+import { head, VertexError } from "@vertexvis/api-client-node";
 import { Request } from "express";
 import * as ironSession from "next-iron-session";
 
@@ -22,7 +22,8 @@ const VertexAPIStorageEngine = {
       });
       cb(undefined, { path: "/files/" + id });
     } catch (err) {
-      cb(err);
+      const e = err as VertexError;
+      cb(e);
     }
   },
 

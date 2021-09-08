@@ -4,6 +4,7 @@ import {
   getPage,
   head,
   logError,
+  VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
@@ -65,9 +66,10 @@ async function get(
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
-    logError(error);
-    return error.vertexError?.res
-      ? toErrorRes(error.vertexError?.res)
+    const e = error as VertexError;
+    logError(e);
+    return e.vertexError?.res
+      ? toErrorRes({ failure: e.vertexError?.res })
       : ServerError;
   }
 }

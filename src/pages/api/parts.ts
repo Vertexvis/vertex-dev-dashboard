@@ -6,6 +6,7 @@ import {
   logError,
   PartData,
   QueuedJobData,
+  VertexError
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
@@ -70,9 +71,10 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
-    logError(error);
-    return error.vertexError?.res
-      ? toErrorRes(error.vertexError?.res)
+    const e = error as VertexError;
+    logError(e);
+    return e.vertexError?.res
+      ? toErrorRes({ failure: e.vertexError?.res })
       : ServerError;
   }
 }
