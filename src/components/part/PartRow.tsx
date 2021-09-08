@@ -103,7 +103,7 @@ export default function PartRow({
                     >
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
-                      <TableCell>{toLocaleString(row.created)}</TableCell>
+                      <TableCell>{toLocaleString(r.created)}</TableCell>
                       <TableCell align="right">
                         <Button
                           color="secondary"

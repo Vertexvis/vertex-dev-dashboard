@@ -7,6 +7,7 @@ import {
   Oauth2Api,
   OAuth2Token,
   VertexClient,
+  VertexError,
 } from "@vertexvis/api-client-node";
 import assert from "assert";
 import { AxiosResponse } from "axios";
@@ -44,8 +45,9 @@ export async function makeCall<T>(
   try {
     return (await apiCall()).data;
   } catch (error) {
-    logError(error);
-    return error.vertexError?.res ?? toFailure(ServerError);
+    const ve = error as VertexError;
+    logError(ve);
+    return ve.vertexError?.res ?? toFailure(ServerError);
   }
 }
 
