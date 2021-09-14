@@ -1,4 +1,4 @@
-import { Checkbox, Skeleton, TableCell, TableRow } from "@material-ui/core";
+import { Checkbox, Skeleton, TableCell, TableRow } from "@mui/material";
 import React from "react";
 
 interface Props {

@@ -4,7 +4,7 @@ import {
   TableCell,
   TableRow,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import { Vector3 } from "@vertexvis/geometry";
 import React from "react";
 

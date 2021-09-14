@@ -10,8 +10,8 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import { Close, FileCopyOutlined } from "@material-ui/icons";
+} from "@mui/material";
+import { Close, FileCopyOutlined } from "@mui/icons-material";
 import React from "react";
 import { useForm } from "react-hook-form";
 

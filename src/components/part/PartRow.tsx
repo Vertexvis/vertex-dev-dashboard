@@ -9,8 +9,8 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@material-ui/core";
-import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@material-ui/icons";
+} from "@mui/material";
+import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";

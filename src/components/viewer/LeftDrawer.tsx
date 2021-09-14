@@ -1,6 +1,6 @@
-import { Box, Divider, Drawer, IconButton, Tooltip } from "@material-ui/core";
-import { drawerClasses } from "@material-ui/core/Drawer";
-import { ChevronLeft } from "@material-ui/icons";
+import { Box, Divider, Drawer, IconButton, Tooltip } from "@mui/material";
+import { drawerClasses } from "@mui/material/Drawer";
+import { ChevronLeft } from "@mui/icons-material";
 import { Environment } from "@vertexvis/viewer";
 import React from "react";
 

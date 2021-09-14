@@ -15,13 +15,13 @@ import {
   TableRow,
   TextField,
   Tooltip,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   EditOutlined,
   MergeTypeOutlined,
   VisibilityOutlined,
   VpnKeyOutlined,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import debounce from "lodash.debounce";

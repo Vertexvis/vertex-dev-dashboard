@@ -1,4 +1,4 @@
-import { SpeedDial, SpeedDialAction } from "@material-ui/core";
+import { SpeedDial, SpeedDialAction } from "@mui/material";
 
 import { Action } from "./Viewer";
 

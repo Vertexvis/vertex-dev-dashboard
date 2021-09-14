@@ -6,7 +6,7 @@ import {
   DialogTitle,
   TextField,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import React from "react";
 
 import { MergeSceneReq, MergeSceneRes } from "../../pages/api/merged-scenes";

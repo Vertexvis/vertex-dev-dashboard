@@ -11,8 +11,8 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@material-ui/core";
-import { Add } from "@material-ui/icons";
+} from "@mui/material";
+import { Add } from "@mui/icons-material";
 import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";

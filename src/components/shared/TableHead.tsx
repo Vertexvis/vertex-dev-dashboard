@@ -3,7 +3,7 @@ import {
   TableCell,
   TableHead as MuiTableHead,
   TableRow,
-} from "@material-ui/core";
+} from "@mui/material";
 import React from "react";
 
 export interface HeadCell {

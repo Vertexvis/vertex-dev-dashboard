@@ -9,13 +9,13 @@ import {
   ListItemText,
   Snackbar,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   CameraAltOutlined,
   FileCopyOutlined,
   SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { TapEventDetails } from "@vertexvis/viewer";
 import {

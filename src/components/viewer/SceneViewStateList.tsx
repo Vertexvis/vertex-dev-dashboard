@@ -1,9 +1,4 @@
-import {
-  List,
-  ListItemButton,
-  ListItemText,
-  Typography,
-} from "@material-ui/core";
+import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 

@@ -3,8 +3,8 @@ import {
   AppBarProps as MuiAppBarProps,
   Box,
   Toolbar,
-} from "@material-ui/core";
-import { styled } from "@material-ui/core/styles";
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 
 import useUser from "../../lib/hooks/use-user";
 import { easeOutEntering, sharpLeaving } from "../../lib/transitions";

@@ -10,8 +10,8 @@ import {
   FormControlLabel,
   LinearProgress,
   TextField,
-} from "@material-ui/core";
-import { CloudUploadOutlined } from "@material-ui/icons";
+} from "@mui/material";
+import { CloudUploadOutlined } from "@mui/icons-material";
 import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
 import { useRouter } from "next/router";
 import React from "react";

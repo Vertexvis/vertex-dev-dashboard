@@ -5,13 +5,13 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
-} from "@material-ui/core";
-import { drawerClasses } from "@material-ui/core/Drawer";
+} from "@mui/material";
+import { drawerClasses } from "@mui/material/Drawer";
 import {
   DescriptionOutlined,
   LocalLibraryOutlined,
   PhotoLibraryOutlined,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 import { useRouter } from "next/router";
 import React from "react";
 
