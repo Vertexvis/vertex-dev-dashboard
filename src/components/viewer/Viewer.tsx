@@ -1,5 +1,11 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
 import {
+  CameraAltOutlined,
+  FileCopyOutlined,
+  SystemUpdateAltOutlined,
+  ZoomOutMapOutlined,
+} from "@mui/icons-material";
+import {
   Alert,
   Autocomplete,
   AutocompleteCloseReason,
@@ -10,12 +16,6 @@ import {
   Snackbar,
   TextField,
 } from "@mui/material";
-import {
-  CameraAltOutlined,
-  FileCopyOutlined,
-  SystemUpdateAltOutlined,
-  ZoomOutMapOutlined,
-} from "@mui/icons-material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { TapEventDetails } from "@vertexvis/viewer";
 import {

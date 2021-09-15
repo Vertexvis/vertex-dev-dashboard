@@ -36,7 +36,7 @@ export function Input<T>({
         <TextField
           error={Boolean(error)}
           fullWidth
-          helperText={error ? error.message : undefined}
+          helperText={error ? error : undefined}
           label={label}
           margin="normal"
           size="small"

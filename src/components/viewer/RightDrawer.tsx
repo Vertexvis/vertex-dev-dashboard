@@ -1,7 +1,7 @@
+import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionSummary, Drawer, Typography } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
 import { styled } from "@mui/material/styles";
-import { ExpandMore } from "@mui/icons-material";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 

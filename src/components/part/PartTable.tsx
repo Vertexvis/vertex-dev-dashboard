@@ -1,3 +1,4 @@
+import { Add } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -12,14 +13,12 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Add } from "@mui/icons-material";
 import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { fetcher } from "../../lib/api";
 import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
@@ -46,7 +45,6 @@ function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
     `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
     }`,
-    fetcher,
     { refreshInterval: 30000 }
   );
 }

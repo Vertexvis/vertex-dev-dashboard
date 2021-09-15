@@ -16,7 +16,6 @@ import {
 import React from "react";
 import useSWR from "swr";
 
-import { fetcher } from "../../lib/api";
 import { toFilePage } from "../../lib/files";
 import { CreatePartReq, CreatePartRes } from "../../pages/api/parts";
 
@@ -29,7 +28,7 @@ interface CreatePartDialogProps {
 }
 
 function useFiles() {
-  return useSWR(`/api/files?pageSize=25`, fetcher);
+  return useSWR(`/api/files?pageSize=25`);
 }
 
 export default function CreatePartDialog({

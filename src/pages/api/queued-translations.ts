@@ -3,7 +3,7 @@ import {
   head,
   logError,
   QueuedJobData,
-  VertexError
+  VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 

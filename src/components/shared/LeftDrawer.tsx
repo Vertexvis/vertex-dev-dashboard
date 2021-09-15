@@ -1,4 +1,9 @@
 import {
+  DescriptionOutlined,
+  LocalLibraryOutlined,
+  PhotoLibraryOutlined,
+} from "@mui/icons-material";
+import {
   Drawer,
   List,
   ListItemButton,
@@ -7,11 +12,6 @@ import {
   Toolbar,
 } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
-import {
-  DescriptionOutlined,
-  LocalLibraryOutlined,
-  PhotoLibraryOutlined,
-} from "@mui/icons-material";
 import { useRouter } from "next/router";
 import React from "react";
 

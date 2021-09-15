@@ -9,7 +9,7 @@ import {
   ScenesApiUpdateSceneRequest,
   UpdateSceneRequestDataAttributes,
   UpdateSceneRequestDataAttributesStateEnum,
-  VertexError
+  VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 

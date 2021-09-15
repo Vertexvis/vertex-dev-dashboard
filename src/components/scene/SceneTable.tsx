@@ -1,4 +1,10 @@
 import {
+  EditOutlined,
+  MergeTypeOutlined,
+  VisibilityOutlined,
+  VpnKeyOutlined,
+} from "@mui/icons-material";
+import {
   Alert,
   Box,
   Button,
@@ -16,12 +22,6 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import {
-  EditOutlined,
-  MergeTypeOutlined,
-  VisibilityOutlined,
-  VpnKeyOutlined,
-} from "@mui/icons-material";
 import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import debounce from "lodash.debounce";
@@ -29,7 +29,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { ErrorRes, fetcher, GetRes, isErrorRes } from "../../lib/api";
+import { ErrorRes, GetRes, isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
@@ -62,8 +62,7 @@ function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
-    }`,
-    fetcher
+    }`
   );
 }
 

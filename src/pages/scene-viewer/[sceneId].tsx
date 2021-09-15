@@ -10,7 +10,7 @@ import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { Viewer } from "../../components/viewer/Viewer";
-import { ErrorRes, fetcher, GetRes } from "../../lib/api";
+import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadata } from "../../lib/metadata";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
@@ -20,8 +20,7 @@ const ViewerId = "vertex-viewer-id";
 
 function useSceneViewStates({ viewId }: { viewId?: string }) {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
-    viewId ? `/api/scene-view-states?view=${viewId}` : null,
-    fetcher
+    viewId ? `/api/scene-view-states?view=${viewId}` : null
   );
 }
 

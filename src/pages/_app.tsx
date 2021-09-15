@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { AppProps } from "next/app";
 import Head from "next/head";
 import React from "react";
+import { SWRConfig } from "swr";
 
 import theme from "../lib/theme";
 
@@ -31,7 +32,11 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
         </Head>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Component {...pageProps} />
+          <SWRConfig
+            value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
+          >
+            <Component {...pageProps} />
+          </SWRConfig>
         </ThemeProvider>
       </CacheProvider>
     </React.StrictMode>
