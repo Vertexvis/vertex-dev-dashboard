@@ -46,7 +46,7 @@ async function create(
     c.streamKeys.createSceneStreamKey({
       id: b.id,
       createStreamKeyRequest: {
-        data: { type: "stream-key", attributes: { expiry: 31536000 } },
+        data: { type: "stream-key", attributes: { expiry: 86400 } },
       },
     })
   );

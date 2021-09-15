@@ -6,6 +6,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import { AppProps } from "next/app";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import React from "react";
 import { SWRConfig } from "swr";
 
@@ -15,6 +16,27 @@ const cache = createCache({ key: "css", prepend: true });
 cache.compat = true;
 
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
+  const { events } = useRouter();
+
+  React.useEffect(() => {
+    function handleChange(url: string) {
+      /* eslint-disable @typescript-eslint/ban-ts-comment */
+      // @ts-ignore
+      if (window.gtag) {
+        // @ts-ignore
+        window.gtag("config", process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS, {
+          page_path: url,
+        });
+      }
+      /* eslint-enable @typescript-eslint/ban-ts-comment */
+    }
+
+    events.on("routeChangeComplete", handleChange);
+    return () => {
+      events.off("routeChangeComplete", handleChange);
+    };
+  }, [events]);
+
   return (
     <React.StrictMode>
       <CacheProvider value={cache}>

@@ -23,7 +23,7 @@ export default function Login(): JSX.Element {
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [env, setEnv] = React.useState("platdev");
+  const [env, setEnv] = React.useState("platprod");
   const router = useRouter();
 
   const invalidId = id != null && id.length !== IdLength;
@@ -105,8 +105,9 @@ export default function Login(): JSX.Element {
             size="small"
             value={env}
           >
-            <MenuItem value="platdev">platdev</MenuItem>
+            <MenuItem value="platprod">platprod</MenuItem>
             <MenuItem value="platstaging">platstaging</MenuItem>
+            <MenuItem value="platdev">platdev</MenuItem>
           </Select>
         </FormControl>
 
