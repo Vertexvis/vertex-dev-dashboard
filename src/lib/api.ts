@@ -57,8 +57,3 @@ export function isErrorRes(obj?: {
 }): obj is ErrorRes {
   return defined(obj) && defined(obj.message) && defined(obj.status);
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetcher(req: RequestInfo): Promise<any> {
-  return (await fetch(req)).json();
-}

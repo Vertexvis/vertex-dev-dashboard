@@ -6,7 +6,7 @@ import {
   logError,
   PartData,
   QueuedJobData,
-  VertexError
+  VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 

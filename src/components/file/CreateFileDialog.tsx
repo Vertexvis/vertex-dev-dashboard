@@ -1,3 +1,4 @@
+import { CloudUploadOutlined } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -11,7 +12,6 @@ import {
   LinearProgress,
   TextField,
 } from "@mui/material";
-import { CloudUploadOutlined } from "@mui/icons-material";
 import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
 import { useRouter } from "next/router";
 import React from "react";

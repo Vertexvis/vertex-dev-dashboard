@@ -1,3 +1,4 @@
+import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import {
   Button,
   Checkbox,
@@ -10,7 +11,6 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";

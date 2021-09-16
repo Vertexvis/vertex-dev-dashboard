@@ -1,3 +1,4 @@
+import { Add } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -13,13 +14,11 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Add } from "@mui/icons-material";
 import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
-import { fetcher } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
@@ -43,8 +42,7 @@ function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
-    }`,
-    fetcher
+    }`
   );
 }
 

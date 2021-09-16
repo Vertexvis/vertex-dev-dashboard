@@ -1,6 +1,6 @@
+import { Delete } from "@mui/icons-material";
 import { IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Delete } from "@mui/icons-material";
 import React from "react";
 
 interface Props {

@@ -5,7 +5,7 @@ import {
   logError,
   SceneViewRelationshipDataTypeEnum,
   SceneViewStateData,
-  VertexError
+  VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 

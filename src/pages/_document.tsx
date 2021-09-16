@@ -1,4 +1,4 @@
-import createCache, { EmotionCache } from "@emotion/cache";
+import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import createEmotionServer from "@emotion/server/create-instance";
 import Document, { Head, Html, Main, NextScript } from "next/document";
@@ -16,6 +16,22 @@ export default class MyDocument extends Document {
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
           />
+          <script
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+          />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
+              page_path: window.location.pathname,
+            });
+          `,
+            }}
+          />
         </Head>
         <body>
           <Main />
@@ -28,8 +44,8 @@ export default class MyDocument extends Document {
 
 MyDocument.getInitialProps = async (ctx) => {
   const originalRenderPage = ctx.renderPage;
-
-  const cache = getCache();
+  const cache = createCache({ key: "css", prepend: true });
+  cache.compat = true;
   const { extractCriticalToChunks } = createEmotionServer(cache);
 
   ctx.renderPage = () =>
@@ -44,26 +60,17 @@ MyDocument.getInitialProps = async (ctx) => {
     });
 
   const initialProps = await Document.getInitialProps(ctx);
-  const emotionStyles = extractCriticalToChunks(initialProps.html);
-  const emotionStyleTags = emotionStyles.styles.map((style) => (
-    <style
-      data-emotion={`${style.key} ${style.ids.join(" ")}`}
-      key={style.key}
-      dangerouslySetInnerHTML={{ __html: style.css }}
-    />
-  ));
   return {
     ...initialProps,
     styles: [
       ...React.Children.toArray(initialProps.styles),
-      ...emotionStyleTags,
+      ...extractCriticalToChunks(initialProps.html).styles.map((style) => (
+        <style
+          data-emotion={`${style.key} ${style.ids.join(" ")}`}
+          key={style.key}
+          dangerouslySetInnerHTML={{ __html: style.css }}
+        />
+      )),
     ],
   };
 };
-
-function getCache(): EmotionCache {
-  const cache = createCache({ key: "css", prepend: true });
-  cache.compat = true;
-
-  return cache;
-}
