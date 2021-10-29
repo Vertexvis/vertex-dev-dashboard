@@ -112,6 +112,7 @@ export default function FilesTable(): JSX.Element {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
+    mutate();
   }
 
   return (
