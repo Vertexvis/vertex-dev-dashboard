@@ -75,7 +75,7 @@ export default function PartTable(): JSX.Element {
     string | undefined
   >();
 
-  const { data, error } = useParts({ cursor, pageSize, suppliedId });
+  const { data, mutate, error } = useParts({ cursor, pageSize, suppliedId });
   const page = data ? toPartPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
@@ -126,6 +126,7 @@ export default function PartTable(): JSX.Element {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
+    mutate();
   }
 
   return (

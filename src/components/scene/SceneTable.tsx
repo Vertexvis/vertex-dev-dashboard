@@ -89,7 +89,7 @@ export default function SceneTable({
   >();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
-  const { data, error } = useScenes({ cursor, pageSize, suppliedId });
+  const { data, error, mutate } = useScenes({ cursor, pageSize, suppliedId });
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
@@ -145,6 +145,7 @@ export default function SceneTable({
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
+    mutate();
   }
 
   function handleEditClick(s: Scene) {
