@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { Environment } from "@vertexvis/viewer";
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
@@ -58,10 +59,12 @@ export function SceneTree({
   }, [collapseAll]);
 
   return (
-    <VertexSceneTree
-      configEnv={configEnv}
-      ref={ref}
-      viewerSelector={`#${viewerId}`}
-    />
+    <Box sx={{ overflow: "hidden" }}>
+      <VertexSceneTree
+        configEnv={configEnv}
+        ref={ref}
+        viewerSelector={`#${viewerId}`}
+      />
+    </Box>
   );
 }
