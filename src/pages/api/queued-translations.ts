@@ -42,7 +42,7 @@ async function get(
     const { cursors, page } = await getPage(() =>
       c.translationInspections.getQueuedTranslations({
         pageCursor: pc,
-        pageSize: ps ? parseInt(ps, 10) : 10,
+        pageSize: ps ? parseInt(ps, 10) : 50,
         filterStatus: status,
       })
     );
