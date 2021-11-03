@@ -1,3 +1,4 @@
+import { SceneItemData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 
 export interface Metadata {
@@ -45,6 +46,31 @@ export function toMetadata({
   }
 
   return { partName: ps.Name, properties: alphabetize(ps) };
+}
+
+export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
+  const ps: Properties = {};
+  const id = item.id;
+  const suppliedId = item.attributes.suppliedId;
+  const partRevisionId = item.relationships.source?.data.id;
+
+  ps[ItemIdKey] = id;
+  if (suppliedId) ps[ItemSuppliedIdKey] = suppliedId;
+  if (partRevisionId) ps[PartRevIdKey] = partRevisionId;
+  const md = item.attributes.metadata;
+
+  if (md) {
+    const itemMD = Object.entries(md).reduce((n, current) => {
+      return {
+        ...n,
+        [current[0]]: current[1].value || "",
+      };
+    }, ps);
+
+    return { partName: "", properties: alphabetize(itemMD) };
+  }
+
+  return { partName: "", properties: alphabetize(ps) };
 }
 
 function alphabetize<T extends Record<string, unknown>>(obj: T): T {

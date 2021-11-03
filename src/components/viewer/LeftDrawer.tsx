@@ -13,6 +13,7 @@ interface Props {
   readonly open: boolean;
   readonly viewerId: string;
   readonly selectedItemdId?: string;
+  readonly onItemSelected: (itemId: string) => void
 }
 
 const IconWidth = "36px";
@@ -42,6 +43,7 @@ export function LeftDrawer({
   open,
   viewerId,
   selectedItemdId,
+  onItemSelected
 }: Props): JSX.Element {
   const [expandAll, setExpandAll] = React.useState<boolean | undefined>();
   const [collapseAll, setCollapseAll] = React.useState<boolean | undefined>();
@@ -99,7 +101,8 @@ export function LeftDrawer({
         selectedItemdId={selectedItemdId}
         expandAll={expandAll}
         collapseAll={collapseAll}
-        onRowClick={() => {
+        onRowClick={(itemId) => {
+          onItemSelected(itemId)
           setExpandAll(undefined);
           setCollapseAll(undefined);
         }}
