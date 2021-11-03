@@ -1,4 +1,4 @@
-import { SceneViewStateData } from "@vertexvis/api-client-node";
+import { SceneItemData, SceneViewStateData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { Environment } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
@@ -12,7 +12,7 @@ import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
-import { Metadata, toMetadata } from "../../lib/metadata";
+import { Metadata, toMetadata, toMetadataFromItem } from "../../lib/metadata";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
 
@@ -21,6 +21,12 @@ const ViewerId = "vertex-viewer-id";
 function useSceneViewStates({ viewId }: { viewId?: string }) {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
     viewId ? `/api/scene-view-states?view=${viewId}` : null
+  );
+}
+
+function useSceneItem({ itemId }: { itemId?: string }) {
+  return useSWR<SceneItemData, ErrorRes>(
+    itemId ? `/api/scene-items/${itemId}` : null
   );
 }
 
@@ -36,7 +42,9 @@ export default function SceneViewer(): JSX.Element {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
+  const [selectedItemFromTree, setSelectedItemFromTree] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
+  const selectedItem = useSceneItem({ itemId: selectedItemId });
 
   // Prefer credentials in URL to enable easy scene sharing. If empty, use defaults.
   React.useEffect(() => {
@@ -61,14 +69,26 @@ export default function SceneViewer(): JSX.Element {
       sceneItemId: hit?.itemId?.hex,
       sceneItemSuppliedId: hit?.itemSuppliedId?.value,
     });
+    setSelectedItemFromTree(false);
     setMetadata(toMetadata({ hit }));
     setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
     await selectByHit({ hit, viewer: viewer.ref.current });
   }
 
+  function handleTreeItemSelected(itemId: string) {
+    setSelectedItemFromTree(true);
+    setSelectedItemId(itemId);
+  }
+
   function handleViewStateSelected(id: string) {
     applySceneViewState({ id, viewer: viewer.ref.current });
   }
+
+  React.useEffect(() => {
+    if (selectedItem.data && selectedItemFromTree) {
+      setMetadata(toMetadataFromItem(selectedItem.data));
+    }
+  }, [selectedItem.data, selectedItemFromTree]);
 
   return router.isReady && credentials ? (
     <Layout
@@ -85,6 +105,7 @@ export default function SceneViewer(): JSX.Element {
           open={drawerOpen}
           viewerId={ViewerId}
           selectedItemdId={selectedItemId}
+          onItemSelected={handleTreeItemSelected}
         />
       }
       leftDrawerOpen={drawerOpen}

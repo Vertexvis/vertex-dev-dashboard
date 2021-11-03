@@ -23,24 +23,21 @@ export function SceneTree({
   const ref = React.useRef<HTMLVertexSceneTreeElement>(null);
 
   React.useEffect(() => {
-    const clickRow = async (
-      event: MouseEvent | PointerEvent
-    ): Promise<void> => {
-      const row = await ref?.current?.getRowForEvent(event);
-      if (row?.node == null) return;
-
-      if (onRowClick) onRowClick(row.node.id?.hex || "");
-
-      console.debug(
-        `Selected ${row.node.suppliedId?.value ?? row.node.id?.hex},${
-          row.node.name
-        }`
-      );
-    };
+    const onSelect = (event: Event) => {     
+      const row = event.target as HTMLVertexSceneTreeRowElement;
+      if (row.node && !row.node?.selected && onRowClick) {
+        console.debug(
+          `Selected ${row.node.suppliedId?.value ?? row.node.id?.hex},${
+            row.node.name
+          }`
+        );
+        onRowClick(row.node.id?.hex || ""); 
+      }      
+    }
 
     const effectRef = ref.current;
-    effectRef?.addEventListener("click", clickRow);
-    return () => effectRef?.removeEventListener("click", clickRow);
+    effectRef?.addEventListener("selectionToggled", onSelect);
+    return () => effectRef?.removeEventListener("selectionToggled", onSelect);
   }, [ref, onRowClick]);
 
   React.useEffect(() => {
