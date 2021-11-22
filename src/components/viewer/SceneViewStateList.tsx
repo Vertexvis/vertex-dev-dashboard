@@ -1,4 +1,4 @@
-import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
+import { List, ListItem, ListItemText, Typography } from "@mui/material";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 
@@ -26,16 +26,16 @@ export function SceneViewStateList({
     <List>
       {sceneViewStates.map((s, i) => {
         return (
-          <ListItemButton
+          <ListItem
             key={s.id}
             selected={selectedIndex === i}
             onClick={() => handleListItemClick(s.id, i)}
           >
             <ListItemText
               primary={s.attributes.name || s.id}
-              secondary={toLocaleString(s.attributes.created)}
+              secondary={s.id + "\n" + toLocaleString(s.attributes.created)}
             />
-          </ListItemButton>
+          </ListItem>
         );
       })}
     </List>
