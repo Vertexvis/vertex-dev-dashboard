@@ -1,6 +1,5 @@
 import {
   SceneData,
-  SceneItemRelationshipDataTypeEnum,
   SceneRelationshipDataTypeEnum,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
