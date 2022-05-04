@@ -14,7 +14,7 @@
     "lodash.debounce": "^4.0",
     "multer": "^1.4",
     "next": "^11.1",
-    "next-connect": "^0.10",
+    "next-connect": "^0.12.2",
     "next-iron-session": "^4.2",
     "react": "^17.0",
     "react-dom": "^17.0",
