@@ -12,7 +12,6 @@ import {
   TablePagination,
   TableRow,
   TextField,
-  ToggleButton,
 } from "@mui/material";
 import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
@@ -87,8 +86,6 @@ export default function PartTable(): JSX.Element {
     []
   );
 
-  const [showFailed, setShowFailed] = React.useState(true);
-
   React.useEffect(() => {
     if (page == null) return;
 
@@ -140,9 +137,9 @@ export default function PartTable(): JSX.Element {
           refreshInterval={10000}
           status="running"
         />
+        
         <QueuedTranslationsTable
           title="Recently Successful Translations"
-          // refreshInterval={60000}
           status="complete"
           fetchAll={true}
           filter={(row) => dateDiffInDays(new Date(row.created)) <= 2}
