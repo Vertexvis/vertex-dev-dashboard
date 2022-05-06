@@ -23,7 +23,7 @@ export function SceneTree({
   const ref = React.useRef<HTMLVertexSceneTreeElement>(null);
 
   React.useEffect(() => {
-    const onSelect = (event: Event) => {     
+    const onSelect = (event: Event) => {
       const row = event.target as HTMLVertexSceneTreeRowElement;
       if (row.node && !row.node?.selected && onRowClick) {
         console.debug(
@@ -31,9 +31,9 @@ export function SceneTree({
             row.node.name
           }`
         );
-        onRowClick(row.node.id?.hex || ""); 
-      }      
-    }
+        onRowClick(row.node.id?.hex || "");
+      }
+    };
 
     const effectRef = ref.current;
     effectRef?.addEventListener("selectionToggled", onSelect);
