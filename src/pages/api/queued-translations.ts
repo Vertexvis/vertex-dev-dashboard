@@ -3,6 +3,7 @@ import {
   head,
   logError,
   QueuedJobData,
+  VertexClient,
   VertexError,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
@@ -37,12 +38,26 @@ async function get(
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
+    const fetchAll = head(req.query.fetchAll);
     const status = head(req.query.status);
+
+    if (fetchAll) {
+      const result: QueuedJobData[] = await fetchAllTranslations(c, status, []);
+
+      return {
+        cursors: {
+          next: undefined,
+          self: undefined,
+        },
+        data: result,
+        status: 200,
+      };
+    }
 
     const { cursors, page } = await getPage(() =>
       c.translationInspections.getQueuedTranslations({
         pageCursor: pc,
-        pageSize: ps ? parseInt(ps, 10) : 50,
+        pageSize: ps ? parseInt(ps, 10) : 200,
         filterStatus: status,
       })
     );
@@ -54,4 +69,32 @@ async function get(
       ? toErrorRes({ failure: e.vertexError?.res })
       : ServerError;
   }
+}
+
+async function fetchAllTranslations(
+  c: VertexClient,
+  status: string,
+  currentTranslations: QueuedJobData[],
+  cursor?: string
+): Promise<QueuedJobData[]> {
+  let queuedJobData: QueuedJobData[] = currentTranslations;
+  const { cursors, page } = await getPage(() =>
+    c.translationInspections.getQueuedTranslations({
+      pageCursor: cursor ?? undefined,
+      pageSize: 200,
+      filterStatus: status,
+    })
+  );
+
+  queuedJobData = queuedJobData.concat(page.data);
+  if (cursors.next != null) {
+    const nextPage = await fetchAllTranslations(
+      c,
+      status,
+      queuedJobData,
+      cursors.next
+    );
+    queuedJobData = queuedJobData.concat(nextPage);
+  }
+  return page.data;
 }
