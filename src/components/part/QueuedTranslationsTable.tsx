@@ -21,24 +21,34 @@ interface QueuedTranslationsTableProps {
   readonly status: string;
   readonly refreshInterval?: number;
   readonly title: string;
+  readonly fetchAll?: boolean;
   readonly filter?: (arg0: QueuedJob) => boolean;
 }
 
-function useRunningTranslations(status: string, refreshInterval: number) {
-  return useSWR(`/api/queued-translations?status=${status}`, {
-    refreshInterval,
-  });
+function useRunningTranslations(
+  status: string,
+  refreshInterval: number,
+  fetchAll: boolean
+) {
+  return useSWR(
+    `/api/queued-translations?status=${status}&fetchAll=${fetchAll}`,
+    {
+      refreshInterval,
+    }
+  );
 }
 
 export function QueuedTranslationsTable({
   title,
   refreshInterval,
   status,
+  fetchAll,
   filter,
 }: QueuedTranslationsTableProps): JSX.Element {
   const { data, isValidating } = useRunningTranslations(
     status,
-    refreshInterval || 0
+    refreshInterval || 0,
+    fetchAll ?? false
   );
   const page = data ? toQueuedJobPage(data) : undefined;
   const items = filter ? page?.items.filter(filter) : page?.items;

@@ -137,11 +137,19 @@ export default function PartTable(): JSX.Element {
           refreshInterval={10000}
           status="running"
         />
+        
+        <QueuedTranslationsTable
+          title="Recently Successful Translations"
+          status="complete"
+          fetchAll={true}
+          filter={(row) => dateDiffInDays(new Date(row.created)) <= 2}
+        />
+
         <QueuedTranslationsTable
           title="Recently Failed Translations"
           refreshInterval={30000}
           status="error"
-          filter={(row) => dateDiffInDays(new Date(row.created)) <= 7}
+          filter={(row) => dateDiffInDays(new Date(row.created)) <= 5}
         />
       </Box>
       <Paper sx={{ m: 2 }}>
