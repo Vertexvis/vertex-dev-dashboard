@@ -12,6 +12,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import {
+  OrthographicCamera,
+  PerspectiveCamera,
+} from "@vertexvis/api-client-node";
 import React from "react";
 import { useForm } from "react-hook-form";
 
@@ -57,6 +61,18 @@ export function SceneDrawer({
   React.useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  function isOrthographic(
+    camera: OrthographicCamera | PerspectiveCamera
+  ): camera is OrthographicCamera {
+    return camera.type === "orthographic";
+  }
+
+  function isPerspective(
+    camera: OrthographicCamera | PerspectiveCamera
+  ): camera is PerspectiveCamera {
+    return camera.type === "perspective";
+  }
 
   return (
     <Drawer
@@ -213,30 +229,70 @@ export function SceneDrawer({
                       </Box>
 
                       <Table size="small">
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>
-                              <Typography variant="subtitle2">
-                                Position
-                              </Typography>
-                              <VectorTable vector={scene.camera.position} />
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>
-                              <Typography variant="subtitle2">
-                                Look at
-                              </Typography>
-                              <VectorTable vector={scene.camera.lookAt} />
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell sx={{ border: 0 }}>
-                              <Typography variant="subtitle2">Up</Typography>
-                              <VectorTable vector={scene.camera.up} />
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
+                        {isPerspective(scene.camera) && (
+                          <TableBody>
+                            <TableRow>
+                              <TableCell>
+                                <Typography variant="subtitle2">
+                                  Position
+                                </Typography>
+                                <VectorTable vector={scene.camera.position} />
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>
+                                <Typography variant="subtitle2">
+                                  Look at
+                                </Typography>
+                                <VectorTable vector={scene.camera.lookAt} />
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 0 }}>
+                                <Typography variant="subtitle2">Up</Typography>
+                                <VectorTable vector={scene.camera.up} />
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        )}
+
+                        {isOrthographic(scene.camera) && (
+                          <TableBody>
+                            <TableRow>
+                              <TableCell>
+                                <Typography variant="subtitle2">
+                                  View Vector
+                                </Typography>
+                                <VectorTable vector={scene.camera.viewVector} />
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>
+                                <Typography variant="subtitle2">
+                                  Look at
+                                </Typography>
+                                <VectorTable vector={scene.camera.lookAt} />
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 0 }}>
+                                <Typography variant="subtitle2">Up</Typography>
+                                <VectorTable vector={scene.camera.up} />
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow>
+                              <TableCell sx={{ border: 0 }}>
+                                <Typography variant="subtitle2">
+                                  Fov Height
+                                </Typography>
+                                <Typography>
+                                  {scene.camera.fovHeight}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        )}
                       </Table>
                     </TableCell>
                   </TableRow>

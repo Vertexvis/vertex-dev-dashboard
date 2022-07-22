@@ -32,7 +32,6 @@ function useSceneItem({ itemId }: { itemId?: string }) {
 }
 
 export default function SceneViewer({
-  vertexEnv,
   networkConfig,
 }: CommonProps): JSX.Element {
   const router = useRouter();
