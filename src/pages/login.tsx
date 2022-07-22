@@ -14,29 +14,86 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/router";
 import React from "react";
+import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
 
 const IdLength = 64;
 const SecretLength = 26;
 
+interface NetworkConfigInput {
+  apiHost?: string;
+  renderingHost?: string;
+  sceneTreeHost?: string;
+  sceneViewHost?: string;
+}
+
 export default function Login(): JSX.Element {
-  const [id, setId] = React.useState<string | undefined>();
+  const [id, setId] = React.useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("vertexvis.client.id") || undefined;
+    }
+    return undefined;
+  });
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [env, setEnv] = React.useState("platprod");
+  const [env, setEnv] = React.useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("vertexvis.env") || "platprod";
+    }
+
+    return "platprod";
+  });
+  const [networkConfig, setNetworkConfig] = React.useState<NetworkConfigInput>(
+    () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("vertexvis.network.config");
+        try {
+          return saved != null ? (JSON.parse(saved) as NetworkConfigInput) : {};
+        } catch (e) {
+          console.error("failed to get network config from local storage", e);
+        }
+      }
+
+      return {};
+    }
+  );
   const router = useRouter();
 
-  const invalidId = id != null && id.length !== IdLength;
-  const invalidSecret = secret != null && secret.length !== SecretLength;
+  const invalidId = id?.length !== IdLength;
+  const invalidSecret = secret?.length !== SecretLength;
+  const invalidApiHost = !isValidHttpUrl(networkConfig.apiHost);
+  const invalidRenderingHost = !isValidHttpUrl(networkConfig.renderingHost);
+  const invalidSceneTreeHost = !isValidHttpUrlNullable(
+    networkConfig.sceneTreeHost
+  );
+  const invalidSceneViewHost = !isValidHttpUrlNullable(
+    networkConfig.sceneViewHost
+  );
+  const customConfigurationValidated =
+    !invalidApiHost &&
+    !invalidRenderingHost &&
+    !invalidSceneTreeHost &&
+    !invalidSceneViewHost;
 
+  function setLocalStorageItems() {
+    if (networkConfig != null) {
+      localStorage.setItem(
+        "vertexvis.network.config",
+        JSON.stringify(networkConfig)
+      );
+    }
+    localStorage.setItem("vertexvis.env", env);
+    if (id != null) {
+      localStorage.setItem("vertexvis.client.id", id);
+    }
+  }
   async function handleSubmit() {
     if (!id || !secret) return;
-
     setLoading(true);
-
+    setLocalStorageItems();
     const res = await (
       await fetch("/api/login", {
-        body: JSON.stringify({ id, secret, env }),
+        body: JSON.stringify({ id, secret, env, networkConfig }),
         method: "POST",
       })
     ).json();
@@ -55,7 +112,7 @@ export default function Login(): JSX.Element {
           display: "flex",
           justifyContent: "center",
           flexDirection: "column",
-          maxHeight: "500px",
+          maxHeight: env === "custom" ? "800px" : "800px",
           minWidth: "30%",
           mx: 2,
           my: 4,
@@ -74,6 +131,7 @@ export default function Login(): JSX.Element {
           helperText={
             invalidId ? `${IdLength}-character client ID required.` : undefined
           }
+          value={id}
           label="Client ID"
           margin="normal"
           onChange={(e) => setId(e.target.value)}
@@ -106,16 +164,103 @@ export default function Login(): JSX.Element {
             value={env}
           >
             <MenuItem value="platprod">platprod</MenuItem>
-            <MenuItem value="platstaging">platstaging</MenuItem>
             <MenuItem value="platdev">platdev</MenuItem>
+            <MenuItem value="custom">custom</MenuItem>
           </Select>
         </FormControl>
+        {env === "custom" && (
+          <>
+            <TextField
+              error={invalidApiHost}
+              fullWidth
+              value={networkConfig.apiHost}
+              helperText={
+                invalidApiHost
+                  ? `URL required and must be formatted as a url ('http://...' or 'https://...')`
+                  : undefined
+              }
+              label="Api Host"
+              margin="normal"
+              onChange={(e) =>
+                setNetworkConfig({
+                  ...networkConfig,
+                  apiHost: e.target.value,
+                })
+              }
+              size="small"
+              type="text"
+            />
+            <TextField
+              error={invalidRenderingHost}
+              fullWidth
+              value={networkConfig.renderingHost}
+              helperText={
+                invalidRenderingHost
+                  ? `URL required and must be formatted as a url ('ws://...' or 'wss://...')`
+                  : undefined
+              }
+              label="Rendering Host"
+              margin="normal"
+              onChange={(e) =>
+                setNetworkConfig({
+                  ...networkConfig,
+                  renderingHost: e.target.value,
+                })
+              }
+              size="small"
+              type="text"
+            />
+
+            <TextField
+              error={invalidSceneTreeHost}
+              fullWidth
+              value={networkConfig.sceneTreeHost}
+              helperText={
+                invalidSceneTreeHost
+                  ? `URL must be formatted as a url ('http://...' or 'https://...')`
+                  : undefined
+              }
+              label="Scene Tree Host"
+              margin="normal"
+              onChange={(e) =>
+                setNetworkConfig({
+                  ...networkConfig,
+                  sceneTreeHost: e.target.value,
+                })
+              }
+              size="small"
+              type="text"
+            />
+            <TextField
+              error={invalidSceneViewHost}
+              fullWidth
+              value={networkConfig.sceneViewHost}
+              helperText={
+                invalidSceneViewHost
+                  ? `URL must be formatted as a url ('http://...' or 'https://...')`
+                  : undefined
+              }
+              label="Scene View Host"
+              margin="normal"
+              onChange={(e) =>
+                setNetworkConfig({
+                  ...networkConfig,
+                  sceneViewHost: e.target.value,
+                })
+              }
+              size="small"
+              type="text"
+            />
+          </>
+        )}
 
         <Button
           sx={{ mt: 2 }}
           variant="outlined"
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={
+            loading || (env === "custom" && !customConfigurationValidated)
+          }
         >
           {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
           <Box>Sign In</Box>

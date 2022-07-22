@@ -18,16 +18,23 @@ import { ErrorRes, ServerError } from "./api";
 import {
   getCreds,
   getEnv,
+  getNetworkConfig,
   getToken as getSessionToken,
+  NetworkConfig,
   setToken,
 } from "./with-session";
 
 const TenMinsInMs = 600_000;
 
-const basePath = (env: string) =>
-  env === "platprod"
+const basePath = (env: string, networkConfig?: NetworkConfig) => {
+  if (env === "custom" && networkConfig != null) {
+    return networkConfig.apiHost;
+  }
+
+  return env === "platprod"
     ? "https://platform.vertexvis.com"
     : `https://platform.${env}.vertexvis.io`;
+};
 
 export async function makeCallRes<T>(
   res: NextApiResponse<T | Failure>,
@@ -54,15 +61,16 @@ export async function makeCall<T>(
 export async function getToken(
   id: string,
   secret: string,
-  env: string
+  env: string,
+  networkConfig?: NetworkConfig
 ): Promise<OAuth2Token> {
   const auth = new Oauth2Api(
     new Configuration({
-      basePath: basePath(env),
+      basePath: basePath(env, networkConfig),
       username: id,
       password: secret,
     }),
-    basePath(env)
+    basePath(env, networkConfig)
   );
 
   return (await auth.createToken({ grantType: "client_credentials" })).data;
@@ -72,10 +80,11 @@ export async function getClientWithCreds(
   id: string,
   secret: string,
   env: string,
-  token: OAuth2Token
+  token: OAuth2Token,
+  networkConfig?: NetworkConfig
 ): Promise<VertexClient> {
   const client = await VertexClient.build({
-    basePath: basePath(env),
+    basePath: basePath(env, networkConfig),
     client: {
       id,
       secret,
@@ -91,6 +100,7 @@ export async function getClientFromSession(
 ): Promise<VertexClient> {
   const creds = getCreds(session);
   const env = getEnv(session);
+  const networkConfig = getNetworkConfig(session);
   const token = getSessionToken(session);
   assert(creds != null);
   assert(env != null);
@@ -98,20 +108,32 @@ export async function getClientFromSession(
 
   const expiresIn = token.expiration - Date.now();
   if (expiresIn < TenMinsInMs) {
-    const newToken = await getToken(creds.id, creds.secret, env);
+    const newToken = await getToken(creds.id, creds.secret, env, networkConfig);
     const newExpiration = Date.now() + newToken.expires_in * 1000;
 
     setToken(session, { token: newToken, expiration: newExpiration });
-    return getClientWithCreds(creds.id, creds.secret, env, {
-      ...newToken,
-      expires_in: newExpiration,
-    });
+    return getClientWithCreds(
+      creds.id,
+      creds.secret,
+      env,
+      {
+        ...newToken,
+        expires_in: newExpiration,
+      },
+      networkConfig
+    );
   }
 
-  return getClientWithCreds(creds.id, creds.secret, env, {
-    ...token.token,
-    expires_in: expiresIn,
-  });
+  return getClientWithCreds(
+    creds.id,
+    creds.secret,
+    env,
+    {
+      ...token.token,
+      expires_in: expiresIn,
+    },
+    networkConfig
+  );
 }
 
 export function toFailure({ message, status }: ErrorRes): Failure {

@@ -15,6 +15,7 @@ import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadata, toMetadataFromItem } from "../../lib/metadata";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
+import { CommonProps, defaultServerSideProps } from "../../lib/with-session";
 
 const ViewerId = "vertex-viewer-id";
 
@@ -30,7 +31,10 @@ function useSceneItem({ itemId }: { itemId?: string }) {
   );
 }
 
-export default function SceneViewer(): JSX.Element {
+export default function SceneViewer({
+  vertexEnv,
+  networkConfig,
+}: CommonProps): JSX.Element {
   const router = useRouter();
   const viewer = useViewer();
   const [credentials, setCredentials] = React.useState<
@@ -39,6 +43,7 @@ export default function SceneViewer(): JSX.Element {
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
+
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
@@ -101,6 +106,7 @@ export default function SceneViewer(): JSX.Element {
       leftDrawer={
         <LeftDrawer
           configEnv={credentials.vertexEnv}
+          networkConfig={networkConfig}
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
           viewerId={ViewerId}
@@ -117,6 +123,7 @@ export default function SceneViewer(): JSX.Element {
             viewer={viewer.ref}
             viewerId={ViewerId}
             onViewStateCreated={mutate}
+            networkConfig={networkConfig}
             onSceneReady={async () => {
               const scene = await viewer.ref.current?.scene();
               if (scene) setViewId(scene.sceneViewId);
@@ -155,3 +162,5 @@ export function encodeCreds({
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
   return `${path}/?${cId}&${sk}&${ve}`;
 }
+
+export const getServerSideProps = defaultServerSideProps;
