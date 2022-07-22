@@ -112,7 +112,7 @@ export default function Login(): JSX.Element {
           display: "flex",
           justifyContent: "center",
           flexDirection: "column",
-          maxHeight: env === "custom" ? "800px" : "800px",
+          maxHeight: env === "custom" ? "800px" : "500px",
           minWidth: "30%",
           mx: 2,
           my: 4,
