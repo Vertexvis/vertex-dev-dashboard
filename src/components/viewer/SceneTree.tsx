@@ -69,7 +69,6 @@ export function SceneTree({
     if (collapseAll) effectRef?.collapseAll();
   }, [collapseAll]);
 
-  console.log("configEnv: ", configEnv, "networkConfig", networkConfig);
   return (
     <Box sx={{ height: "100%" }}>
       <VertexSceneTree
