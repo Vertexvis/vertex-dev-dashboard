@@ -1,15 +1,14 @@
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Divider, Drawer, IconButton, Tooltip } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
-import { Environment } from "@vertexvis/viewer";
 import React from "react";
-import { NetworkConfig } from "../../lib/with-session";
+import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 
 import { LeftDrawerWidth } from "./Layout";
 import { SceneTree } from "./SceneTree";
 
 interface Props {
-  readonly configEnv: Environment;
+  readonly configEnv: EnvironmentWithCustom;
   readonly onClose: () => void;
   readonly open: boolean;
   readonly viewerId: string;

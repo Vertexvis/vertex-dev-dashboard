@@ -1,8 +1,5 @@
 import { Box } from "@mui/material";
-import {
-  Environment,
-  VertexSceneTreeTableCellCustomEvent,
-} from "@vertexvis/viewer";
+import { VertexSceneTreeTableCellCustomEvent } from "@vertexvis/viewer";
 
 import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/components/scene-tree-table-cell/scene-tree-table-cell";
 import { VertexSceneTree } from "@vertexvis/viewer-react";
