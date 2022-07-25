@@ -26,6 +26,7 @@ src/
     api/      // API endpoints served by NextJS
 ```
 
+
 ### Deployment
 
 A few options for deployment,
