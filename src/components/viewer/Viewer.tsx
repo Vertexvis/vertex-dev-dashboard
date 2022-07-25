@@ -17,9 +17,12 @@ import {
   TextField,
 } from "@mui/material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { TapEventDetails } from "@vertexvis/viewer";
 import {
+  TapEventDetails,
   JSX as ViewerJSX,
+  VertexViewerCustomEvent,
+} from "@vertexvis/viewer";
+import {
   VertexViewer,
   VertexViewerToolbar,
   VertexViewerViewCube,
@@ -30,6 +33,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
 import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
+import { NetworkConfig } from "../../lib/with-session";
 import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
@@ -38,6 +42,7 @@ interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
   readonly viewerId: string;
+  readonly networkConfig?: NetworkConfig;
   readonly onViewStateCreated: () => void;
 }
 
@@ -65,6 +70,7 @@ function UnwrappedViewer({
   viewer,
   viewerId,
   onViewStateCreated,
+  networkConfig,
   ...props
 }: ViewerProps): JSX.Element {
   const ref = React.useRef<HTMLElement>(null);
@@ -132,9 +138,22 @@ function UnwrappedViewer({
     },
   ];
 
+  const stringConfig = JSON.stringify({
+    network: {
+      ...networkConfig,
+    },
+  });
+
   return (
     <VertexViewer
-      configEnv={credentials.vertexEnv}
+      configEnv={
+        credentials.vertexEnv !== "custom" ? credentials.vertexEnv : undefined
+      }
+      config={
+        credentials.vertexEnv === "custom" && networkConfig != null
+          ? stringConfig
+          : undefined
+      }
       css={{ height: "100%", width: "100%" }}
       clientId={credentials.clientId}
       id={viewerId}
@@ -220,7 +239,7 @@ function onTap<P extends ViewerProps>(
   WrappedViewer: ViewerComponentType
 ): React.FunctionComponent<P & OnSelectProps> {
   return function Component({ viewer, onSelect, ...props }: P & OnSelectProps) {
-    async function handleTap(e: CustomEvent<TapEventDetails>) {
+    async function handleTap(e: VertexViewerCustomEvent<TapEventDetails>) {
       if (props.onTap) props.onTap(e);
 
       if (!e.defaultPrevented) {

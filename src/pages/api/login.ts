@@ -1,10 +1,11 @@
 import { OAuth2Token } from "@vertexvis/api-client-node";
-import { Environment } from "@vertexvis/viewer";
 import { NextApiResponse } from "next";
 
 import { ErrorRes, MethodNotAllowed, Res } from "../../lib/api";
 import { getToken } from "../../lib/vertex-api";
 import withSession, {
+  EnvironmentWithCustom,
+  NetworkConfig,
   NextIronRequest,
   OAuthCredentials,
   SessionToken,
@@ -16,7 +17,8 @@ import withSession, {
 export interface LoginReq {
   readonly id: string;
   readonly secret: string;
-  readonly env: Environment;
+  readonly env: EnvironmentWithCustom;
+  readonly networkConfig?: NetworkConfig;
 }
 
 export default withSession(async function (
@@ -28,7 +30,7 @@ export default withSession(async function (
 
     let token: OAuth2Token | undefined;
     try {
-      token = await getToken(b.id, b.secret, b.env);
+      token = await getToken(b.id, b.secret, b.env, b.networkConfig);
     } catch {
       return res.status(401).json({ status: 401, message: "Unauthorized" });
     }
@@ -39,7 +41,7 @@ export default withSession(async function (
       expiration: Date.now() + token.expires_in * 1000,
     };
     setCreds(req.session, creds);
-    setEnv(req.session, b.env);
+    setEnv(req.session, b.env, b.networkConfig);
     setToken(req.session, sessionToken);
 
     await req.session.save();
