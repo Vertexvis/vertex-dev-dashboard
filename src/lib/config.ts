@@ -1,4 +1,5 @@
 import { Environment } from "@vertexvis/viewer";
+import { EnvironmentWithCustom } from "./with-session";
 
 export interface AccountCredentials {
   readonly clientId: string;
@@ -9,7 +10,7 @@ export interface AccountCredentials {
 export interface StreamCredentials {
   readonly clientId: string;
   readonly streamKey: string;
-  readonly vertexEnv: Environment;
+  readonly vertexEnv: EnvironmentWithCustom;
 }
 
 export function head<T>(items?: T | T[]): T | undefined {

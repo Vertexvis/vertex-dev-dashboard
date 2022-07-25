@@ -7,10 +7,10 @@ import {
 import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/components/scene-tree-table-cell/scene-tree-table-cell";
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
-import { NetworkConfig } from "../../lib/with-session";
+import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 
 interface Props {
-  readonly configEnv: Environment;
+  readonly configEnv: EnvironmentWithCustom;
   readonly viewerId: string;
   readonly selectedItemdId?: string;
   readonly expandAll?: boolean;
@@ -72,13 +72,14 @@ export function SceneTree({
     if (collapseAll) effectRef?.collapseAll();
   }, [collapseAll]);
 
+  console.log("configEnv: ", configEnv, "networkConfig", networkConfig);
   return (
     <Box sx={{ height: "100%" }}>
       <VertexSceneTree
-        configEnv={networkConfig == null ? configEnv : undefined}
+        configEnv={configEnv !== "custom" ? configEnv : undefined}
         id="vertex-scene-tree"
         config={
-          networkConfig != null
+          networkConfig != null && configEnv === "custom"
             ? JSON.stringify({
                 network: {
                   ...networkConfig,

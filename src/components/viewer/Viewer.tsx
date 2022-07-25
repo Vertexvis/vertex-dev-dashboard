@@ -146,8 +146,14 @@ function UnwrappedViewer({
 
   return (
     <VertexViewer
-      configEnv={networkConfig != null ? credentials.vertexEnv : undefined}
-      config={networkConfig != null ? stringConfig : undefined}
+      configEnv={
+        credentials.vertexEnv !== "custom" ? credentials.vertexEnv : undefined
+      }
+      config={
+        credentials.vertexEnv === "custom" && networkConfig != null
+          ? stringConfig
+          : undefined
+      }
       css={{ height: "100%", width: "100%" }}
       clientId={credentials.clientId}
       id={viewerId}
