@@ -56,17 +56,16 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
     },
   });
 
-
   const sceneId = s.data.data.id;
 
- await c.sceneItems.createSceneItem({
+  await c.sceneItems.createSceneItem({
     id: sceneId,
     createSceneItemRequest: {
       data: {
         type: "scene-item",
         attributes: {
           name,
-          suppliedId: suppliedId
+          suppliedId: suppliedId,
         },
         relationships: {},
       },
@@ -81,7 +80,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
           data: {
             type: "scene-item",
             attributes: {
-              parent: suppliedId
+              parent: suppliedId,
             },
             relationships: {
               source: {

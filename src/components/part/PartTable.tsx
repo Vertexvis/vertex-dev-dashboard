@@ -137,7 +137,7 @@ export default function PartTable(): JSX.Element {
           refreshInterval={10000}
           status="running"
         />
-        
+
         <QueuedTranslationsTable
           title="Recently Successful Translations"
           status="complete"

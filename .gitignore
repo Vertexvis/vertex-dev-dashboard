@@ -3,6 +3,7 @@
 .env.local
 .env.production.local
 .env.test.local
+.env
 yarn-error.log*
 
 /.next
