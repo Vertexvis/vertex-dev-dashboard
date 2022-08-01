@@ -1,17 +1,18 @@
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Divider, Drawer, IconButton, Tooltip } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
-import { Environment } from "@vertexvis/viewer";
 import React from "react";
+import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 
 import { LeftDrawerWidth } from "./Layout";
 import { SceneTree } from "./SceneTree";
 
 interface Props {
-  readonly configEnv: Environment;
+  readonly configEnv: EnvironmentWithCustom;
   readonly onClose: () => void;
   readonly open: boolean;
   readonly viewerId: string;
+  readonly networkConfig?: NetworkConfig;
   readonly selectedItemdId?: string;
   readonly onItemSelected: (itemId: string) => void;
 }
@@ -39,10 +40,11 @@ const CollapseAll = () => (
 
 export function LeftDrawer({
   configEnv,
-  onClose,
   open,
   viewerId,
   selectedItemdId,
+  networkConfig,
+  onClose,
   onItemSelected,
 }: Props): JSX.Element {
   const [expandAll, setExpandAll] = React.useState<boolean | undefined>();
@@ -100,6 +102,7 @@ export function LeftDrawer({
         viewerId={viewerId}
         selectedItemdId={selectedItemdId}
         expandAll={expandAll}
+        networkConfig={networkConfig}
         collapseAll={collapseAll}
         onRowClick={(itemId) => {
           onItemSelected(itemId);

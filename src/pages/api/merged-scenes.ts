@@ -58,6 +58,20 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
 
   const sceneId = s.data.data.id;
 
+  await c.sceneItems.createSceneItem({
+    id: sceneId,
+    createSceneItemRequest: {
+      data: {
+        type: "scene-item",
+        attributes: {
+          name,
+          suppliedId: suppliedId,
+        },
+        relationships: {},
+      },
+    },
+  });
+
   const items = await Promise.all(
     sceneIds.map((s) => {
       return c.sceneItems.createSceneItem({
@@ -65,7 +79,9 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
         createSceneItemRequest: {
           data: {
             type: "scene-item",
-            attributes: {},
+            attributes: {
+              parent: suppliedId,
+            },
             relationships: {
               source: {
                 data: {
