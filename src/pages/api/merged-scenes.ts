@@ -1,6 +1,8 @@
 import {
+  CameraFitTypeEnum,
   SceneData,
   SceneRelationshipDataTypeEnum,
+  UpdateSceneRequestDataAttributesStateEnum,
 } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
@@ -11,7 +13,7 @@ import {
   MethodNotAllowed,
   Res,
 } from "../../lib/api";
-import { getClientFromSession } from "../../lib/vertex-api";
+import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
 export type MergeSceneReq = {
@@ -93,6 +95,23 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
           },
         },
       });
+    })
+  );
+
+  await makeCall(() =>
+    c.scenes.updateScene({
+      id: sceneId,
+      updateSceneRequest: {
+        data: {
+          attributes: {
+            state: UpdateSceneRequestDataAttributesStateEnum.Commit,
+            camera: {
+              type: CameraFitTypeEnum.FitVisibleSceneItems,
+            },
+          },
+          type: "scene",
+        },
+      },
     })
   );
 
