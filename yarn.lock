@@ -246,13 +246,6 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@babel/runtime@^7.17.2":
-  version "7.17.9"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.17.9.tgz#d19fbf802d01a8cb6cf053a64e472d42c434ba72"
-  integrity sha512-lSiBBvodq29uShpWGNbgFdKYNiFDo5/HIYsaCEY9ff4sb10x9jizo2+pRrSyF4jKZCXqgzuqBOQKbUm90gQwJg==
-  dependencies:
-    regenerator-runtime "^0.13.4"
-
 "@babel/runtime@^7.18.9":
   version "7.19.0"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.19.0.tgz#22b11c037b094d27a8a2504ea4dcff00f50e2259"
@@ -1010,10 +1003,10 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vertexvis/api-client-node@^0.20":
-  version "0.20.0"
-  resolved "https://registry.yarnpkg.com/@vertexvis/api-client-node/-/api-client-node-0.20.0.tgz#7e222a6e46e1d414876bc2a462522bf4f0298a46"
-  integrity sha512-yYIud4vRMkmTQVLkAztnFkp/mKNpcXJ3RRkJI8XkIrIBmYfPCL7doJagQSg5vOUtiMydM4sNOLXON07a0pixdA==
+"@vertexvis/api-client-node@^0.20.3":
+  version "0.20.3"
+  resolved "https://registry.yarnpkg.com/@vertexvis/api-client-node/-/api-client-node-0.20.3.tgz#529bce96ff8a64ac86356ab5efc382325ec3e8f3"
+  integrity sha512-h+eVGFgo6+WHNQ/0pauIoulkRUFW/LO/uIIv3RRtU5zvdp0wTB4zdXBS/LLtjOwEM1fSqymt3fafUOrlQJSopw==
   dependencies:
     axios "^0.27.2"
     p-limit "^3"

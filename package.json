@@ -9,7 +9,7 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.2",
     "@mui/material": "^5.10.1",
-    "@vertexvis/api-client-node": "^0.20",
+    "@vertexvis/api-client-node": "^0.20.3",
     "@vertexvis/viewer-react": "^0.15.0",
     "lodash.debounce": "^4.0",
     "multer": "^1.4.4",
