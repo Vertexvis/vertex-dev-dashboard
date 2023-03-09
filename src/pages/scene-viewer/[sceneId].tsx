@@ -94,6 +94,8 @@ export default function SceneViewer({
     }
   }, [selectedItem.data, selectedItemFromTree]);
 
+  const featureLines = {width: 1, color: "#000000"};
+
   return router.isReady && credentials ? (
     <Layout
       header={
@@ -123,6 +125,7 @@ export default function SceneViewer({
             viewerId={ViewerId}
             onViewStateCreated={mutate}
             networkConfig={networkConfig}
+            featureLines={featureLines}
             onSceneReady={async () => {
               const scene = await viewer.ref.current?.scene();
               if (scene) setViewId(scene.sceneViewId);
