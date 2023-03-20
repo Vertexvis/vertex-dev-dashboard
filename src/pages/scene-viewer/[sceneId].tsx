@@ -94,7 +94,7 @@ export default function SceneViewer({
     }
   }, [selectedItem.data, selectedItemFromTree]);
 
-  const featureLines = {width: 0.5, color: "#444444"};
+  const featureLines = { width: 0.5, color: "#444444" };
 
   return router.isReady && credentials ? (
     <Layout
