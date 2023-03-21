@@ -1,4 +1,4 @@
-import { SceneItemData } from "@vertexvis/api-client-node";
+import { MetadataStringType, SceneItemData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 
 export interface Metadata {
@@ -63,7 +63,7 @@ export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
     const itemMD = Object.entries(md).reduce((n, current) => {
       return {
         ...n,
-        [current[0]]: current[1].value || "",
+        [current[0]]: (current[1] as MetadataStringType).value || "",
       };
     }, ps);
 

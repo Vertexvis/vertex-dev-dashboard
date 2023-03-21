@@ -1,14 +1,8 @@
 import { Vector3 } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { ColorMaterial, Components } from "@vertexvis/viewer";
+import { Components } from "@vertexvis/viewer";
 
 import { AnimationDurationMs } from "../components/viewer/Viewer";
-
-const SelectColor = {
-  ...ColorMaterial.create(255, 255, 0),
-  glossiness: 4,
-  specular: { r: 255, g: 255, b: 255, a: 0 },
-};
 
 interface Req {
   readonly viewer: Components.VertexViewer | null;
@@ -71,7 +65,7 @@ export async function selectByHit({
     await scene
       .items((op) => [
         op.where((q) => q.all()).deselect(),
-        op.where((q) => q.withItemId(id)).select(SelectColor),
+        op.where((q) => q.withItemId(id)).select(),
       ])
       .execute();
   } else {
