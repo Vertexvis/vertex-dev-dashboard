@@ -8,7 +8,7 @@
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.16",
-    "@mui/material": "^5.11.15",
+    "@mui/material": "^5.12.2",
     "@vertexvis/api-client-node": "^0.20.7",
     "@vertexvis/viewer-react": "^0.16.0",
     "lodash.debounce": "^4.0",
