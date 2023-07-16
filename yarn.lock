@@ -821,11 +821,6 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.175.tgz#b78dfa959192b01fae0ad90e166478769b215f45"
   integrity sha512-XmdEOrKQ8a1Y/yxQFOMbC47G/V2VDO1GvMRnl4O75M4GW/abC5tnfzadQYkqEveqRM1dEJGFFegfPNA2vvx2iw==
 
-"@types/long@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@types/long/-/long-4.0.1.tgz#459c65fa1867dafe6a8f322c4c51695663cc55e9"
-  integrity sha512-5tXH6Bx/kNGd3MgffdmP4dy2Z+G4eaXw0SE81Tq3BNadtnMR5/ySMzX4SLEzHJzSmPNn4HIdpQsBvXMUykr58w==
-
 "@types/mime@^1":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.2.tgz#93e25bf9ee75fe0fd80b594bc4feb0e862111b5a"
@@ -994,71 +989,71 @@
     axios "^0.27.2"
     p-limit "^3"
 
-"@vertexvis/frame-streaming-protos@^0.9.0":
-  version "0.9.0"
-  resolved "https://registry.npmjs.org/@vertexvis/frame-streaming-protos/-/frame-streaming-protos-0.9.0.tgz#89909f0323b15eb646d7265899975b0edc88872c"
-  integrity sha512-E57lw/4H/jSQiFZAFLciTh9MtzZrUrkjWv7Z6MnNK3+LJ6pED5JHq8sddMpHJ8ypjoTxvidHCESTP9ipBeMabw==
+"@vertexvis/frame-streaming-protos@^0.10.4":
+  version "0.10.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/frame-streaming-protos/-/frame-streaming-protos-0.10.4.tgz#e5957305ce49ec02b79b62dad7321998b6be38c7"
+  integrity sha512-GGcA06hcdT9I4UFYqiOW6O2hXXh2tL7qpPHFx5hp5IFmNPgMfBgo/ELnYUnz2gIHQu3xaBGOxLC+4NCyPoIaxg==
 
-"@vertexvis/geometry@0.17.2":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/geometry/-/geometry-0.17.2.tgz#8fced1d6e28f4508d394f036f1c7211352a993e0"
-  integrity sha512-uPAXDHkw9n0Aso5azXOrobT11EnMAoh43J55xzdSSpx3wu76qLUs7wp1c40kQfR2zBfql82oHQov/iOT5YgPYQ==
+"@vertexvis/geometry@0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/geometry/-/geometry-0.17.4.tgz#d62ac4ff17646e7a13360f8183d829231880f8b4"
+  integrity sha512-k+hREX3bXeYHZMa1yjWq26MZaK+tbMc4cDC9DLgaNMtHG63TFWOeP0SRKXM7/+H0FloM2niDTALDjfvHbLQIsA==
 
-"@vertexvis/html-templates@0.17.2":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/html-templates/-/html-templates-0.17.2.tgz#7c986837e214585de80a5ca32bf782f5161dba95"
-  integrity sha512-D+vrds9+QQlBF5bcy5a1tzrv2NUAx09ymz4FdSJPVqEI88lsX738oegrYNqA+8SvwRNFkERkgwnoQg1AXQkIBA==
+"@vertexvis/html-templates@0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/html-templates/-/html-templates-0.17.4.tgz#97415698775d274308c3c33ee6efcb06933640f9"
+  integrity sha512-kmp/mpgBS4rpR9suZy80IlO8/C8udzx4yKzzNIHMkkvge7vzk83xtBHKLc0tOtmxSeTp7R9BudHJAc5lEL6miQ==
   dependencies:
-    "@vertexvis/utils" "0.17.2"
+    "@vertexvis/utils" "0.17.4"
 
-"@vertexvis/scene-tree-protos@^0.1.15":
-  version "0.1.15"
-  resolved "https://registry.yarnpkg.com/@vertexvis/scene-tree-protos/-/scene-tree-protos-0.1.15.tgz#343639af315c8f835d3840b9649fc8d6f64761c7"
-  integrity sha512-+j8/WdWSNwQcEVS2OcgWvmt85oWO3S/brdMXr+gSC3wt514JbCCqfCvn0cAozWEsmxby05qge5XggdQH5O2VVA==
+"@vertexvis/scene-tree-protos@^0.1.18":
+  version "0.1.18"
+  resolved "https://registry.yarnpkg.com/@vertexvis/scene-tree-protos/-/scene-tree-protos-0.1.18.tgz#b3d9f984040d6ef6bd74b77244c56f59ad71244b"
+  integrity sha512-Y/KKpgctXupXlJntLmbhvs+dHytDYSTRqnuewuqwFRlnZhri9HhLgbtC/Zw7pqAeE0sYNOfT2wK5cAIUKVXNBQ==
 
 "@vertexvis/scene-view-protos@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@vertexvis/scene-view-protos/-/scene-view-protos-0.1.8.tgz#eb676022c3323b8bbb1198a27cc7ad6849d1ac28"
   integrity sha512-R3HOVRYWTthiwxrndrbSlvqfmqobSvTsmMvohjihqv9toXWAdjRw/uFcL6ei2zQAq18NPenKqxU3hI1sa0MrjQ==
 
-"@vertexvis/stream-api@0.17.2":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/stream-api/-/stream-api-0.17.2.tgz#f60439d1ba06ce8ed5c32833d07b35d08d76fea0"
-  integrity sha512-AcUuKR9anvjSuk6OyV50KaxVkKKFs05sH8Q+/jhqbDY5ogx11Du9CHIC1fIJ8Az+WVO0kf2RzMKpaHr8C5zdrw==
+"@vertexvis/stream-api@0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/stream-api/-/stream-api-0.17.4.tgz#4efa9518434f9983f721b40dd1fedbccdc5a6e4d"
+  integrity sha512-pF3HPxCiOIjw7orJR2J9NF5c+H3YrwIH0Yx0J1Bz1vyJL7pi9VP2R72WiSlvnlMdxMnzrI/k3Qk+b1mKRaQ6NA==
   dependencies:
-    "@vertexvis/frame-streaming-protos" "^0.9.0"
+    "@vertexvis/frame-streaming-protos" "^0.10.4"
 
-"@vertexvis/utils@0.17.2":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/utils/-/utils-0.17.2.tgz#0709bccfac6843d12e96c67edadb1ba0566a8ed8"
-  integrity sha512-r/N2fQ6B1M8Af7PHRtM4b+qkfOLx/1BllAzov22oY/DzeOmIgXTZ1tVYyfx++FRQnt4OzZ4UMKkNElWczWe0Kg==
+"@vertexvis/utils@0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/utils/-/utils-0.17.4.tgz#d8d942958856585ad669412c4e611199599ab2fc"
+  integrity sha512-KPRK6XYVKN/3xLJwpVkfKZtlUXeTlHYr6pO+QTbwtDg3gBJGfeQ1XThzYFCRGOj1vWu0lUIrvWYtrXDvLvLfTQ==
   dependencies:
     is-plain-object "^3.0.0"
     lodash.isequal "^4.5.0"
     uuid "^8.3.2"
 
-"@vertexvis/viewer-react@^0.17.0":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.17.2.tgz#4c6ad0da0bcb54b8c9d6804016f23a705a7cda5b"
-  integrity sha512-JCgD0dFZjgTUlt8El8d8c1BLyH+1tLVOAxfgHU1lKBU9b0TY4rvzhmyxqEvYYmPSW4d5vWj7ednlMciRw7k+ug==
+"@vertexvis/viewer-react@^0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.17.4.tgz#d5be931738ebff7d248acc4bf3e945feaae42d45"
+  integrity sha512-W2g39094Rhr8mOXOSSMTTehRsZtYi2zVEQx27YFJaJVv56vnkHmIRM0SxSWy992hFRSumOWsAdoOJn3XhNAHvQ==
   dependencies:
-    "@vertexvis/viewer" "0.17.2"
+    "@vertexvis/viewer" "0.17.4"
 
-"@vertexvis/viewer@0.17.2":
-  version "0.17.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/viewer/-/viewer-0.17.2.tgz#99516d113e7df209cf54afa3bd151806e153c89e"
-  integrity sha512-C+5bt8oTpBxzBHEzbcHTuLr8xSEl0/GNWjSMrOTdCFl4TCXSopquQuo1YQjrLPCpkBJyT2XTsovPwGkZ5CHMLw==
+"@vertexvis/viewer@0.17.4":
+  version "0.17.4"
+  resolved "https://registry.yarnpkg.com/@vertexvis/viewer/-/viewer-0.17.4.tgz#0f5563d94ba3b2a43edd235c2250ff9444260e19"
+  integrity sha512-htoHkHwEcxgxQT15v9N0YvLeJXiHZ5Jkfj+8t9ZCO/B6AHGsuv4xupAS0Xmd/4wehc4jZ2H2QZganYOZ+JNkZA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.15.0"
     "@stencil/core" "^2.16.1"
     "@types/classnames" "^2.3.1"
-    "@vertexvis/frame-streaming-protos" "^0.9.0"
-    "@vertexvis/geometry" "0.17.2"
-    "@vertexvis/html-templates" "0.17.2"
-    "@vertexvis/scene-tree-protos" "^0.1.15"
+    "@vertexvis/frame-streaming-protos" "^0.10.4"
+    "@vertexvis/geometry" "0.17.4"
+    "@vertexvis/html-templates" "0.17.4"
+    "@vertexvis/scene-tree-protos" "^0.1.18"
     "@vertexvis/scene-view-protos" "^0.1.8"
-    "@vertexvis/stream-api" "0.17.2"
-    "@vertexvis/utils" "0.17.2"
+    "@vertexvis/stream-api" "0.17.4"
+    "@vertexvis/utils" "0.17.4"
     "@vertexvis/web-workers" "^0.1.0"
     camel-case "^4.1.2"
     classnames "^2.3.1"
@@ -1067,7 +1062,7 @@
     google-protobuf "3.19.4"
     jwt-decode "^3.1.2"
     param-case "^3.0.4"
-    protobufjs "^6.11.3"
+    protobufjs "^7.2.4"
     regl "^2.1.0"
     regl-shape "^1.1.0"
     requestidlecallback-polyfill "^1.0.2"
@@ -3110,10 +3105,10 @@ lodash.truncate@^4.4.2:
   resolved "https://registry.yarnpkg.com/lodash.truncate/-/lodash.truncate-4.4.2.tgz#5a350da0b1113b837ecfffd5812cbe58d6eae193"
   integrity sha1-WjUNoLERO4N+z//VgSy+WNbq4ZM=
 
-long@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
-  integrity sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==
+long@^5.0.0:
+  version "5.2.3"
+  resolved "https://registry.yarnpkg.com/long/-/long-5.2.3.tgz#a3ba97f3877cf1d778eccbcb048525ebb77499e1"
+  integrity sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==
 
 loose-envify@^1.1.0, loose-envify@^1.4.0:
   version "1.4.0"
@@ -3813,10 +3808,10 @@ prop-types@^15.8.1:
     object-assign "^4.1.1"
     react-is "^16.13.1"
 
-protobufjs@^6.11.3:
-  version "6.11.3"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.11.3.tgz#637a527205a35caa4f3e2a9a4a13ddffe0e7af74"
-  integrity sha512-xL96WDdCZYdU7Slin569tFX712BxsxslWwAfAhCYjQKGTq7dAU91Lomy6nLLhh/dyGhk/YH4TwTSRxTzhuHyZg==
+protobufjs@^7.2.4:
+  version "7.2.4"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.2.4.tgz#3fc1ec0cdc89dd91aef9ba6037ba07408485c3ae"
+  integrity sha512-AT+RJgD2sH8phPmCf7OUZR8xGdcJRga4+1cOaXJ64hvcSkVhNcRHOwIxUatPH15+nj59WAGTDv3LSGZPEQbJaQ==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
@@ -3828,9 +3823,8 @@ protobufjs@^6.11.3:
     "@protobufjs/path" "^1.1.2"
     "@protobufjs/pool" "^1.1.0"
     "@protobufjs/utf8" "^1.1.0"
-    "@types/long" "^4.0.1"
     "@types/node" ">=13.7.0"
-    long "^4.0.0"
+    long "^5.0.0"
 
 public-encrypt@^4.0.0:
   version "4.0.3"
