@@ -10,7 +10,7 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.5",
     "@vertexvis/api-client-node": "^0.21.0",
-    "@vertexvis/viewer-react": "^0.17.0",
+    "@vertexvis/viewer-react": "^0.17.4",
     "lodash.debounce": "^4.0",
     "multer": "^1.4.4",
     "next": "^11.1",
