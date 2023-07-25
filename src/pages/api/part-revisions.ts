@@ -37,6 +37,9 @@ async function get(
     const ps = head(req.query.pageSize);
     const pId = head(req.query.partId);
 
+    if (pId == null) {
+      throw new Error("Part ID not set");
+    }
     const { cursors, page } = await getPage(() =>
       c.partRevisions.getPartRevisions({
         id: pId,
