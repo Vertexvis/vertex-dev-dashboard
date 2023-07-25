@@ -16,7 +16,10 @@ interface Props {
   readonly onViewStateSelected: (arg0: string) => void;
 }
 
-const Title = styled((props) => <Typography variant="body2" {...props} />)(
+interface TitleProps {
+  children: React.ReactNode;
+}
+const Title = styled((props: TitleProps) => <Typography variant="body2" {...props} />)(
   () => ({ textTransform: "uppercase" })
 );
 
