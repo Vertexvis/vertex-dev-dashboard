@@ -11,9 +11,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dynamic from 'next/dynamic'
 import Image from "next/image";
 import { useRouter } from "next/router";
 import React from "react";
+
 import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
 
 const IdLength = 64;
@@ -26,7 +28,7 @@ interface NetworkConfigInput {
   sceneViewHost?: string;
 }
 
-export default function Login(): JSX.Element {
+const LoginPage = (): JSX.Element => {
   const [id, setId] = React.useState<string | undefined>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("vertexvis.client.id") || undefined;
@@ -273,3 +275,7 @@ export default function Login(): JSX.Element {
     </Box>
   );
 }
+
+export default dynamic(() => Promise.resolve(LoginPage), { 
+    ssr: false 
+})

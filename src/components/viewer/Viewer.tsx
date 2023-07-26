@@ -18,8 +18,8 @@ import {
 } from "@mui/material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import {
-  TapEventDetails,
   JSX as ViewerJSX,
+  TapEventDetails,
   VertexViewerCustomEvent,
 } from "@vertexvis/viewer";
 import {
@@ -158,7 +158,7 @@ function UnwrappedViewer({
       clientId={credentials.clientId}
       id={viewerId}
       ref={viewer}
-      src={`urn:vertexvis:stream-key:${credentials.streamKey}`}
+      src={`urn:vertex:stream-key:${credentials.streamKey}`}
       {...props}
     >
       <VertexViewerToolbar placement="top-left">
