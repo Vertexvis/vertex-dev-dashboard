@@ -37,9 +37,10 @@ export function Header({ onMenuClick, open }: Props): JSX.Element {
             <MenuIcon />
           </IconButton>
         )}
-        <Link href="/">
+        <Link href="/" paddingRight={"16px"}>
           <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
         </Link>
+        <p>Vertex Developer Dashboard</p>
       </Box>
       <Box sx={{ ml: "auto" }}>
         <Button onClick={handleSignOut}>Sign Out</Button>
