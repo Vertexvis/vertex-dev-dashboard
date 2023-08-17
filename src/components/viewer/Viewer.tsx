@@ -163,7 +163,7 @@ function UnwrappedViewer({
       id={viewerId}
       ref={viewer}
       rotateAroundTapPoint={true}
-      src={`urn:vertexvis:stream-key:${credentials.streamKey}`}
+      src={`urn:vertex:stream-key:${credentials.streamKey}`}
       {...props}
     >
       <VertexViewerToolbar placement="top-left">

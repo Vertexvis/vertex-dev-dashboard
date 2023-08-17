@@ -41,6 +41,10 @@ async function get(
     const fetchAll = head(req.query.fetchAll);
     const status = head(req.query.status);
 
+    if (status == null) {
+      throw new Error("Status not set and is required");
+    }
+
     if (fetchAll) {
       const result: QueuedJobData[] = await fetchAllTranslations(c, status, []);
 

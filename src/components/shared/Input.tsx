@@ -3,12 +3,13 @@ import React from "react";
 import {
   Control,
   Controller,
+  FieldValues,
   Path,
   PathValue,
   RegisterOptions,
 } from "react-hook-form";
 
-interface Custom<T> {
+interface Custom<T extends FieldValues> {
   readonly control: Control<T>;
   readonly defaultValue?: PathValue<T, Path<T>> | undefined;
   readonly label: string;
@@ -19,9 +20,9 @@ interface Custom<T> {
   >;
 }
 
-type Props<T> = Custom<T> & TextFieldProps;
+type Props<T extends FieldValues> = Custom<T> & TextFieldProps;
 
-export function Input<T>({
+export function Input<T extends FieldValues>({
   control,
   label,
   name,
@@ -36,7 +37,7 @@ export function Input<T>({
         <TextField
           error={Boolean(error)}
           fullWidth
-          helperText={error ? error : undefined}
+          helperText={error ? error.message : undefined}
           label={label}
           margin="normal"
           size="small"
