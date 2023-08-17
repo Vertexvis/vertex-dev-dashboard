@@ -256,6 +256,7 @@ function onTap<P extends ViewerProps>(
             includeMetadata: true,
           });
           const hit = (res?.hits ?? [])[0];
+          console.debug(hit);
           await onSelect(hit);
         }
       }
