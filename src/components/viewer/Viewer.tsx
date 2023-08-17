@@ -156,8 +156,13 @@ function UnwrappedViewer({
       }
       css={{ height: "100%", width: "100%" }}
       clientId={credentials.clientId}
+      featureLines={{
+        width: 1.0,
+        color: { r: 100, g: 100, b: 100 },
+      }}
       id={viewerId}
       ref={viewer}
+      rotateAroundTapPoint={true}
       src={`urn:vertex:stream-key:${credentials.streamKey}`}
       {...props}
     >
@@ -251,6 +256,7 @@ function onTap<P extends ViewerProps>(
             includeMetadata: true,
           });
           const hit = (res?.hits ?? [])[0];
+          console.debug(hit);
           await onSelect(hit);
         }
       }
