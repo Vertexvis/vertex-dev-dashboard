@@ -33,7 +33,16 @@ export function SceneViewStateList({
           >
             <ListItemText
               primary={s.attributes.name || s.id}
-              secondary={s.id + "\n" + toLocaleString(s.attributes.created)}
+              secondary={
+                "ID: " +
+                s.id +
+                "\n" +
+                (s.attributes.suppliedId
+                  ? `SUPPLIED-ID: ${s.attributes.suppliedId}\n`
+                  : "") +
+                "CREATED: " +
+                toLocaleString(s.attributes.created)
+              }
             />
           </ListItem>
         );
