@@ -45,7 +45,10 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [env, setEnv] = React.useState(() => {
-    if (typeof window !== "undefined") {
+    if (serverProvidedNetworkConfig != null) {
+      return "custom";
+    }
+    else if (typeof window !== "undefined") {
       return localStorage.getItem("vertexvis.env") || "platprod";
     }
 
