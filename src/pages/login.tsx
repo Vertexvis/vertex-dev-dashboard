@@ -115,6 +115,8 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     } else if (res.status === 200) router.push("/");
   }
 
+  const predefinedEnv = serverProvidedNetworkConfig != null ? ` for ${serverProvidedNetworkConfig?.name ?? serverProvidedNetworkConfig.apiHost}`: '';
+  
   return (
     <Box sx={{ display: "flex", height: "100vh", justifyContent: "center" }}>
       <Paper
@@ -135,7 +137,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
           <Image src="/vertex-logo.svg" alt="Vertex" width="50" height="50" />
         </Box>
 
-        <FormLabel component="legend">Enter your API credentials</FormLabel>
+        <FormLabel component="legend">{`Enter your API credentials${predefinedEnv}`}</FormLabel>
         <TextField
           error={invalidId}
           fullWidth
@@ -302,7 +304,8 @@ function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | null {
       apiHost: process.env.API_HOST,
       renderingHost: process.env.RENDERING_HOST,
       sceneTreeHost: process.env.SCENE_TREE_HOST,
-      sceneViewHost: process.env.SCENE_VIEW_HOST
+      sceneViewHost: process.env.SCENE_VIEW_HOST,
+      name: process.env.ENV_NAME // could be undefined
     };
   }
 
