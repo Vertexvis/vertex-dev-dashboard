@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { GetServerSideProps, GetServerSidePropsResult } from "next";
+import { GetServerSidePropsResult } from "next";
 import dynamic from 'next/dynamic'
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -31,7 +31,7 @@ interface NetworkConfigInput {
 }
 
 interface Props {
-  serverProvidedNetworkConfig: NetworkConfig | undefined
+  serverProvidedNetworkConfig: NetworkConfig | null
 }
 
 const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
@@ -293,7 +293,7 @@ const DynamicPage = dynamic(() => Promise.resolve(LoginPage), {
 });
 
 
-function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | undefined {
+function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | null {
   /**
    * If the host values are configured from the server, disallow the option on the client to switch.
    */
@@ -306,7 +306,7 @@ function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | undefined {
     };
   }
 
-  return undefined;
+  return null;
 }
 
 export const getServerSideProps = ((): GetServerSidePropsResult<Props> => {
