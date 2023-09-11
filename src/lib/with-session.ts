@@ -19,7 +19,7 @@ export interface NetworkConfig {
   renderingHost: string;
   sceneTreeHost: string;
   sceneViewHost: string;
-  name?: string;
+  name: string | null;
 }
 
 export interface CommonProps {

@@ -116,7 +116,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   }
 
   const predefinedEnv = serverProvidedNetworkConfig != null ? ` for ${serverProvidedNetworkConfig?.name ?? serverProvidedNetworkConfig.apiHost}`: '';
-  
+
   return (
     <Box sx={{ display: "flex", height: "100vh", justifyContent: "center" }}>
       <Paper
@@ -305,7 +305,7 @@ function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | null {
       renderingHost: process.env.RENDERING_HOST,
       sceneTreeHost: process.env.SCENE_TREE_HOST,
       sceneViewHost: process.env.SCENE_VIEW_HOST,
-      name: process.env.ENV_NAME // could be undefined
+      name: process.env.ENV_NAME ?? null
     };
   }
 
