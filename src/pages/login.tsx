@@ -11,12 +11,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { GetServerSideProps, GetServerSidePropsResult } from "next";
 import dynamic from 'next/dynamic'
 import Image from "next/image";
 import { useRouter } from "next/router";
 import React from "react";
 
 import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
+import { NetworkConfig } from "../lib/with-session";
 
 const IdLength = 64;
 const SecretLength = 26;
@@ -28,7 +30,11 @@ interface NetworkConfigInput {
   sceneViewHost?: string;
 }
 
-const LoginPage = (): JSX.Element => {
+interface Props {
+  serverProvidedNetworkConfig: NetworkConfig | undefined
+}
+
+const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   const [id, setId] = React.useState<string | undefined>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("vertexvis.client.id") || undefined;
@@ -47,7 +53,10 @@ const LoginPage = (): JSX.Element => {
   });
   const [networkConfig, setNetworkConfig] = React.useState<NetworkConfigInput>(
     () => {
-      if (typeof window !== "undefined") {
+      if (serverProvidedNetworkConfig != null) {
+        return serverProvidedNetworkConfig;
+      }
+      else if (typeof window !== "undefined") {
         const saved = localStorage.getItem("vertexvis.network.config");
         try {
           return saved != null ? (JSON.parse(saved) as NetworkConfigInput) : {};
@@ -155,7 +164,8 @@ const LoginPage = (): JSX.Element => {
           type="password"
         />
 
-        <FormControl fullWidth sx={{ mt: 2 }}>
+        { serverProvidedNetworkConfig == null && <>
+          <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="environment">Environment</InputLabel>
           <Select
             id="environment"
@@ -256,6 +266,8 @@ const LoginPage = (): JSX.Element => {
           </>
         )}
 
+        </>}
+
         <Button
           sx={{ mt: 2 }}
           variant="outlined"
@@ -276,6 +288,34 @@ const LoginPage = (): JSX.Element => {
   );
 }
 
-export default dynamic(() => Promise.resolve(LoginPage), { 
+const DynamicPage = dynamic(() => Promise.resolve(LoginPage), { 
     ssr: false 
-})
+});
+
+
+function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | undefined {
+  /**
+   * If the host values are configured from the server, disallow the option on the client to switch.
+   */
+  if (process.env.API_HOST != null && process.env.RENDERING_HOST != null && process.env.SCENE_TREE_HOST != null && process.env.SCENE_VIEW_HOST != null) {
+    return  {
+      apiHost: process.env.API_HOST,
+      renderingHost: process.env.RENDERING_HOST,
+      sceneTreeHost: process.env.SCENE_TREE_HOST,
+      sceneViewHost: process.env.SCENE_VIEW_HOST
+    };
+  }
+
+  return undefined;
+}
+
+export const getServerSideProps = ((): GetServerSidePropsResult<Props> => {
+  const serverProvidedNetworkConfig = getNetworkConfigFromEnvironmentVariables();
+  return { props: { serverProvidedNetworkConfig } }
+});
+
+const ServerSidePage = ({serverProvidedNetworkConfig}: Props): JSX.Element => {
+  return <DynamicPage serverProvidedNetworkConfig={serverProvidedNetworkConfig}/>
+}
+
+export default ServerSidePage;
