@@ -126,7 +126,7 @@ export default function SceneViewer({
             onViewStateCreated={mutate}
             networkConfig={networkConfig}
             featureLines={featureLines}
-            rotateAroundTapPoint={false}
+            rotateAroundTapPoint={true}
             onSceneReady={async () => {
               const scene = await viewer.ref.current?.scene();
               if (scene) setViewId(scene.sceneViewId);
