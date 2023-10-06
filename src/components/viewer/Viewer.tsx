@@ -163,7 +163,6 @@ function UnwrappedViewer({
       }}
       id={viewerId}
       ref={viewer}
-      rotateAroundTapPoint={true}
       src={`urn:vertex:stream-key:${credentials.streamKey}`}
       {...props}
     >
