@@ -38,11 +38,11 @@ export type OAuthCredentials = {
   readonly secret: string;
 };
 
-const CookieName = "sess";
-const CredsKey = "creds";
-const TokenKey = "token";
-const EnvKey = "env";
-const NetworkConfig = "networkConfig";
+export const CookieName = "sess";
+export const CredsKey = "creds";
+export const TokenKey = "token";
+export const EnvKey = "env";
+export const NetworkConfig = "networkConfig";
 
 export const CookieAttributes: SessionOptions = {
   password: process.env.COOKIE_SECRET || "",
