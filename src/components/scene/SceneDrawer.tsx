@@ -47,8 +47,14 @@ export function SceneDrawer({
   });
 
   async function onSubmit(data: FormData) {
+    // Omit camera data when saving this form, since it's not
+    // updated. This prevents a bug where the `fovY` value is
+    // not correctly represented as a Float, and causes the
+    // save to fail.
+    // https://vertexvis.atlassian.net/browse/PLAT-3630
+    const updateData = { ...data, camera: undefined };
     await fetch("/api/scenes", {
-      body: JSON.stringify({ id: scene?.id, ...data }),
+      body: JSON.stringify({ id: scene?.id, ...updateData }),
       method: "PATCH",
     });
     onClose();
