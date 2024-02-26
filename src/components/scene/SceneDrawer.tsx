@@ -16,7 +16,7 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
 } from "@vertexvis/api-client-node";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { toLocaleString } from "../../lib/dates";
@@ -46,19 +46,42 @@ export function SceneDrawer({
     defaultValues,
   });
 
+  const [editableMetadata, setMetadata] = useState<string | undefined>(
+    scene?.metadata != null ? JSON.stringify(scene.metadata) : undefined
+  );
+
   async function onSubmit(data: FormData) {
+    const metadata = typeSafeMetadata(editableMetadata)
+
     // Omit camera data when saving this form, since it's not
     // updated. This prevents a bug where the `fovY` value is
     // not correctly represented as a Float, and causes the
     // save to fail.
     // https://vertexvis.atlassian.net/browse/PLAT-3630
-    const updateData = { ...data, camera: undefined };
+    const updateData = { ...data, metadata, camera: undefined };
+
     await fetch("/api/scenes", {
       body: JSON.stringify({ id: scene?.id, ...updateData }),
       method: "PATCH",
     });
     onClose();
   }
+
+  function typeSafeMetadata(metadata?: string): {
+      [key: string]: string;
+  } | undefined {
+    if (metadata != null && typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata);
+      } catch (e) {
+        console.error("Invalid Metadata: ", e);
+        return undefined;
+      }
+    }
+
+    return metadata;
+  }
+
 
   function copyCamera() {
     navigator.clipboard.writeText(JSON.stringify(scene?.camera));
@@ -107,6 +130,14 @@ export function SceneDrawer({
               control={control}
               label="Supplied ID"
               name="suppliedId"
+            />
+            <Input<FormData> 
+              control={control} 
+              placeholder={`{"KEY": "VALUE"}`} 
+              label="Scene Metadata (JSON)" 
+              name="metadata" 
+              onChange={(e) => setMetadata(e.target.value)}
+              value={editableMetadata}
             />
             <Box
               sx={{
@@ -178,6 +209,12 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Supplied ID</Typography>
                     <Typography variant="body2">{scene.suppliedId}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle2">Metadata</Typography>
+                    <Typography variant="body2">{JSON.stringify(scene.metadata)}</Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>

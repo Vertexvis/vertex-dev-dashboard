@@ -37,7 +37,7 @@ export type CreateSceneReq = Pick<
 export type CreateSceneRes = Pick<QueuedJobData, "id"> & Res;
 
 export type UpdateSceneReq = Pick<ScenesApiUpdateSceneRequest, "id"> &
-  Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId" | "camera">;
+  Pick<UpdateSceneRequestDataAttributes, "name" | "suppliedId" | "camera" | "metadata">;
 
 export default withSession(async function handle(
   req: NextIronRequest,
@@ -80,6 +80,7 @@ async function get(
         pageCursor: pc,
         pageSize: ps ? parseInt(ps, 10) : 10,
         filterSuppliedId: sId,
+        fieldsScene: 'metadata,state,camera,worldOrientation,name,suppliedId'
       })
     );
     return { cursors, data: page.data, status: 200 };
@@ -108,13 +109,13 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 async function upd(req: NextIronRequest): Promise<ErrorRes | Res> {
   if (!req.body) return BodyRequired;
 
-  const { id, name, suppliedId, camera }: UpdateSceneReq = JSON.parse(req.body);
+  const { id, name, suppliedId, camera, metadata }: UpdateSceneReq = JSON.parse(req.body);
   const c = await getClientFromSession(req.session);
   await makeCall(() =>
     c.scenes.updateScene({
       id,
       updateSceneRequest: {
-        data: { attributes: { name, suppliedId, camera }, type: "scene" },
+        data: { attributes: { name, suppliedId, camera, metadata }, type: "scene" },
       },
     })
   );
