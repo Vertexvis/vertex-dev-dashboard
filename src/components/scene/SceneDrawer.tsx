@@ -16,7 +16,7 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
 } from "@vertexvis/api-client-node";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { toLocaleString } from "../../lib/dates";
@@ -46,9 +46,15 @@ export function SceneDrawer({
     defaultValues,
   });
 
-  const [editableMetadata, setMetadata] = useState<string | undefined>(
-    scene?.metadata != null ? JSON.stringify(scene.metadata) : undefined
-  );
+  const [editableMetadata, setMetadata] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (scene?.metadata != null) {
+      setMetadata(JSON.stringify(scene?.metadata));
+    } else if (scene == null) {
+      setMetadata(undefined);
+    }
+  }, [scene?.metadata])
 
   async function onSubmit(data: FormData) {
     const metadata = typeSafeMetadata(editableMetadata)
@@ -135,6 +141,8 @@ export function SceneDrawer({
               control={control} 
               placeholder={`{"KEY": "VALUE"}`} 
               label="Scene Metadata (JSON)" 
+              rows={5}
+              multiline={true}
               name="metadata" 
               onChange={(e) => setMetadata(e.target.value)}
               value={editableMetadata}
