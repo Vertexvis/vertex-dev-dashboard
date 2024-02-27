@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import React from "react";
+import React, { useCallback } from "react";
 
 import { SceneDrawer } from "../components/scene/SceneDrawer";
 import { Layout } from "../components/shared/Layout";
@@ -17,6 +17,7 @@ export default function Home({
   const [editing, setEditing] = React.useState<boolean>(false);
   const [scene, setScene] = React.useState<Scene | undefined>();
   const drawerOpen = Boolean(scene);
+  const [invalidationCount, setInvalidationCount] = React.useState(0);
 
   function handleClick(s: Scene) {
     setScene(s);
@@ -28,10 +29,11 @@ export default function Home({
     setEditing(true);
   }
 
-  function handleClose() {
+  const handleClose = useCallback( () => {
     setScene(undefined);
     setEditing(false);
-  }
+    setInvalidationCount(invalidationCount + 1);
+  },[invalidationCount]) 
 
   return (
     <Layout
@@ -42,6 +44,7 @@ export default function Home({
           onEditClick={handleEditClick}
           scene={scene}
           vertexEnv={vertexEnv}
+          invalidationCount={invalidationCount}
         />
       }
       rightDrawer={

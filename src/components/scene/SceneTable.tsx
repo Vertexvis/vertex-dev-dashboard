@@ -26,7 +26,7 @@ import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import useSWR from "swr";
 
 import { ErrorRes, GetRes, isErrorRes } from "../../lib/api";
@@ -47,6 +47,7 @@ interface Props {
   readonly onEditClick: (s: Scene) => void;
   readonly scene?: Scene;
   readonly vertexEnv: Environment;
+  readonly invalidationCount: number;
 }
 
 const headCells: readonly HeadCell[] = [
@@ -71,6 +72,7 @@ export default function SceneTable({
   onClick,
   onEditClick,
   vertexEnv,
+  invalidationCount,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);
@@ -90,6 +92,11 @@ export default function SceneTable({
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
   const { data, error, mutate } = useScenes({ cursor, pageSize, suppliedId });
+
+  useEffect(() => {
+    mutate();
+  }, [invalidationCount, mutate]);
+  
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
