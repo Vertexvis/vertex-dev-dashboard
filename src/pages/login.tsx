@@ -427,11 +427,9 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               endAdornment: createEditButton("sceneViewHost"),
             }}
           />
-          <Tooltip title="Reset URL" placement="right">
-            <Button onClick={handleReset}>
+          <Button title="Reset Url" sx={{ display: "flex", justifyContent: "start", marginRight:"auto", minWidth:"auto"}} onClick={handleReset}>
               <ResetIcon />
-            </Button>
-          </Tooltip>
+          </Button>
         </> )
         }
 
