@@ -4,6 +4,8 @@ import {
   CircularProgress,
   FormControl,
   FormLabel,
+  IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
@@ -15,6 +17,9 @@ import { GetServerSidePropsResult } from "next";
 import dynamic from 'next/dynamic'
 import Image from "next/image";
 import { useRouter } from "next/router";
+import EditIcon from '@mui/icons-material/Edit';
+import ResetIcon from '@mui/icons-material/RestartAlt';
+import Tooltip from '@mui/material/Tooltip';
 import React from "react";
 
 import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
@@ -71,6 +76,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
       return {};
     }
   );
+
   const router = useRouter();
 
   const invalidId = id?.length !== IdLength;
@@ -120,6 +126,53 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
 
   const predefinedEnv = serverProvidedNetworkConfig != null ? ` for ${serverProvidedNetworkConfig?.name ?? serverProvidedNetworkConfig.apiHost}`: '';
 
+  const [editableFields, setEditableFields] = React.useState<{
+    apiHost: boolean;
+    renderingHost: boolean;
+    sceneTreeHost: boolean;
+    sceneViewHost: boolean;
+  }>({
+    apiHost: false,
+    renderingHost: false,
+    sceneTreeHost: false,
+    sceneViewHost: false,
+  });
+  
+  const createEditButton = (field: keyof typeof editableFields) => (
+    <InputAdornment position="end">
+      <IconButton
+        size="small"
+        sx={{
+          "& > .MuiSvgIcon-root": {
+            fontSize: 16,
+          },
+          position: "absolute",
+          right: 5,
+        }}
+        onClick={() =>
+          setEditableFields((prev) => ({
+            ...prev,
+            [field]: !prev[field],
+          }))
+        }
+      >
+        {<EditIcon />}
+      </IconButton>
+    </InputAdornment>
+  );
+
+
+  const handleReset = () => {
+    const config = getNetworkConfigFromEnvironmentVariables();
+    if (config) {
+      setNetworkConfig(config);
+    } else {
+      setNetworkConfig({});
+    }
+  };
+  
+  
+
   return (
     <Box sx={{ display: "flex", height: "100vh", justifyContent: "center" }}>
       <Paper
@@ -128,7 +181,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
           display: "flex",
           justifyContent: "center",
           flexDirection: "column",
-          maxHeight: env === "custom" ? "800px" : "500px",
+          maxHeight: serverProvidedNetworkConfig != null ? "800px" : (env === "custom" ? "800px" : "500px"),
           minWidth: "30%",
           mx: 2,
           my: 4,
@@ -169,7 +222,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
           type="password"
         />
 
-        { serverProvidedNetworkConfig == null && <>
+        { serverProvidedNetworkConfig == null ?  <>
           <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="environment">Environment</InputLabel>
           <Select
@@ -269,9 +322,118 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               type="text"
             />
           </>
-        )}
+          
+        )} 
+        </> : (
+        <>
+          <TextField
+            error={invalidApiHost}
+            fullWidth
+            value={networkConfig.apiHost}
+            helperText={
+              invalidApiHost
+                ? `URL required and must be formatted as a url ('http://...' or 'https://...')`
+                : undefined
+            }
+            label="Api Host"
+            margin="normal"
+            defaultValue={serverProvidedNetworkConfig.apiHost}
+            onChange={(e) =>
+              setNetworkConfig({
+                ...networkConfig,
+                apiHost: e.target.value,
+              })
+            }
+            size="small"
+            type="text"
+            disabled={!editableFields.apiHost} 
+            InputProps={{
+              endAdornment: createEditButton("apiHost"),
+            }}
+          />
+          <TextField
+            error={invalidRenderingHost}
+            fullWidth
+            value={networkConfig.renderingHost}
+            helperText={
+              invalidRenderingHost
+                ? `URL required and must be formatted as a url ('ws://...' or 'wss://...')`
+                : undefined
+            }
+            label="Rendering Host"
+            margin="normal"
+            defaultValue={serverProvidedNetworkConfig.renderingHost}
+            onChange={(e) =>
+              setNetworkConfig({
+                ...networkConfig,
+                renderingHost: e.target.value,
+              })
+            }
+            size="small"
+            type="text"
+            disabled={!editableFields.renderingHost}
+            InputProps={{
+              endAdornment: createEditButton("renderingHost"),
+            }}
+          />
 
-        </>}
+          <TextField
+            error={invalidSceneTreeHost}
+            fullWidth
+            value={networkConfig.sceneTreeHost}
+            helperText={
+              invalidSceneTreeHost
+                ? `URL must be formatted as a url ('http://...' or 'https://...')`
+                : undefined
+            }
+            label="Scene Tree Host"
+            margin="normal"
+            defaultValue={serverProvidedNetworkConfig.sceneTreeHost}
+            onChange={(e) =>
+              setNetworkConfig({
+                ...networkConfig,
+                sceneTreeHost: e.target.value,
+              })
+            }
+            size="small"
+            type="text"
+            disabled={!editableFields.sceneTreeHost}
+            InputProps={{
+              endAdornment: createEditButton("sceneTreeHost"),
+            }}
+          />
+          <TextField
+            error={invalidSceneViewHost}
+            fullWidth
+            value={networkConfig.sceneViewHost}
+            helperText={
+              invalidSceneViewHost
+                ? `URL must be formatted as a url ('http://...' or 'https://...')`
+                : undefined
+            }
+            label="Scene View Host"
+            margin="normal"
+            defaultValue={serverProvidedNetworkConfig.sceneViewHost}
+            onChange={(e) =>
+              setNetworkConfig({
+                ...networkConfig,
+                sceneViewHost: e.target.value,
+              })
+            }
+            size="small"
+            type="text"
+            disabled={!editableFields.sceneViewHost}
+            InputProps={{
+              endAdornment: createEditButton("sceneViewHost"),
+            }}
+          />
+          <Tooltip title="Reset URL" placement="right">
+            <Button onClick={handleReset}>
+              <ResetIcon />
+            </Button>
+          </Tooltip>
+        </> )
+        }
 
         <Button
           sx={{ mt: 2 }}
