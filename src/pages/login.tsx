@@ -426,23 +426,37 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               endAdornment: createEditButton("sceneViewHost"),
             }}
           />
-          <Button title="Reset Url" sx={{ display: "flex", justifyContent: "start", marginRight:"auto", minWidth:"auto"}} onClick={handleReset}>
-              <ResetIcon />
-          </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+            <Button title="Reset Url" sx={{ mt: 2 }} variant="outlined" onClick={handleReset}>
+                <ResetIcon />
+            </Button>
+            <Button
+              sx={{ mt: 2 }}
+              variant="outlined"
+              onClick={handleSubmit}
+              disabled={
+                loading || (env === "custom" && !customConfigurationValidated)
+              }
+            >
+              {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
+              <Box>Sign In</Box>
+            </Button>
+          </Box>
         </> )
         }
-
-        <Button
-          sx={{ mt: 2 }}
-          variant="outlined"
-          onClick={handleSubmit}
-          disabled={
-            loading || (env === "custom" && !customConfigurationValidated)
-          }
-        >
-          {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
-          <Box>Sign In</Box>
-        </Button>
+        { serverProvidedNetworkConfig == null &&
+          <Button
+            sx={{ mt: 2 }}
+            variant="outlined"
+            onClick={handleSubmit}
+            disabled={
+              loading || (env === "custom" && !customConfigurationValidated)
+            }
+          >
+            {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
+            <Box>Sign In</Box>
+          </Button>
+        }
 
         <Typography sx={{ my: 2 }} variant="body2">
           {error}
