@@ -481,13 +481,13 @@ function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | null {
   /**
    * If the host values are configured from the server, disallow the option on the client to switch.
    */
-  if (process.env.NEXT_PUBLIC_API_HOST != null && process.env.NEXT_PUBLIC_RENDERING_HOST != null && process.env.NEXT_PUBLIC_SCENE_TREE_HOST != null && process.env.NEXT_PUBLIC_SCENE_VIEW_HOST != null) {
+  if (process.env.API_HOST != null && process.env.RENDERING_HOST != null && process.env.SCENE_TREE_HOST != null && process.env.SCENE_VIEW_HOST != null) {
     return  {
-      apiHost: process.env.NEXT_PUBLIC_API_HOST,
-      renderingHost: process.env.NEXT_PUBLIC_RENDERING_HOST,
-      sceneTreeHost: process.env.NEXT_PUBLIC_SCENE_TREE_HOST,
-      sceneViewHost: process.env.NEXT_PUBLIC_SCENE_VIEW_HOST,
-      name: process.env.NEXT_PUBLIC_ENV_NAME ?? null
+      apiHost: process.env.API_HOST,
+      renderingHost: process.env.RENDERING_HOST,
+      sceneTreeHost: process.env.SCENE_TREE_HOST,
+      sceneViewHost: process.env.SCENE_VIEW_HOST,
+      name: process.env.ENV_NAME ?? null
     };
   }
 
