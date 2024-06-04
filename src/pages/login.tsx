@@ -162,18 +162,13 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
 
 
   const handleReset = () => {
-    const config = getNetworkConfigFromEnvironmentVariables();
-    if (config) {
       setEditableFields({
         apiHost: true,
         renderingHost: true,
         sceneTreeHost: true,
         sceneViewHost: true,
       });
-      setNetworkConfig(config);
-    } else {
-      setNetworkConfig({});
-    }
+      setNetworkConfig(serverProvidedNetworkConfig ?? {});
   };
   
   
