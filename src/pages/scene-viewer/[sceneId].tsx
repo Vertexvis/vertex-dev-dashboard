@@ -12,7 +12,7 @@ import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
-import { Metadata, toMetadata, toMetadataFromItem } from "../../lib/metadata";
+import { Metadata, toMetadataFromItem } from "../../lib/metadata";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
 import { CommonProps, defaultServerSideProps } from "../../lib/with-session";
