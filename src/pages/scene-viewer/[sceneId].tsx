@@ -42,11 +42,9 @@ export default function SceneViewer({
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
-
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
-  const [selectedItemFromTree, setSelectedItemFromTree] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
 
@@ -73,14 +71,11 @@ export default function SceneViewer({
       sceneItemId: hit?.itemId?.hex,
       sceneItemSuppliedId: hit?.itemSuppliedId?.value,
     });
-    setSelectedItemFromTree(false);
-    setMetadata(toMetadata({ hit }));
     setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
     await selectByHit({ hit, viewer: viewer.ref.current });
   }
 
   function handleTreeItemSelected(itemId: string) {
-    setSelectedItemFromTree(true);
     setSelectedItemId(itemId);
   }
 
@@ -89,10 +84,10 @@ export default function SceneViewer({
   }
 
   React.useEffect(() => {
-    if (selectedItem.data && selectedItemFromTree) {
+    if (selectedItem.data) {
       setMetadata(toMetadataFromItem(selectedItem.data));
     }
-  }, [selectedItem.data, selectedItemFromTree]);
+  }, [selectedItem.data]);
 
   const featureLines = { width: 0.5, color: "#444444" };
 
