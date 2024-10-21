@@ -50,6 +50,7 @@ export const CookieAttributes: SessionOptions = {
   cookieOptions: {
     // Allow session use in non-https environments like localhost
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
   },
 };
 
