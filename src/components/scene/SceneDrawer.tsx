@@ -46,7 +46,9 @@ export function SceneDrawer({
     defaultValues,
   });
 
-  const [editableMetadata, setMetadata] = useState<string | undefined>(undefined);
+  const [editableMetadata, setMetadata] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (scene?.metadata != null) {
@@ -54,10 +56,10 @@ export function SceneDrawer({
     } else if (scene == null) {
       setMetadata(undefined);
     }
-  }, [scene?.metadata])
+  }, [scene?.metadata]);
 
   async function onSubmit(data: FormData) {
-    const metadata = typeSafeMetadata(editableMetadata)
+    const metadata = typeSafeMetadata(editableMetadata);
 
     // Omit camera data when saving this form, since it's not
     // updated. This prevents a bug where the `fovY` value is
@@ -73,10 +75,12 @@ export function SceneDrawer({
     onClose();
   }
 
-  function typeSafeMetadata(metadata?: string): {
-      [key: string]: string;
-  } | undefined {
-    if (metadata != null && typeof metadata === 'string') {
+  function typeSafeMetadata(metadata?: string):
+    | {
+        [key: string]: string;
+      }
+    | undefined {
+    if (metadata != null && typeof metadata === "string") {
       try {
         return JSON.parse(metadata);
       } catch (e) {
@@ -87,7 +91,6 @@ export function SceneDrawer({
 
     return metadata;
   }
-
 
   function copyCamera() {
     navigator.clipboard.writeText(JSON.stringify(scene?.camera));
@@ -137,13 +140,13 @@ export function SceneDrawer({
               label="Supplied ID"
               name="suppliedId"
             />
-            <Input<FormData> 
-              control={control} 
-              placeholder={`{"KEY": "VALUE"}`} 
-              label="Scene Metadata (JSON)" 
+            <Input<FormData>
+              control={control}
+              placeholder={`{"KEY": "VALUE"}`}
+              label="Scene Metadata (JSON)"
               rows={5}
               multiline={true}
-              name="metadata" 
+              name="metadata"
               onChange={(e) => setMetadata(e.target.value)}
               value={editableMetadata}
             />
@@ -222,7 +225,9 @@ export function SceneDrawer({
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Metadata</Typography>
-                    <Typography variant="body2">{JSON.stringify(scene.metadata)}</Typography>
+                    <Typography variant="body2">
+                      {JSON.stringify(scene.metadata)}
+                    </Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>

@@ -3,6 +3,7 @@ import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
+import { Title } from "../shared/Title";
 
 interface Props {
   readonly sceneViewStates?: SceneViewStateData[];
@@ -23,31 +24,40 @@ export function SceneViewStateList({
   };
 
   return (
-    <List>
-      {sceneViewStates.map((s, i) => {
-        return (
-          <ListItem
-            key={s.id}
-            selected={selectedIndex === i}
-            onClick={() => handleListItemClick(s.id, i)}
-          >
-            <ListItemText
-              primary={s.attributes.name || s.id}
-              secondary={
-                "ID: " +
-                s.id +
-                "\n" +
-                (s.attributes.suppliedId
-                  ? `SUPPLIED-ID: ${s.attributes.suppliedId}\n`
-                  : "") +
-                "CREATED: " +
-                toLocaleString(s.attributes.created)
-              }
-            />
-          </ListItem>
-        );
-      })}
-    </List>
+    <>
+      <Title
+        sx={{
+          borderBottom: "1px solid #ccc",
+        }}
+      >
+        Scene View States
+      </Title>
+      <List>
+        {sceneViewStates.map((s, i) => {
+          return (
+            <ListItem
+              key={s.id}
+              selected={selectedIndex === i}
+              onClick={() => handleListItemClick(s.id, i)}
+            >
+              <ListItemText
+                primary={s.attributes.name || s.id}
+                secondary={
+                  "ID: " +
+                  s.id +
+                  "\n" +
+                  (s.attributes.suppliedId
+                    ? `SUPPLIED-ID: ${s.attributes.suppliedId}\n`
+                    : "") +
+                  "CREATED: " +
+                  toLocaleString(s.attributes.created)
+                }
+              />
+            </ListItem>
+          );
+        })}
+      </List>
+    </>
   );
 }
 

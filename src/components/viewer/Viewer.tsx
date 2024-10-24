@@ -4,6 +4,7 @@ import {
   FileCopyOutlined,
   SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
+  RestartAltOutlined,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -37,13 +38,16 @@ import { NetworkConfig } from "../../lib/with-session";
 import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
 import { ViewerSpeedDial } from "./ViewerSpeedDial";
+import { ViewerContextMenu } from "./ViewerContextMenu";
+import { viewerHasSelection, ViewerState } from "../../lib/viewer";
 
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
-  readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
+  readonly viewerState: ViewerState;
   readonly viewerId: string;
   readonly networkConfig?: NetworkConfig;
   readonly onViewStateCreated: () => void;
+  readonly onViewReset?: () => void;
 }
 
 export interface Action {
@@ -59,7 +63,10 @@ type ViewerComponentType = React.ComponentType<
 type HOCViewerProps = React.RefAttributes<HTMLVertexViewerElement>;
 
 interface OnSelectProps extends HOCViewerProps {
-  readonly onSelect: (hit?: vertexvis.protobuf.stream.IHit) => Promise<void>;
+  readonly onSelect: (
+    detail: TapEventDetails,
+    hit?: vertexvis.protobuf.stream.IHit
+  ) => Promise<void>;
 }
 
 export const AnimationDurationMs = 1500;
@@ -67,13 +74,15 @@ export const Viewer = onTap(UnwrappedViewer);
 
 function UnwrappedViewer({
   credentials,
-  viewer,
+  viewerState,
   viewerId,
   onViewStateCreated,
+  onViewReset,
   networkConfig,
   ...props
 }: ViewerProps): JSX.Element {
   const ref = React.useRef<HTMLElement>(null);
+  const viewer = viewerState.ref;
   const [key, setKey] = React.useState(Date.now());
   const [createViewState, setCreateViewState] = React.useState(false);
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
@@ -135,6 +144,14 @@ function UnwrappedViewer({
       icon: <SystemUpdateAltOutlined fontSize="small" />,
       label: "Update base scene with current camera",
       onSelect: handleUpdateBaseCamera,
+    },
+    {
+      icon: <RestartAltOutlined fontSize="small" />,
+      label: "Reset View",
+      onSelect: () => {
+        viewerState.actions.reset();
+        onViewReset?.();
+      },
     },
   ];
 
@@ -243,23 +260,39 @@ function UnwrappedViewer({
 function onTap<P extends ViewerProps>(
   WrappedViewer: ViewerComponentType
 ): React.FunctionComponent<P & OnSelectProps> {
-  return function Component({ viewer, onSelect, ...props }: P & OnSelectProps) {
+  return function Component({
+    viewerState,
+    onSelect,
+    ...props
+  }: P & OnSelectProps) {
+    const [hit, setHit] = React.useState<vertexvis.protobuf.stream.IHit>();
+
     async function handleTap(e: VertexViewerCustomEvent<TapEventDetails>) {
       if (props.onTap) props.onTap(e);
 
       if (!e.defaultPrevented) {
-        const scene = await viewer.current?.scene();
+        const scene = await viewerState.ref.current?.scene();
         const raycaster = scene?.raycaster();
 
         if (raycaster != null) {
           const res = await raycaster.hitItems(e.detail.position);
           const hit = (res?.hits ?? [])[0];
           console.debug(hit);
-          await onSelect(hit);
+          setHit(hit);
+          await onSelect(e.detail, hit);
         }
       }
     }
 
-    return <WrappedViewer viewer={viewer} {...props} onTap={handleTap} />;
+    return (
+      <>
+        <WrappedViewer viewerState={viewerState} {...props} onTap={handleTap} />
+        <ViewerContextMenu
+          hit={hit}
+          hasSelection={viewerHasSelection(viewerState.ref)}
+          actions={viewerState.actions}
+        />
+      </>
+    );
   };
 }

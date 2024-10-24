@@ -29,11 +29,11 @@ export default function Home({
     setEditing(true);
   }
 
-  const handleClose = useCallback( () => {
+  const handleClose = useCallback(() => {
     setScene(undefined);
     setEditing(false);
     setInvalidationCount(invalidationCount + 1);
-  },[invalidationCount]) 
+  }, [invalidationCount]);
 
   return (
     <Layout

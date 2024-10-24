@@ -10,6 +10,7 @@ import {
 import React from "react";
 
 import { Metadata } from "../../lib/metadata";
+import { Title } from "../shared/Title";
 
 interface Props {
   readonly metadata?: Metadata;
@@ -22,29 +23,38 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
   if (propKeys.length === 0) return <NoData />;
 
   return (
-    <TableContainer>
-      <Table size="small" style={{ whiteSpace: "nowrap" }}>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <Typography variant="subtitle1">{metadata.partName}</Typography>
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {propKeys.map((k) => (
-            <TableRow key={k}>
+    <>
+      <Title
+        sx={{
+          borderBottom: "1px solid #ccc",
+        }}
+      >
+        Properties
+      </Title>
+      <TableContainer>
+        <Table size="small" style={{ whiteSpace: "nowrap" }}>
+          <TableHead>
+            <TableRow>
               <TableCell>
-                <Typography variant="subtitle2">{k}</Typography>
-                <Typography variant="body2">
-                  {metadata.properties[k]}
-                </Typography>
+                <Typography variant="subtitle1">{metadata.partName}</Typography>
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {propKeys.map((k) => (
+              <TableRow key={k}>
+                <TableCell>
+                  <Typography variant="subtitle2">{k}</Typography>
+                  <Typography variant="body2">
+                    {metadata.properties[k]}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
   );
 }
 

@@ -1,58 +1,65 @@
-import { ExpandMore } from "@mui/icons-material";
-import { Accordion, AccordionSummary, Drawer, Typography } from "@mui/material";
+import { Drawer } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
-import { styled } from "@mui/material/styles";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 
 import { Metadata } from "../../lib/metadata";
+import { ModelViewsState } from "../../lib/model-views";
 import { RightDrawerWidth } from "./Layout";
 import { MetadataProperties } from "./MetadataProperties";
+import { ModelViews } from "./ModelViews";
 import { SceneViewStateList } from "./SceneViewStateList";
 
 interface Props {
+  readonly active?: string;
   readonly metadata?: Metadata;
+  readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
 }
 
-interface TitleProps {
-  children: React.ReactNode;
-}
-const Title = styled((props: TitleProps) => <Typography variant="body2" {...props} />)(
-  () => ({ textTransform: "uppercase" })
-);
-
 export function RightDrawer({
+  active,
   metadata,
+  modelViews,
   sceneViewStates,
   onViewStateSelected,
 }: Props): JSX.Element {
+  const getDisplayedContent = () => {
+    switch (active) {
+      case "properties":
+        return <MetadataProperties metadata={metadata} />;
+      case "scene-view-states":
+        return (
+          <SceneViewStateList
+            sceneViewStates={sceneViewStates}
+            onViewStateSelected={onViewStateSelected}
+          />
+        );
+      case "model-views":
+        return <ModelViews modelViews={modelViews} metadata={metadata} />;
+      default:
+        return <></>;
+    }
+  };
+
   return (
     <Drawer
       anchor="right"
       sx={{
         display: { sm: "block", xs: "none" },
+        position: "relative",
         width: RightDrawerWidth,
         [`& .${drawerClasses.paper}`]: { width: RightDrawerWidth },
       }}
+      PaperProps={{
+        sx: {
+          position: "relative",
+        },
+      }}
       variant="permanent"
     >
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Title>Metadata Properties</Title>
-        </AccordionSummary>
-        <MetadataProperties metadata={metadata} />
-      </Accordion>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Title>Scene View States</Title>
-        </AccordionSummary>
-        <SceneViewStateList
-          sceneViewStates={sceneViewStates}
-          onViewStateSelected={onViewStateSelected}
-        />
-      </Accordion>
+      {getDisplayedContent()}
     </Drawer>
   );
 }
