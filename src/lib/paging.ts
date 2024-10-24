@@ -11,6 +11,7 @@ export interface SwrProps {
   readonly cursor?: string;
   readonly pageSize: number;
   readonly suppliedId?: string;
+  readonly name?: string;
 }
 
 export function toPage<T extends { attributes: TA; id: string }, TA>({
