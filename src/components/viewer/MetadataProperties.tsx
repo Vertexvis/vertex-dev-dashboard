@@ -1,4 +1,5 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -24,14 +25,8 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
 
   return (
     <>
-      <Title
-        sx={{
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        Properties
-      </Title>
-      <TableContainer>
+      <DrawerTitle />
+      <TableContainer sx={{ flexGrow: 1 }}>
         <Table size="small" style={{ whiteSpace: "nowrap" }}>
           <TableHead>
             <TableRow>
@@ -59,9 +54,24 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
 }
 
 function NoData(): JSX.Element {
-  return (
-    <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
-      No data
-    </Typography>
+  return (<><DrawerTitle />
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
+      <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+        No data
+      </Typography>
+    </Box>
+  </>
   );
+}
+
+function DrawerTitle(): JSX.Element {
+  return (
+    <Title
+      sx={{
+        borderBottom: "1px solid #ccc",
+      }}
+    >
+      Properties
+    </Title>
+  )
 }

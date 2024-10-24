@@ -88,9 +88,11 @@ function NoData(): JSX.Element {
   return (
     <>
       <DrawerTitle />
-      <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
-        No data
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
+        <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+          No data
+        </Typography>
+      </Box>
     </>
   );
 }

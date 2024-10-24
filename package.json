@@ -55,6 +55,7 @@
     "start": "next start"
   },
   "resolutions": {
+    "@types/react": "^18.2",
     "@vertexvis/viewer": "0.22.1-canary.15"
   }
 }

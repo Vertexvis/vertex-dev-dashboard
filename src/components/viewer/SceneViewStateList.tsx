@@ -1,4 +1,4 @@
-import { List, ListItem, ListItemText, Typography } from "@mui/material";
+import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
 
@@ -25,13 +25,7 @@ export function SceneViewStateList({
 
   return (
     <>
-      <Title
-        sx={{
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        Scene View States
-      </Title>
+      <DrawerTitle />
       <List>
         {sceneViewStates.map((s, i) => {
           return (
@@ -62,9 +56,24 @@ export function SceneViewStateList({
 }
 
 function NoData(): JSX.Element {
-  return (
-    <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
-      No scene view states.
-    </Typography>
+  return (<><DrawerTitle />
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
+      <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+        No data
+      </Typography>
+    </Box>
+  </>
   );
+}
+
+function DrawerTitle(): JSX.Element {
+  return (
+    <Title
+      sx={{
+        borderBottom: "1px solid #ccc",
+      }}
+    >
+      Scene View States
+    </Title>
+  )
 }
