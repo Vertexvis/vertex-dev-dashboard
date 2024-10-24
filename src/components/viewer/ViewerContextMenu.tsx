@@ -1,10 +1,10 @@
-import { Divider, ListItemIcon, ListItemText } from "@mui/material";
-import * as React from "react";
-import { ViewerActions } from "../../lib/viewer";
+import { Divider } from "@mui/material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { Icon } from "../shared/Icon";
-import { ContextMenu } from "./ContextMenu";
+import * as React from "react";
+
+import { ViewerActions } from "../../lib/viewer";
 import { ContextMenuItem } from "../shared/ContextMenuItem";
+import { ContextMenu } from "./ContextMenu";
 
 export interface Props {
   readonly hit?: vertexvis.protobuf.stream.IHit;

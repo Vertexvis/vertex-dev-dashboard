@@ -54,13 +54,22 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
 }
 
 function NoData(): JSX.Element {
-  return (<><DrawerTitle />
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
-      <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
-        No data
-      </Typography>
-    </Box>
-  </>
+  return (
+    <>
+      <DrawerTitle />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1,
+        }}
+      >
+        <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+          No data
+        </Typography>
+      </Box>
+    </>
   );
 }
 
@@ -73,5 +82,5 @@ function DrawerTitle(): JSX.Element {
     >
       Properties
     </Title>
-  )
+  );
 }

@@ -1,3 +1,4 @@
+import { CloseOutlined } from "@mui/icons-material";
 import {
   Box,
   IconButton,
@@ -6,14 +7,13 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
+import AutoSizer, { Size } from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
-import { PmiAnnotations } from "./PmiAnnotations";
-import AutoSizer from "react-virtualized-auto-sizer";
 import { Title } from "../shared/Title";
-import { CloseOutlined } from "@mui/icons-material";
+import { PmiAnnotations } from "./PmiAnnotations";
 
 export interface Props {
   readonly metadata?: Metadata;
@@ -36,7 +36,7 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
       <DrawerTitle onClear={() => modelViews.actions.unloadModelView()} />
       <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
         <AutoSizer>
-          {({ height, width }) => {
+          {({ height, width }: Size) => {
             return (
               <FixedSizeList
                 height={height}
@@ -88,7 +88,14 @@ function NoData(): JSX.Element {
   return (
     <>
       <DrawerTitle />
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1,
+        }}
+      >
         <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
           No data
         </Typography>

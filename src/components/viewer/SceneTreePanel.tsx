@@ -24,8 +24,6 @@ export const SceneTreePanel = ({
   viewerState,
   onItemSelected,
 }: Props): JSX.Element => {
-  const sceneTreeRef = React.useRef<HTMLVertexSceneTreeElement>();
-
   const [expandAll, setExpandAll] = React.useState<boolean | undefined>();
   const [collapseAll, setCollapseAll] = React.useState<boolean | undefined>();
 

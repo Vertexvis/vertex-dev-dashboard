@@ -1,8 +1,4 @@
-import {
-  RootQuery,
-  Scene,
-  SceneItemOperationsBuilder,
-} from "@vertexvis/viewer";
+import { Scene, SceneItemOperationsBuilder } from "@vertexvis/viewer";
 import { SceneItemQueryExecutor } from "@vertexvis/viewer/dist/types/lib/scenes/queries";
 import { defineCustomElements } from "@vertexvis/viewer/loader";
 import React from "react";

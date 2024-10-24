@@ -8,7 +8,9 @@ import useSWR from "swr";
 import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
+import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
+import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
@@ -17,9 +19,6 @@ import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
 import { CommonProps, defaultServerSideProps } from "../../lib/with-session";
-import { RightSidebar } from "../../components/viewer/RightSidebar";
-import { LeftSidebar } from "../../components/viewer/LeftSidebar";
-import { SceneTreeContextMenu } from "../../components/viewer/SceneTreeContextMenu";
 
 const ViewerId = "vertex-viewer-id";
 

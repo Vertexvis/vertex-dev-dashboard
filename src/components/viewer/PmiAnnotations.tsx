@@ -1,6 +1,6 @@
 import { Box, ListItemButton, Typography } from "@mui/material";
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
+import AutoSizer, { Size } from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
 import { Metadata } from "../../lib/metadata";
@@ -44,7 +44,7 @@ export function PmiAnnotations({ metadata, modelViews }: Props): JSX.Element {
       </Title>
       <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
         <AutoSizer>
-          {({ height, width }) => {
+          {({ height, width }: Size) => {
             return (
               <FixedSizeList
                 height={height}

@@ -1,14 +1,7 @@
-import {
-  CameraAltOutlined as CameraAltOutlinedIcon,
-  InfoOutlined as InfoOutlinedIcon,
-  Menu as MenuIcon,
-  ViewInAr as ViewInArIcon,
-} from "@mui/icons-material";
-import { Box, Drawer, IconButton } from "@mui/material";
-import { drawerClasses } from "@mui/material/Drawer";
+import { Menu as MenuIcon } from "@mui/icons-material";
+import { Box } from "@mui/material";
 import React from "react";
 
-import { LeftDrawerWidth } from "./Layout";
 import { SidebarIcon } from "./SidebarIcon";
 
 export interface Props {
