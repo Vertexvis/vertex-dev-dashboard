@@ -59,11 +59,11 @@ const headCells: readonly HeadCell[] = [
   { id: "actions", label: "Actions" },
 ];
 
-function useScenes({ cursor, pageSize, suppliedId }: SwrProps) {
+function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
-    }`
+    }${name ? `&name=${name}` : ""}`
   );
 }
 
@@ -89,14 +89,20 @@ export default function SceneTable({
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
-  const { data, error, mutate } = useScenes({ cursor, pageSize, suppliedId });
+  const { data, error, mutate } = useScenes({
+    cursor,
+    pageSize,
+    suppliedId,
+    name: nameFilter,
+  });
 
   useEffect(() => {
     mutate();
   }, [invalidationCount, mutate]);
-  
+
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
@@ -105,6 +111,11 @@ export default function SceneTable({
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
+    []
+  );
+
+  const debouncedSetNameFilter = React.useMemo(
+    () => debounce(setNameFilter, 300),
     []
   );
 
@@ -210,7 +221,8 @@ export default function SceneTable({
           sx={{
             px: { sm: 2 },
             display: "flex",
-            justifyContent: "space-between",
+            gap: "1rem",
+            justifyContent: "flex-start",
             alignItems: "center",
           }}
         >
@@ -223,6 +235,18 @@ export default function SceneTable({
             type="text"
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value);
+            }}
+            sx={{ mt: 0 }}
+          />
+          <TextField
+            variant="standard"
+            size="small"
+            margin="normal"
+            id="nameFilter"
+            label="Name Filter"
+            type="text"
+            onChange={(e) => {
+              debouncedSetNameFilter(e.target.value);
             }}
             sx={{ mt: 0 }}
           />

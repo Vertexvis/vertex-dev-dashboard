@@ -1,6 +1,6 @@
 import { SceneItemData, SceneViewStateData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { Environment } from "@vertexvis/viewer";
+import { Environment, TapEventDetails } from "@vertexvis/viewer";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
@@ -8,11 +8,14 @@ import useSWR from "swr";
 import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
+import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
+import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadataFromItem } from "../../lib/metadata";
+import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
 import { CommonProps, defaultServerSideProps } from "../../lib/with-session";
@@ -35,18 +38,23 @@ export default function SceneViewer({
   networkConfig,
 }: CommonProps): JSX.Element {
   const router = useRouter();
-  const viewer = useViewer();
+  const viewerState = useViewer();
   const [credentials, setCredentials] = React.useState<
     StreamCredentials | undefined
   >();
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
+  const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const modelViews = useModelViews({
+    itemId: selectedItemId,
+    viewerState,
+  });
 
   // Prefer credentials in URL to enable easy scene sharing. If empty, use defaults.
   React.useEffect(() => {
@@ -64,15 +72,21 @@ export default function SceneViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
-  async function handleSelect(hit?: vertexvis.protobuf.stream.IHit) {
+  async function handleSelect(
+    detail: TapEventDetails,
+    hit?: vertexvis.protobuf.stream.IHit
+  ) {
     console.debug({
       hitNormal: hit?.hitNormal,
       hitPoint: hit?.hitPoint,
       sceneItemId: hit?.itemId?.hex,
       sceneItemSuppliedId: hit?.itemSuppliedId?.value,
     });
-    setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
-    await selectByHit({ hit, viewer: viewer.ref.current });
+
+    if (detail.buttons !== 2) {
+      setSelectedItemId(hit?.itemId?.hex ?? undefined);
+      await selectByHit({ hit, viewer: viewerState.ref.current });
+    }
   }
 
   function handleTreeItemSelected(itemId: string) {
@@ -80,7 +94,7 @@ export default function SceneViewer({
   }
 
   function handleViewStateSelected(id: string) {
-    applySceneViewState({ id, viewer: viewer.ref.current });
+    applySceneViewState({ id, viewer: viewerState.ref.current });
   }
 
   React.useEffect(() => {
@@ -93,50 +107,63 @@ export default function SceneViewer({
 
   return router.isReady && credentials ? (
     <Layout
-      header={
-        <Header
-          onMenuClick={() => setDrawerOpen(!drawerOpen)}
-          open={drawerOpen}
+      header={<Header />}
+      leftSidebar={
+        <LeftSidebar
+          active={openedLeftPanel}
+          onSelectSidebar={setOpenedLeftPanel}
         />
       }
       leftDrawer={
         <LeftDrawer
+          active={openedLeftPanel}
           configEnv={credentials.vertexEnv}
           networkConfig={networkConfig}
-          onClose={() => setDrawerOpen(false)}
-          open={drawerOpen}
           viewerId={ViewerId}
-          selectedItemdId={selectedItemId}
+          selectedItemId={selectedItemId}
+          viewerState={viewerState}
           onItemSelected={handleTreeItemSelected}
         />
       }
-      leftDrawerOpen={drawerOpen}
+      leftDrawerOpen={openedLeftPanel != null}
       main={
-        viewer.isReady && (
+        viewerState.isReady && (
           <Viewer
             credentials={credentials}
             onSelect={handleSelect}
-            viewer={viewer.ref}
+            viewerState={viewerState}
             viewerId={ViewerId}
             onViewStateCreated={mutate}
             networkConfig={networkConfig}
             featureLines={featureLines}
             rotateAroundTapPoint={true}
             onSceneReady={async () => {
-              const scene = await viewer.ref.current?.scene();
+              const scene = await viewerState.ref.current?.scene();
               if (scene) setViewId(scene.sceneViewId);
+            }}
+            onViewReset={() => {
+              setSelectedItemId(undefined);
+              modelViews.actions.unloadModelView();
             }}
           />
         )
       }
+      rightSidebar={
+        <RightSidebar
+          active={openedRightPanel}
+          onSelectSidebar={setOpenedRightPanel}
+        />
+      }
       rightDrawer={
         <RightDrawer
+          active={openedRightPanel}
           metadata={metadata}
+          modelViews={modelViews}
           sceneViewStates={data?.data}
           onViewStateSelected={handleViewStateSelected}
         />
       }
-      rightDrawerOpen
+      rightDrawerOpen={openedRightPanel != null}
     />
   ) : (
     <></>

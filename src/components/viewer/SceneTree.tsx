@@ -5,24 +5,29 @@ import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/com
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
 import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
+import { viewerHasSelection, ViewerState } from "../../lib/viewer";
+import { SceneTreeContextMenu } from "./SceneTreeContextMenu";
 
 interface Props {
   readonly configEnv: EnvironmentWithCustom;
   readonly viewerId: string;
-  readonly selectedItemdId?: string;
+  readonly selectedItemId?: string;
   readonly expandAll?: boolean;
   readonly collapseAll?: boolean;
   readonly networkConfig?: NetworkConfig;
+  readonly viewerState: ViewerState;
+
   readonly onRowClick?: (itemId: string) => void;
 }
 
 export function SceneTree({
   configEnv,
   viewerId,
-  selectedItemdId,
+  selectedItemId,
   expandAll,
   collapseAll,
   networkConfig,
+  viewerState,
   onRowClick,
 }: Props): JSX.Element {
   const ref = React.useRef<HTMLVertexSceneTreeElement>(null);
@@ -56,8 +61,8 @@ export function SceneTree({
 
   React.useEffect(() => {
     const effectRef = ref.current;
-    if (selectedItemdId) effectRef?.scrollToItem(selectedItemdId);
-  }, [selectedItemdId]);
+    if (selectedItemId) effectRef?.scrollToItem(selectedItemId);
+  }, [selectedItemId]);
 
   React.useEffect(() => {
     const effectRef = ref.current;
@@ -85,6 +90,12 @@ export function SceneTree({
         }
         ref={ref}
         viewerSelector={`#${viewerId}`}
+      />
+
+      <SceneTreeContextMenu
+        sceneTree={ref}
+        hasSelection={viewerHasSelection(viewerState.ref)}
+        actions={viewerState.actions}
       />
     </Box>
   );

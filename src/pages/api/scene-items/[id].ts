@@ -34,7 +34,7 @@ async function get(req: NextIronRequest): Promise<ErrorRes | SceneItemData> {
     if (id == null) {
       throw new Error("ID not set and is required");
     }
-    
+
     const item = await c.sceneItems.getSceneItem({
       id,
       fieldsSceneItem: "id,suppliedId,name,metadata",

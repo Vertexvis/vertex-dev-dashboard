@@ -56,7 +56,7 @@ async function get(
     if (vId == null) {
       throw new Error("ID not set and is required");
     }
-    
+
     const view = await c.sceneViews.getSceneView({ id: vId });
     const sceneId = view.data.data.relationships.scene.data.id;
 
