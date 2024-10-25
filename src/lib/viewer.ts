@@ -35,6 +35,7 @@ export interface ViewerActions {
   setVisibility: (itemId: string, visible: boolean) => Promise<void>;
   setVisibilityAll: (visible: boolean) => Promise<void>;
   setVisibilitySelected: (visible: boolean) => Promise<void>;
+  setSelection: (itemId: string, selected: boolean) => Promise<void>;
 
   fit: (itemId: string) => Promise<void>;
   fitSelected: () => Promise<void>;
@@ -43,7 +44,7 @@ export interface ViewerActions {
 }
 
 function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
-  async function setVisibility(
+  async function updateVisibility(
     scene: Scene,
     visible: boolean,
     queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder
@@ -54,6 +55,24 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
         if (visible) {
           return builder.show();
+        } else {
+          return builder.hide();
+        }
+      })
+      .execute();
+  }
+
+  async function updateSelection(
+    scene: Scene,
+    selected: boolean,
+    queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder
+  ): Promise<void> {
+    await scene
+      .items((op) => {
+        const builder = queryBuilder(op);
+
+        if (selected) {
+          return builder.select();
         } else {
           return builder.hide();
         }
@@ -90,7 +109,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       const scene = await element?.scene();
 
       if (scene != null) {
-        await setVisibility(scene, visible, (op) =>
+        await updateVisibility(scene, visible, (op) =>
           op.where((q) => q.withItemIds([itemId]))
         );
       }
@@ -99,15 +118,26 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       const scene = await element?.scene();
 
       if (scene != null) {
-        await setVisibility(scene, visible, (op) => op.where((q) => q.all()));
+        await updateVisibility(scene, visible, (op) =>
+          op.where((q) => q.all())
+        );
       }
     },
     setVisibilitySelected: async (visible) => {
       const scene = await element?.scene();
 
       if (scene != null) {
-        await setVisibility(scene, visible, (op) =>
+        await updateVisibility(scene, visible, (op) =>
           op.where((q) => q.withSelected())
+        );
+      }
+    },
+    setSelection: async (itemId, selected) => {
+      const scene = await element?.scene();
+
+      if (scene != null) {
+        await updateSelection(scene, selected, (op) =>
+          op.where((q) => q.withItemIds([itemId]))
         );
       }
     },

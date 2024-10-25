@@ -4,8 +4,8 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import React from "react";
@@ -27,22 +27,28 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
     <>
       <DrawerTitle />
       <TableContainer sx={{ flexGrow: 1 }}>
-        <Table size="small" style={{ whiteSpace: "nowrap" }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <Typography variant="subtitle1">{metadata.partName}</Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
+        <Table sx={{ whiteSpace: "nowrap", tableLayout: "fixed" }} size="small">
           <TableBody>
             {propKeys.map((k) => (
               <TableRow key={k}>
                 <TableCell>
                   <Typography variant="subtitle2">{k}</Typography>
-                  <Typography variant="body2">
-                    {metadata.properties[k]}
-                  </Typography>
+                  <Tooltip
+                    title={metadata.properties[k]}
+                    placement="left"
+                    enterDelay={500}
+                  >
+                    <Typography
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      variant="body2"
+                    >
+                      {metadata.properties[k]}
+                    </Typography>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
