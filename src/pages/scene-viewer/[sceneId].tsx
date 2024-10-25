@@ -84,7 +84,7 @@ export default function SceneViewer({
     });
 
     if (detail.buttons !== 2) {
-      setSelectedItemId(hit?.itemId?.hex ? hit?.itemId?.hex : undefined);
+      setSelectedItemId(hit?.itemId?.hex ?? undefined);
       await selectByHit({ hit, viewer: viewerState.ref.current });
     }
   }
