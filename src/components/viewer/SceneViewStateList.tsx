@@ -26,7 +26,7 @@ export function SceneViewStateList({
   return (
     <>
       <DrawerTitle />
-      <List>
+      <List sx={{ flexGrow: 1, overflow: "auto" }}>
         {sceneViewStates.map((s, i) => {
           return (
             <ListItem

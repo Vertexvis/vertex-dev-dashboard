@@ -18,6 +18,7 @@ export function Header(): JSX.Element {
         display: "flex",
         justifyContent: "space-between",
         width: "100%",
+        height: "56px",
       }}
     >
       <Box sx={{ alignItems: "center", display: "flex" }}>

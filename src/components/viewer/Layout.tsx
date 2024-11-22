@@ -2,6 +2,7 @@ import { AppBar as MuiAppBar, Box, Toolbar } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import React from "react";
 
+export const HeaderHeight = 56;
 export const BottomDrawerHeight = 240;
 export const DenseToolbarHeight = 48;
 export const LeftDrawerWidth = 300;
@@ -92,6 +93,7 @@ export function Layout({
       <Main
         sx={{
           display: "flex",
+          height: `calc(100% - ${HeaderHeight}px)`,
         }}
         bottomDrawerHeight={bdh}
       >
