@@ -5,7 +5,6 @@ COPY . /build
 WORKDIR /build
 
 RUN yarn install && \
-  yarn add protobufjs@7.2.5 && \
   yarn build
 
 FROM node:18-alpine AS app
