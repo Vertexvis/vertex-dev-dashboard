@@ -1,13 +1,14 @@
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 
 COPY . /build
 
 WORKDIR /build
 
 RUN yarn install && \
+  yarn add protobufjs@7.2.5 && \
   yarn build
 
-FROM node:16-alpine AS app
+FROM node:18-alpine AS app
 
 WORKDIR /app
 
