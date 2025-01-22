@@ -67,7 +67,7 @@ export default function CreatePartDialog({
       suppliedId,
       suppliedRevisionId,
       suppliedIterationId,
-      indexMetadata
+      indexMetadata,
     };
 
     const partRes: CreatePartRes = await (
