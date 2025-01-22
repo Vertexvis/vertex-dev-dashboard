@@ -80,7 +80,7 @@ export default function CreateFileDialog({
 
   return (
     <Dialog fullWidth onClose={onClose} open={open}>
-      <DialogTitle>Add new File</DialogTitle>
+      <DialogTitle>Add New File</DialogTitle>
       <DialogContent>
         <TextField
           fullWidth
@@ -97,6 +97,8 @@ export default function CreateFileDialog({
           onChange={(e) => setRootFileName(e.target.value)}
           size="small"
           type="text"
+          helperText="If uploading an assembly file, include the name (with file extension) of the root model file.
+          If uploading a single model file, leave this field blank."
         />
 
         <Box sx={{ py: 2, display: "flex" }}>
