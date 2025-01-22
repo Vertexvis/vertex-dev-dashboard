@@ -67,7 +67,7 @@ export default function CreatePartDialog({
       suppliedId,
       suppliedRevisionId,
       suppliedIterationId,
-      indexMetadata,
+      indexMetadata
     };
 
     const partRes: CreatePartRes = await (
@@ -136,6 +136,14 @@ export default function CreatePartDialog({
           label="Supplied Revision ID"
           margin="normal"
           onChange={(e) => setSuppliedRevisionId(e.target.value)}
+          size="small"
+          type="text"
+        />
+        <TextField
+          fullWidth
+          label="Supplied Iteration ID (optional)"
+          margin="normal"
+          onChange={(e) => setSuppliedIterationId(e.target.value)}
           size="small"
           type="text"
         />
