@@ -90,6 +90,7 @@ export default function PartRow({
                 <TableRow>
                   <TableCell>ID</TableCell>
                   <TableCell>Supplied ID</TableCell>
+                  <TableCell>Supplied Iteration ID</TableCell>
                   <TableCell>Created</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -103,6 +104,7 @@ export default function PartRow({
                     >
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
+                      <TableCell>{r.suppliedIterationId}</TableCell>
                       <TableCell>{toLocaleString(r.created)}</TableCell>
                       <TableCell align="right">
                         <Button

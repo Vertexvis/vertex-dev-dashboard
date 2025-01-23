@@ -26,7 +26,7 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 
 export type CreatePartReq = Pick<
   CreatePartRequestDataAttributes,
-  "suppliedId" | "suppliedRevisionId" | "indexMetadata"
+  "suppliedId" | "suppliedRevisionId" | "suppliedIterationId" | "indexMetadata"
 > & {
   readonly fileId: string;
 };
@@ -104,6 +104,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
         attributes: {
           suppliedId: b.suppliedId,
           suppliedRevisionId: b.suppliedRevisionId,
+          suppliedIterationId: b.suppliedIterationId,
           indexMetadata: b.indexMetadata,
         },
         relationships: {

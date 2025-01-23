@@ -44,6 +44,9 @@ export default function CreatePartDialog({
   const [suppliedRevisionId, setSuppliedRevisionId] = React.useState<
     string | undefined
   >();
+  const [suppliedIterationId, setSuppliedIterationId] = React.useState<
+    string | undefined
+  >();
   const [submitDisabled, setSubmitDisabled] = React.useState(true);
   const { data } = useFiles();
   const files = data ? toFilePage(data) : undefined;
@@ -63,6 +66,7 @@ export default function CreatePartDialog({
       fileId: file,
       suppliedId,
       suppliedRevisionId,
+      suppliedIterationId,
       indexMetadata,
     };
 
@@ -77,6 +81,7 @@ export default function CreatePartDialog({
     setFile(undefined);
     setSuppliedId(undefined);
     setSuppliedRevisionId(undefined);
+    setSuppliedIterationId(undefined);
   }
 
   return (
@@ -131,6 +136,14 @@ export default function CreatePartDialog({
           label="Supplied Revision ID"
           margin="normal"
           onChange={(e) => setSuppliedRevisionId(e.target.value)}
+          size="small"
+          type="text"
+        />
+        <TextField
+          fullWidth
+          label="Supplied Iteration ID (optional)"
+          margin="normal"
+          onChange={(e) => setSuppliedIterationId(e.target.value)}
           size="small"
           type="text"
         />
