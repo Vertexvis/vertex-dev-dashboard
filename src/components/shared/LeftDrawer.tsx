@@ -33,7 +33,11 @@ export function LeftDrawer(): JSX.Element {
       variant="permanent"
     >
       <Toolbar variant="dense" />
-      <List>
+      <List
+        sx={{
+          paddingTop: "15px",
+        }}
+      >
         <ListItemButton
           onClick={() => router.push("/")}
           selected={router.route === "/"}
