@@ -4,15 +4,12 @@ The Vertex Developer Dashboard is an application designed for managing and viewi
 
 This dashboard is intended to be a lightweight option for managing this data, and as such, does not provide all of the functionality available through
 [Vertex Connect](https://vertex3d.com/products/vertex-connect). What this dashboard does provide is an easy way to manage, track, and visually inspect the
-data being brought into the Vertex Platform through a GUI. The tools provided for performing these interactions are split into focused areas, which we'll
-walk through in greater detail below.
+data being brought into the Vertex Platform through a GUI. The tools provided for performing these interactions are split into focused areas. For more information on getting started with the Vertex Developer Dashboard, see the [Getting Started guide](./getting-started.md).
 
 For our multi-tenant account, the dashboard can be found at https://dashboard.developer.vertexvis.com/. Private deployments of the Vertex Platform will also
 include a custom deployment of this dashboard accessible at a URL generated as part of the initial deployment. Once this initial deployment has completed, the
 URL generated will be discoverable from Route 53 in AWS, and will contain the `dev-dashboard` prefix. This dashboard will be pre-configured to work against
 your private deployment.
-
-For more information on getting started with the Vertex Developer Dashboard, see the [getting started guide](./getting-started.md).
 
 ## Run locally in Docker
 
@@ -47,5 +44,3 @@ A few options for deployment,
 - [Vercel](https://nextjs.org/docs/deployment)
 - [Netlify](https://www.netlify.com/blog/2020/11/30/how-to-deploy-next.js-sites-to-netlify/)
 - [AWS CDK](https://github.com/serverless-nextjs/serverless-next.js#readme)
-- [Vertex Connect](https://vertex3d.com/products/vertex-connect)
-- [Vertex Platform Files](https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca)

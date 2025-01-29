@@ -5,7 +5,7 @@
 Before you can start leveraging the dashboard to manage your Vertex Platform data, you must first create a set of credentials unique to you or your application
 that can be used to sign in. These credentials are generated through the creation of an `Application` ([API Reference](https://docs.vertex3d.com/#f7aab897-5276-48e3-8ecb-2b9931c53cc9)), returning a `Client ID` and `Client Secret` which can be used to sign in.
 
-### Using Vertex Console
+### Using Vertex Console (multi-tenant only)
 
 If you have access to the [Vertex Console](https://console.vertexvis.com), you can simply sign in using the same credentials used for
 Vertex Connect. Once you've signed in, follow the provided steps up until `Generating Your Credentials`. This will generate a new `Client ID` and `Client Secret`
@@ -30,8 +30,7 @@ APIs, we recommend using [Postman](https://www.postman.com/), for which we provi
 the HTTP protocol can be used, but for the purposes of this guide, we will focus on usage of Postman.
 
 In order to access the Postman collection for our platform APIs, first navigate to our [API Docs](https://docs.vertex3d.com/). From here, you can click the `Run in Postman`
-button in the top-right corner of the page. This will prompt you to either download Postman, or open it in your local installation. Expand the content below to see the
-location of this button.
+button in the top-right corner of the page. This will prompt you to either download Postman, or open it in your local installation.
 
 <details>
   <summary>Importing the Postman Collection</summary>
@@ -50,7 +49,7 @@ creating a new Application and credentials. In order to make this request, we fi
 </details>
 <br />
 
-Obtaining an OAuth2 token for the platform account allows us to create a new set of credentials, by passing the value as through the `Bearer Token` authorization
+Obtaining an OAuth2 token for the platform account allows us to create a new set of application credentials, by passing the value as through the `Bearer Token` authorization
 configuration in Postman.
 
 **NOTE:** Once the `Client Secret` here has been generated and returned, it can not be retrieved again. **Make sure you store these credentials somewhere secure.**
@@ -65,7 +64,7 @@ This `Client Secret` is confidential, and bundling it with a mobile or browser a
 
 ## Signing In
 
-After you have created your credentials, you can sign in to the dashboard using the returned `Client ID` and `Client Secret` and interact with data associated to your account.
+After you have created your application credentials, you can sign in to the dashboard using the returned `Client ID` and `Client Secret` and interact with data associated to your account.
 When signing in, you are also provided with the option to customize the API URLs, allowing any deployment of the dashboard to be configured for alternate environments. This is
 typically only used for internal development, as individual Vertex Platform deployments will always have a corresponding pre-configured deployment of this dashboard.
 
@@ -88,6 +87,8 @@ in the account the credentials were created for, which we will revisit as the la
 ## Files
 
 The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference]((https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca))). Through the `Files` page, you can:
+* View existing files
+  * 
 * Create new files
 * Delete existing files
 * Inspect file status and properties
