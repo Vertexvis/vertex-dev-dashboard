@@ -88,7 +88,7 @@ in the account the credentials were created for, which we will revisit as the la
 
 The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference]((https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca))). Through the `Files` page, you can:
 * View existing files
-  * 
+  * Includes both files created through the dashboard as well as files created through our APIs directly
 * Create new files
 * Delete existing files
 * Inspect file status and properties
@@ -141,6 +141,8 @@ After pressing `Create`, a new translation will begin running, and can be tracke
 ## Parts Library
 
 The `Parts Library` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Parts ([API Reference]((https://docs.vertex3d.com/#6de47d1b-0bba-4a3a-a8b6-3f9a23834784))). Through the `Parts Library` page, you can:
+* View existing parts
+  * Includes both parts created through the dashboard as well as parts created through our APIs directly
 * Create new parts
 * Delete existing parts
 * Inspect a part and its properties
@@ -175,6 +177,8 @@ After clicking `Create`, your scene will be created from the specified part revi
 ## Scenes
 
 The `Scenes` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Scenes ([API Reference]((https://docs.vertex3d.com/#72c23aae-e949-4f0e-989a-0c9587a5116c))). Through the `Scenes` page, you can:
+* View existing scenes
+  * Includes both scenes created through the dashboard as well as scenes created through our APIs directly
 * Update scene names, supplied IDs, or metadata
 * Generate stream keys to access your scene through our SDKs
 * View your scene
