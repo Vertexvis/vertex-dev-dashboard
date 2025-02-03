@@ -1,4 +1,4 @@
-import { OAuth2Token } from "@vertexvis/api-client-node";
+import { logError, OAuth2Token } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import { ErrorRes, MethodNotAllowed, Res } from "../../lib/api";
@@ -31,7 +31,8 @@ export default withSession(async function (
     let token: OAuth2Token | undefined;
     try {
       token = await getToken(b.id, b.secret, b.env, b.networkConfig);
-    } catch {
+    } catch (e) {
+      logError(e);
       return res.status(401).json({ status: 401, message: "Unauthorized" });
     }
 
