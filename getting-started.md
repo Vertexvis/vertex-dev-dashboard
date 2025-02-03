@@ -93,7 +93,7 @@ The `Files` page within the Vertex Developer Dashboard allows for basic operatio
 * Delete existing files
 * Inspect file status and properties
 
-### Creating a new File
+### Creating a New File
 
 From this view, the `New` button in the top right corner of the list can be used to create Files and upload data to them. The file creation dialog provides
 a set of optional parameters that can be configured to suit a variety of different use cases.
@@ -112,7 +112,7 @@ no two files can share the same supplied ID.
 * `Create Part After Upload` - indicates whether we intend to create a part within the `Parts Library` with the data uploaded. If checked, this file will be uploaded 
 to the Vertex Platform and you will automatically navigate to the `Parts Library` tab to complete part creation.
 
-### Creating a new Part
+### Creating a New Part
 
 Once `Upload` is pressed, you will be auto-navigated to the `Parts Library` page, where we can complete the Part creation. The part creation dialog provides 
 a set of inputs to provide `Supplied ID`s, similar to the file creation dialog.
@@ -153,7 +153,7 @@ After following the steps for the `Files` page, a translation should appear here
 the part has appeared in the `Recently Successful Translations`, you should see your part in the `Parts` list. From here, the expansion arrow on the left-hand side
 can be clicked to reveal information about the associated part revision that was created along with the part.
 
-### Creating a new Scene
+### Creating a New Scene
 
 Now that we have a part and a part revision, you'll see that the part revision shows a new action on the right-hand side of the row labeled `New Scene`. Pressing
 this button will begin the process of creating a Scene that we can visually inspect by opening the scene creation dialog.
