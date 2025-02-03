@@ -128,12 +128,9 @@ a set of inputs to provide `Supplied ID`s, similar to the file creation dialog.
 * `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a part. Similar to the `Supplied ID` for files, this value is globally unique
 across the platform account, and no two parts can share the same supplied ID.
 * `Supplied Revision ID` - refers to a user-provided string that can be used to uniquely identify a part revision. Contrary the `Supplied ID`, the `Supplied Revision ID`
-is not required to be globally unique within the platform account. When combined with the part `Supplied ID`, this ID is expected to be globally unique, so a part
-with a `Supplied ID` of `part-a` could not have two revisions with a `Supplied Revision ID` of `rev-1` for instance.
+is not required to be globally unique within the platform account. However, this ID must be unique for a given part. For instance, a part with a Supplied ID of `part-a` could not have two revisions with a Supplied Revision ID of `rev-1`.
 * `Supplied Iteration ID` - refers to a user-provided string that can be used to uniquely identify a part iteration. Similar to the `Supplied Revision ID`, this ID is not
-required to be globally unique within the platform account. When combined with the part `Supplied ID` and part revision `Supplied Revision ID`, this ID is expected to be
-globally unique, so a part with a `Supplied ID` of `part-a` and `Supplied Revision ID` of `rev-1` could not have two iterations with a `Supplied Iteration ID` of `i-1`
-for instance.
+required to be globally unique within the platform account. However, this ID must be unique for a given part revision. For instance, a part revision with a Supplied Revision ID of `rev-1` could not have two iterations with a Supplied Iteration ID of `i-1`.
 * `Index Metadata` - indicates whether metadata within the provided CAD file should be indexed and made available for use within Vertex-based applications.
 
 After pressing `Create`, a new translation will begin running, and can be tracked using the `Parts Library` page.
@@ -297,3 +294,4 @@ present in this platform account. The camera data can be provided to our SDKs to
   ![Fit All](./public/fit-all.gif)
 </details>
 <br />
+  
