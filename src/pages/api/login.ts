@@ -14,6 +14,10 @@ import withSession, {
   setToken,
 } from "../../lib/with-session";
 
+// debugging
+import { networkInterfaces } from "os";
+import { request } from "https";
+
 export interface LoginReq {
   readonly id: string;
   readonly secret: string;
@@ -32,7 +36,29 @@ export default withSession(async function (
     try {
       token = await getToken(b.id, b.secret, b.env, b.networkConfig);
     } catch (e) {
+      // debugging
       logError(e);
+      console.log(b.networkConfig);
+      console.log(networkInterfaces());
+      console.log("attempting to open connection with apiHost");
+
+      try {
+        const options = { hostname: b.networkConfig?.apiHost.replace("https://", "").replace("/", ""), port: 443, path: '/', method: 'GET' };
+        const req = request(options, (res) => {
+          res.on('error', (e) => {
+            logError(e);
+          })
+        });
+
+        req.on('error', (e) => {
+          logError(e);
+        });
+
+        req.end();
+      } catch (e) {
+        logError(e);
+      }
+
       return res.status(401).json({ status: 401, message: "Unauthorized" });
     }
 
