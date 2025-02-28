@@ -924,14 +924,14 @@
     lodash.isequal "^4.5.0"
     uuid "^8.3.2"
 
-"@vertexvis/viewer-react@^0.22.1-canary.15":
-  version "0.22.1-testing.1"
-  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.22.1-testing.1.tgz#02d9d2762f8cdce65dca26c59f05d945f538c828"
-  integrity sha512-oq3eItD5VGa/9y/8wguTD9hB0p2GRaWfIGQyANSU+pgDT0m9Vu3/gg+/nQzb7Uxxbn2sw2D9BTUuEdwXoHHDVw==
+"@vertexvis/viewer-react@^0.23.0":
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.23.0.tgz#f2b3b041ff5132a04bbb676f2c4f39c3de69e2c8"
+  integrity sha512-Es1v3/BXFCjXcOQe39sZWkcz26vrGnAvNC730Pov5qkYpaSLu0I+Ohp7HZQzvVRaa/JGDjIXNpcN1FgOz+ug5Q==
   dependencies:
-    "@vertexvis/viewer" "0.22.1-testing.1"
+    "@vertexvis/viewer" "0.23.0"
 
-"@vertexvis/viewer@0.22.1-canary.15", "@vertexvis/viewer@0.22.1-testing.1":
+"@vertexvis/viewer@0.22.1-canary.15", "@vertexvis/viewer@0.23.0":
   version "0.22.1-canary.15"
   resolved "https://registry.yarnpkg.com/@vertexvis/viewer/-/viewer-0.22.1-canary.15.tgz#401b2b416c0a7627124e6a9b60728f84367bacaf"
   integrity sha512-J3MTr6YN9QD1DZtZtjdeO6NAjjja23hBHkgcuj9olU0q+L9sxelAqO6RdQJK/fK8SfWwBEoq4amoetm7pi8cQQ==
