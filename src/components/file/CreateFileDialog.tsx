@@ -9,6 +9,7 @@ import {
   DialogTitle,
   Fade,
   FormControlLabel,
+  FormHelperText,
   LinearProgress,
   TextField,
 } from "@mui/material";
@@ -116,6 +117,9 @@ export default function CreateFileDialog({
             <Button variant="outlined" component="span">
               Choose File
             </Button>
+            <FormHelperText variant="filled">
+              Choose a file up to 1MB in size to upload.
+            </FormHelperText>
           </label>
           {!!file && <span style={{ marginLeft: "auto" }}>{file?.name}</span>}
         </Box>

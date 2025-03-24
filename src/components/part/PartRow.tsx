@@ -88,6 +88,7 @@ export default function PartRow({
             <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
+                  <TableCell>Name</TableCell>
                   <TableCell>ID</TableCell>
                   <TableCell>Supplied ID</TableCell>
                   <TableCell>Supplied Iteration ID</TableCell>
@@ -102,6 +103,7 @@ export default function PartRow({
                       key={r.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
+                      <TableCell> {r.name} </TableCell>
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
                       <TableCell>{r.suppliedIterationId}</TableCell>
