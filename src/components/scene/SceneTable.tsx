@@ -3,6 +3,7 @@ import {
   MergeTypeOutlined,
   VisibilityOutlined,
   VpnKeyOutlined,
+  SyncAlt,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -61,7 +62,7 @@ const headCells: readonly HeadCell[] = [
 
 function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
+    `/api/scenes?fields[scene]=metadata,modified,camera,created&pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${suppliedId}` : ""
     }${name ? `&name=${name}` : ""}`
   );
@@ -182,9 +183,10 @@ export default function SceneTable({
 
     if (isErrorRes(json)) console.error("Error creating stream key.", json);
     else
-      router.push(
-        encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId })
-      );
+      window.open(encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId }), '_blank', 'noopener,noreferrer');
+      // router.push(
+      //   encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId }),
+      // );
   }
 
   async function handleGetStreamKey(sceneId: string) {
@@ -199,6 +201,16 @@ export default function SceneTable({
     setToastMsg(`Stream key "${key}" copied to clipboard.`);
   }
 
+  async function handleSyncConnect(sceneId: string) {
+    await fetch("/api/scenes", {
+      body: JSON.stringify({ id: sceneId, metadata: {
+        'CONNECT_WORKSPACE_URN': 'urn:vertex:workspace:a2da9d84-d08d-4b5c-9547-19adff99b6d1:folder:dc1fade9-4ece-4403-b8e4-3ea3cff59683'
+      } }),
+      method: "PATCH",
+    });
+  }
+
+  
   return (
     <>
       <Paper sx={{ m: 2 }}>
@@ -306,6 +318,18 @@ export default function SceneTable({
                               sx={{ position: "absolute" }}
                             />
                           )}
+
+                          <Tooltip title="SynctoConnect">
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSyncConnect(row.id);
+                              }}
+                            >
+                              <SyncAlt fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+
                           <Tooltip title="Generate stream key">
                             <IconButton
                               onClick={(e) => {

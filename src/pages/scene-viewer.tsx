@@ -47,16 +47,19 @@ export async function serverSidePropsHandler(
         const keyRes = await c.streamKeys.createSceneStreamKey({
           id: sceneToLoad.id,
           createStreamKeyRequest: {
-            data: { type: "stream-key", attributes: { expiry: 86400 } },
+            data: { type: "stream-key", attributes: { expiry: 86400, withSearchSession: true} },
           },
         });
 
-        return {
-          redirect: {
-            statusCode: 307,
-            destination: `/scene-viewer/${sceneToLoad.id}?clientId=${creds.id}&streamKey=${keyRes.data.data.attributes.key}&vertexEnv=${vertexEnv}`,
-          },
-        };
+        // return {
+
+        // }
+        // return {
+        //   redirect: {
+        //     statusCode: 307,
+        //     destination: `/scene-viewer/${sceneToLoad.id}?clientId=${creds.id}&streamKey=${keyRes.data.data.attributes.key}&vertexEnv=${vertexEnv}`,
+        //   },
+        // };
       }
     } catch (error) {
       const e = error as VertexError;
