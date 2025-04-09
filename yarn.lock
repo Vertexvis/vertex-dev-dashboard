@@ -930,14 +930,14 @@
     lodash.isequal "^4.5.0"
     uuid "^8.3.2"
 
-"@vertexvis/viewer-react@^0.23.0":
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.23.0.tgz#f2b3b041ff5132a04bbb676f2c4f39c3de69e2c8"
-  integrity sha512-Es1v3/BXFCjXcOQe39sZWkcz26vrGnAvNC730Pov5qkYpaSLu0I+Ohp7HZQzvVRaa/JGDjIXNpcN1FgOz+ug5Q==
+"@vertexvis/viewer-react@^0.23.1":
+  version "0.23.3"
+  resolved "https://registry.yarnpkg.com/@vertexvis/viewer-react/-/viewer-react-0.23.3.tgz#3b0582ea4b3156079965b885476c0f506d9bf045"
+  integrity sha512-9cZ1fFqCRStBrzS8ZUYaxDXb/FhYmyqwESHkUKdCwYf0JxqDyVJqAHcEruhUHbHqaTlCspRUogxKJKaiQAo3CQ==
   dependencies:
-    "@vertexvis/viewer" "0.23.0"
+    "@vertexvis/viewer" "0.23.3"
 
-"@vertexvis/viewer@0.22.1-canary.15", "@vertexvis/viewer@0.23.0":
+"@vertexvis/viewer@0.22.1-canary.15", "@vertexvis/viewer@0.23.3":
   version "0.22.1-canary.15"
   resolved "https://registry.yarnpkg.com/@vertexvis/viewer/-/viewer-0.22.1-canary.15.tgz#401b2b416c0a7627124e6a9b60728f84367bacaf"
   integrity sha512-J3MTr6YN9QD1DZtZtjdeO6NAjjja23hBHkgcuj9olU0q+L9sxelAqO6RdQJK/fK8SfWwBEoq4amoetm7pi8cQQ==
