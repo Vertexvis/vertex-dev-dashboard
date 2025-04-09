@@ -892,10 +892,10 @@
   resolved "https://registry.yarnpkg.com/@vertexvis/geometry/-/geometry-0.22.1-canary.15.tgz#ac7df5e980a2c8c12d4af9c7166f39ee559126d0"
   integrity sha512-8UEwOE141GsLzsRM7QioXzgQMxgBJRZ+Ar3f1QmgCwrEKbDPvLUSkoweiIb0aiVM0FOxCOlUnP2Y+po/BwigKA==
 
-"@vertexvis/geometry@^0.23.0":
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/@vertexvis/geometry/-/geometry-0.23.0.tgz#7f782497d04020eadc9c2da194552ffedf980d1c"
-  integrity sha512-jGs/QMfQfz8nm1hniEgRdbe4+Q/kxAUo4EsI5Bm0uwe61T0490LCvu9167uKROviqEiagXsauNqL9tKJtRk74A==
+"@vertexvis/geometry@^0.23.1":
+  version "0.23.3"
+  resolved "https://registry.yarnpkg.com/@vertexvis/geometry/-/geometry-0.23.3.tgz#5af0ad5d2b7fb12524db151af8966dd0be0e8803"
+  integrity sha512-QGnneUR4F2EdswHSoSsbLWqxw9tZXtxz/Ad+cx5dk9vfXKjnsDySN6l+ZePC5Gw9M2wT9e/shNroghDsgmEFbw==
 
 "@vertexvis/html-templates@0.22.1-canary.15":
   version "0.22.1-canary.15"
