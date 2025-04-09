@@ -54,7 +54,10 @@ export function QueuedTranslationsTable({
   const items = filter ? page?.items.filter(filter) : page?.items;
 
   return (
-    <TableContainer sx={{ m: 2 }} component={Paper}>
+    <TableContainer
+      sx={{ m: 2, maxHeight: "700px", overflow: "auto" }}
+      component={Paper}
+    >
       <Box
         sx={{
           alignItems: "center",
