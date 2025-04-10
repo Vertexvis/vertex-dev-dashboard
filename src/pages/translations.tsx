@@ -4,12 +4,15 @@ import React from "react";
 import { Layout } from "../components/shared/Layout";
 import { defaultServerSideProps } from "../lib/with-session";
 
-const TranslationTable = dynamic(() => import("../components/translation/TranslationTable"), {
-  ssr: false,
-});
+const TranslationTables = dynamic(
+  () => import("../components/translation/TranslationTables"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Translations(): JSX.Element {
-  return <Layout main={<TranslationTable />} />;
+  return <Layout main={<TranslationTables />} />;
 }
 
 export const getServerSideProps = defaultServerSideProps;
