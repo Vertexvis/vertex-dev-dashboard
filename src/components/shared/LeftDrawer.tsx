@@ -1,7 +1,6 @@
 import {
   DatasetOutlined,
   DescriptionOutlined,
-  FileUpload,
   LocalLibraryOutlined,
   PendingOutlined,
   PhotoLibraryOutlined,
@@ -58,15 +57,6 @@ export function LeftDrawer(): JSX.Element {
             <DescriptionOutlined />
           </ListItemIcon>
           <ListItemText primary="Files" />
-        </ListItemButton>
-        <ListItemButton
-            onClick={() => router.push("/translations")}
-            selected={router.route === "/translations"}
-        >
-          <ListItemIcon>
-            <FileUpload />
-          </ListItemIcon>
-          <ListItemText primary="Translations" />
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/parts")}
