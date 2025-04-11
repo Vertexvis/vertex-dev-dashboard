@@ -19,7 +19,6 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { dateDiffInDays } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { toPartPage } from "../../lib/parts";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
@@ -30,7 +29,6 @@ import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreatePartDialog from "./CreatePartDialog";
 import PartRow from "./PartRow";
-import { QueuedTranslationsTable } from "./QueuedTranslationsTable";
 
 const headCells: readonly HeadCell[] = [
   { id: "expand", label: "", beforeCheckbox: true },
@@ -131,27 +129,6 @@ export default function PartTable(): JSX.Element {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <QueuedTranslationsTable
-          title="Running Translations"
-          refreshInterval={10000}
-          status="running"
-        />
-
-        <QueuedTranslationsTable
-          title="Recently Successful Translations"
-          status="complete"
-          fetchAll={true}
-          filter={(row) => dateDiffInDays(new Date(row.created)) <= 2}
-        />
-
-        <QueuedTranslationsTable
-          title="Recently Failed Translations"
-          refreshInterval={30000}
-          status="error"
-          filter={(row) => dateDiffInDays(new Date(row.created)) <= 5}
-        />
-      </Box>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
@@ -171,7 +148,7 @@ export default function PartTable(): JSX.Element {
             size="small"
             margin="normal"
             id="suppliedIdFilter"
-            label="Supplied ID Filter"
+            label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value);

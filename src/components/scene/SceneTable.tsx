@@ -230,11 +230,11 @@ export default function SceneTable({
             variant="standard"
             size="small"
             margin="normal"
-            id="suppliedIdFilter"
-            label="Supplied ID Filter"
+            id="nameFilter"
+            label="Name Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value);
+              debouncedSetNameFilter(e.target.value);
             }}
             sx={{ mt: 0 }}
           />
@@ -242,11 +242,11 @@ export default function SceneTable({
             variant="standard"
             size="small"
             margin="normal"
-            id="nameFilter"
-            label="Name Filter"
+            id="suppliedIdFilter"
+            label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetNameFilter(e.target.value);
+              debouncedSetSuppliedIdFilter(e.target.value);
             }}
             sx={{ mt: 0 }}
           />
