@@ -136,7 +136,7 @@ export default function FilesTable(): JSX.Element {
             size="small"
             margin="normal"
             id="suppliedIdFilter"
-            label="Supplied ID Filter"
+            label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value);

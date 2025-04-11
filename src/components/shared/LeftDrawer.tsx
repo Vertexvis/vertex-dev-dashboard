@@ -1,7 +1,9 @@
 import {
+  DatasetOutlined,
   DescriptionOutlined,
   FileUpload,
   LocalLibraryOutlined,
+  PendingOutlined,
   PhotoLibraryOutlined,
 } from "@mui/icons-material";
 import {
@@ -71,9 +73,18 @@ export function LeftDrawer(): JSX.Element {
           selected={router.route === "/parts"}
         >
           <ListItemIcon>
-            <LocalLibraryOutlined />
+            <DatasetOutlined />
           </ListItemIcon>
           <ListItemText primary="Parts Library" />
+        </ListItemButton>
+        <ListItemButton
+          onClick={() => router.push("/translations")}
+          selected={router.route === "/translations"}
+        >
+          <ListItemIcon>
+            <PendingOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Translations" />
         </ListItemButton>
       </List>
     </Drawer>
