@@ -38,7 +38,7 @@ async function get(
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
-    const fetchAll = head(req.query.fetchAll);
+    const fetchAll = (head(req.query.fetchAll) ?? 'false') === 'true';
     const status = head(req.query.status);
 
     if (status == null) {
@@ -46,7 +46,7 @@ async function get(
     }
 
     if (fetchAll) {
-      const result: QueuedJobData[] = await fetchAllTranslations(c, status, []);
+      const result: QueuedJobData[] = await fetchAllTranslations(c, status);
 
       return {
         cursors: {
@@ -56,16 +56,17 @@ async function get(
         data: result,
         status: 200,
       };
+    } else {
+      const { cursors, page } = await getPage(() =>
+        c.translationInspections.getQueuedTranslationJobs({
+          pageCursor: pc,
+          pageSize: ps ? parseInt(ps, 10) : 200,
+          filterStatus: status,
+        })
+      );
+      return { cursors, data: page.data, status: 200 };
     }
 
-    const { cursors, page } = await getPage(() =>
-      c.translationInspections.getQueuedTranslations({
-        pageCursor: pc,
-        pageSize: ps ? parseInt(ps, 10) : 200,
-        filterStatus: status,
-      })
-    );
-    return { cursors, data: page.data, status: 200 };
   } catch (error) {
     const e = error as VertexError;
     logError(e);
@@ -75,30 +76,31 @@ async function get(
   }
 }
 
-async function fetchAllTranslations(
+export const fetchAllTranslations = async (
   c: VertexClient,
   status: string,
-  currentTranslations: QueuedJobData[],
-  cursor?: string
-): Promise<QueuedJobData[]> {
-  let queuedJobData: QueuedJobData[] = currentTranslations;
-  const { cursors, page } = await getPage(() =>
-    c.translationInspections.getQueuedTranslations({
-      pageCursor: cursor ?? undefined,
-      pageSize: 200,
-      filterStatus: status,
-    })
-  );
-
-  queuedJobData = queuedJobData.concat(page.data);
-  if (cursors.next != null) {
-    const nextPage = await fetchAllTranslations(
-      c,
-      status,
-      queuedJobData,
-      cursors.next
+): Promise<QueuedJobData[]> => {
+  const queuedJobData: QueuedJobData[][] = [];
+  let cursor: string | undefined;
+  const promises: Array<Promise<unknown>> = [];
+  let itemsRemain = true;
+  while (itemsRemain) {
+    const resPromise = getPage(() =>
+      c.translationInspections.getQueuedTranslationJobs({
+        pageCursor: cursor ?? undefined,
+        pageSize: 200,
+        filterStatus: status,
+      })
     );
-    queuedJobData = queuedJobData.concat(nextPage);
+    promises.push(resPromise);
+    // eslint-disable-next-line no-await-in-loop
+    const { cursors, page } = await resPromise;
+    cursor = cursors.next;
+    if (cursor === undefined) {
+      itemsRemain = false;
+    }
+    queuedJobData.push(page.data);
   }
-  return page.data;
-}
+  await Promise.all(promises);
+  return queuedJobData.flat();
+};

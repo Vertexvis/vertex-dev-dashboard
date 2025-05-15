@@ -11,13 +11,14 @@ export default function TranslationTables(): JSX.Element {
         <QueuedTranslationsTable
           title="Running Translations"
           refreshInterval={10000}
+          fetchAll={true}
           status="running"
         />
 
         <QueuedTranslationsTable
           title="Recently Successful Translations"
           status="complete"
-          fetchAll={true}
+          fetchAll={false}
           filter={(row) => dateDiffInDays(new Date(row.created)) <= 2}
         />
 
