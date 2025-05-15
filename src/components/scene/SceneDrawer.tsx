@@ -56,7 +56,7 @@ export function SceneDrawer({
     } else if (scene == null) {
       setMetadata(undefined);
     }
-  }, [scene?.metadata]);
+  }, [scene, scene?.metadata]);
 
   async function onSubmit(data: FormData) {
     const metadata = typeSafeMetadata(editableMetadata);
@@ -225,9 +225,7 @@ export function SceneDrawer({
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Metadata</Typography>
-                    <Typography variant="body2">
-                      {JSON.stringify(scene.metadata)}
-                    </Typography>
+                    {scene.metadata && (getMetadataTable(scene.metadata))}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -402,3 +400,20 @@ export function SceneDrawer({
     </Drawer>
   );
 }
+
+const getMetadataTable = (metadata:Record<string, string>) => {
+  return (
+    <Table size="small">
+      <TableBody>
+        {Object.entries(metadata).map(([key, value]) => (
+          <TableRow key={key}>
+            <TableCell>
+              <Typography variant="subtitle2">{key}</Typography>
+              <Typography variant="body2">{value}</Typography>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};

@@ -85,7 +85,7 @@ async function get(
         pageSize: ps ? parseInt(ps, 10) : 10,
         filterSuppliedId: sId,
         filterName: n,
-        fieldsScene: "metadata,state,camera,worldOrientation,name,suppliedId",
+        fieldsScene: "metadata,state,camera,worldOrientation,name,suppliedId,created,modified",
       })
     );
     return { cursors, data: page.data, status: 200 };
