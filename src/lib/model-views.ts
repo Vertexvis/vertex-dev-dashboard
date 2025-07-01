@@ -76,7 +76,7 @@ export function useModelViews({
       setLoadedSceneItemId(itemId);
       actions.fetchNextModelViews(itemId);
     }
-  }, [itemId, modelViewResponses, modelViewCursor]);
+  }, [actions, itemId, modelViewResponses, modelViewCursor]);
 
   React.useEffect(() => {
     setAnnotationResponses([]);
@@ -91,7 +91,7 @@ export function useModelViews({
     ) {
       actions.fetchNextAnnotations(loadedModelViewId);
     }
-  }, [loadedModelViewId, annotationResponses, annotationCursor]);
+  }, [actions, loadedModelViewId, annotationResponses, annotationCursor]);
 
   return {
     modelViewList: modelViewResponses.reduce(

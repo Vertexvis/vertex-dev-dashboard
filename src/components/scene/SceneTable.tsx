@@ -194,9 +194,14 @@ export default function SceneTable({
       method: "POST",
     });
     const { key } = await b.json();
-    await navigator.clipboard.writeText(key);
-    setKeyLoadingSceneId(undefined);
-    setToastMsg(`Stream key "${key}" copied to clipboard.`);
+    try {
+      await navigator.clipboard.writeText(key);
+      setToastMsg(`Stream key "${key}" copied to clipboard.`);
+    } catch (e) {
+      console.error("Error copying stream key to clipboard", e);
+    } finally {
+      setKeyLoadingSceneId(undefined);
+    }
   }
 
   return (
@@ -234,9 +239,9 @@ export default function SceneTable({
             label="Name Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetNameFilter(e.target.value);
+              debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0 }}
+            sx={{ mt: 0, width: "20rem" }}
           />
           <TextField
             variant="standard"
@@ -246,9 +251,9 @@ export default function SceneTable({
             label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value);
+              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0 }}
+            sx={{ mt: 0, width: "20rem" }}
           />
         </Box>
         <TableContainer>
