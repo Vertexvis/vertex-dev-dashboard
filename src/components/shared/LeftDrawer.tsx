@@ -3,7 +3,6 @@ import {
   DescriptionOutlined,
   LocalLibraryOutlined,
   PendingOutlined,
-  PhotoLibraryOutlined,
 } from "@mui/icons-material";
 import {
   Drawer,
@@ -45,7 +44,7 @@ export function LeftDrawer(): JSX.Element {
           selected={router.route === "/"}
         >
           <ListItemIcon>
-            <PhotoLibraryOutlined />
+            <LocalLibraryOutlined />
           </ListItemIcon>
           <ListItemText primary="Scenes" />
         </ListItemButton>
