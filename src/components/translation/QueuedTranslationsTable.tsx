@@ -55,7 +55,7 @@ export function QueuedTranslationsTable({
 
   return (
     <TableContainer
-      sx={{ m: 2, maxHeight: "700px", overflow: "auto" }}
+      sx={{ m: 2, overflowY: "auto" }}
       component={Paper}
     >
       <Box

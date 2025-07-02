@@ -1,4 +1,5 @@
 import { Environment } from "@vertexvis/viewer";
+
 import { EnvironmentWithCustom } from "./with-session";
 
 export interface AccountCredentials {
