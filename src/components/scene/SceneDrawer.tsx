@@ -15,6 +15,7 @@ import {
 import {
   OrthographicCamera,
   PerspectiveCamera,
+  SceneData,
 } from "@vertexvis/api-client-node";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -42,6 +43,7 @@ export function SceneDrawer({
   scene,
 }: Props): JSX.Element {
   const defaultValues = scene;
+
   const { control, handleSubmit, reset } = useForm<FormData>({
     defaultValues,
   });
@@ -50,13 +52,27 @@ export function SceneDrawer({
     undefined
   );
 
+  const [sceneDetails, setSceneDetails] = useState<SceneData | undefined>(undefined);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const result = await fetch(`/api/scenes/${scene?.id}`);
+      setSceneDetails(await result.json());
+    };
+
+    if (scene != null && open) {
+      fetchData();
+    }
+  }, [scene, open]);
+
+
   useEffect(() => {
     if (scene?.metadata != null) {
       setMetadata(JSON.stringify(scene?.metadata));
     } else if (scene == null) {
       setMetadata(undefined);
     }
-  }, [scene?.metadata]);
+  }, [scene, sceneDetails]);
 
   async function onSubmit(data: FormData) {
     const metadata = typeSafeMetadata(editableMetadata);
@@ -212,49 +228,48 @@ export function SceneDrawer({
               <TableBody>
                 <TableRow>
                   <TableCell>
-                    <Typography variant="subtitle2">Name</Typography>
-                    <Typography variant="body2">{scene.name}</Typography>
+                    <Typography variant="subtitle2">ID</Typography>
+                    <Typography variant="body2">{sceneDetails?.id ?? ""}</Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Supplied ID</Typography>
-                    <Typography variant="body2">{scene.suppliedId}</Typography>
+                    <Typography variant="body2">{sceneDetails?.attributes.suppliedId ?? ""}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle2">Name</Typography>
+                    <Typography variant="body2">{sceneDetails?.attributes.name ?? ""}</Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Metadata</Typography>
+                    {sceneDetails?.attributes.metadata && (getMetadataTable(sceneDetails.attributes.metadata))}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle2">Tree Enabled</Typography>
                     <Typography variant="body2">
-                      {JSON.stringify(scene.metadata)}
+                      {(sceneDetails?.attributes.treeEnabled ?? false).toString()}
                     </Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
-                    <Typography variant="subtitle2">ID</Typography>
-                    <Typography variant="body2">{scene.id}</Typography>
+                    <Typography variant="subtitle2">State (deprecated)</Typography>
+                    <Typography variant="body2">{sceneDetails?.attributes.state ?? ""}</Typography>
                   </TableCell>
                 </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <Typography variant="subtitle2">State</Typography>
-                    <Typography variant="body2">{scene.state}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <Typography variant="subtitle2">Tree enabled</Typography>
-                    <Typography variant="body2">
-                      {(scene.treeEnabled ?? false).toString()}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Created</Typography>
                     <Typography variant="body2">
-                      {toLocaleString(scene.created)}
+                      {toLocaleString(sceneDetails?.attributes.created)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -262,11 +277,23 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Modified</Typography>
                     <Typography variant="body2">
-                      {toLocaleString(scene.modified)}
+                      {toLocaleString(sceneDetails?.attributes.modified)}
                     </Typography>
                   </TableCell>
                 </TableRow>
-                {scene.camera && (
+                {sceneDetails?.attributes.sceneItemCount && (
+                  <TableRow>
+                    <TableCell>
+                      <Typography variant="subtitle2">
+                        Scene Item Count
+                      </Typography>
+                      <Typography variant="body2">
+                        {sceneDetails?.attributes.sceneItemCount}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {sceneDetails?.attributes.camera && (
                   <TableRow>
                     <TableCell>
                       <Box
@@ -283,16 +310,15 @@ export function SceneDrawer({
                           </IconButton>
                         </Tooltip>
                       </Box>
-
                       <Table size="small">
-                        {isPerspective(scene.camera) && (
+                        {isPerspective(sceneDetails?.attributes.camera) && (
                           <TableBody>
                             <TableRow>
                               <TableCell>
                                 <Typography variant="subtitle2">
                                   Position
                                 </Typography>
-                                <VectorTable vector={scene.camera.position} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.position} />
                               </TableCell>
                             </TableRow>
                             <TableRow>
@@ -300,26 +326,26 @@ export function SceneDrawer({
                                 <Typography variant="subtitle2">
                                   Look at
                                 </Typography>
-                                <VectorTable vector={scene.camera.lookAt} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.lookAt} />
                               </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell sx={{ border: 0 }}>
                                 <Typography variant="subtitle2">Up</Typography>
-                                <VectorTable vector={scene.camera.up} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.up} />
                               </TableCell>
                             </TableRow>
                           </TableBody>
                         )}
 
-                        {isOrthographic(scene.camera) && (
+                        {isOrthographic(sceneDetails?.attributes.camera) && (
                           <TableBody>
                             <TableRow>
                               <TableCell>
                                 <Typography variant="subtitle2">
                                   View Vector
                                 </Typography>
-                                <VectorTable vector={scene.camera.viewVector} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.viewVector} />
                               </TableCell>
                             </TableRow>
                             <TableRow>
@@ -327,13 +353,13 @@ export function SceneDrawer({
                                 <Typography variant="subtitle2">
                                   Look at
                                 </Typography>
-                                <VectorTable vector={scene.camera.lookAt} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.lookAt} />
                               </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell sx={{ border: 0 }}>
                                 <Typography variant="subtitle2">Up</Typography>
-                                <VectorTable vector={scene.camera.up} />
+                                <VectorTable vector={sceneDetails?.attributes.camera.up} />
                               </TableCell>
                             </TableRow>
 
@@ -343,7 +369,7 @@ export function SceneDrawer({
                                   Fov Height
                                 </Typography>
                                 <Typography>
-                                  {scene.camera.fovHeight}
+                                  {sceneDetails?.attributes.camera.fovHeight}
                                 </Typography>
                               </TableCell>
                             </TableRow>
@@ -353,11 +379,11 @@ export function SceneDrawer({
                     </TableCell>
                   </TableRow>
                 )}
-                {scene.worldOrientation && (
+                {sceneDetails?.attributes.worldOrientation && (
                   <TableRow>
                     <TableCell>
                       <Typography variant="subtitle2">
-                        World orientation
+                        World Orientation
                       </Typography>
                       <Table size="small">
                         <TableBody>
@@ -365,30 +391,18 @@ export function SceneDrawer({
                             <TableCell>
                               <Typography variant="subtitle2">Front</Typography>
                               <VectorTable
-                                vector={scene.worldOrientation.front}
+                                vector={sceneDetails?.attributes.worldOrientation.front}
                               />
                             </TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell sx={{ border: 0 }}>
                               <Typography variant="subtitle2">Up</Typography>
-                              <VectorTable vector={scene.worldOrientation.up} />
+                              <VectorTable vector={sceneDetails?.attributes.worldOrientation.up} />
                             </TableCell>
                           </TableRow>
                         </TableBody>
                       </Table>
-                    </TableCell>
-                  </TableRow>
-                )}
-                {scene.sceneItemCount && (
-                  <TableRow>
-                    <TableCell>
-                      <Typography variant="subtitle2">
-                        Scene item count
-                      </Typography>
-                      <Typography variant="body2">
-                        {scene.sceneItemCount}
-                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -402,3 +416,20 @@ export function SceneDrawer({
     </Drawer>
   );
 }
+
+const getMetadataTable = (metadata:Record<string, string>) => {
+  return (
+    <Table size="small">
+      <TableBody>
+        {Object.entries(metadata).map(([key, value]) => (
+          <TableRow key={key}>
+            <TableCell>
+              <Typography variant="subtitle2">{key}</Typography>
+              <Typography variant="body2">{value}</Typography>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};

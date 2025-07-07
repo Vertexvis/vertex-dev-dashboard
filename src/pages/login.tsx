@@ -1,3 +1,5 @@
+import EditIcon from "@mui/icons-material/Edit";
+import ResetIcon from "@mui/icons-material/RestartAlt";
 import {
   Box,
   Button,
@@ -17,8 +19,6 @@ import { GetServerSidePropsResult } from "next";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import EditIcon from "@mui/icons-material/Edit";
-import ResetIcon from "@mui/icons-material/RestartAlt";
 import React from "react";
 
 import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
