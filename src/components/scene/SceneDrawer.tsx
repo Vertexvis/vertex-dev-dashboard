@@ -252,7 +252,7 @@ export function SceneDrawer({
                 </TableRow>
                 <TableRow>
                   <TableCell>
-                    <Typography variant="subtitle2">Tree enabled</Typography>
+                    <Typography variant="subtitle2">Tree Enabled</Typography>
                     <Typography variant="body2">
                       {(sceneDetails?.attributes.treeEnabled ?? false).toString()}
                     </Typography>
@@ -383,7 +383,7 @@ export function SceneDrawer({
                   <TableRow>
                     <TableCell>
                       <Typography variant="subtitle2">
-                        World orientation
+                        World Orientation
                       </Typography>
                       <Table size="small">
                         <TableBody>
