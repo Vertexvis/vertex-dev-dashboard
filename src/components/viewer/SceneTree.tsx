@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
 import { VertexSceneTreeTableCellCustomEvent } from "@vertexvis/viewer";
-
 import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/components/scene-tree-table-cell/scene-tree-table-cell";
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
-import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
+
 import { viewerHasSelection, ViewerState } from "../../lib/viewer";
+import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { SceneTreeContextMenu } from "./SceneTreeContextMenu";
 
 interface Props {

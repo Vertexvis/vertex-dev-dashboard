@@ -148,12 +148,12 @@ export default function PartTable(): JSX.Element {
             size="small"
             margin="normal"
             id="suppliedIdFilter"
-            label="Supplied ID Filter"
+            label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value);
+              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0 }}
+            sx={{ mt: 0, width: "20rem" }}
           />
           <Button
             variant="contained"

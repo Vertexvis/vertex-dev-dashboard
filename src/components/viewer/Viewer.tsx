@@ -2,9 +2,9 @@
 import {
   CameraAltOutlined,
   FileCopyOutlined,
+  RestartAltOutlined,
   SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
-  RestartAltOutlined,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -34,12 +34,12 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
 import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
+import { viewerHasSelection, ViewerState } from "../../lib/viewer";
 import { NetworkConfig } from "../../lib/with-session";
 import { UpdateSceneReq } from "../../pages/api/scenes";
 import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
-import { ViewerSpeedDial } from "./ViewerSpeedDial";
 import { ViewerContextMenu } from "./ViewerContextMenu";
-import { viewerHasSelection, ViewerState } from "../../lib/viewer";
+import { ViewerSpeedDial } from "./ViewerSpeedDial";
 
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
