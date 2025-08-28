@@ -14,7 +14,7 @@
     "@vertexvis/viewer-react": "^0.23.6",
     "lodash.debounce": "^4.0",
     "multer": "2.0.2",
-    "next": "^15.4.1",
+    "next": "^15.4.6",
     "next-connect": "^0.13.0",
     "next-iron-session": "^4.2",
     "react": "^18.3.1",
