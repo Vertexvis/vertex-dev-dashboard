@@ -239,14 +239,7 @@ export default function SceneTable({
             label="Name Filter (exact)"
             type="text"
             onChange={(e) => {
-              const searchValue = e.target.value?.trim() ?? undefined;
-
-              // Replace special characters
-              // const newSearchValue = searchValue?.replace("#", "%23").replace("%", "%25").replace("+", "%2B");
-
-              console.log("searchValue: " + searchValue);
-              // console.log("newSearchValue: " + newSearchValue);
-              debouncedSetNameFilter(encodeURIComponent(searchValue));
+              debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
