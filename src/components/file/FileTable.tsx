@@ -41,7 +41,7 @@ export const headCells: readonly HeadCell[] = [
 function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${suppliedId}` : ""
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
     }`
   );
 }

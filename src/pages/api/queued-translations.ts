@@ -66,7 +66,6 @@ async function get(
       );
       return { cursors, data: page.data, status: 200 };
     }
-
   } catch (error) {
     const e = error as VertexError;
     logError(e);
@@ -78,7 +77,7 @@ async function get(
 
 export const fetchAllTranslations = async (
   c: VertexClient,
-  status: string,
+  status: string
 ): Promise<QueuedJobData[]> => {
   const queuedJobData: QueuedJobData[][] = [];
   let cursor: string | undefined;

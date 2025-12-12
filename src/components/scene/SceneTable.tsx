@@ -62,8 +62,8 @@ const headCells: readonly HeadCell[] = [
 function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${suppliedId}` : ""
-    }${name ? `&name=${name}` : ""}`
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
+    }${name ? `&name=${encodeURIComponent(name)}` : ""}`
   );
 }
 
@@ -239,7 +239,14 @@ export default function SceneTable({
             label="Name Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
+              const searchValue = e.target.value?.trim() ?? undefined;
+
+              // Replace special characters
+              // const newSearchValue = searchValue?.replace("#", "%23").replace("%", "%25").replace("+", "%2B");
+
+              console.log("searchValue: " + searchValue);
+              // console.log("newSearchValue: " + newSearchValue);
+              debouncedSetNameFilter(encodeURIComponent(searchValue));
             }}
             sx={{ mt: 0, width: "20rem" }}
           />

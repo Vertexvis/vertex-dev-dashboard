@@ -41,7 +41,7 @@ const headCells: readonly HeadCell[] = [
 function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${suppliedId}` : ""
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
     }`,
     { refreshInterval: 30000 }
   );
