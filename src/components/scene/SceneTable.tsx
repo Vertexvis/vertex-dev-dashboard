@@ -62,8 +62,8 @@ const headCells: readonly HeadCell[] = [
 function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${suppliedId}` : ""
-    }${name ? `&name=${name}` : ""}`
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
+    }${name ? `&name=${encodeURIComponent(name)}` : ""}`
   );
 }
 
