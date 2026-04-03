@@ -7,6 +7,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableHead,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -109,13 +110,30 @@ function MetadataRow({
       <TableCell>
         <Typography variant="subtitle2">Metadata</Typography>
         {entries.length > 0 ? (
-          <Table size="small">
+          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ px: 0, py: 0.5, width: "40%" }}>
+                  <Typography variant="subtitle2">Key</Typography>
+                </TableCell>
+                <TableCell sx={{ px: 0, py: 0.5 }}>
+                  <Typography variant="subtitle2">Value</Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
             <TableBody>
               {entries.map(([key, value]) => (
                 <TableRow key={key}>
-                  <TableCell sx={{ px: 0 }}>
-                    <Typography variant="subtitle2">{key}</Typography>
-                  <Typography
+                  <TableCell sx={{ px: 0, py: 0.5, verticalAlign: "top" }}>
+                    <Typography
+                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                      variant="body2"
+                    >
+                      {displayValue(key)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ px: 0, py: 0.5, verticalAlign: "top" }}>
+                    <Typography
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"
                     >
