@@ -181,6 +181,7 @@ export default function FilesTable({
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
+                  const isActive = activeFileId === row.id;
 
                   return (
                     <TableRow
@@ -188,17 +189,8 @@ export default function FilesTable({
                       role="checkbox"
                       tabIndex={-1}
                       key={row.id}
-                      selected={isSel}
+                      selected={isSel || isActive}
                       onClick={() => onFileSelected(row)}
-                      sx={
-                        activeFileId === row.id
-                          ? {
-                              "& td, & th": {
-                                backgroundColor: "action.hover",
-                              },
-                            }
-                          : undefined
-                      }
                     >
                       <TableCell
                         padding="checkbox"

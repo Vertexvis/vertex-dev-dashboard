@@ -11,10 +11,10 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import prettyBytes from "pretty-bytes";
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
+import { toDisplayValue, toFileSizeDisplay } from "../../lib/display";
 import { File } from "../../lib/files";
 import { RightDrawerWidth } from "../shared/Layout";
 
@@ -61,10 +61,7 @@ export function FileDetailsDrawer({
               />
               <MetadataRow metadata={file.metadata} />
               <DetailsRow label="Root File Name" value={file.rootFileName} />
-              <DetailsRow
-                label="Size"
-                value={formatFileSize(file.size)}
-              />
+              <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
               <DetailsRow label="Updated" value={toLocaleString(file.uploaded)} />
             </TableBody>
           </Table>
@@ -91,7 +88,7 @@ function DetailsRow({
           sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
           variant="body2"
         >
-          {displayValue(value)}
+          {toDisplayValue(value)}
         </Typography>
       </TableCell>
     </TableRow>
@@ -129,7 +126,7 @@ function MetadataRow({
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"
                     >
-                      {displayValue(key)}
+                      {toDisplayValue(key)}
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ px: 0, py: 0.5, verticalAlign: "top" }}>
@@ -137,7 +134,7 @@ function MetadataRow({
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"
                     >
-                      {displayValue(value)}
+                      {toDisplayValue(value)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -155,14 +152,4 @@ function MetadataRow({
       </TableCell>
     </TableRow>
   );
-}
-
-function displayValue(value?: string): string {
-  return value == null || value.trim().length === 0 ? "N/A" : value;
-}
-
-function formatFileSize(size?: number): string | undefined {
-  if (size == null) return undefined;
-
-  return prettyBytes(size);
 }
