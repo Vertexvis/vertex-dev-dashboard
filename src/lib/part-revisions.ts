@@ -9,6 +9,10 @@ import { Paged, toPage } from "./paging";
 export type PartRevision = Pick<PartRevisionData, "id"> &
   PartRevisionDataAttributes;
 
+export function toPartRevision(data: PartRevisionData): PartRevision {
+  return { ...data.attributes, id: data.id };
+}
+
 export function toPartRevisionPage(
   res: GetRes<PartRevisionData>
 ): Paged<PartRevision> {

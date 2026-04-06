@@ -20,6 +20,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { SwrProps } from "../../lib/paging";
+import { PartRevision } from "../../lib/part-revisions";
 import { toPartPage } from "../../lib/parts";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -51,7 +52,15 @@ const maybeQueryParam = (
   target: string | string[] | undefined
 ): string | undefined => (Array.isArray(target) ? target[0] : target);
 
-export default function PartTable(): JSX.Element {
+interface Props {
+  readonly activeRevisionId?: string;
+  readonly onRevisionSelected: (revision: PartRevision) => void;
+}
+
+export default function PartTable({
+  activeRevisionId,
+  onRevisionSelected,
+}: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);
@@ -185,9 +194,11 @@ export default function PartTable(): JSX.Element {
                 page.items.map((row) => {
                   return (
                     <PartRow
+                      activeRevisionId={activeRevisionId}
                       key={row.id}
                       isSelected={selected.has(row.id)}
                       onSelected={handleCheck}
+                      onRevisionSelected={onRevisionSelected}
                       part={row}
                       onCreteSceneFromRevision={setTargetRevisionId}
                     />

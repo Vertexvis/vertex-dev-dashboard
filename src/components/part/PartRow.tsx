@@ -20,16 +20,20 @@ import { toPartRevisionPage } from "../../lib/part-revisions";
 import { Part } from "../../lib/parts";
 
 interface PartRowProps {
+  readonly activeRevisionId?: string;
   readonly part: Part;
   readonly isSelected: boolean;
   readonly onSelected: (id: string) => void;
+  readonly onRevisionSelected: (revision: PartRevision) => void;
   readonly onCreteSceneFromRevision: (id: string) => void;
 }
 
 export default function PartRow({
+  activeRevisionId,
   part,
   isSelected,
   onSelected,
+  onRevisionSelected,
   onCreteSceneFromRevision,
 }: PartRowProps): JSX.Element {
   const row = part;
@@ -101,6 +105,9 @@ export default function PartRow({
                   revisions.items.map((r) => (
                     <TableRow
                       key={r.id}
+                      hover
+                      onClick={() => onRevisionSelected(r)}
+                      selected={activeRevisionId === r.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
                       <TableCell> {r.name} </TableCell>
@@ -112,7 +119,10 @@ export default function PartRow({
                         <Button
                           color="secondary"
                           startIcon={<Add />}
-                          onClick={() => onCreteSceneFromRevision(r.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCreteSceneFromRevision(r.id);
+                          }}
                         >
                           New Scene
                         </Button>
