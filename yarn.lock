@@ -994,12 +994,12 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vertexvis/api-client-node@^0.33.2":
-  version "0.33.2"
-  resolved "https://registry.yarnpkg.com/@vertexvis/api-client-node/-/api-client-node-0.33.2.tgz#bfb15f972270b1aaf5ae80abb146b28b00a2559b"
-  integrity sha512-u4Hso8ADOMbk7s/8Qhm0vGzY1sR2MDQ3mWiFc0xxJ051rL2S/UdKjSQA/Yjm3eU2ut1cTmso8ZXWVqvuAqcv6w==
+"@vertexvis/api-client-node@^0.40.0":
+  version "0.40.0"
+  resolved "https://registry.yarnpkg.com/@vertexvis/api-client-node/-/api-client-node-0.40.0.tgz#9563245ab3247ae3789bc972a739f2638b2681da"
+  integrity sha512-z/WtLR296nffQc047nHIiFhC68Vhw4Xs5354t0LWA4j+jPm8ybnf6UkObuJcJv1Nm13qsRe+NAJ08zQzUbtGzQ==
   dependencies:
-    axios "^1.6.4"
+    axios "1.11.0"
     p-limit "^3"
 
 "@vertexvis/frame-streaming-protos@^0.15.1":
@@ -1293,7 +1293,7 @@ axe-core@^4.10.0:
   resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.10.2.tgz#85228e3e1d8b8532a27659b332e39b7fa0e022df"
   integrity sha512-RE3mdQ7P3FRSe7eqCWoeQ/Z9QXrtniSjp1wUjt5nRC3WIpz5rSCve6o3fsZ2aCpJtrZjSZgjwXAoTO5k4tEI0w==
 
-axios@1.8.2, axios@^1.6.4:
+axios@1.11.0, axios@1.8.2:
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.8.2.tgz#fabe06e241dfe83071d4edfbcaa7b1c3a40f7979"
   integrity sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==
