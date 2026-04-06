@@ -14,8 +14,8 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
-import { toDisplayValue, toFileSizeDisplay } from "../../lib/display";
 import { File } from "../../lib/files";
+import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
 import { RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
