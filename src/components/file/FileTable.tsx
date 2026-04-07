@@ -1,9 +1,10 @@
-import { Add } from "@mui/icons-material";
+import { Add, Download } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
+  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -13,6 +14,7 @@ import {
   TablePagination,
   TableRow,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
@@ -36,6 +38,7 @@ export const headCells: readonly HeadCell[] = [
   { id: "id", label: "ID" },
   { id: "created", label: "Created" },
   { id: "uploaded", label: "Uploaded" },
+  { id: "download", label: "Download" },
 ];
 
 function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
@@ -68,6 +71,7 @@ export default function FilesTable({
     string | undefined
   >();
   const [showToast, setShowToast] = React.useState(false);
+  const [downloadError, setDownloadError] = React.useState<string>();
 
   const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
   const page = data ? toFilePage(data) : undefined;
@@ -123,6 +127,30 @@ export default function FilesTable({
     mutate();
   }
 
+  async function handleDownload(id: string) {
+    setDownloadError(undefined);
+
+    const res = await fetch(
+      `/api/files/${encodeURIComponent(id)}/download-url`,
+      {
+        method: "POST",
+      }
+    );
+
+    const body = await res.json();
+    if (!res.ok || body.url == null) {
+      setDownloadError(
+        body.message ?? "Could not create a download URL for this file."
+      );
+      return;
+    }
+
+    const opened = window.open(body.url as string, "_blank", "noopener");
+    if (opened == null) {
+      window.location.assign(body.url as string);
+    }
+  }
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
@@ -174,7 +202,7 @@ export default function FilesTable({
               ) : !page ? (
                 <SkeletonBody
                   includeCheckbox={true}
-                  numCellsPerRow={7}
+                  numCellsPerRow={8}
                   numRows={pageSize - pageLength}
                   rowHeight={DefaultRowHeight}
                 />
@@ -209,6 +237,24 @@ export default function FilesTable({
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
                       <TableCell>{toLocaleString(row.uploaded)}</TableCell>
+                      <TableCell
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Tooltip title="Download file">
+                          <IconButton
+                            aria-label={`Download ${row.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(row.id);
+                            }}
+                            size="small"
+                          >
+                            <Download fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -247,6 +293,15 @@ export default function FilesTable({
       >
         <Alert onClose={() => setShowToast(false)} severity="success">
           File created!
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={downloadError != null}
+        autoHideDuration={6000}
+        onClose={() => setDownloadError(undefined)}
+      >
+        <Alert onClose={() => setDownloadError(undefined)} severity="error">
+          {downloadError}
         </Alert>
       </Snackbar>
     </>
