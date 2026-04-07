@@ -20,7 +20,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import { toFilePage } from "../../lib/files";
+import { File, toFilePage } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -46,7 +46,15 @@ function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-export default function FilesTable(): JSX.Element {
+interface Props {
+  readonly activeFileId?: string;
+  readonly onFileSelected: (file: File) => void;
+}
+
+export default function FilesTable({
+  activeFileId,
+  onFileSelected,
+}: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const [curPage, setCurPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
@@ -173,17 +181,23 @@ export default function FilesTable(): JSX.Element {
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
+                  const isActive = activeFileId === row.id;
+
                   return (
                     <TableRow
                       hover
                       role="checkbox"
                       tabIndex={-1}
                       key={row.id}
-                      selected={isSel}
+                      selected={isSel || isActive}
+                      onClick={() => onFileSelected(row)}
                     >
                       <TableCell
                         padding="checkbox"
-                        onClick={() => handleCheck(row.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCheck(row.id);
+                        }}
                       >
                         <Checkbox color="primary" checked={isSel} />
                       </TableCell>
