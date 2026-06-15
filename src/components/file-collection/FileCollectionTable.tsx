@@ -97,7 +97,7 @@ export default function FileCollectionTable({
     if (page == null) return;
 
     const upd = new Set<string>();
-    if (e.target.checked) page.items.map((n) => upd.add(n.id));
+    if (e.target.checked) page.items.forEach((n) => upd.add(n.id));
     setSelected(upd);
   }
 
