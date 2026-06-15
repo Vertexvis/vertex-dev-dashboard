@@ -1,4 +1,5 @@
 import {
+  CollectionsBookmarkOutlined,
   DatasetOutlined,
   DescriptionOutlined,
   LocalLibraryOutlined,
@@ -56,6 +57,15 @@ export function LeftDrawer(): JSX.Element {
             <DescriptionOutlined />
           </ListItemIcon>
           <ListItemText primary="Files" />
+        </ListItemButton>
+        <ListItemButton
+          onClick={() => router.push("/file-collections")}
+          selected={router.route === "/file-collections"}
+        >
+          <ListItemIcon>
+            <CollectionsBookmarkOutlined />
+          </ListItemIcon>
+          <ListItemText primary="File Collections" />
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/parts")}
