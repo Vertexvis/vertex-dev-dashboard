@@ -1,9 +1,9 @@
 import { NextApiResponse } from "next";
 
-import * as fileCollections from "../../../lib/file-collections";
-import * as vertexApi from "../../../lib/vertex-api";
-import { NextIronRequest } from "../../../lib/with-session";
-import * as route from "./[id]";
+import * as fileCollections from "../../../../lib/file-collections";
+import * as vertexApi from "../../../../lib/vertex-api";
+import { NextIronRequest } from "../../../../lib/with-session";
+import * as route from "../../../../pages/api/file-collections/[id]";
 
 jest.mock("@vertexvis/api-client-node", () => ({
   head: jest.fn((value?: string | string[]) =>
@@ -12,15 +12,15 @@ jest.mock("@vertexvis/api-client-node", () => ({
   logError: jest.fn(),
 }));
 
-jest.mock("../../../lib/file-collections", () => ({
+jest.mock("../../../../lib/file-collections", () => ({
   getFileCollectionsApi: jest.fn(),
 }));
 
-jest.mock("../../../lib/vertex-api", () => ({
+jest.mock("../../../../lib/vertex-api", () => ({
   getClientFromSession: jest.fn(),
 }));
 
-jest.mock("../../../lib/with-session", () => ({
+jest.mock("../../../../lib/with-session", () => ({
   __esModule: true,
   default: jest.fn((handler) => handler),
 }));
