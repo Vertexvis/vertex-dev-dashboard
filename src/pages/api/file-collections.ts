@@ -2,6 +2,7 @@ import {
   FileCollectionMetadataData,
   getPage,
   head,
+  isFailure,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
@@ -73,9 +74,12 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 
   try {
     const c = getFileCollectionsApi(await getClientFromSession(req.session));
-    await Promise.all(
+    const results = await Promise.all(
       b.ids.map((id) => makeCall(() => c.deleteFileCollection({ id })))
     );
+    const failure = results.find(isFailure);
+    if (failure != null) return toErrorRes({ failure });
+
     return { status: 200 };
   } catch (error) {
     const e = error as VertexError;

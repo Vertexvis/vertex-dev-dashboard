@@ -24,11 +24,7 @@ interface Props {
   readonly open: boolean;
 }
 
-export function FileDetailsDrawer({
-  file,
-  onClose,
-  open,
-}: Props): JSX.Element {
+export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
   return (
     <Drawer
       anchor="right"
@@ -53,7 +49,10 @@ export function FileDetailsDrawer({
           <Table size="small" sx={{ whiteSpace: "nowrap" }}>
             <TableBody>
               <DetailsRow label="Name" value={file.name} />
-              <DetailsRow label="Created" value={toLocaleString(file.created)} />
+              <DetailsRow
+                label="Created"
+                value={toLocaleString(file.created)}
+              />
               <DetailsRow label="Status" value={file.status} />
               <DetailsRow
                 label="Expires"
@@ -62,7 +61,10 @@ export function FileDetailsDrawer({
               <MetadataRow metadata={file.metadata} />
               <DetailsRow label="Root File Name" value={file.rootFileName} />
               <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
-              <DetailsRow label="Updated" value={toLocaleString(file.uploaded)} />
+              <DetailsRow
+                label="Updated"
+                value={toLocaleString(file.uploaded)}
+              />
             </TableBody>
           </Table>
         </TableContainer>
@@ -143,7 +145,9 @@ function MetadataRow({
                       {toDisplayValue(key)}
                     </Typography>
                   </TableCell>
-                  <TableCell sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}>
+                  <TableCell
+                    sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}
+                  >
                     <Typography
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"

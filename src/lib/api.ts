@@ -37,9 +37,10 @@ export const ServerError: ErrorRes = {
   status: 500,
 };
 
-export function toAPIRes<TA, T extends { attributes: TA; id: string }>(
-  data: { attributes: TA; id: string }
-): T {
+export function toAPIRes<TA, T extends { attributes: TA; id: string }>(data: {
+  attributes: TA;
+  id: string;
+}): T {
   // This is a workaround for the fact that the API client doesn't return the id in the attributes
   // and we need to add it back in for the API client to work properly
   return {

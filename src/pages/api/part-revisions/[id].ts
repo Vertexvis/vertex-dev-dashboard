@@ -27,9 +27,7 @@ export default withSession(async function handle(
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
 });
 
-async function get(
-  req: NextIronRequest
-): Promise<ErrorRes | PartRevisionData> {
+async function get(req: NextIronRequest): Promise<ErrorRes | PartRevisionData> {
   try {
     const c = await getClientFromSession(req.session);
     const id = head(req.query.id);
