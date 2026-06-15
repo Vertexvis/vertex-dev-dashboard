@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: 22.x }
       - name: Install
@@ -23,20 +25,7 @@ jobs:
           retention-days: 10
       - name: Build
         run: yarn build
-
-  sonar-analysis:
-    runs-on: ubuntu-latest
-    needs:
-      - build
-    env:
-      ACTIONS_SONAR_TOKEN: ${{ secrets.ACTIONS_SONAR_TOKEN }}
-    steps:
-      - name: SonarQube Analysis
-        uses: Vertexvis/actions/sonar-analysis@main
-        with:
-          service-name: ${{ github.event.repository.name }}
-          sonar-coverage-property: "sonar.javascript.lcov.reportPaths"
-          coverage-report-path: "./coverage/lcov.info"
-          sources: "./src"
-          tests: "./src"
-          sbt-dependencies-artifact: ""
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.ACTIONS_SONAR_TOKEN }}
