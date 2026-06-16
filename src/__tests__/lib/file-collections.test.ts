@@ -1,4 +1,4 @@
-import { toFileCollectionPage } from "./file-collections";
+import { toFileCollectionPage } from "../../lib/file-collections";
 
 describe("file collection paging", () => {
   it("maps file collection metadata into dashboard rows", () => {

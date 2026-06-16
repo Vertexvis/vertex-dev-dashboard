@@ -37,11 +37,11 @@ export const headCells: readonly HeadCell[] = [
 ];
 
 function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
-  return useSWR(
-    `/api/file-collections?pageSize=${pageSize}${
-      cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""
-    }${suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""}`
-  );
+  const params = new URLSearchParams({ pageSize: pageSize.toString() });
+  if (cursor != null) params.set("cursor", cursor);
+  if (suppliedId != null) params.set("suppliedId", suppliedId);
+
+  return useSWR(`/api/file-collections?${params.toString()}`);
 }
 
 interface Props {

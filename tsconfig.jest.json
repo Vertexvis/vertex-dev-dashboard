@@ -3,6 +3,6 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "module": "CommonJS",
-    "noEmit": false
+    "noEmit": true
   }
 }

@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { SWRConfig } from "swr";
 
-import FileCollectionTable from "./FileCollectionTable";
+import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
 const firstPage = {
-  cursors: { self: "page-1", next: "page-2" },
+  cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
   data: [
     {
       type: "file-collection",
@@ -69,7 +69,9 @@ describe("FileCollectionTable", () => {
 
   it("paginates file collections using the next cursor", async () => {
     const fetchMock = mockFetch((url) =>
-      url.includes("cursor=page-2") ? secondPage : firstPage
+      url.includes("cursor=page%2B2%26filter%3Dunexpected%23fragment")
+        ? secondPage
+        : firstPage
     );
 
     renderTable();
@@ -81,7 +83,7 @@ describe("FileCollectionTable", () => {
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/file-collections?pageSize=25&cursor=page-2"
+      "/api/file-collections?pageSize=25&cursor=page%2B2%26filter%3Dunexpected%23fragment"
     );
   });
 
