@@ -2,7 +2,6 @@ import {
   FileCollectionMetadataData,
   getPage,
   head,
-  isFailure,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
@@ -14,6 +13,7 @@ import {
   ErrorRes,
   GetRes,
   InvalidBody,
+  isErrorFailure,
   MethodNotAllowed,
   Res,
   ServerError,
@@ -23,7 +23,7 @@ import { getFileCollectionsApi } from "../../lib/file-collections";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
-export default withSession(async function handle(
+export async function handleFileCollections(
   req: NextIronRequest,
   res: NextApiResponse<GetRes<FileCollectionMetadataData> | Res | ErrorRes>
 ): Promise<void> {
@@ -38,7 +38,9 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+}
+
+export default withSession(handleFileCollections);
 
 async function get(
   req: NextIronRequest
@@ -77,7 +79,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
     const results = await Promise.all(
       b.ids.map((id) => makeCall(() => c.deleteFileCollection({ id })))
     );
-    const failure = results.find(isFailure);
+    const failure = results.find(isErrorFailure);
     if (failure != null) return toErrorRes({ failure });
 
     return { status: 200 };

@@ -10,7 +10,7 @@ import {
   VertexError,
 } from "@vertexvis/api-client-node";
 import assert from "assert";
-import { AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import type { NextApiResponse } from "next";
 import { Session } from "next-iron-session";
 
@@ -53,8 +53,9 @@ export async function makeCall<T>(
     return (await apiCall()).data;
   } catch (error) {
     const ve = error as VertexError;
+    const ae = error as AxiosError<Failure>;
     logError(ve);
-    return ve.vertexError?.res ?? toFailure(ServerError);
+    return ve.vertexError?.res ?? ae.response?.data ?? toFailure(ServerError);
   }
 }
 

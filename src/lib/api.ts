@@ -63,6 +63,15 @@ export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
   };
 }
 
+export function isErrorFailure(obj: unknown): obj is Failure {
+  const failure = obj as Failure | undefined;
+  return (
+    failure?.errors != null &&
+    ((failure.errors instanceof Set && failure.errors.size > 0) ||
+      (Array.isArray(failure.errors) && failure.errors.length > 0))
+  );
+}
+
 export function isErrorRes(obj?: {
   message?: string;
   status?: number;
