@@ -1,18 +1,18 @@
 /**
  * @jest-environment node
  */
-import type { MockServerClient } from "mockserver-client";
-import { mockServerClient } from "mockserver-client";
 import type { NextApiResponse } from "next";
 import type { Session } from "next-iron-session";
-import type { StartedTestContainer } from "testcontainers";
-import { GenericContainer, Wait } from "testcontainers";
 
+import {
+  type MockServerHarness,
+  startMockServer,
+} from "../../../../test/helpers/mockserver";
 import {
   CredsKey,
   EnvKey,
   NetworkConfig as NetworkConfigKey,
-  NextIronRequest,
+  type NextIronRequest,
   TokenKey,
 } from "../../../lib/with-session";
 import { handleFileCollections } from "../../../pages/api/file-collections";
@@ -20,303 +20,240 @@ import { handleFileCollection } from "../../../pages/api/file-collections/[id]";
 
 jest.setTimeout(120_000);
 
-type MockNextIronRequest = Pick<
-  NextIronRequest,
-  "body" | "method" | "query" | "session"
->;
-
 type JsonBody = Record<string, unknown>;
 
-interface MockNextApiResponse extends Pick<NextApiResponse, "json" | "status"> {
-  readonly json: jest.MockedFunction<(body: unknown) => MockNextApiResponse>;
-  readonly status: jest.MockedFunction<
-    (statusCode: number) => MockNextApiResponse
-  >;
-}
+type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
 
-interface TestSession extends Pick<Session, "get" | "set"> {
-  readonly values: Map<string, unknown>;
+interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
+  readonly body: () => unknown;
+  readonly statusCode: () => number | undefined;
 }
 
 describe("file collection API routes", () => {
-  let container: StartedTestContainer;
-  let mockServer: MockServerClient;
-  let apiHost: string;
+  let mockServer: MockServerHarness;
 
   beforeAll(async () => {
-    container = await new GenericContainer("mockserver/mockserver")
-      .withExposedPorts(1080)
-      .withEnvironment({ SERVER_PORT: "1080" })
-      .withWaitStrategy(Wait.forLogMessage("started on port: 1080"))
-      .start();
-
-    const host = container.getHost();
-    const port = container.getMappedPort(1080);
-    apiHost = `http://${host}:${port}`;
-    mockServer = mockServerClient(host, port);
+    mockServer = await startMockServer();
   });
 
   afterAll(async () => {
-    await container?.stop();
+    await mockServer.stop();
   });
 
   beforeEach(async () => {
-    await mockServer.reset();
+    await mockServer.client.reset();
   });
 
-  describe("/api/file-collections", () => {
-    it("lists file collections with query parameters", async () => {
-      const res = createRes();
-      await expectFileCollectionList({
-        queryStringParameters: {
-          "filter[suppliedId]": ["supplied-1"],
-          "page[cursor]": ["cursor-1"],
-          "page[size]": ["50"],
-        },
-      });
-
-      await handleFileCollections(
-        createReq(apiHost, {
-          method: "GET",
-          query: {
-            cursor: "cursor-1",
-            pageSize: "50",
-            suppliedId: "supplied-1",
-          },
-        }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        cursors: { next: "next-page", self: "self-page" },
-        data: [collectionData("collection-1")],
-        status: 200,
-      });
-      await mockServer.verify(
-        {
-          method: "GET",
-          path: "/file-collections",
-          queryStringParameters: {
-            "filter[suppliedId]": ["supplied-1"],
-            "page[cursor]": ["cursor-1"],
-            "page[size]": ["50"],
-          },
-        },
-        1,
-        1
-      );
+  it("lists file collections with query parameters", async () => {
+    await expectFileCollectionList({
+      "filter[suppliedId]": ["supplied-1"],
+      "page[cursor]": ["cursor-1"],
+      "page[size]": ["50"],
+    });
+    const res = await callFileCollections({
+      method: "GET",
+      query: { cursor: "cursor-1", pageSize: "50", suppliedId: "supplied-1" },
     });
 
-    it("uses the default page size when one is not supplied", async () => {
-      const res = createRes();
-      await expectFileCollectionList({
-        queryStringParameters: { "page[size]": ["10"] },
-      });
-
-      await handleFileCollections(
-        createReq(apiHost, { method: "GET" }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      await mockServer.verify(
-        {
-          method: "GET",
-          path: "/file-collections",
-          queryStringParameters: { "page[size]": ["10"] },
-        },
-        1,
-        1
-      );
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [collectionData("collection-1")],
+      status: 200,
     });
-
-    it("requires a delete request body", async () => {
-      const res = createRes();
-
-      await handleFileCollections(
-        createReq(apiHost, { method: "DELETE" }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Body required.",
-        status: 400,
-      });
-      await mockServer.verifyZeroInteractions();
-    });
-
-    it("requires delete IDs", async () => {
-      const res = createRes();
-
-      await handleFileCollections(
-        createReq(apiHost, { body: "{}", method: "DELETE" }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Invalid body.",
-        status: 400,
-      });
-      await mockServer.verifyZeroInteractions();
-    });
-
-    it("deletes each supplied file collection ID", async () => {
-      const res = createRes();
-      await expectDeleteFileCollection("collection-1");
-      await expectDeleteFileCollection("collection-2");
-
-      await handleFileCollections(
-        createReq(apiHost, {
-          body: JSON.stringify({ ids: ["collection-1", "collection-2"] }),
-          method: "DELETE",
-        }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ status: 200 });
-      await verifyDeleteFileCollection("collection-1");
-      await verifyDeleteFileCollection("collection-2");
-    });
-
-    it("returns Vertex API failures from delete requests", async () => {
-      const res = createRes();
-      await expectDeleteFileCollection("collection-1", {
-        body: failureBody("404", "Collection not found."),
-        statusCode: 404,
-      });
-
-      await handleFileCollections(
-        createReq(apiHost, {
-          body: JSON.stringify({ ids: ["collection-1"] }),
-          method: "DELETE",
-        }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Collection not found.",
-        status: 404,
-      });
-      await verifyDeleteFileCollection("collection-1");
-    });
-
-    it("rejects unsupported methods", async () => {
-      const res = createRes();
-
-      await handleFileCollections(
-        createReq(apiHost, { method: "POST" }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(405);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Method not allowed.",
-        status: 405,
-      });
-      await mockServer.verifyZeroInteractions();
+    await verifyListFileCollections({
+      "filter[suppliedId]": ["supplied-1"],
+      "page[cursor]": ["cursor-1"],
+      "page[size]": ["50"],
     });
   });
 
-  describe("/api/file-collections/[id]", () => {
-    it("gets a file collection by ID", async () => {
-      const res = createRes();
-      await mockServer.mockAnyResponse({
-        httpRequest: { method: "GET", path: "/file-collections/collection-1" },
-        httpResponse: jsonResponse({
-          data: collectionData("collection-1"),
-          links: {},
-        }),
-      });
+  it("uses the default page size when one is not supplied", async () => {
+    await expectFileCollectionList({ "page[size]": ["10"] });
 
-      await handleFileCollection(
-        createReq(apiHost, {
-          method: "GET",
-          query: { id: "collection-1" },
-        }),
-        asNextApiResponse(res)
-      );
+    const res = await callFileCollections({ method: "GET" });
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
+    expect(res.statusCode()).toBe(200);
+    await verifyListFileCollections({ "page[size]": ["10"] });
+  });
+
+  it("validates delete request bodies before calling Vertex", async () => {
+    const missingBody = await callFileCollections({ method: "DELETE" });
+    const invalidBody = await callFileCollections({
+      body: "{}",
+      method: "DELETE",
+    });
+
+    expect(missingBody.statusCode()).toBe(400);
+    expect(missingBody.body()).toEqual({
+      message: "Body required.",
+      status: 400,
+    });
+    expect(invalidBody.statusCode()).toBe(400);
+    expect(invalidBody.body()).toEqual({
+      message: "Invalid body.",
+      status: 400,
+    });
+    await mockServer.client.verifyZeroInteractions();
+  });
+
+  it("deletes each supplied file collection ID", async () => {
+    await expectDeleteFileCollection("collection-1");
+    await expectDeleteFileCollection("collection-2");
+
+    const res = await callFileCollections({
+      body: JSON.stringify({ ids: ["collection-1", "collection-2"] }),
+      method: "DELETE",
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({ status: 200 });
+    await verifyDeleteFileCollection("collection-1");
+    await verifyDeleteFileCollection("collection-2");
+  });
+
+  it("returns Vertex API failures from delete requests", async () => {
+    await expectDeleteFileCollection("collection-1", {
+      body: failureBody("404", "Collection not found."),
+      statusCode: 404,
+    });
+
+    const res = await callFileCollections({
+      body: JSON.stringify({ ids: ["collection-1"] }),
+      method: "DELETE",
+    });
+
+    expect(res.statusCode()).toBe(404);
+    expect(res.body()).toEqual({
+      message: "Collection not found.",
+      status: 404,
+    });
+    await verifyDeleteFileCollection("collection-1");
+  });
+
+  it("gets a file collection by ID", async () => {
+    await mockServer.client.mockAnyResponse({
+      httpRequest: { method: "GET", path: "/file-collections/collection-1" },
+      httpResponse: jsonResponse({
         data: collectionData("collection-1"),
-        status: 200,
-      });
-      await mockServer.verify(
-        { method: "GET", path: "/file-collections/collection-1" },
-        1,
-        1
-      );
+        links: {},
+      }),
     });
 
-    it("requires a file collection ID", async () => {
-      const res = createRes();
+    const res = await callFileCollectionById("collection-1", { method: "GET" });
 
-      await handleFileCollection(
-        createReq(apiHost, { method: "GET" }),
-        asNextApiResponse(res)
-      );
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      data: collectionData("collection-1"),
+      status: 200,
+    });
+    await mockServer.client.verify(
+      { method: "GET", path: "/file-collections/collection-1" },
+      1,
+      1
+    );
+  });
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "File Collection ID required.",
-        status: 400,
-      });
-      await mockServer.verifyZeroInteractions();
+  it("validates file collection ID requests before calling Vertex", async () => {
+    const missingId = await callFileCollectionById(undefined, {
+      method: "GET",
+    });
+    const unsupportedMethod = await callFileCollectionById("collection-1", {
+      method: "DELETE",
     });
 
-    it("returns Vertex API failures", async () => {
-      const res = createRes();
-      await mockServer.mockAnyResponse({
-        httpRequest: { method: "GET", path: "/file-collections/collection-1" },
-        httpResponse: jsonResponse(failureBody("500", "Vertex is upset."), 500),
-      });
+    expect(missingId.statusCode()).toBe(400);
+    expect(missingId.body()).toEqual({
+      message: "File Collection ID required.",
+      status: 400,
+    });
+    expect(unsupportedMethod.statusCode()).toBe(405);
+    expect(unsupportedMethod.body()).toEqual({
+      message: "Method not allowed.",
+      status: 405,
+    });
+    await mockServer.client.verifyZeroInteractions();
+  });
 
-      await handleFileCollection(
-        createReq(apiHost, {
-          method: "GET",
-          query: { id: "collection-1" },
-        }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Vertex is upset.",
-        status: 500,
-      });
+  it("returns Vertex API failures from get requests", async () => {
+    await mockServer.client.mockAnyResponse({
+      httpRequest: { method: "GET", path: "/file-collections/collection-1" },
+      httpResponse: jsonResponse(failureBody("500", "Vertex is upset."), 500),
     });
 
-    it("rejects unsupported methods", async () => {
-      const res = createRes();
+    const res = await callFileCollectionById("collection-1", { method: "GET" });
 
-      await handleFileCollection(
-        createReq(apiHost, {
-          method: "DELETE",
-          query: { id: "collection-1" },
-        }),
-        asNextApiResponse(res)
-      );
-
-      expect(res.status).toHaveBeenCalledWith(405);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Method not allowed.",
-        status: 405,
-      });
-      await mockServer.verifyZeroInteractions();
+    expect(res.statusCode()).toBe(500);
+    expect(res.body()).toEqual({
+      message: "Vertex is upset.",
+      status: 500,
     });
   });
 
-  async function expectFileCollectionList({
-    queryStringParameters,
+  it("rejects unsupported collection methods", async () => {
+    const res = await callFileCollections({ method: "POST" });
+
+    expect(res.statusCode()).toBe(405);
+    expect(res.body()).toEqual({
+      message: "Method not allowed.",
+      status: 405,
+    });
+    await mockServer.client.verifyZeroInteractions();
+  });
+
+  function callFileCollections(req: {
+    readonly body?: string;
+    readonly method: string;
+    readonly query?: Record<string, string | string[]>;
+  }): Promise<TestRes> {
+    return callApi((r, res) => handleFileCollections(r, res), req);
+  }
+
+  function callFileCollectionById(
+    id: string | undefined,
+    req: { readonly method: string }
+  ): Promise<TestRes> {
+    return callApi((r, res) => handleFileCollection(r, res), {
+      ...req,
+      query: id == null ? {} : { id },
+    });
+  }
+
+  async function callApi(
+    handler: (req: NextIronRequest, res: NextApiResponse) => Promise<void>,
+    req: {
+      readonly body?: string;
+      readonly method: string;
+      readonly query?: Record<string, string | string[]>;
+    }
+  ): Promise<TestRes> {
+    const res = createRes();
+    await handler(createReq(req), res as unknown as NextApiResponse);
+    return res;
+  }
+
+  function createReq({
+    body,
+    method,
+    query = {},
   }: {
-    readonly queryStringParameters: Record<string, string[]>;
-  }): Promise<void> {
-    await mockServer.mockAnyResponse({
+    readonly body?: string;
+    readonly method: string;
+    readonly query?: Record<string, string | string[]>;
+  }): NextIronRequest {
+    const req: TestReq = {
+      body,
+      method,
+      query,
+      session: createSession(mockServer.apiHost),
+    };
+    return req as NextIronRequest;
+  }
+
+  async function expectFileCollectionList(
+    queryStringParameters: Record<string, string[]>
+  ): Promise<void> {
+    await mockServer.client.mockAnyResponse({
       httpRequest: {
         method: "GET",
         path: "/file-collections",
@@ -325,11 +262,25 @@ describe("file collection API routes", () => {
       httpResponse: jsonResponse({
         data: [collectionData("collection-1")],
         links: {
-          next: { href: `${apiHost}/file-collections?page[cursor]=next-page` },
-          self: { href: `${apiHost}/file-collections?page[cursor]=self-page` },
+          next: {
+            href: `${mockServer.apiHost}/file-collections?page[cursor]=next-page`,
+          },
+          self: {
+            href: `${mockServer.apiHost}/file-collections?page[cursor]=self-page`,
+          },
         },
       }),
     });
+  }
+
+  async function verifyListFileCollections(
+    queryStringParameters: Record<string, string[]>
+  ): Promise<void> {
+    await mockServer.client.verify(
+      { method: "GET", path: "/file-collections", queryStringParameters },
+      1,
+      1
+    );
   }
 
   async function expectDeleteFileCollection(
@@ -339,20 +290,37 @@ describe("file collection API routes", () => {
       statusCode: 204,
     }
   ): Promise<void> {
-    await mockServer.mockAnyResponse({
+    await mockServer.client.mockAnyResponse({
       httpRequest: { method: "DELETE", path: `/file-collections/${id}` },
       httpResponse: jsonResponse(response.body, response.statusCode),
     });
   }
 
   async function verifyDeleteFileCollection(id: string): Promise<void> {
-    await mockServer.verify(
+    await mockServer.client.verify(
       { method: "DELETE", path: `/file-collections/${id}` },
       1,
       1
     );
   }
 });
+
+function createRes(): TestRes {
+  let responseBody: unknown;
+  let responseStatus: number | undefined;
+  const res = {} as TestRes;
+  res.body = () => responseBody;
+  res.statusCode = () => responseStatus;
+  res.status = jest.fn((statusCode: number) => {
+    responseStatus = statusCode;
+    return res;
+  });
+  res.json = jest.fn((body: unknown) => {
+    responseBody = body;
+    return res;
+  });
+  return res;
+}
 
 function collectionData(id: string): JsonBody {
   return {
@@ -364,39 +332,6 @@ function collectionData(id: string): JsonBody {
     id,
     type: "file-collection",
   };
-}
-
-function failureBody(status: string, title: string): JsonBody {
-  return { errors: [{ status, title }] };
-}
-
-function jsonResponse(body: JsonBody, statusCode = 200): JsonBody {
-  return {
-    body: JSON.stringify(body),
-    headers: { "content-type": ["application/json"] },
-    statusCode,
-  };
-}
-
-function createReq(
-  apiHost: string,
-  {
-    body,
-    method,
-    query = {},
-  }: {
-    readonly body?: string;
-    readonly method: string;
-    readonly query?: Record<string, string | string[]>;
-  }
-): NextIronRequest {
-  const req: MockNextIronRequest = {
-    body,
-    method,
-    query,
-    session: createSession(apiHost),
-  };
-  return req as NextIronRequest;
 }
 
 function createSession(apiHost: string): Session {
@@ -427,23 +362,23 @@ function createSession(apiHost: string): Session {
       },
     ],
   ]);
-  const session: TestSession = {
-    get: jest.fn((key: string) => values.get(key)),
-    set: jest.fn((key: string, value: unknown) => {
+
+  return {
+    get: (key: string) => values.get(key),
+    set: (key: string, value: unknown) => {
       values.set(key, value);
-    }),
-    values,
+    },
+  } as unknown as Session;
+}
+
+function failureBody(status: string, title: string): JsonBody {
+  return { errors: [{ status, title }] };
+}
+
+function jsonResponse(body: JsonBody, statusCode = 200): JsonBody {
+  return {
+    body: JSON.stringify(body),
+    headers: { "content-type": ["application/json"] },
+    statusCode,
   };
-  return session as unknown as Session;
-}
-
-function createRes(): MockNextApiResponse {
-  const res = {} as MockNextApiResponse;
-  res.json = jest.fn(() => res);
-  res.status = jest.fn(() => res);
-  return res;
-}
-
-function asNextApiResponse(res: MockNextApiResponse): NextApiResponse {
-  return res as unknown as NextApiResponse;
 }

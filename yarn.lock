@@ -1358,6 +1358,13 @@
   dependencies:
     tslib "^2.8.0"
 
+"@testcontainers/mockserver@10.28.0":
+  version "10.28.0"
+  resolved "https://registry.yarnpkg.com/@testcontainers/mockserver/-/mockserver-10.28.0.tgz#1c038a845569d08ca4afee3132ec965d6b33ab80"
+  integrity sha512-Amsll+yxfJVqxQa3VUrEX4uLcrZbG2dFEXCfmXjsMK7w/Z4bBVAUzSnUsKsDUD7F9tzr8scxPehe3rIl/v/XWg==
+  dependencies:
+    testcontainers "^10.28.0"
+
 "@testing-library/dom@^10.4.1":
   version "10.4.1"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-10.4.1.tgz#d444f8a889e9a46e9a3b4f3b88e0fcb3efb6cf95"
@@ -6541,7 +6548,7 @@ test-exclude@^6.0.0:
     glob "^7.1.4"
     minimatch "^3.0.4"
 
-testcontainers@10.28.0:
+testcontainers@10.28.0, testcontainers@^10.28.0:
   version "10.28.0"
   resolved "https://registry.yarnpkg.com/testcontainers/-/testcontainers-10.28.0.tgz#73d3757fcd60405c20dd55599ca89e44cadc8ccf"
   integrity sha512-1fKrRRCsgAQNkarjHCMKzBKXSJFmzNTiTbhb5E/j5hflRXChEtHvkefjaHlgkNUjfw92/Dq8LTgwQn6RDBFbMg==
