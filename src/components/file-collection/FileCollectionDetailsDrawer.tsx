@@ -14,17 +14,21 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
-import { File } from "../../lib/files";
-import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
+import { FileCollection } from "../../lib/file-collections";
+import { toDisplayValue } from "../../lib/formatting";
 import { RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
-  readonly file?: File;
+  readonly fileCollection?: FileCollection;
   readonly onClose: () => void;
   readonly open: boolean;
 }
 
-export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
+export function FileCollectionDetailsDrawer({
+  fileCollection,
+  onClose,
+  open,
+}: Props): JSX.Element {
   return (
     <Drawer
       anchor="right"
@@ -38,33 +42,31 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
     >
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
-          File Details
+          File Collection Details
         </Typography>
         <IconButton onClick={onClose} sx={{ mr: 2 }}>
           <Close />
         </IconButton>
       </Box>
-      {file ? (
+      {fileCollection ? (
         <TableContainer>
           <Table size="small" sx={{ whiteSpace: "nowrap" }}>
             <TableBody>
-              <DetailsRow label="Name" value={file.name} />
+              <DetailsRow label="Name" value={fileCollection.name} />
+              <DetailsRow label="ID" value={fileCollection.id} />
+              <DetailsRow
+                label="Supplied ID"
+                value={fileCollection.suppliedId}
+              />
               <DetailsRow
                 label="Created"
-                value={toLocaleString(file.created)}
+                value={toLocaleString(fileCollection.created)}
               />
-              <DetailsRow label="Status" value={file.status} />
               <DetailsRow
                 label="Expires"
-                value={toLocaleString(file.expiresAt)}
+                value={toLocaleString(fileCollection.expiresAt)}
               />
-              <MetadataRow metadata={file.metadata} />
-              <DetailsRow label="Root File Name" value={file.rootFileName} />
-              <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
-              <DetailsRow
-                label="Updated"
-                value={toLocaleString(file.uploaded)}
-              />
+              <MetadataRow metadata={fileCollection.metadata} />
             </TableBody>
           </Table>
         </TableContainer>
@@ -112,14 +114,7 @@ function MetadataRow({
           <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
-                <TableCell
-                  sx={{
-                    px: 0,
-                    py: 0.5,
-                    width: "40%",
-                    pr: 1,
-                  }}
-                >
+                <TableCell sx={{ px: 0, py: 0.5, width: "40%", pr: 1 }}>
                   <Typography variant="subtitle2">Key</Typography>
                 </TableCell>
                 <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
@@ -130,14 +125,7 @@ function MetadataRow({
             <TableBody>
               {entries.map(([key, value]) => (
                 <TableRow key={key}>
-                  <TableCell
-                    sx={{
-                      px: 0,
-                      py: 0.5,
-                      verticalAlign: "top",
-                      pr: 1,
-                    }}
-                  >
+                  <TableCell sx={{ px: 0, py: 0.5, pr: 1 }}>
                     <Typography
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"
@@ -145,9 +133,7 @@ function MetadataRow({
                       {toDisplayValue(key)}
                     </Typography>
                   </TableCell>
-                  <TableCell
-                    sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}
-                  >
+                  <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
                     <Typography
                       sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
                       variant="body2"
