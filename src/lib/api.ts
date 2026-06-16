@@ -37,9 +37,10 @@ export const ServerError: ErrorRes = {
   status: 500,
 };
 
-export function toAPIRes<TA, T extends { attributes: TA; id: string }>(
-  data: { attributes: TA; id: string }
-): T {
+export function toAPIRes<TA, T extends { attributes: TA; id: string }>(data: {
+  attributes: TA;
+  id: string;
+}): T {
   // This is a workaround for the fact that the API client doesn't return the id in the attributes
   // and we need to add it back in for the API client to work properly
   return {
@@ -60,6 +61,15 @@ export function toErrorRes({ failure }: { failure: Failure }): ErrorRes {
     message: es[0].title ?? fallback,
     status: parseInt(es[0].status ?? ServerError.status.toString(), 10),
   };
+}
+
+export function isErrorFailure(obj: unknown): obj is Failure {
+  const failure = obj as Failure | undefined;
+  return (
+    failure?.errors != null &&
+    ((failure.errors instanceof Set && failure.errors.size > 0) ||
+      (Array.isArray(failure.errors) && failure.errors.length > 0))
+  );
 }
 
 export function isErrorRes(obj?: {

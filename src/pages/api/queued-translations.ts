@@ -38,7 +38,7 @@ async function get(
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
-    const fetchAll = (head(req.query.fetchAll) ?? 'false') === 'true';
+    const fetchAll = (head(req.query.fetchAll) ?? "false") === "true";
     const status = head(req.query.status);
 
     if (status == null) {

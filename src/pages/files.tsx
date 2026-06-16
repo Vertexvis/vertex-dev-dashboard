@@ -16,9 +16,7 @@ export default function Files(): JSX.Element {
 
   return (
     <Layout
-      main={
-        <FilesTable activeFileId={file?.id} onFileSelected={setFile} />
-      }
+      main={<FilesTable activeFileId={file?.id} onFileSelected={setFile} />}
       rightDrawer={
         <FileDetailsDrawer
           file={file}

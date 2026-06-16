@@ -46,8 +46,8 @@ export function PartRevisionDetailsDrawer({
     partRevision == null
       ? fetchedRevision
       : fetchedRevision == null
-        ? partRevision
-        : { ...partRevision, ...fetchedRevision };
+      ? partRevision
+      : { ...partRevision, ...fetchedRevision };
   const showMetadataLoading =
     partRevision != null && fetchedRevision?.metadata == null && error == null;
 
@@ -79,7 +79,10 @@ export function PartRevisionDetailsDrawer({
                 label="Created"
                 value={toLocaleString(revisionDetails.created)}
               />
-              <DetailsRow label="Supplied ID" value={revisionDetails.suppliedId} />
+              <DetailsRow
+                label="Supplied ID"
+                value={revisionDetails.suppliedId}
+              />
               <DetailsRow
                 label="Supplied Iteration ID"
                 value={revisionDetails.suppliedIterationId}
@@ -90,8 +93,8 @@ export function PartRevisionDetailsDrawer({
                   error != null
                     ? "error"
                     : showMetadataLoading
-                      ? "loading"
-                      : "ready"
+                    ? "loading"
+                    : "ready"
                 }
               />
             </TableBody>

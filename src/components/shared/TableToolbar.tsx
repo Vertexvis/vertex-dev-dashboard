@@ -47,7 +47,7 @@ export const TableToolbar = ({
       {numSelected > 1 && !!customActions ? customActions : <></>}
       {numSelected > 0 && (
         <Tooltip title="Delete">
-          <IconButton onClick={() => onDelete()}>
+          <IconButton aria-label="Delete" onClick={() => onDelete()}>
             <Delete />
           </IconButton>
         </Tooltip>

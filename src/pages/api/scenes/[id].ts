@@ -37,7 +37,8 @@ async function get(req: NextIronRequest): Promise<ErrorRes | SceneData> {
 
     const item = await c.scenes.getScene({
       id,
-      fieldsScene: "id,suppliedId,name,metadata,state,camera,worldOrientation,created,modified,sceneItemCount,treeEnabled",
+      fieldsScene:
+        "id,suppliedId,name,metadata,state,camera,worldOrientation,created,modified,sceneItemCount,treeEnabled",
     });
 
     return item.data.data;
