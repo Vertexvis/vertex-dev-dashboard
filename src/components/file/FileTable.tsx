@@ -27,26 +27,34 @@ import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
+import { HeadCell, SortState, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreateFileDialog from "./CreateFileDialog";
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name" },
+  { id: "name", disablePadding: true, label: "Name", sortable: true },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "status", label: "Status" },
   { id: "id", label: "ID" },
-  { id: "created", label: "Created" },
+  { id: "created", label: "Created", sortable: true },
   { id: "uploaded", label: "Uploaded" },
   { id: "download", label: "Download" },
 ];
 
-function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
-  return useSWR(
-    `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }`
-  );
+function useFiles({
+  cursor,
+  pageSize,
+  sort,
+  suppliedId,
+}: SwrProps & { readonly sort: string }) {
+  const params = new URLSearchParams({
+    pageSize: pageSize.toString(),
+    sort,
+  });
+  if (cursor != null) params.set("cursor", cursor);
+  if (suppliedId != null) params.set("suppliedId", suppliedId);
+
+  return useSWR(`/api/files?${params.toString()}`);
 }
 
 interface Props {
@@ -59,6 +67,10 @@ export default function FilesTable({
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
+  const [sort, setSort] = React.useState<SortState>({
+    field: "created",
+    order: "desc",
+  });
   const [curPage, setCurPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
@@ -73,14 +85,26 @@ export default function FilesTable({
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
-  const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
+  const sortParam = sort.order === "desc" ? `-${sort.field}` : sort.field;
+  const { data, error, mutate } = useFiles({
+    cursor,
+    pageSize,
+    sort: sortParam,
+    suppliedId,
+  });
   const page = data ? toFilePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
+    () =>
+      debounce((value: string) => {
+        setCurPage(0);
+        setCursor(undefined);
+        setPrev({});
+        setSuppliedIdFilter(value === "" ? undefined : value);
+      }, 300),
     []
   );
 
@@ -116,6 +140,21 @@ export default function FilesTable({
     }
     if (curPage > num) setCursor(prev[num]);
     setCurPage(num);
+  }
+
+  function handleSortChange(field: string) {
+    setSort((current) => ({
+      field,
+      order:
+        current.field === field
+          ? current.order === "asc"
+            ? "desc"
+            : "asc"
+          : "asc",
+    }));
+    setCurPage(0);
+    setCursor(undefined);
+    setPrev({});
   }
 
   async function handleDelete() {
@@ -175,7 +214,7 @@ export default function FilesTable({
             label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
+              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
@@ -194,7 +233,9 @@ export default function FilesTable({
               headCells={headCells}
               numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
+              onSortChange={handleSortChange}
               rowCount={pageLength}
+              sort={sort}
             />
             <TableBody>
               {error ? (
