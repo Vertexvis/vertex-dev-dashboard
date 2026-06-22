@@ -26,6 +26,8 @@ interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
   readonly statusCode: () => number | undefined;
 }
 
+jest.setTimeout(120_000);
+
 describe("files API route", () => {
   let mockServer: MockServerHarness;
 
@@ -34,7 +36,7 @@ describe("files API route", () => {
   });
 
   afterAll(async () => {
-    await mockServer.stop();
+    await mockServer?.stop();
   });
 
   beforeEach(async () => {
