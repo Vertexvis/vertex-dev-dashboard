@@ -10,7 +10,7 @@ primary_worktree="$(
 )"
 
 local_files=(
-  "mise.local.toml"
+  ".env.local" ".yarnrc.yml" "mise.local.toml"
 )
 
 # Convenience to bring over uncommitted dev local files into worktrees.
