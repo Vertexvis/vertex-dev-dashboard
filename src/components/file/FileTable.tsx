@@ -45,6 +45,16 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
+function toLocalDayStartIso(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+  return date.toISOString();
+}
+
+function toLocalDayEndIso(value: string): string {
+  const date = new Date(`${value}T23:59:59.999`);
+  return date.toISOString();
+}
+
 export default function FilesTable({
   activeFileId,
   onFileSelected,
@@ -246,7 +256,7 @@ export default function FilesTable({
               onChange={(e) => {
                 resetPaging();
                 setCreatedAtFrom(
-                  e.target.value ? `${e.target.value}T00:00:00.000Z` : undefined
+                  e.target.value ? toLocalDayStartIso(e.target.value) : undefined
                 );
               }}
               sx={{ mt: 0, width: "12rem" }}
@@ -262,7 +272,7 @@ export default function FilesTable({
               onChange={(e) => {
                 resetPaging();
                 setCreatedAtTo(
-                  e.target.value ? `${e.target.value}T23:59:59.999Z` : undefined
+                  e.target.value ? toLocalDayEndIso(e.target.value) : undefined
                 );
               }}
               sx={{ mt: 0, width: "12rem" }}
