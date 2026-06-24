@@ -22,3 +22,5 @@ if [[ -n "$primary_worktree" && "$primary_worktree" != "$current_worktree" ]]; t
     fi
   done
 fi
+
+yarn install
