@@ -1,14 +1,15 @@
 /**
  * @jest-environment node
  */
+import { spawn } from "child_process";
+import { applySession } from "next-iron-session";
+import path from "path";
+import request from "supertest";
+
 import {
   type HttpMockServerHarness,
   startHttpMockServer,
 } from "../../../../test/helpers/http-mockserver";
-import {
-  type NextApiTestHarness,
-  startNextApiHarness,
-} from "../../../../test/helpers/next-api-harness";
 import {
   CredsKey,
   EnvKey,
@@ -20,22 +21,29 @@ jest.setTimeout(120_000);
 process.env.COOKIE_SECRET = "codex-test-cookie-secret-1234567890";
 
 type JsonBody = Record<string, unknown>;
+type ServerProcess = ReturnType<typeof spawn>;
+type RequestClient = ReturnType<typeof request>;
+
+const CookieName = "sess";
+const ReadyPrefix = "__NEXT_TEST_READY__";
 
 describe("file collection API routes", () => {
-  let app: NextApiTestHarness;
   let mockServer: HttpMockServerHarness;
+  let nextServer: ServerProcess;
+  let requestClient: RequestClient;
   let sessionCookie: string;
 
   beforeAll(async () => {
     mockServer = await startHttpMockServer();
-    app = await startNextApiHarness();
-    sessionCookie = await app.createSessionCookie(
+    nextServer = startNextServer();
+    requestClient = request(await waitForServerReady(nextServer));
+    sessionCookie = await createSessionCookie(
       createSessionData(mockServer.apiHost)
     );
   });
 
   afterAll(async () => {
-    await app.close();
+    await stopNextServer(nextServer);
     await mockServer.stop();
   });
 
@@ -50,7 +58,7 @@ describe("file collection API routes", () => {
       "page[size]": ["50"],
     });
 
-    const res = await app.request
+    const res = await requestClient
       .get(
         "/api/file-collections?cursor=cursor-1&pageSize=50&suppliedId=supplied-1"
       )
@@ -72,7 +80,7 @@ describe("file collection API routes", () => {
   it("uses the default page size when one is not supplied", async () => {
     await expectFileCollectionList(mockServer, { "page[size]": ["10"] });
 
-    const res = await app.request
+    const res = await requestClient
       .get("/api/file-collections")
       .set("Cookie", sessionCookie);
 
@@ -81,10 +89,10 @@ describe("file collection API routes", () => {
   });
 
   it("validates delete request bodies before calling Vertex", async () => {
-    const missingBody = await app.request
+    const missingBody = await requestClient
       .delete("/api/file-collections")
       .set("Cookie", sessionCookie);
-    const invalidBody = await app.request
+    const invalidBody = await requestClient
       .delete("/api/file-collections")
       .set("Cookie", sessionCookie)
       .set("Content-Type", "text/plain")
@@ -107,7 +115,7 @@ describe("file collection API routes", () => {
     await expectDeleteFileCollection(mockServer, "collection-1");
     await expectDeleteFileCollection(mockServer, "collection-2");
 
-    const res = await app.request
+    const res = await requestClient
       .delete("/api/file-collections")
       .set("Cookie", sessionCookie)
       .set("Content-Type", "text/plain")
@@ -125,7 +133,7 @@ describe("file collection API routes", () => {
       statusCode: 404,
     });
 
-    const res = await app.request
+    const res = await requestClient
       .delete("/api/file-collections")
       .set("Cookie", sessionCookie)
       .set("Content-Type", "text/plain")
@@ -148,7 +156,7 @@ describe("file collection API routes", () => {
       }),
     });
 
-    const res = await app.request
+    const res = await requestClient
       .get("/api/file-collections/collection-1")
       .set("Cookie", sessionCookie);
 
@@ -170,7 +178,7 @@ describe("file collection API routes", () => {
       httpResponse: jsonResponse(failureBody("500", "Vertex is upset."), 500),
     });
 
-    const res = await app.request
+    const res = await requestClient
       .get("/api/file-collections/collection-1")
       .set("Cookie", sessionCookie);
 
@@ -182,10 +190,10 @@ describe("file collection API routes", () => {
   });
 
   it("rejects unsupported collection methods", async () => {
-    const collectionRes = await app.request
+    const collectionRes = await requestClient
       .post("/api/file-collections")
       .set("Cookie", sessionCookie);
-    const collectionByIdRes = await app.request
+    const collectionByIdRes = await requestClient
       .delete("/api/file-collections/collection-1")
       .set("Cookie", sessionCookie);
 
@@ -202,6 +210,146 @@ describe("file collection API routes", () => {
     await mockServer.verifyZeroInteractions();
   });
 });
+
+function startNextServer(): ServerProcess {
+  return spawn(process.execPath, [serverScriptPath()], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      COOKIE_SECRET: process.env.COOKIE_SECRET,
+      NEXT_TEST_DIR: process.cwd(),
+      NEXT_TEST_HOST: "127.0.0.1",
+      NEXT_TEST_PORT: "0",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+async function stopNextServer(child: ServerProcess): Promise<void> {
+  if (child.exitCode != null) return;
+
+  await new Promise<void>((resolve, reject) => {
+    child.once("exit", () => resolve());
+    child.once("error", reject);
+    child.kill("SIGTERM");
+  });
+}
+
+function waitForServerReady(child: ServerProcess): Promise<string> {
+  const stdout = child.stdout;
+  const stderr = child.stderr;
+  if (stdout == null || stderr == null) {
+    throw new Error("Next test server pipes were not configured correctly.");
+  }
+
+  const stdoutLines: string[] = [];
+  const stderrLines: string[] = [];
+
+  return new Promise<string>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(
+        new Error(
+          `Timed out waiting for Next test server.\nstdout:\n${stdoutLines.join(
+            "\n"
+          )}\nstderr:\n${stderrLines.join("\n")}`
+        )
+      );
+    }, 30_000);
+
+    const onStdout = (chunk: Buffer) => {
+      const text = chunk.toString();
+      stdoutLines.push(text);
+
+      for (const line of text.split("\n")) {
+        if (!line.startsWith(ReadyPrefix)) continue;
+
+        clearTimeout(timeout);
+        stdout.off("data", onStdout);
+        stderr.off("data", onStderr);
+        child.off("exit", onExit);
+
+        const { host, port } = JSON.parse(line.slice(ReadyPrefix.length)) as {
+          readonly host: string;
+          readonly port: number;
+        };
+        resolve(`http://${host}:${port}`);
+      }
+    };
+
+    const onStderr = (chunk: Buffer) => {
+      stderrLines.push(chunk.toString());
+    };
+
+    const onExit = (code: number | null) => {
+      clearTimeout(timeout);
+      reject(
+        new Error(
+          `Next test server exited before becoming ready (code ${code}).\nstdout:\n${stdoutLines.join(
+            "\n"
+          )}\nstderr:\n${stderrLines.join("\n")}`
+        )
+      );
+    };
+
+    stdout.on("data", onStdout);
+    stderr.on("data", onStderr);
+    child.once("exit", onExit);
+    child.once("error", reject);
+  });
+}
+
+async function createSessionCookie(
+  sessionData: Record<string, unknown>
+): Promise<string> {
+  const cookieSecret = process.env.COOKIE_SECRET;
+  if (cookieSecret == null) {
+    throw new Error("COOKIE_SECRET must be set for API route tests.");
+  }
+
+  const req = { headers: {} } as {
+    headers: Record<string, string>;
+    session?: {
+      set: (key: string, value: unknown) => void;
+      save: () => Promise<string>;
+    };
+  };
+  const headers = new Map<string, string | string[]>();
+  const res = {
+    getHeader: (name: string) => headers.get(name.toLowerCase()),
+    setHeader: (name: string, value: string | string[]) => {
+      headers.set(name.toLowerCase(), value);
+    },
+  } as {
+    getHeader: (name: string) => string | string[] | undefined;
+    setHeader: (name: string, value: string | string[]) => void;
+  };
+
+  await applySession(req, res, {
+    cookieName: CookieName,
+    cookieOptions: {
+      secure: process.env.NODE_ENV === "production",
+    },
+    password: cookieSecret,
+  });
+
+  Object.entries(sessionData).forEach(([key, value]) => {
+    req.session?.set(key, value);
+  });
+
+  await req.session?.save();
+
+  const setCookie = headers.get("set-cookie");
+  const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+  if (cookieHeader == null) {
+    throw new Error("Session cookie was not written.");
+  }
+
+  return cookieHeader.split(";")[0];
+}
+
+function serverScriptPath(): string {
+  return path.join(__dirname, "../../../../test/helpers/run-next-server.js");
+}
 
 async function expectFileCollectionList(
   mockServer: HttpMockServerHarness,
