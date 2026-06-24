@@ -73,8 +73,10 @@ export default function FilesTable({
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
-  const [createdAtFrom, setCreatedAtFrom] = React.useState<string | undefined>();
-  const [createdAtTo, setCreatedAtTo] = React.useState<string | undefined>();
+  const [createdAtStart, setCreatedAtStart] = React.useState<
+    string | undefined
+  >();
+  const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>();
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
@@ -83,8 +85,8 @@ export default function FilesTable({
   if (name != null) params.set("name", name);
   if (fileId != null) params.set("fileId", fileId);
   if (suppliedId != null) params.set("suppliedId", suppliedId);
-  if (createdAtFrom != null) params.set("createdAtFrom", createdAtFrom);
-  if (createdAtTo != null) params.set("createdAtTo", createdAtTo);
+  if (createdAtStart != null) params.set("createdAtStart", createdAtStart);
+  if (createdAtEnd != null) params.set("createdAtEnd", createdAtEnd);
 
   const { data, error, mutate } = useSWR(`/api/files?${params.toString()}`);
   const page = data ? toFilePage(data) : undefined;
@@ -249,13 +251,13 @@ export default function FilesTable({
               variant="standard"
               size="small"
               margin="normal"
-              id="createdAtFrom"
+              id="createdAtStart"
               label="Created From"
               type="date"
               InputLabelProps={{ shrink: true }}
               onChange={(e) => {
                 resetPaging();
-                setCreatedAtFrom(
+                setCreatedAtStart(
                   e.target.value ? toLocalDayStartIso(e.target.value) : undefined
                 );
               }}
@@ -265,13 +267,13 @@ export default function FilesTable({
               variant="standard"
               size="small"
               margin="normal"
-              id="createdAtTo"
+              id="createdAtEnd"
               label="Created To"
               type="date"
               InputLabelProps={{ shrink: true }}
               onChange={(e) => {
                 resetPaging();
-                setCreatedAtTo(
+                setCreatedAtEnd(
                   e.target.value ? toLocalDayEndIso(e.target.value) : undefined
                 );
               }}

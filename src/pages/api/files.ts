@@ -62,8 +62,8 @@ async function get(
     const name = head(req.query.name);
     const fileId = head(req.query.fileId);
     const sId = head(req.query.suppliedId);
-    const createdAtFrom = head(req.query.createdAtFrom);
-    const createdAtTo = head(req.query.createdAtTo);
+    const createdAtStart = head(req.query.createdAtStart);
+    const createdAtEnd = head(req.query.createdAtEnd);
 
     const { cursors, page } = await getPage(() =>
       c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
@@ -75,8 +75,8 @@ async function get(
           "filter[name][contains]": name,
           "filter[fileId]": fileId,
           "filter[suppliedId][contains]": sId,
-          "filter[createdAt][gte]": createdAtFrom,
-          "filter[createdAt][lte]": createdAtTo,
+          "filter[createdAtStart][gte]": createdAtStart,
+          "filter[createdAtEnd][lte]": createdAtEnd,
           "page[cursor]": pc,
           "page[size]": ps ? parseInt(ps, 10) : 10,
         },
