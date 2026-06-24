@@ -1,11 +1,13 @@
 import {
   CreateFileRequestDataAttributes,
+  FileList,
   FileMetadataData,
   getPage,
   head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
+import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -26,7 +28,7 @@ type CreateFileReq = CreateFileRequestDataAttributes;
 
 export type CreateFileRes = Res & Pick<FileMetadataData, "id">;
 
-export default withSession(async function handle(
+export async function handleFiles(
   req: NextIronRequest,
   res: NextApiResponse<GetRes<FileMetadataData> | Res | ErrorRes>
 ): Promise<void> {
@@ -46,7 +48,9 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+}
+
+export default withSession(handleFiles);
 
 async function get(
   req: NextIronRequest
@@ -55,14 +59,28 @@ async function get(
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
+    const name = head(req.query.name);
+    const fileId = head(req.query.fileId);
     const sId = head(req.query.suppliedId);
+    const createdAtFrom = head(req.query.createdAtFrom);
+    const createdAtTo = head(req.query.createdAtTo);
 
     const { cursors, page } = await getPage(() =>
-      c.files.getFiles({
-        pageCursor: pc,
-        pageSize: ps ? parseInt(ps, 10) : 10,
-        filterSuppliedId: sId,
-      })
+      c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: `Bearer ${c.token.access_token}`,
+        },
+        params: {
+          "filter[name][contains]": name,
+          "filter[fileId]": fileId,
+          "filter[suppliedId][contains]": sId,
+          "filter[createdAt][gte]": createdAtFrom,
+          "filter[createdAt][lte]": createdAtTo,
+          "page[cursor]": pc,
+          "page[size]": ps ? parseInt(ps, 10) : 10,
+        },
+      }) as Promise<AxiosResponse<FileList>>
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
