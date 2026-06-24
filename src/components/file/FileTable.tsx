@@ -23,7 +23,6 @@ import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
 import { File, toFilePage } from "../../lib/files";
-import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -41,17 +40,19 @@ export const headCells: readonly HeadCell[] = [
   { id: "download", label: "Download" },
 ];
 
-function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
-  return useSWR(
-    `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }`
-  );
-}
-
 interface Props {
   readonly activeFileId?: string;
   readonly onFileSelected: (file: File) => void;
+}
+
+function toLocalDayStartIso(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+  return date.toISOString();
+}
+
+function toLocalDayEndIso(value: string): string {
+  const date = new Date(`${value}T23:59:59.999`);
+  return date.toISOString();
 }
 
 export default function FilesTable({
@@ -67,21 +68,61 @@ export default function FilesTable({
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
+  const [name, setNameFilter] = React.useState<string | undefined>();
+  const [fileId, setFileIdFilter] = React.useState<string | undefined>();
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
+  const [createdAtStart, setCreatedAtStart] = React.useState<
+    string | undefined
+  >();
+  const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>();
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
-  const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
+  const params = new URLSearchParams({ pageSize: pageSize.toString() });
+  if (cursor != null) params.set("cursor", cursor);
+  if (name != null) params.set("name", name);
+  if (fileId != null) params.set("fileId", fileId);
+  if (suppliedId != null) params.set("suppliedId", suppliedId);
+  if (createdAtStart != null) params.set("createdAtStart", createdAtStart);
+  if (createdAtEnd != null) params.set("createdAtEnd", createdAtEnd);
+
+  const { data, error, mutate } = useSWR(`/api/files?${params.toString()}`);
   const page = data ? toFilePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
+  const resetPaging = React.useCallback(() => {
+    setCurPage(0);
+    setCursor(undefined);
+    setPrev({});
+  }, []);
+
+  const debouncedSetNameFilter = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setNameFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging]
+  );
+  const debouncedSetFileIdFilter = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setFileIdFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging]
+  );
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setSuppliedIdFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging]
   );
 
   React.useEffect(() => {
@@ -165,20 +206,80 @@ export default function FilesTable({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
           }}
         >
-          <TextField
-            variant="standard"
-            size="small"
-            margin="normal"
-            id="suppliedIdFilter"
-            label="Supplied ID Filter (exact)"
-            type="text"
-            onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
-            }}
-            sx={{ mt: 0, width: "20rem" }}
-          />
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="nameFilter"
+              label="Name"
+              type="text"
+              onChange={(e) => {
+                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="fileIdFilter"
+              label="File ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="suppliedIdFilter"
+              label="Supplied ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="createdAtStart"
+              label="Created From"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              onChange={(e) => {
+                resetPaging();
+                setCreatedAtStart(
+                  e.target.value ? toLocalDayStartIso(e.target.value) : undefined
+                );
+              }}
+              sx={{ mt: 0, width: "12rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="createdAtEnd"
+              label="Created To"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              onChange={(e) => {
+                resetPaging();
+                setCreatedAtEnd(
+                  e.target.value ? toLocalDayEndIso(e.target.value) : undefined
+                );
+              }}
+              sx={{ mt: 0, width: "12rem" }}
+            />
+          </Box>
           <Button
             key="upload"
             variant="contained"
