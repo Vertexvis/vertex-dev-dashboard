@@ -1,0 +1,16 @@
+[mcp_servers.playwright]
+command = "npx"
+args = [
+    "@playwright/mcp@latest",
+    "--executable-path",
+    "/Users/sksizer/Library/Caches/ms-playwright/chromium-1228/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    "--isolated",
+    "--storage-state",
+    "/Users/sksizer/.codex/worktrees/fdd7/vertex-dev-dashboard-plat-8768/playwright/.auth/user.json",
+    "--viewport-size",
+    "1440x1000"
+]
+enabled = true
+
+[mcp_servers.playwright.tools.browser_evaluate]
+approval_mode = "approve"

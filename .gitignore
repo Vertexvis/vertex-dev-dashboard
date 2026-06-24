@@ -15,3 +15,6 @@ yarn-error.log*
 .idea
 .yarnrc.yml
 .yarn
+
+playwright
+.playwright-mcp
