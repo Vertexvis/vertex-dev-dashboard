@@ -5,6 +5,14 @@ import { SWRConfig } from "swr";
 
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
+const mockPush = jest.fn();
+
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
 const firstPage = {
   cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
   data: [
@@ -63,6 +71,10 @@ const multiCollectionPage = {
 };
 
 describe("FileCollectionTable", () => {
+  beforeEach(() => {
+    mockPush.mockClear();
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -171,9 +183,27 @@ describe("FileCollectionTable", () => {
       );
     });
   });
+
+  it("navigates to the file collection detail route from the view files action", async () => {
+    mockFetch(() => firstPage);
+    const onFileCollectionSelected = jest.fn();
+
+    renderTable(onFileCollectionSelected);
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "View files for Collection One",
+      })
+    );
+
+    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
+    expect(onFileCollectionSelected).not.toHaveBeenCalled();
+  });
 });
 
-function renderTable(): void {
+function renderTable(onFileCollectionSelected = jest.fn()): void {
   render(
     <SWRConfig
       value={{
@@ -182,7 +212,9 @@ function renderTable(): void {
         provider: () => new Map(),
       }}
     >
-      <FileCollectionTable onFileCollectionSelected={jest.fn()} />
+      <FileCollectionTable
+        onFileCollectionSelected={onFileCollectionSelected}
+      />
     </SWRConfig>
   );
 }
