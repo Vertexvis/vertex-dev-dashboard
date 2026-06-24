@@ -14,9 +14,10 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
+import { toFileCollectionPage } from "../../lib/file-collections";
 import { File } from "../../lib/files";
 import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
-import { RightDrawerWidth } from "../shared/Layout";
+import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
   readonly file?: File;
@@ -25,6 +26,11 @@ interface Props {
 }
 
 export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
+  const { error, fileCollectionIds, loading } = useFileCollectionIds({
+    fileId: file?.id,
+    open,
+  });
+
   return (
     <Drawer
       anchor="right"
@@ -59,6 +65,11 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
                 value={toLocaleString(file.expiresAt)}
               />
               <MetadataRow metadata={file.metadata} />
+              <FileCollectionIdsRow
+                error={error}
+                fileCollectionIds={fileCollectionIds}
+                loading={loading}
+              />
               <DetailsRow label="Root File Name" value={file.rootFileName} />
               <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
               <DetailsRow
@@ -73,6 +84,90 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
       )}
     </Drawer>
   );
+}
+
+function useFileCollectionIds({
+  fileId,
+  open,
+}: {
+  readonly fileId?: string;
+  readonly open: boolean;
+}): {
+  readonly error?: string;
+  readonly fileCollectionIds: string[];
+  readonly loading: boolean;
+} {
+  const [fileCollectionIds, setFileCollectionIds] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string>();
+
+  React.useEffect(() => {
+    if (!open || fileId == null) {
+      setFileCollectionIds([]);
+      setLoading(false);
+      setError(undefined);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPage = async (nextCursor?: string): Promise<string[]> => {
+      const params = new URLSearchParams({
+        pageSize: DefaultPageSize.toString(),
+      });
+      if (nextCursor != null) params.set("cursor", nextCursor);
+
+      const res = await fetch(
+        `/api/files/${encodeURIComponent(fileId)}/file-collections?${params.toString()}`
+      );
+      const body = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          (body as { message?: string }).message ??
+            "Could not load file collections."
+        );
+      }
+
+      const page = toFileCollectionPage(body);
+      const ids = page.items.map((item) => item.id);
+      return body.cursors?.next == null
+        ? ids
+        : [...ids, ...(await loadPage(body.cursors.next))];
+    };
+
+    const load = async () => {
+      setFileCollectionIds([]);
+      setLoading(true);
+      setError(undefined);
+
+      try {
+        const ids = await loadPage();
+
+        if (!cancelled) {
+          setFileCollectionIds(ids);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load file collections."
+          );
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fileId, open]);
+
+  return { error, fileCollectionIds, loading };
 }
 
 function DetailsRow({
@@ -159,6 +254,58 @@ function MetadataRow({
               ))}
             </TableBody>
           </Table>
+        ) : (
+          <Typography
+            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            variant="body2"
+          >
+            N/A
+          </Typography>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function FileCollectionIdsRow({
+  error,
+  fileCollectionIds,
+  loading,
+}: {
+  readonly error?: string;
+  readonly fileCollectionIds: string[];
+  readonly loading: boolean;
+}): JSX.Element {
+  return (
+    <TableRow>
+      <TableCell>
+        <Typography variant="subtitle2">File Collection IDs</Typography>
+        {loading ? (
+          <Typography
+            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            variant="body2"
+          >
+            Loading...
+          </Typography>
+        ) : error != null ? (
+          <Typography
+            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            variant="body2"
+          >
+            {error}
+          </Typography>
+        ) : fileCollectionIds.length > 0 ? (
+          <Box sx={{ mt: 1 }}>
+            {fileCollectionIds.map((id) => (
+              <Typography
+                key={id}
+                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                variant="body2"
+              >
+                {id}
+              </Typography>
+            ))}
+          </Box>
         ) : (
           <Typography
             sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
