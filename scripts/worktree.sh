@@ -10,7 +10,7 @@ primary_worktree="$(
 )"
 
 local_files=(
-  ".env.local" ".yarnrc.yml" "mise.local.toml"
+  ".env.local" ".yarnrc.yml" "mise.local.toml" "playwright/.auth/user.json"
 )
 
 # Convenience to bring over uncommitted dev local files into worktrees.

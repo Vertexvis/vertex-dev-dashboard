@@ -10,7 +10,8 @@ yarn-error.log*
 /.next
 /coverage
 /node_modules
+/playwright/.auth
+/playwright/.user-data
 .idea
 .yarnrc.yml
 .yarn
-
