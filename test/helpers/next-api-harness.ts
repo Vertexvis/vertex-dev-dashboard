@@ -1,15 +1,15 @@
 import path from "path";
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import { spawn } from "child_process";
 
 import { applySession } from "next-iron-session";
-import supertest, { type SuperTest, type Test } from "supertest";
+import supertest from "supertest";
 
 const CookieName = "sess";
 const DefaultCookieSecret = "codex-test-cookie-secret-1234567890";
 const ReadyPrefix = "__NEXT_TEST_READY__";
 
 export interface NextApiTestHarness {
-  readonly request: SuperTest<Test>;
+  readonly request: ReturnType<typeof supertest>;
   readonly createSessionCookie: (
     sessionData: Record<string, unknown>
   ) => Promise<string>;
@@ -104,8 +104,14 @@ function serverScriptPath(): string {
 }
 
 async function waitForServerReady(
-  child: ChildProcessWithoutNullStreams
+  child: ReturnType<typeof spawn>
 ): Promise<string> {
+  const stdout = child.stdout;
+  const stderr = child.stderr;
+  if (stdout == null || stderr == null) {
+    throw new Error("Next test server pipes were not configured correctly.");
+  }
+
   const stdoutLines: string[] = [];
   const stderrLines: string[] = [];
 
@@ -128,8 +134,8 @@ async function waitForServerReady(
         if (!line.startsWith(ReadyPrefix)) continue;
 
         clearTimeout(timeout);
-        child.stdout.off("data", onStdout);
-        child.stderr.off("data", onStderr);
+        stdout.off("data", onStdout);
+        stderr.off("data", onStderr);
         child.off("exit", onExit);
 
         const { host, port } = JSON.parse(line.slice(ReadyPrefix.length)) as {
@@ -155,8 +161,8 @@ async function waitForServerReady(
       );
     };
 
-    child.stdout.on("data", onStdout);
-    child.stderr.on("data", onStderr);
+    stdout.on("data", onStdout);
+    stderr.on("data", onStderr);
     child.once("exit", onExit);
     child.once("error", reject);
   });
