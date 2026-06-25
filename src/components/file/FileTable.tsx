@@ -46,10 +46,11 @@ function useFiles({
   pageSize,
   sort,
   suppliedId,
-}: SwrProps & { readonly sort: string }) {
+}: SwrProps & { readonly sort: SortState }) {
+  const sortParam = sort.order === "desc" ? `-${sort.field}` : sort.field;
   const params = new URLSearchParams({
     pageSize: pageSize.toString(),
-    sort,
+    sort: sortParam,
   });
   if (cursor != null) params.set("cursor", cursor);
   if (suppliedId != null) params.set("suppliedId", suppliedId);
@@ -85,11 +86,10 @@ export default function FilesTable({
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
-  const sortParam = sort.order === "desc" ? `-${sort.field}` : sort.field;
   const { data, error, mutate } = useFiles({
     cursor,
     pageSize,
-    sort: sortParam,
+    sort,
     suppliedId,
   });
   const page = data ? toFilePage(data) : undefined;

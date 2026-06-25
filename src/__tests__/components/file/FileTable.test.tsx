@@ -5,7 +5,11 @@ import { SWRConfig } from "swr";
 
 import FileTable from "../../../components/file/FileTable";
 
-jest.mock("../../../components/file/CreateFileDialog", () => () => null);
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
 
 const page = {
   cursors: { self: "page-1" },
