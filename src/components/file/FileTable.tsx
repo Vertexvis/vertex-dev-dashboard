@@ -23,11 +23,12 @@ import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
 import { File, toFilePage } from "../../lib/files";
-import { SwrProps } from "../../lib/paging";
+import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { SortState, toggleSort,toSortParam } from "../../lib/sorting";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, SortState, TableHead } from "../shared/TableHead";
+import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreateFileDialog from "./CreateFileDialog";
 
@@ -47,15 +48,14 @@ function useFiles({
   sort,
   suppliedId,
 }: SwrProps & { readonly sort: SortState }) {
-  const sortParam = sort.order === "desc" ? `-${sort.field}` : sort.field;
-  const params = new URLSearchParams({
-    pageSize: pageSize.toString(),
-    sort: sortParam,
-  });
-  if (cursor != null) params.set("cursor", cursor);
-  if (suppliedId != null) params.set("suppliedId", suppliedId);
-
-  return useSWR(`/api/files?${params.toString()}`);
+  return useSWR(
+    buildQuery("/api/files", {
+      cursor,
+      pageSize,
+      sort: toSortParam(sort),
+      suppliedId,
+    })
+  );
 }
 
 interface Props {
@@ -72,12 +72,9 @@ export default function FilesTable({
     field: "created",
     order: "desc",
   });
-  const [curPage, setCurPage] = React.useState(0);
-  const [cursor, setCursor] = React.useState<string | undefined>();
+  const { currentPage, cursor, handlePageChange, resetPaging } =
+    useCursorPagingState();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
-  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
@@ -100,12 +97,10 @@ export default function FilesTable({
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
       debounce((value: string) => {
-        setCurPage(0);
-        setCursor(undefined);
-        setPrev({});
+        resetPaging();
         setSuppliedIdFilter(value === "" ? undefined : value);
       }, 300),
-    []
+    [resetPaging]
   );
 
   React.useEffect(() => {
@@ -134,27 +129,12 @@ export default function FilesTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
+    handlePageChange(cursors, num);
   }
 
   function handleSortChange(field: string) {
-    setSort((current) => ({
-      field,
-      order:
-        current.field === field
-          ? current.order === "asc"
-            ? "desc"
-            : "asc"
-          : "asc",
-    }));
-    setCurPage(0);
-    setCursor(undefined);
-    setPrev({});
+    setSort((current) => toggleSort(current, field));
+    resetPaging();
   }
 
   async function handleDelete() {
@@ -313,7 +293,7 @@ export default function FilesTable({
           component="div"
           count={-1}
           rowsPerPage={pageSize}
-          page={curPage}
+          page={currentPage}
           onPageChange={handleChangePage}
           nextIconButtonProps={{ disabled: cursors?.next == null }}
         />

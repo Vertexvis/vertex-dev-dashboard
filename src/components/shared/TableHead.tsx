@@ -7,6 +7,8 @@ import {
 } from "@mui/material";
 import React from "react";
 
+import { SortState } from "../../lib/sorting";
+
 export interface HeadCell {
   readonly beforeCheckbox?: boolean;
   readonly disablePadding?: boolean;
@@ -14,13 +16,6 @@ export interface HeadCell {
   readonly label: string;
   readonly numeric?: boolean;
   readonly sortable?: boolean;
-}
-
-export type SortOrder = "asc" | "desc";
-
-export interface SortState {
-  readonly field: string;
-  readonly order: SortOrder;
 }
 
 interface Props {
