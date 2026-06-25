@@ -16,14 +16,14 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
 import { File, toFilePage } from "../../lib/files";
-import { SwrProps } from "../../lib/paging";
+import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { SortState, toggleSort,toSortParam } from "../../lib/sorting";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -32,20 +32,28 @@ import { TableToolbar } from "../shared/TableToolbar";
 import CreateFileDialog from "./CreateFileDialog";
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name" },
+  { id: "name", disablePadding: true, label: "Name", sortable: true },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "status", label: "Status" },
   { id: "id", label: "ID" },
-  { id: "created", label: "Created" },
+  { id: "created", label: "Created", sortable: true },
   { id: "uploaded", label: "Uploaded" },
   { id: "download", label: "Download" },
 ];
 
-function useFiles({ cursor, pageSize, suppliedId }: SwrProps) {
+function useFiles({
+  cursor,
+  pageSize,
+  sort,
+  suppliedId,
+}: SwrProps & { readonly sort: SortState }) {
   return useSWR(
-    `/api/files?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }`
+    buildQuery("/api/files", {
+      cursor,
+      pageSize,
+      sort: toSortParam(sort),
+      suppliedId,
+    })
   );
 }
 
@@ -59,12 +67,12 @@ export default function FilesTable({
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const [curPage, setCurPage] = React.useState(0);
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
-  );
+  const [sort, setSort] = React.useState<SortState>({
+    field: "created",
+    order: "desc",
+  });
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
@@ -73,22 +81,31 @@ export default function FilesTable({
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
-  const { data, error, mutate } = useFiles({ cursor, pageSize, suppliedId });
+  const { data, error, mutate } = useFiles({
+    cursor,
+    pageSize,
+    sort,
+    suppliedId,
+  });
   const page = data ? toFilePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setSuppliedIdFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging]
   );
 
   React.useEffect(() => {
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -110,12 +127,12 @@ export default function FilesTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
+    handlePageChange(num);
+  }
+
+  function handleSortChange(field: string) {
+    setSort((current) => toggleSort(current, field));
+    resetPaging();
   }
 
   async function handleDelete() {
@@ -175,7 +192,7 @@ export default function FilesTable({
             label="Supplied ID Filter (exact)"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
+              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
@@ -194,7 +211,9 @@ export default function FilesTable({
               headCells={headCells}
               numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
+              onSortChange={handleSortChange}
               rowCount={pageLength}
+              sort={sort}
             />
             <TableBody>
               {error ? (
@@ -272,7 +291,7 @@ export default function FilesTable({
           component="div"
           count={-1}
           rowsPerPage={pageSize}
-          page={curPage}
+          page={currentPage}
           onPageChange={handleChangePage}
           nextIconButtonProps={{ disabled: cursors?.next == null }}
         />

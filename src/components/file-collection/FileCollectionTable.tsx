@@ -12,7 +12,6 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
@@ -22,7 +21,7 @@ import {
   FileCollection,
   toFileCollectionPage,
 } from "../../lib/file-collections";
-import { SwrProps } from "../../lib/paging";
+import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -37,11 +36,13 @@ export const headCells: readonly HeadCell[] = [
 ];
 
 function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
-  const params = new URLSearchParams({ pageSize: pageSize.toString() });
-  if (cursor != null) params.set("cursor", cursor);
-  if (suppliedId != null) params.set("suppliedId", suppliedId);
-
-  return useSWR(`/api/file-collections?${params.toString()}`);
+  return useSWR(
+    buildQuery("/api/file-collections", {
+      cursor,
+      pageSize,
+      suppliedId,
+    })
+  );
 }
 
 interface Props {
@@ -54,12 +55,8 @@ export default function FileCollectionTable({
   onFileCollectionSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const [curPage, setCurPage] = React.useState(0);
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
-  );
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
@@ -79,19 +76,17 @@ export default function FileCollectionTable({
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
       debounce((value: string) => {
-        setCurPage(0);
-        setCursor(undefined);
-        setPrev({});
+        resetPaging();
         setSuppliedIdFilter(value === "" ? undefined : value);
       }, 300),
-    []
+    [resetPaging]
   );
 
   React.useEffect(() => {
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -113,12 +108,7 @@ export default function FileCollectionTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
+    handlePageChange(num);
   }
 
   async function handleDelete() {
@@ -249,7 +239,7 @@ export default function FileCollectionTable({
           component="div"
           count={-1}
           rowsPerPage={pageSize}
-          page={curPage}
+          page={currentPage}
           onPageChange={handleChangePage}
           nextIconButtonProps={{ disabled: cursors?.next == null }}
         />

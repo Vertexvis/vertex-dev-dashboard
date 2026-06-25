@@ -1,11 +1,13 @@
 import {
   CreateFileRequestDataAttributes,
+  FileList,
   FileMetadataData,
   getPage,
   head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
+import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -26,7 +28,7 @@ type CreateFileReq = CreateFileRequestDataAttributes;
 
 export type CreateFileRes = Res & Pick<FileMetadataData, "id">;
 
-export default withSession(async function handle(
+export const handleFiles = async function handle(
   req: NextIronRequest,
   res: NextApiResponse<GetRes<FileMetadataData> | Res | ErrorRes>
 ): Promise<void> {
@@ -46,7 +48,9 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+};
+
+export default withSession(handleFiles);
 
 async function get(
   req: NextIronRequest
@@ -56,13 +60,21 @@ async function get(
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
     const sId = head(req.query.suppliedId);
+    const sort = head(req.query.sort);
 
     const { cursors, page } = await getPage(() =>
-      c.files.getFiles({
-        pageCursor: pc,
-        pageSize: ps ? parseInt(ps, 10) : 10,
-        filterSuppliedId: sId,
-      })
+      c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: `Bearer ${c.token.access_token}`,
+        },
+        params: {
+          "filter[suppliedId]": sId,
+          "page[cursor]": pc,
+          "page[size]": ps ? parseInt(ps, 10) : 10,
+          sort,
+        },
+      }) as Promise<AxiosResponse<FileList>>
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
