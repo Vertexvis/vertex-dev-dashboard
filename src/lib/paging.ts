@@ -16,14 +16,24 @@ export interface SwrProps {
 }
 
 type QueryValue = number | string | undefined;
+const QueryParamOrder = ["pageSize", "cursor", "sort", "suppliedId", "name"];
 
 export function buildQuery(
   path: string,
   params: Record<string, QueryValue>
 ): string {
   const query = new URLSearchParams();
+  const entries = Object.entries(params).sort(([leftKey], [rightKey]) => {
+    const leftIndex = QueryParamOrder.indexOf(leftKey);
+    const rightIndex = QueryParamOrder.indexOf(rightKey);
 
-  Object.entries(params).forEach(([key, value]) => {
+    if (leftIndex === -1 && rightIndex === -1) return leftKey.localeCompare(rightKey);
+    if (leftIndex === -1) return 1;
+    if (rightIndex === -1) return -1;
+    return leftIndex - rightIndex;
+  });
+
+  entries.forEach(([key, value]) => {
     if (value != null && value !== "") {
       query.set(key, value.toString());
     }
