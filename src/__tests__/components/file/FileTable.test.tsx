@@ -29,6 +29,12 @@ const page = {
   status: 200,
 };
 
+const pagedPage = {
+  cursors: { self: "page-1", next: "page-2" },
+  data: page.data,
+  status: 200,
+};
+
 describe("FileTable", () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -60,6 +66,26 @@ describe("FileTable", () => {
       expect(fetchMock).toHaveBeenCalledWith("/api/files?pageSize=25&sort=-name");
     });
   });
+
+  it("disables pagination while a sorted request is loading", async () => {
+    let resolveSortedPage: ((value: unknown) => void) | undefined;
+    const sortedPage = new Promise((resolve) => {
+      resolveSortedPage = resolve;
+    });
+    mockFetch((url) => (url.includes("sort=name") ? sortedPage : pagedPage));
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    expect(screen.getByLabelText("Go to next page")).toBeEnabled();
+
+    await userEvent.click(screen.getByText("Name"));
+
+    expect(screen.getByLabelText("Go to next page")).toBeDisabled();
+
+    resolveSortedPage?.(page);
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+  });
 });
 
 function renderTable(): void {
@@ -76,7 +102,9 @@ function renderTable(): void {
   );
 }
 
-function mockFetch(responseFor: (url: string) => unknown): jest.Mock {
+function mockFetch(
+  responseFor: (url: string) => Promise<unknown> | unknown
+): jest.Mock {
   const fetchMock = jest.fn((input: RequestInfo | URL) =>
     Promise.resolve({
       json: () => Promise.resolve(responseFor(input.toString())),

@@ -12,7 +12,6 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
@@ -56,9 +55,8 @@ export default function FileCollectionTable({
   onFileCollectionSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, handlePageChange, resetPaging } =
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
     useCursorPagingState();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
@@ -88,7 +86,7 @@ export default function FileCollectionTable({
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -110,7 +108,7 @@ export default function FileCollectionTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    handlePageChange(cursors, num);
+    handlePageChange(num);
   }
 
   async function handleDelete() {

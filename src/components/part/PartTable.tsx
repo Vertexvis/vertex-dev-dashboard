@@ -13,7 +13,6 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
@@ -65,9 +64,8 @@ export default function PartTable({
 }: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, handlePageChange, resetPaging } =
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
     useCursorPagingState();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
@@ -100,7 +98,7 @@ export default function PartTable({
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -122,7 +120,7 @@ export default function PartTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    handlePageChange(cursors, num);
+    handlePageChange(num);
   }
 
   async function handleDelete() {

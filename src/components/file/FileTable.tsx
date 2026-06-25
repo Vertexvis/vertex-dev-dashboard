@@ -16,7 +16,6 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
@@ -72,9 +71,8 @@ export default function FilesTable({
     field: "created",
     order: "desc",
   });
-  const { currentPage, cursor, handlePageChange, resetPaging } =
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
     useCursorPagingState();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
@@ -107,7 +105,7 @@ export default function FilesTable({
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -129,7 +127,7 @@ export default function FilesTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    handlePageChange(cursors, num);
+    handlePageChange(num);
   }
 
   function handleSortChange(field: string) {

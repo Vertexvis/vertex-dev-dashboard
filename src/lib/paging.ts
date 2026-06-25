@@ -46,14 +46,16 @@ export function buildQuery(
 export function useCursorPagingState(): {
   readonly currentPage: number;
   readonly cursor?: string;
+  readonly cursors?: Cursors;
   readonly handlePageChange: (
-    cursors: Cursors | undefined,
     nextPage: number
   ) => void;
   readonly resetPaging: () => void;
+  readonly setCursors: React.Dispatch<React.SetStateAction<Cursors | undefined>>;
 } {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
+  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [previous, setPrevious] = React.useState<
     Record<number, string | undefined>
   >({});
@@ -61,11 +63,12 @@ export function useCursorPagingState(): {
   const resetPaging = React.useCallback(() => {
     setCurrentPage(0);
     setCursor(undefined);
+    setCursors(undefined);
     setPrevious({});
   }, []);
 
   const handlePageChange = React.useCallback(
-    (cursors: Cursors | undefined, nextPage: number) => {
+    (nextPage: number) => {
       if (currentPage < nextPage) {
         setPrevious((current) => ({ ...current, [nextPage - 1]: cursors?.self }));
         setCursor(cursors?.next);
@@ -75,10 +78,10 @@ export function useCursorPagingState(): {
 
       setCurrentPage(nextPage);
     },
-    [currentPage, previous]
+    [currentPage, cursors, previous]
   );
 
-  return { currentPage, cursor, handlePageChange, resetPaging };
+  return { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors };
 }
 
 export function toPage<T extends { attributes: TA; id: string }, TA>({
