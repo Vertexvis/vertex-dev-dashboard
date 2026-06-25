@@ -14,7 +14,7 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
-import { File } from "../../lib/files";
+import { File, toFileStatusDisplay } from "../../lib/files";
 import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
 import { RightDrawerWidth } from "../shared/Layout";
 
@@ -53,7 +53,10 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
                 label="Created"
                 value={toLocaleString(file.created)}
               />
-              <DetailsRow label="Status" value={file.status} />
+              <DetailsRow
+                label="Status"
+                value={toFileStatusDisplay(file.status)}
+              />
               <DetailsRow
                 label="Expires"
                 value={toLocaleString(file.expiresAt)}

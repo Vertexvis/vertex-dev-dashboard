@@ -1597,14 +1597,14 @@ available-typed-arrays@^1.0.7:
 axe-core@^4.10.0:
   version "4.10.2"
 
-axios@1.11.0:
-  version "1.11.0"
-  resolved "https://registry.npmjs.org/axios/-/axios-1.11.0.tgz"
-  integrity sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==
+axios@1.11.0, axios@1.15.2:
+  version "1.15.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.15.2.tgz#eb8fb6d30349abace6ade5b4cb4d9e8a0dc23e5b"
+  integrity sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==
   dependencies:
-    follow-redirects "^1.15.6"
-    form-data "^4.0.4"
-    proxy-from-env "^1.1.0"
+    follow-redirects "^1.15.11"
+    form-data "^4.0.5"
+    proxy-from-env "^2.1.0"
 
 axobject-query@^4.1.0:
   version "4.1.0"
@@ -2765,7 +2765,7 @@ flat-cache@^3.0.4:
 flatted@^3.2.9:
   version "3.4.2"
 
-follow-redirects@^1.15.6:
+follow-redirects@^1.15.11, follow-redirects@^1.15.6:
   version "1.16.0"
 
 for-each@^0.3.3:
@@ -2788,7 +2788,7 @@ form-data@^4.0.0:
     hasown "^2.0.4"
     mime-types "^2.1.35"
 
-form-data@^4.0.4:
+form-data@^4.0.4, form-data@^4.0.5:
   version "4.0.5"
   dependencies:
     asynckit "^0.4.0"
@@ -4238,6 +4238,9 @@ proxy-from-env@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz"
   integrity sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==
+
+proxy-from-env@^2.1.0:
+  version "2.1.0"
 
 psl@^1.1.33:
   version "1.15.0"

@@ -13,6 +13,7 @@
     "@vertexvis/api-client-node": "^0.40.0",
     "@vertexvis/geometry": "^0.24.2",
     "@vertexvis/viewer-react": "^0.24.2",
+    "axios": "1.15.2",
     "filesize": "^11.0.17",
     "lodash.debounce": "^4.0",
     "multer": "2.1.1",

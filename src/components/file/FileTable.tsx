@@ -22,7 +22,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import { File, toFilePage } from "../../lib/files";
+import { File, toFilePage, toFileStatusDisplay } from "../../lib/files";
 import { SwrProps } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -233,7 +233,7 @@ export default function FilesTable({
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.status}</TableCell>
+                      <TableCell>{toFileStatusDisplay(row.status)}</TableCell>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
                       <TableCell>{toLocaleString(row.uploaded)}</TableCell>
