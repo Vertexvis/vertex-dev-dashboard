@@ -2,12 +2,9 @@
 
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-current_worktree="$(git -C "$script_dir/.." rev-parse --show-toplevel)"
-
-cd "$current_worktree"
 git submodule update --init --recursive
 
+current_worktree="$(git rev-parse --show-toplevel)"
 primary_worktree="$(
   git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }'
 )"
