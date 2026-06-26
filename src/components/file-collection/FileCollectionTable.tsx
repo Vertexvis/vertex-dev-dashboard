@@ -1,7 +1,9 @@
+import { VisibilityOutlined } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Checkbox,
+  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -11,8 +13,10 @@ import {
   TablePagination,
   TableRow,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -33,6 +37,7 @@ export const headCells: readonly HeadCell[] = [
   { id: "id", label: "ID" },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "created", label: "Created At" },
+  { id: "actions", label: "Actions" },
 ];
 
 function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
@@ -54,9 +59,16 @@ export default function FileCollectionTable({
   activeFileCollectionId,
   onFileCollectionSelected,
 }: Props): JSX.Element {
+  const router = useRouter();
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
@@ -131,6 +143,10 @@ export default function FileCollectionTable({
     }
 
     mutate();
+  }
+
+  function handleViewFiles(fileCollectionId: string) {
+    router.push(`/file-collections/${fileCollectionId}`);
   }
 
   return (
@@ -215,6 +231,20 @@ export default function FileCollectionTable({
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
+                      <TableCell>
+                        <Tooltip title="View files">
+                          <IconButton
+                            aria-label={`View files for ${row.name ?? row.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewFiles(row.id);
+                            }}
+                            size="small"
+                          >
+                            <VisibilityOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   );
                 })
