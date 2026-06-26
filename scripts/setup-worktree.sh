@@ -2,25 +2,76 @@
 
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+current_worktree="$(git -C "$script_dir/.." rev-parse --show-toplevel)"
+
+cd "$current_worktree"
 git submodule update --init --recursive
 
-current_worktree="$(git rev-parse --show-toplevel)"
 primary_worktree="$(
   git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }'
 )"
 
-local_files=(
-  ".env.local" ".yarnrc.yml" "mise.local.toml" "playwright/.auth/user.json"
-)
+copy_local_path() {
+  local relative_path="$1"
+  local source="$primary_worktree/$relative_path"
+  local destination="$current_worktree/$relative_path"
 
-# Convenience to bring over uncommitted dev local files into worktrees.
+  if [[ ! -e "$source" && ! -L "$source" ]]; then
+    return
+  fi
+
+  if [[ -d "$source" && ! -L "$source" ]]; then
+    mkdir -p "$destination"
+    cp -R "$source"/. "$destination"/
+  else
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  fi
+}
+
+copy_local_entry() {
+  local entry="$1"
+
+  case "$entry" in
+    /* | .. | ../* | */.. | */../*)
+      echo "Skipping unsafe local worktree file entry: $entry" >&2
+      return
+      ;;
+  esac
+
+  case "$entry" in
+    *'*'* | *'?'* | *'['*)
+      while IFS= read -r match; do
+        [[ -n "$match" ]] && copy_local_path "$match"
+      done < <(
+        cd "$primary_worktree"
+        compgen -G "$entry" || true
+      )
+      ;;
+    *)
+      copy_local_path "$entry"
+      ;;
+  esac
+}
+
+# Convenience to bring over uncommitted dev local files into worktrees. Create
+# .codex/worktree-files.local in the primary worktree and list repo-relative
+# files or glob patterns, one per line. Blank lines and comments are ignored.
 if [[ -n "$primary_worktree" && "$primary_worktree" != "$current_worktree" ]]; then
-  for file in "${local_files[@]}"; do
-    if [[ -f "$primary_worktree/$file" ]]; then
-      mkdir -p "$current_worktree/$(dirname "$file")"
-      cp "$primary_worktree/$file" "$current_worktree/$file"
-    fi
-  done
+  local_file_list="$primary_worktree/.codex/worktree-files.local"
+
+  if [[ -f "$local_file_list" ]]; then
+    while IFS= read -r entry || [[ -n "$entry" ]]; do
+      entry="$(
+        printf '%s' "$entry" \
+          | sed -e 's/[[:space:]]*#.*$//' \
+                -e 's/^[[:space:]]*//' \
+                -e 's/[[:space:]]*$//'
+      )"
+      [[ -n "$entry" ]] && copy_local_entry "$entry"
+    done < "$local_file_list"
+  fi
 fi
 
 yarn install
