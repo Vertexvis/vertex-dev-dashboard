@@ -55,11 +55,12 @@ copy_local_entry() {
   esac
 }
 
-# Convenience to bring over uncommitted dev local files into worktrees. Create
-# .codex/worktree-files.local in the primary worktree and list repo-relative
-# files or glob patterns, one per line. Blank lines and comments are ignored.
+# Copy selected uncommitted local files from the primary worktree into this
+# worktree. Create local-dev-files.txt in the primary worktree and list
+# repo-relative files or glob patterns, one per line. Blank lines and comments
+# are ignored.
 if [[ -n "$primary_worktree" && "$primary_worktree" != "$current_worktree" ]]; then
-  local_file_list="$primary_worktree/.codex/worktree-files.local"
+  local_file_list="$primary_worktree/local-dev-files.txt"
 
   if [[ -f "$local_file_list" ]]; then
     while IFS= read -r entry || [[ -n "$entry" ]]; do
