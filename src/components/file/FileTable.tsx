@@ -66,13 +66,17 @@ function useFiles({
 }
 
 function isFileAvailable(file: File): boolean {
-  return file.status === "complete";
+  return file.status === "completed";
 }
 
 function statusLabel(status?: string): string {
-  if (status === "complete") return "READY";
-
-  return status?.toUpperCase() ?? "N/A";
+  switch (status) {
+    case "complete":
+    case "completed":
+      return "COMPLETE";
+    default:
+      return status?.toUpperCase() ?? "N/A";
+  }
 }
 
 function statusColor(
@@ -80,6 +84,7 @@ function statusColor(
 ): "default" | "success" | "warning" | "error" {
   switch (status) {
     case "complete":
+    case "completed":
       return "success";
     case "pending":
       return "warning";

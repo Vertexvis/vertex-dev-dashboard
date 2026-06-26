@@ -23,7 +23,7 @@ const page = {
       attributes: {
         created: "2026-06-10T15:30:00Z",
         name: "alpha.jt",
-        status: "complete",
+        status: "completed",
         suppliedId: "supplied-1",
         uploaded: "2026-06-10T15:45:00Z",
       },
@@ -46,7 +46,7 @@ const collectionFilesPage = {
       id: "file-1",
       attributes: {
         name: "File One",
-        status: "complete",
+        status: "completed",
         suppliedId: "supplied-file-1",
         created: "2026-06-12T15:30:00Z",
         uploaded: "2026-06-12T15:31:00Z",
@@ -166,7 +166,7 @@ describe("FileTable", () => {
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
-    expect(screen.getByText("READY")).toBeInTheDocument();
+    expect(screen.getByText("COMPLETE")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost/api/file-collections/collection-1/files?pageSize=25&sort=-created"
     );
@@ -187,7 +187,7 @@ describe("FileTable", () => {
     expect(onFileSelected).toHaveBeenCalledWith({
       id: "file-1",
       name: "File One",
-      status: "complete",
+      status: "completed",
       suppliedId: "supplied-file-1",
       created: "2026-06-12T15:30:00Z",
       uploaded: "2026-06-12T15:31:00Z",
@@ -209,7 +209,7 @@ describe("FileTable", () => {
     );
   });
 
-  it("disables download for files that are not complete", async () => {
+  it("disables download for files that are not completed", async () => {
     const fetchMock = mockFetch(() => ({
       ...collectionFilesPage,
       data: [

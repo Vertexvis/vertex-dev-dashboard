@@ -9,6 +9,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   CircularProgress,
   IconButton,
   Paper,
@@ -65,6 +66,23 @@ function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
       suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
     }${name ? `&name=${encodeURIComponent(name)}` : ""}`
   );
+}
+
+function stateColor(
+  state?: string
+): "default" | "success" | "warning" | "error" {
+  switch (state) {
+    case "commit":
+    case "committed":
+      return "success";
+    case "draft":
+      return "warning";
+    case "error":
+    case "failed":
+      return "error";
+    default:
+      return "default";
+  }
 }
 
 export default function SceneTable({
@@ -300,7 +318,15 @@ export default function SceneTable({
                         {row.name}
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.state}</TableCell>
+                      <TableCell>
+                        <Chip
+                          color={stateColor(row.state)}
+                          label={row.state ?? "N/A"}
+                          size="small"
+                          sx={{ fontWeight: 600 }}
+                          variant="outlined"
+                        />
+                      </TableCell>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
                       <TableCell>

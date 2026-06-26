@@ -1,9 +1,7 @@
-import { VisibilityOutlined } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Checkbox,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -13,7 +11,6 @@ import {
   TablePagination,
   TableRow,
   TextField,
-  Tooltip,
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
@@ -21,10 +18,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import {
-  FileCollection,
-  toFileCollectionPage,
-} from "../../lib/file-collections";
+import { toFileCollectionPage } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -37,7 +31,6 @@ export const headCells: readonly HeadCell[] = [
   { id: "id", label: "ID" },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "created", label: "Created At" },
-  { id: "actions", label: "Actions" },
 ];
 
 function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
@@ -50,15 +43,7 @@ function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-interface Props {
-  readonly activeFileCollectionId?: string;
-  readonly onFileCollectionSelected: (fileCollection: FileCollection) => void;
-}
-
-export default function FileCollectionTable({
-  activeFileCollectionId,
-  onFileCollectionSelected,
-}: Props): JSX.Element {
+export default function FileCollectionTable(): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
   const {
@@ -146,7 +131,7 @@ export default function FileCollectionTable({
   }
 
   function handleViewFiles(fileCollectionId: string) {
-    router.push(`/file-collections/${fileCollectionId}`);
+    router.push(`/file-collections/${encodeURIComponent(fileCollectionId)}`);
   }
 
   return (
@@ -199,7 +184,6 @@ export default function FileCollectionTable({
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
-                  const isActive = activeFileCollectionId === row.id;
 
                   return (
                     <TableRow
@@ -207,8 +191,8 @@ export default function FileCollectionTable({
                       role="checkbox"
                       tabIndex={-1}
                       key={row.id}
-                      selected={isSel || isActive}
-                      onClick={() => onFileCollectionSelected(row)}
+                      selected={isSel}
+                      onClick={() => handleViewFiles(row.id)}
                     >
                       <TableCell
                         padding="checkbox"
@@ -231,20 +215,6 @@ export default function FileCollectionTable({
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
-                      <TableCell>
-                        <Tooltip title="View files">
-                          <IconButton
-                            aria-label={`View files for ${row.name ?? row.id}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewFiles(row.id);
-                            }}
-                            size="small"
-                          >
-                            <VisibilityOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
                     </TableRow>
                   );
                 })
