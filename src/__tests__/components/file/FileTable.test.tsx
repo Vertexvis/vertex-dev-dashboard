@@ -166,7 +166,7 @@ describe("FileTable", () => {
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
-    expect(screen.getByText("COMPLETE")).toBeInTheDocument();
+    expect(screen.getByText("READY")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost/api/file-collections/collection-1/files?pageSize=25&sort=-created"
     );

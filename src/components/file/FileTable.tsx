@@ -70,6 +70,8 @@ function isFileAvailable(file: File): boolean {
 }
 
 function statusLabel(status?: string): string {
+  if (status === "complete") return "READY";
+
   return status?.toUpperCase() ?? "N/A";
 }
 
