@@ -5,6 +5,8 @@
 .env.test.local
 .env
 mise.local.toml
+local-dev.sh
+local-dev-files.txt
 yarn-error.log*
 
 /.next
