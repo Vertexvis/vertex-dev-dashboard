@@ -4,9 +4,13 @@
 .env.production.local
 .env.test.local
 .env
-local-dev-files.txt
+mise.local.toml
 yarn-error.log*
 
 /.next
 /coverage
 /node_modules
+.idea
+.yarnrc.yml
+.yarn
+
