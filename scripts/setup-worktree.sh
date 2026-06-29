@@ -96,17 +96,22 @@ run_local_dev_commands() {
       )
     fi
   fi
-
 }
 
+# Runs template setup script in this worktree if it exists
+setup() {
+  if [[ -f "$current_worktree/scripts/setup.sh" ]]; then
+      (
+        cd "$current_worktree"
+        bash scripts/setup.sh
+      )
+    else
+      echo "No setup.sh script found in $current_worktree/scripts"
+  fi
+}
 
-# Worktree Initialization
-
-## Vertex Standard Repo Setup
-git submodule update --init --recursive
-
-## Project Specific Setup
-yarn install
+# Worktree Setup
+setup
 
 ## Local Dev Setup
 copy_local_dev_files
