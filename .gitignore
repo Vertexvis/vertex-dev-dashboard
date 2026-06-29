@@ -5,7 +5,15 @@
 .env.test.local
 .env
 yarn-error.log*
+.worktrees
 
 /.next
 /coverage
 /node_modules
+.idea
+.yarnrc.yml
+.yarn
+tsconfig.tsbuildinfo
+
+playwright
+.playwright-mcp
