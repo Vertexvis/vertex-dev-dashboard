@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   IconButton,
   Paper,
   Snackbar,
@@ -20,10 +21,11 @@ import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
+import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { File, toFilePage } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
-import { SortState, toggleSort,toSortParam } from "../../lib/sorting";
+import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -41,14 +43,20 @@ export const headCells: readonly HeadCell[] = [
   { id: "download", label: "Download" },
 ];
 
+interface UseFilesProps extends SwrProps {
+  readonly apiPath: string;
+  readonly sort: SortState;
+}
+
 function useFiles({
+  apiPath,
   cursor,
   pageSize,
   sort,
   suppliedId,
-}: SwrProps & { readonly sort: SortState }) {
+}: UseFilesProps) {
   return useSWR(
-    buildQuery("/api/files", {
+    buildQuery(apiPath, {
       cursor,
       pageSize,
       sort: toSortParam(sort),
@@ -57,13 +65,58 @@ function useFiles({
   );
 }
 
+function isFileAvailable(file: File): boolean {
+  const status = normalizeStatus(file.status);
+
+  return status === "complete";
+}
+
+function normalizeStatus(status?: string): string | undefined {
+  return status?.toLowerCase();
+}
+
+function statusLabel(status?: string): string {
+  return status ?? "N/A";
+}
+
+function statusColor(
+  status?: string
+): "default" | "success" | "warning" | "error" {
+  switch (normalizeStatus(status)) {
+    case "complete":
+    case "ready":
+      return "success";
+    case "pending":
+      return "warning";
+    case "error":
+    case "failed":
+      return "error";
+    default:
+      return "default";
+  }
+}
+
 interface Props {
   readonly activeFileId?: string;
+  readonly apiPath?: string;
+  readonly emptyOnLoadError?: boolean;
+  readonly logLoadError?: boolean;
+  readonly showCreateButton?: boolean;
+  readonly showDeleteAction?: boolean;
+  readonly showSuppliedIdFilter?: boolean;
+  readonly title?: string;
   readonly onFileSelected: (file: File) => void;
 }
 
 export default function FilesTable({
   activeFileId,
+  apiPath = "/api/files",
+  emptyOnLoadError = false,
+  logLoadError = false,
+  showCreateButton = true,
+  showDeleteAction = true,
+  showSuppliedIdFilter = true,
+  title = "Files",
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
@@ -71,8 +124,14 @@ export default function FilesTable({
     field: "created",
     order: "desc",
   });
-  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
@@ -80,17 +139,26 @@ export default function FilesTable({
   >();
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
+  const loggedLoadError = React.useRef<unknown>();
 
   const { data, error, mutate } = useFiles({
+    apiPath,
     cursor,
     pageSize,
     sort,
     suppliedId,
   });
-  const page = data ? toFilePage(data) : undefined;
-  const pageLength = page ? page.items.length : 0;
+  const loadError = error ?? (isErrorRes(data) ? data : undefined);
+  const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
+  const visiblePage =
+    page ??
+    (loadError && emptyOnLoadError ? { cursors: null, items: [] } : undefined);
+  const pageLength = visiblePage ? visiblePage.items.length : 0;
+  const paginationCursors = visiblePage?.cursors ?? cursors;
   const emptyRows =
-    cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
+    paginationCursors?.next == null && paginationCursors?.self == null
+      ? 0
+      : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
@@ -107,11 +175,24 @@ export default function FilesTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
+  React.useEffect(() => {
+    if (
+      !logLoadError ||
+      loadError == null ||
+      loggedLoadError.current === loadError
+    ) {
+      return;
+    }
+
+    loggedLoadError.current = loadError;
+    console.error(loadError);
+  }, [loadError, logLoadError]);
+
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
-    if (page == null) return;
+    if (visiblePage == null) return;
 
     const upd = new Set<string>();
-    if (e.target.checked) page.items.map((n) => upd.add(n.id));
+    if (e.target.checked) visiblePage.items.forEach((n) => upd.add(n.id));
     setSelected(upd);
   }
 
@@ -136,8 +217,10 @@ export default function FilesTable({
   }
 
   async function handleDelete() {
+    if (!showDeleteAction) return;
+
     setSelected(new Set());
-    await fetch("/api/files", {
+    await fetch(apiPath, {
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
@@ -168,43 +251,139 @@ export default function FilesTable({
     }
   }
 
+  let tableRows: React.ReactNode;
+  if (loadError && !emptyOnLoadError) {
+    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
+  } else if (!visiblePage) {
+    tableRows = (
+      <SkeletonBody
+        includeCheckbox={true}
+        numCellsPerRow={8}
+        numRows={pageSize - pageLength}
+        rowHeight={DefaultRowHeight}
+      />
+    );
+  } else {
+    tableRows = visiblePage.items.map((row) => {
+      const isSel = selected.has(row.id);
+      const isActive = activeFileId === row.id;
+      const isAvailable = isFileAvailable(row);
+
+      return (
+        <TableRow
+          hover
+          role="checkbox"
+          tabIndex={-1}
+          key={row.id}
+          selected={isSel || isActive}
+          onClick={() => onFileSelected(row)}
+        >
+          <TableCell
+            padding="checkbox"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheck(row.id);
+            }}
+          >
+            <Checkbox
+              color="primary"
+              checked={isSel}
+              inputProps={{
+                "aria-label": `Select ${row.name ?? row.id}`,
+              }}
+            />
+          </TableCell>
+          <TableCell component="th" scope="row" padding="none">
+            {row.name}
+          </TableCell>
+          <TableCell>{row.suppliedId}</TableCell>
+          <TableCell>
+            <Chip
+              color={statusColor(row.status)}
+              label={statusLabel(row.status)}
+              size="small"
+              sx={{ fontWeight: 600, textTransform: "uppercase" }}
+              variant="outlined"
+            />
+          </TableCell>
+          <TableCell>{row.id}</TableCell>
+          <TableCell>{toLocaleString(row.created)}</TableCell>
+          <TableCell>{toLocaleString(row.uploaded)}</TableCell>
+          <TableCell
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <Tooltip
+              title={
+                isAvailable ? "Download file" : "File is not available yet"
+              }
+            >
+              <span>
+                <IconButton
+                  aria-label={`Download ${row.name}`}
+                  disabled={!isAvailable}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isAvailable) handleDownload(row.id);
+                  }}
+                  size="small"
+                >
+                  <Download fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </TableCell>
+        </TableRow>
+      );
+    });
+  }
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
-          title="Files"
+          onDelete={showDeleteAction ? handleDelete : undefined}
+          title={title}
         />
-        <Box
-          sx={{
-            px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <TextField
-            variant="standard"
-            size="small"
-            margin="normal"
-            id="suppliedIdFilter"
-            label="Supplied ID Filter (exact)"
-            type="text"
-            onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+        {(showSuppliedIdFilter || showCreateButton) && (
+          <Box
+            sx={{
+              px: { sm: 2 },
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
-            sx={{ mt: 0, width: "20rem" }}
-          />
-          <Button
-            key="upload"
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setShowDialog(true)}
           >
-            New
-          </Button>
-        </Box>
+            {showSuppliedIdFilter ? (
+              <TextField
+                variant="standard"
+                size="small"
+                margin="normal"
+                id="suppliedIdFilter"
+                label="Supplied ID Filter (exact)"
+                type="text"
+                onChange={(e) => {
+                  debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                }}
+                sx={{ mt: 0, width: "20rem" }}
+              />
+            ) : (
+              <Box />
+            )}
+            {showCreateButton && (
+              <Button
+                key="upload"
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setShowDialog(true)}
+              >
+                New
+              </Button>
+            )}
+          </Box>
+        )}
         <TableContainer>
           <Table>
             <TableHead
@@ -216,68 +395,7 @@ export default function FilesTable({
               sort={sort}
             />
             <TableBody>
-              {error ? (
-                <DataLoadError colSpan={headCells.length + 1} />
-              ) : !page ? (
-                <SkeletonBody
-                  includeCheckbox={true}
-                  numCellsPerRow={8}
-                  numRows={pageSize - pageLength}
-                  rowHeight={DefaultRowHeight}
-                />
-              ) : (
-                page.items.map((row) => {
-                  const isSel = selected.has(row.id);
-                  const isActive = activeFileId === row.id;
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isSel || isActive}
-                      onClick={() => onFileSelected(row)}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCheck(row.id);
-                        }}
-                      >
-                        <Checkbox color="primary" checked={isSel} />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{toLocaleString(row.created)}</TableCell>
-                      <TableCell>{toLocaleString(row.uploaded)}</TableCell>
-                      <TableCell
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Tooltip title="Download file">
-                          <IconButton
-                            aria-label={`Download ${row.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownload(row.id);
-                            }}
-                            size="small"
-                          >
-                            <Download fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
+              {tableRows}
               {emptyRows > 0 && (
                 <TableRow style={{ height: DefaultRowHeight * emptyRows }}>
                   <TableCell colSpan={headCells.length + 1} />
@@ -293,18 +411,24 @@ export default function FilesTable({
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: paginationCursors?.next == null },
+            },
+          }}
         />
       </Paper>
-      <CreateFileDialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        onFileCreated={() => {
-          setShowDialog(false);
-          setShowToast(true);
-          mutate();
-        }}
-      />
+      {showCreateButton && (
+        <CreateFileDialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+          onFileCreated={() => {
+            setShowDialog(false);
+            setShowToast(true);
+            mutate();
+          }}
+        />
+      )}
       <Snackbar
         open={showToast}
         autoHideDuration={6000}
