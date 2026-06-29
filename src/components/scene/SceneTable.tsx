@@ -74,6 +74,7 @@ function stateColor(
   switch (state) {
     case "commit":
     case "committed":
+    case "ready":
       return "success";
     case "draft":
       return "warning";
@@ -323,7 +324,7 @@ export default function SceneTable({
                           color={stateColor(row.state)}
                           label={row.state ?? "N/A"}
                           size="small"
-                          sx={{ fontWeight: 600 }}
+                          sx={{ fontWeight: 600, textTransform: "uppercase" }}
                           variant="outlined"
                         />
                       </TableCell>
@@ -388,7 +389,11 @@ export default function SceneTable({
           rowsPerPage={pageSize}
           page={curPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: cursors?.next == null },
+            },
+          }}
         />
       </Paper>
       <Snackbar

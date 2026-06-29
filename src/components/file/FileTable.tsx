@@ -66,25 +66,25 @@ function useFiles({
 }
 
 function isFileAvailable(file: File): boolean {
-  return file.status === "completed";
+  const status = normalizeStatus(file.status);
+
+  return status === "complete";
+}
+
+function normalizeStatus(status?: string): string | undefined {
+  return status?.toLowerCase();
 }
 
 function statusLabel(status?: string): string {
-  switch (status) {
-    case "complete":
-    case "completed":
-      return "COMPLETE";
-    default:
-      return status?.toUpperCase() ?? "N/A";
-  }
+  return status ?? "N/A";
 }
 
 function statusColor(
   status?: string
 ): "default" | "success" | "warning" | "error" {
-  switch (status) {
+  switch (normalizeStatus(status)) {
     case "complete":
-    case "completed":
+    case "ready":
       return "success";
     case "pending":
       return "warning";
@@ -192,7 +192,7 @@ export default function FilesTable({
     if (visiblePage == null) return;
 
     const upd = new Set<string>();
-    if (e.target.checked) visiblePage.items.map((n) => upd.add(n.id));
+    if (e.target.checked) visiblePage.items.forEach((n) => upd.add(n.id));
     setSelected(upd);
   }
 
@@ -251,6 +251,94 @@ export default function FilesTable({
     }
   }
 
+  let tableRows: React.ReactNode;
+  if (loadError && !emptyOnLoadError) {
+    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
+  } else if (!visiblePage) {
+    tableRows = (
+      <SkeletonBody
+        includeCheckbox={true}
+        numCellsPerRow={8}
+        numRows={pageSize - pageLength}
+        rowHeight={DefaultRowHeight}
+      />
+    );
+  } else {
+    tableRows = visiblePage.items.map((row) => {
+      const isSel = selected.has(row.id);
+      const isActive = activeFileId === row.id;
+      const isAvailable = isFileAvailable(row);
+
+      return (
+        <TableRow
+          hover
+          role="checkbox"
+          tabIndex={-1}
+          key={row.id}
+          selected={isSel || isActive}
+          onClick={() => onFileSelected(row)}
+        >
+          <TableCell
+            padding="checkbox"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheck(row.id);
+            }}
+          >
+            <Checkbox
+              color="primary"
+              checked={isSel}
+              inputProps={{
+                "aria-label": `Select ${row.name ?? row.id}`,
+              }}
+            />
+          </TableCell>
+          <TableCell component="th" scope="row" padding="none">
+            {row.name}
+          </TableCell>
+          <TableCell>{row.suppliedId}</TableCell>
+          <TableCell>
+            <Chip
+              color={statusColor(row.status)}
+              label={statusLabel(row.status)}
+              size="small"
+              sx={{ fontWeight: 600, textTransform: "uppercase" }}
+              variant="outlined"
+            />
+          </TableCell>
+          <TableCell>{row.id}</TableCell>
+          <TableCell>{toLocaleString(row.created)}</TableCell>
+          <TableCell>{toLocaleString(row.uploaded)}</TableCell>
+          <TableCell
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <Tooltip
+              title={
+                isAvailable ? "Download file" : "File is not available yet"
+              }
+            >
+              <span>
+                <IconButton
+                  aria-label={`Download ${row.name}`}
+                  disabled={!isAvailable}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isAvailable) handleDownload(row.id);
+                  }}
+                  size="small"
+                >
+                  <Download fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </TableCell>
+        </TableRow>
+      );
+    });
+  }
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
@@ -307,92 +395,7 @@ export default function FilesTable({
               sort={sort}
             />
             <TableBody>
-              {loadError && !emptyOnLoadError ? (
-                <DataLoadError colSpan={headCells.length + 1} />
-              ) : !visiblePage ? (
-                <SkeletonBody
-                  includeCheckbox={true}
-                  numCellsPerRow={8}
-                  numRows={pageSize - pageLength}
-                  rowHeight={DefaultRowHeight}
-                />
-              ) : (
-                visiblePage.items.map((row) => {
-                  const isSel = selected.has(row.id);
-                  const isActive = activeFileId === row.id;
-                  const isAvailable = isFileAvailable(row);
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isSel || isActive}
-                      onClick={() => onFileSelected(row)}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCheck(row.id);
-                        }}
-                      >
-                        <Checkbox
-                          color="primary"
-                          checked={isSel}
-                          inputProps={{
-                            "aria-label": `Select ${row.name ?? row.id}`,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>
-                        <Chip
-                          color={statusColor(row.status)}
-                          label={statusLabel(row.status)}
-                          size="small"
-                          sx={{ fontWeight: 600 }}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{toLocaleString(row.created)}</TableCell>
-                      <TableCell>{toLocaleString(row.uploaded)}</TableCell>
-                      <TableCell
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Tooltip
-                          title={
-                            isAvailable
-                              ? "Download file"
-                              : "File is not available yet"
-                          }
-                        >
-                          <span>
-                            <IconButton
-                              aria-label={`Download ${row.name}`}
-                              disabled={!isAvailable}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isAvailable) handleDownload(row.id);
-                              }}
-                              size="small"
-                            >
-                              <Download fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
+              {tableRows}
               {emptyRows > 0 && (
                 <TableRow style={{ height: DefaultRowHeight * emptyRows }}>
                   <TableCell colSpan={headCells.length + 1} />
@@ -408,7 +411,11 @@ export default function FilesTable({
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: paginationCursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: paginationCursors?.next == null },
+            },
+          }}
         />
       </Paper>
       {showCreateButton && (

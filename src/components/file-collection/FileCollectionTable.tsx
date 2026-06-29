@@ -55,9 +55,7 @@ export default function FileCollectionTable(): JSX.Element {
     setCursors,
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
@@ -74,7 +72,7 @@ export default function FileCollectionTable(): JSX.Element {
     () =>
       debounce((value: string) => {
         resetPaging();
-        setSuppliedIdFilter(value === "" ? undefined : value);
+        setSuppliedId(value === "" ? undefined : value);
       }, 300),
     [resetPaging]
   );
@@ -134,6 +132,57 @@ export default function FileCollectionTable(): JSX.Element {
     router.push(`/file-collections/${encodeURIComponent(fileCollectionId)}`);
   }
 
+  let tableRows: React.ReactNode;
+  if (error) {
+    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
+  } else if (!page) {
+    tableRows = (
+      <SkeletonBody
+        includeCheckbox={true}
+        numCellsPerRow={headCells.length}
+        numRows={pageSize - pageLength}
+        rowHeight={DefaultRowHeight}
+      />
+    );
+  } else {
+    tableRows = page.items.map((row) => {
+      const isSel = selected.has(row.id);
+
+      return (
+        <TableRow
+          hover
+          role="checkbox"
+          tabIndex={-1}
+          key={row.id}
+          selected={isSel}
+          onClick={() => handleViewFiles(row.id)}
+        >
+          <TableCell
+            padding="checkbox"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheck(row.id);
+            }}
+          >
+            <Checkbox
+              color="primary"
+              checked={isSel}
+              inputProps={{
+                "aria-label": `Select ${row.name ?? row.id}`,
+              }}
+            />
+          </TableCell>
+          <TableCell component="th" scope="row" padding="none">
+            {row.name}
+          </TableCell>
+          <TableCell>{row.id}</TableCell>
+          <TableCell>{row.suppliedId}</TableCell>
+          <TableCell>{toLocaleString(row.created)}</TableCell>
+        </TableRow>
+      );
+    });
+  }
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
@@ -172,53 +221,7 @@ export default function FileCollectionTable(): JSX.Element {
               rowCount={pageLength}
             />
             <TableBody>
-              {error ? (
-                <DataLoadError colSpan={headCells.length + 1} />
-              ) : !page ? (
-                <SkeletonBody
-                  includeCheckbox={true}
-                  numCellsPerRow={headCells.length}
-                  numRows={pageSize - pageLength}
-                  rowHeight={DefaultRowHeight}
-                />
-              ) : (
-                page.items.map((row) => {
-                  const isSel = selected.has(row.id);
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isSel}
-                      onClick={() => handleViewFiles(row.id)}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCheck(row.id);
-                        }}
-                      >
-                        <Checkbox
-                          color="primary"
-                          checked={isSel}
-                          inputProps={{
-                            "aria-label": `Select ${row.name ?? row.id}`,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{toLocaleString(row.created)}</TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
+              {tableRows}
               {page?.items.length === 0 && (
                 <TableRow style={{ height: DefaultRowHeight }}>
                   <TableCell colSpan={headCells.length + 1}>
@@ -241,7 +244,11 @@ export default function FileCollectionTable(): JSX.Element {
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: cursors?.next == null },
+            },
+          }}
         />
       </Paper>
       <Snackbar

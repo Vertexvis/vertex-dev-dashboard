@@ -23,7 +23,7 @@ const page = {
       attributes: {
         created: "2026-06-10T15:30:00Z",
         name: "alpha.jt",
-        status: "completed",
+        status: "complete",
         suppliedId: "supplied-1",
         uploaded: "2026-06-10T15:45:00Z",
       },
@@ -46,7 +46,7 @@ const collectionFilesPage = {
       id: "file-1",
       attributes: {
         name: "File One",
-        status: "completed",
+        status: "complete",
         suppliedId: "supplied-file-1",
         created: "2026-06-12T15:30:00Z",
         uploaded: "2026-06-12T15:31:00Z",
@@ -166,7 +166,10 @@ describe("FileTable", () => {
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
-    expect(screen.getByText("COMPLETE")).toBeInTheDocument();
+    const statusLabel = screen.getByText("complete");
+    expect(statusLabel.closest(".MuiChip-root")).toHaveStyle({
+      textTransform: "uppercase",
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost/api/file-collections/collection-1/files?pageSize=25&sort=-created"
     );
@@ -187,7 +190,7 @@ describe("FileTable", () => {
     expect(onFileSelected).toHaveBeenCalledWith({
       id: "file-1",
       name: "File One",
-      status: "completed",
+      status: "complete",
       suppliedId: "supplied-file-1",
       created: "2026-06-12T15:30:00Z",
       uploaded: "2026-06-12T15:31:00Z",
@@ -209,7 +212,7 @@ describe("FileTable", () => {
     );
   });
 
-  it("disables download for files that are not completed", async () => {
+  it("disables download for files that are not complete", async () => {
     const fetchMock = mockFetch(() => ({
       ...collectionFilesPage,
       data: [
@@ -235,7 +238,77 @@ describe("FileTable", () => {
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
-    expect(screen.getByText("PENDING")).toBeInTheDocument();
+    expect(screen.getByText("pending")).toBeInTheDocument();
+
+    const download = screen.getByRole("button", { name: "Download File One" });
+    expect(download).toBeDisabled();
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/files/file-1/download-url",
+      {
+        method: "POST",
+      }
+    );
+  });
+
+  it("styles ready file statuses as success", async () => {
+    mockFetch(() => ({
+      ...collectionFilesPage,
+      data: [
+        {
+          type: "file",
+          id: "file-1",
+          attributes: {
+            name: "File One",
+            status: "ready",
+            suppliedId: "supplied-file-1",
+            created: "2026-06-12T15:30:00Z",
+            uploaded: "2026-06-12T15:31:00Z",
+          },
+        },
+      ],
+    }));
+
+    renderTable(jest.fn(), {
+      apiPath: "/api/file-collections/collection-1/files",
+      showCreateButton: false,
+      showDeleteAction: false,
+      showSuppliedIdFilter: false,
+    });
+
+    const statusLabel = await screen.findByText("ready");
+    expect(statusLabel.closest(".MuiChip-root")).toHaveClass(
+      "MuiChip-colorSuccess"
+    );
+  });
+
+  it("does not treat completed as an available file state", async () => {
+    const fetchMock = mockFetch(() => ({
+      ...collectionFilesPage,
+      data: [
+        {
+          type: "file",
+          id: "file-1",
+          attributes: {
+            name: "File One",
+            status: "completed",
+            suppliedId: "supplied-file-1",
+            created: "2026-06-12T15:30:00Z",
+            uploaded: "2026-06-12T15:31:00Z",
+          },
+        },
+      ],
+    }));
+    jest.spyOn(window, "open").mockReturnValue({} as Window);
+
+    renderTable(jest.fn(), {
+      apiPath: "/api/file-collections/collection-1/files",
+      showCreateButton: false,
+      showDeleteAction: false,
+      showSuppliedIdFilter: false,
+    });
+
+    expect(await screen.findByText("completed")).toBeInTheDocument();
 
     const download = screen.getByRole("button", { name: "Download File One" });
     expect(download).toBeDisabled();

@@ -47,7 +47,7 @@ async function get(
       c.listFileCollectionFiles({
         id,
         pageCursor: cursor,
-        pageSize: pageSize ? parseInt(pageSize, 10) : 10,
+        pageSize: pageSize ? Number.parseInt(pageSize, 10) : 10,
       })
     );
 
