@@ -5,9 +5,11 @@
 Bootstraps a git worktree. Runs automatically when a worktree is created
 (configured in `.codex/environments/environment.toml`).
 
-It runs these steps in order, skipping any that aren't present:
-
+Always runs in a worktree setup
 1. **Standard repo setup** — `git submodule update --init --recursive`.
+
+It runs the following steps in order, skipping any that aren't present:
+
 2. **Local dev pre-init** — copies files listed in `local-dev-files.txt` from the
    primary worktree, then runs `pre-project-init.sh`.
 3. **Project setup** — runs committed `scripts/setup.sh` (`yarn install`).
