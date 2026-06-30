@@ -77,42 +77,43 @@ copy_local_dev_files() {
   fi
 }
 
-# Runs local dev script in this worktree if it exists in the primary worktree
-# To Use:
-#  Create local-dev.sh in the primary worktree
-# NOTE: local-dev.sh is copied into worktree and executed from there - BE CAREFUL WITH PATHS!
-run_local_dev_commands() {
-  if [[ -n "$primary_worktree" && "$primary_worktree" != "$current_worktree" ]]; then
-    local relative_path="local-dev.sh"
-    local source_script="$primary_worktree/$relative_path"
-    local target_script="$current_worktree/$relative_path"
+# Runs a worktree script if it is present, executed from the worktree root.
+#
+# Local-only hook scripts (e.g. pre-project-init.sh, post-project-init.sh) are
+# gitignored and therefore only live in the primary worktree. When a script is
+# missing from the current worktree but present in the primary, it is copied
+# across before running. Committed scripts (e.g. scripts/setup.sh) already exist
+# in the worktree and are run as-is.
+#
+# NOTE: scripts run from the current worktree root - BE CAREFUL WITH PATHS!
+run_worktree_script() {
+  local relative_path="$1"
+  local target_script="$current_worktree/$relative_path"
 
-    if [[ -f "$source_script" ]]; then
-      copy_local_path "$relative_path"
+  # Pull local-only scripts in from the primary worktree if we don't have them.
+  if [[ ! -f "$target_script" \
+        && -n "$primary_worktree" \
+        && "$primary_worktree" != "$current_worktree" ]]; then
+    copy_local_path "$relative_path"
+  fi
 
-      (
-        cd "$current_worktree"
-        bash "$target_script"
-      )
-    fi
+  if [[ -f "$target_script" ]]; then
+    echo "Running $relative_path"
+    (
+      cd "$current_worktree"
+      bash "$relative_path"
+    )
+  else
+    echo "No $relative_path found - skipping."
   fi
 }
 
-# Runs template setup script in this worktree if it exists
-setup() {
-  if [[ -f "$current_worktree/scripts/setup.sh" ]]; then
-      (
-        cd "$current_worktree"
-        bash scripts/setup.sh
-      )
-    else
-      echo "No setup.sh script found in $current_worktree/scripts"
-  fi
-}
-
-# Worktree Setup
-setup
-
-## Local Dev Setup
+## Pre-Project Init
 copy_local_dev_files
-run_local_dev_commands
+run_worktree_script "pre-project-init.sh"
+
+## Project Setup
+run_worktree_script "scripts/setup.sh"
+
+## Post-Project Init
+run_worktree_script "post-project-init.sh"
