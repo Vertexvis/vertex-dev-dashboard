@@ -1,6 +1,3 @@
-## Vertex Standard Repo Setup
-git submodule update --init --recursive
-
 ## Project Specific Setup
 if ! command -v yarn >/dev/null 2>&1; then
   echo "Error: yarn is not installed or not on PATH." >&2

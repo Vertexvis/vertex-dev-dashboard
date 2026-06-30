@@ -108,12 +108,15 @@ run_worktree_script() {
   fi
 }
 
-## Pre-Project Init
+## Vertex Standard Repo Setup Commands
+git submodule update --init --recursive
+
+## Local Dev Customization: Pre-Project Init
 copy_local_dev_files
 run_worktree_script "pre-project-init.sh"
 
-## Project Setup
+## Project Customization: Setup
 run_worktree_script "scripts/setup.sh"
 
-## Post-Project Init
+## Local Dev Customization: Post-Project Init
 run_worktree_script "post-project-init.sh"
