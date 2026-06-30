@@ -4,8 +4,18 @@
 .env.production.local
 .env.test.local
 .env
+mise.local.toml
 yarn-error.log*
+
+# Local Dev Lifecylce Scripts/Files
+local-dev-files.txt
+pre-project-init.sh
+post-project-init.sh
+
 
 /.next
 /coverage
 /node_modules
+.idea
+.yarnrc.yml
+.yarn
