@@ -1,8 +1,4 @@
-import { Close } from "@mui/icons-material";
 import {
-  Box,
-  Drawer,
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -11,69 +7,37 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
 import { FileCollection } from "../../lib/file-collections";
 import { toDisplayValue } from "../../lib/formatting";
-import { RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
-  readonly fileCollection?: FileCollection;
-  readonly onClose: () => void;
-  readonly open: boolean;
+  readonly fileCollection: FileCollection;
 }
 
-export function FileCollectionDetailsDrawer({
+export function FileCollectionMetadataTable({
   fileCollection,
-  onClose,
-  open,
 }: Props): JSX.Element {
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      sx={{
-        flexShrink: 0,
-        width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
-      }}
-      variant="persistent"
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography sx={{ my: 2, mx: 2 }} variant="h5">
-          File Collection Details
-        </Typography>
-        <IconButton onClick={onClose} sx={{ mr: 2 }}>
-          <Close />
-        </IconButton>
-      </Box>
-      {fileCollection ? (
-        <TableContainer>
-          <Table size="small" sx={{ whiteSpace: "nowrap" }}>
-            <TableBody>
-              <DetailsRow label="Name" value={fileCollection.name} />
-              <DetailsRow label="ID" value={fileCollection.id} />
-              <DetailsRow
-                label="Supplied ID"
-                value={fileCollection.suppliedId}
-              />
-              <DetailsRow
-                label="Created"
-                value={toLocaleString(fileCollection.created)}
-              />
-              <DetailsRow
-                label="Expires"
-                value={toLocaleString(fileCollection.expiresAt)}
-              />
-              <MetadataRow metadata={fileCollection.metadata} />
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <></>
-      )}
-    </Drawer>
+    <TableContainer>
+      <Table size="small" sx={{ whiteSpace: "nowrap" }}>
+        <TableBody>
+          <DetailsRow label="Name" value={fileCollection.name} />
+          <DetailsRow label="ID" value={fileCollection.id} />
+          <DetailsRow label="Supplied ID" value={fileCollection.suppliedId} />
+          <DetailsRow
+            label="Created"
+            value={toLocaleString(fileCollection.created)}
+          />
+          <DetailsRow
+            label="Expires"
+            value={toLocaleString(fileCollection.expiresAt)}
+          />
+          <MetadataRow metadata={fileCollection.metadata} />
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
