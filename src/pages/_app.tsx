@@ -3,6 +3,7 @@ import "@vertexvis/viewer/dist/viewer/viewer.css";
 import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
+import LinearProgress from "@mui/material/LinearProgress";
 import { ThemeProvider } from "@mui/material/styles";
 import { AppProps } from "next/app";
 import Head from "next/head";
@@ -17,6 +18,7 @@ cache.compat = true;
 
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
   const { events } = useRouter();
+  const [routeLoading, setRouteLoading] = React.useState(false);
 
   React.useEffect(() => {
     function handleChange(url: string) {
@@ -38,6 +40,26 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
     };
   }, [events]);
 
+  React.useEffect(() => {
+    function handleRouteChangeStart() {
+      setRouteLoading(true);
+    }
+
+    function handleRouteChangeEnd() {
+      setRouteLoading(false);
+    }
+
+    events.on("routeChangeStart", handleRouteChangeStart);
+    events.on("routeChangeComplete", handleRouteChangeEnd);
+    events.on("routeChangeError", handleRouteChangeEnd);
+
+    return () => {
+      events.off("routeChangeStart", handleRouteChangeStart);
+      events.off("routeChangeComplete", handleRouteChangeEnd);
+      events.off("routeChangeError", handleRouteChangeEnd);
+    };
+  }, [events]);
+
   return (
     <React.StrictMode>
       <CacheProvider value={cache}>
@@ -55,6 +77,17 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
         </Head>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          {routeLoading && (
+            <LinearProgress
+              sx={{
+                left: 0,
+                position: "fixed",
+                right: 0,
+                top: 0,
+                zIndex: (theme) => theme.zIndex.tooltip,
+              }}
+            />
+          )}
           <SWRConfig
             value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
           >
