@@ -27,9 +27,12 @@ interface Props {
   readonly fileCollection: FileCollection;
 }
 
-const FileTable = dynamic(() => import("../../components/file/FileTable"), {
-  ssr: false,
-});
+const FileCollectionFilesTable = dynamic(
+  () => import("../../components/file-collection/FileCollectionFilesTable"),
+  {
+    ssr: false,
+  }
+);
 
 type ServerSideProps = CommonProps & Props;
 
@@ -74,10 +77,9 @@ export default function FileCollectionDetails({
               <FileCollectionMetadataTable fileCollection={fileCollection} />
             </Box>
           </Paper>
-          <FileTable
+          <FileCollectionFilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
-            mode="filesCollection"
             onFileSelected={setFile}
           />
         </Box>

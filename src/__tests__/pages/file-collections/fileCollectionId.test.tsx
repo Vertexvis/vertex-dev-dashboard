@@ -16,10 +16,10 @@ import FileCollectionDetails, {
 const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockGetFileCollection = jest.fn();
-const mockFileTable = jest.fn(
-  ({ apiPath, mode }: { readonly apiPath: string; readonly mode: string }) => (
-    <div data-api-path={apiPath} data-mode={mode} data-testid="file-table">
-      Files Table
+const mockFileCollectionFilesTable = jest.fn(
+  ({ apiPath }: { readonly apiPath: string }) => (
+    <div data-api-path={apiPath} data-testid="file-collection-files-table">
+      File Collection Files Table
     </div>
   )
 );
@@ -30,7 +30,8 @@ jest.mock("../../../components/shared/Layout", () => ({
 
 jest.mock(
   "next/dynamic",
-  () => () => (props: Record<string, unknown>) => mockFileTable(props)
+  () => () => (props: Record<string, unknown>) =>
+    mockFileCollectionFilesTable(props)
 );
 
 jest.mock("../../../lib/vertex-api", () => {
@@ -103,13 +104,14 @@ describe("FileCollectionDetails", () => {
       />
     );
 
-    const fileTable = await screen.findByTestId("file-table");
+    const fileCollectionFilesTable = await screen.findByTestId(
+      "file-collection-files-table"
+    );
 
-    expect(fileTable).toHaveAttribute(
+    expect(fileCollectionFilesTable).toHaveAttribute(
       "data-api-path",
       "/api/file-collections/collection-1/files"
     );
-    expect(fileTable).toHaveAttribute("data-mode", "filesCollection");
   });
 
   it("loads a file collection by URL ID on the server", async () => {
