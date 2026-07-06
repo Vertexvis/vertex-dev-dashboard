@@ -77,6 +77,7 @@ export default function FileCollectionDetails({
           <FilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
+            enableSorting={false}
             emptyOnLoadError={false}
             logLoadError={false}
             onFileSelected={setFile}

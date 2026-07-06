@@ -1,12 +1,10 @@
 import {
-  FileList,
   FileMetadataData,
   getPage,
   head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -16,6 +14,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../../../lib/api";
+import { getFileCollectionsApi } from "../../../../lib/file-collections";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
@@ -43,27 +42,13 @@ async function get(
 
     const pageSize = head(req.query.pageSize);
     const cursor = head(req.query.cursor);
-    const sort = head(req.query.sort);
-    const c = await getClientFromSession(req.session);
-    const params = new URLSearchParams({
-      "page[size]": pageSize ? Number.parseInt(pageSize, 10).toString() : "10",
-    });
-    if (cursor != null) params.set("page[cursor]", cursor);
-    if (sort != null) params.set("sort", sort);
-
-    const { cursors, page } = await getPage(
-      () =>
-        c.axiosInstance.get<FileList>(
-          `${c.config.basePath}/file-collections/${encodeURIComponent(
-            id
-          )}/files?${params.toString()}`,
-          {
-            headers: {
-              Accept: "application/vnd.api+json",
-              Authorization: `Bearer ${c.token.access_token}`,
-            },
-          }
-        ) as Promise<AxiosResponse<FileList>>
+    const c = getFileCollectionsApi(await getClientFromSession(req.session));
+    const { cursors, page } = await getPage(() =>
+      c.listFileCollectionFiles({
+        id,
+        pageCursor: cursor,
+        pageSize: pageSize ? Number.parseInt(pageSize, 10) : 10,
+      })
     );
 
     return { cursors, data: page.data, status: 200 };

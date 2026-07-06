@@ -160,6 +160,7 @@ describe("FileTable", () => {
 
     renderTable(onFileSelected, {
       apiPath: "/api/file-collections/collection-1/files",
+      enableSorting: false,
       showCreateButton: false,
       showDeleteAction: false,
       showSuppliedIdFilter: false,
@@ -171,8 +172,9 @@ describe("FileTable", () => {
       textTransform: "uppercase",
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost/api/file-collections/collection-1/files?pageSize=25&sort=-created"
+      "http://localhost/api/file-collections/collection-1/files?pageSize=25"
     );
+    expect(screen.getByText("Name")).not.toHaveAttribute("role", "button");
     expect(
       screen.queryByLabelText("Supplied ID Filter (exact)")
     ).not.toBeInTheDocument();

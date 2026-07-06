@@ -45,7 +45,7 @@ export const headCells: readonly HeadCell[] = [
 
 interface UseFilesProps extends SwrProps {
   readonly apiPath: string;
-  readonly sort: SortState;
+  readonly sort?: SortState;
 }
 
 function useFiles({
@@ -59,7 +59,7 @@ function useFiles({
     buildQuery(apiPath, {
       cursor,
       pageSize,
-      sort: toSortParam(sort),
+      sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
     })
   );
@@ -99,6 +99,7 @@ function statusColor(
 interface Props {
   readonly activeFileId?: string;
   readonly apiPath?: string;
+  readonly enableSorting?: boolean;
   readonly emptyOnLoadError?: boolean;
   readonly logLoadError?: boolean;
   readonly showCreateButton?: boolean;
@@ -111,6 +112,7 @@ interface Props {
 export default function FilesTable({
   activeFileId,
   apiPath = "/api/files",
+  enableSorting = true,
   emptyOnLoadError = false,
   logLoadError = false,
   showCreateButton = true,
@@ -145,7 +147,7 @@ export default function FilesTable({
     apiPath,
     cursor,
     pageSize,
-    sort,
+    sort: enableSorting ? sort : undefined,
     suppliedId,
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
@@ -390,9 +392,9 @@ export default function FilesTable({
               headCells={headCells}
               numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
-              onSortChange={handleSortChange}
+              onSortChange={enableSorting ? handleSortChange : undefined}
               rowCount={pageLength}
-              sort={sort}
+              sort={enableSorting ? sort : undefined}
             />
             <TableBody>
               {tableRows}
