@@ -155,10 +155,12 @@ export default function FileCollectionTable(): JSX.Element {
           tabIndex={-1}
           key={row.id}
           selected={isSel}
+          style={{ cursor: "pointer" }}
           onClick={() => handleViewFiles(row.id)}
         >
           <TableCell
             padding="checkbox"
+            style={{ cursor: "default" }}
             onClick={(e) => {
               e.stopPropagation();
               handleCheck(row.id);
