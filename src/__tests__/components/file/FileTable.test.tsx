@@ -336,6 +336,24 @@ describe("FileTable", () => {
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
 
+  it("renders load errors with an error indicator", async () => {
+    mockFetch(() => ({
+      message: "Could not load collection files.",
+      status: 500,
+    }));
+
+    renderTable(jest.fn(), {
+      apiPath: "/api/file-collections/collection-1/files",
+      showCreateButton: false,
+      showDeleteAction: false,
+      showSuppliedIdFilter: false,
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Error loading data."
+    );
+  });
+
   it("logs load errors and renders an empty files table when configured", async () => {
     const error = { message: "Could not load collection files.", status: 500 };
     const consoleError = jest

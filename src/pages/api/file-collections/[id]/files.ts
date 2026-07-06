@@ -45,21 +45,22 @@ async function get(
     const cursor = head(req.query.cursor);
     const sort = head(req.query.sort);
     const c = await getClientFromSession(req.session);
+    const params = new URLSearchParams({
+      "page[size]": pageSize ? Number.parseInt(pageSize, 10).toString() : "10",
+    });
+    if (cursor != null) params.set("page[cursor]", cursor);
+    if (sort != null) params.set("sort", sort);
+
     const { cursors, page } = await getPage(
       () =>
         c.axiosInstance.get<FileList>(
           `${c.config.basePath}/file-collections/${encodeURIComponent(
             id
-          )}/files`,
+          )}/files?${params.toString()}`,
           {
             headers: {
               Accept: "application/vnd.api+json",
               Authorization: `Bearer ${c.token.access_token}`,
-            },
-            params: {
-              "page[cursor]": cursor,
-              "page[size]": pageSize ? Number.parseInt(pageSize, 10) : 10,
-              sort,
             },
           }
         ) as Promise<AxiosResponse<FileList>>

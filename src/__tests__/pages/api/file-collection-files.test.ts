@@ -71,16 +71,11 @@ describe("file collection files API route", () => {
 
     expect(mockGetClientFromSession).toHaveBeenCalled();
     expect(mockAxiosGet).toHaveBeenCalledWith(
-      "https://example.test/file-collections/collection-1/files",
+      "https://example.test/file-collections/collection-1/files?page%5Bsize%5D=50&page%5Bcursor%5D=cursor-1&sort=-created",
       {
         headers: {
           Accept: "application/vnd.api+json",
           Authorization: "Bearer test-token",
-        },
-        params: {
-          "page[cursor]": "cursor-1",
-          "page[size]": 50,
-          sort: "-created",
         },
       }
     );
@@ -99,12 +94,11 @@ describe("file collection files API route", () => {
     });
 
     expect(mockAxiosGet).toHaveBeenCalledWith(
-      "https://example.test/file-collections/collection-1/files",
+      "https://example.test/file-collections/collection-1/files?page%5Bsize%5D=10",
       expect.objectContaining({
-        params: {
-          "page[cursor]": undefined,
-          "page[size]": 10,
-          sort: undefined,
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: "Bearer test-token",
         },
       })
     );
