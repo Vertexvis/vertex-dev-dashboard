@@ -107,7 +107,7 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
-export default function FilesTable({
+export default function FileTable({
   activeFileId,
   apiPath = "/api/files",
   mode = "files",

@@ -18,7 +18,7 @@ const mockGetFileCollectionsApi = jest.fn();
 const mockGetFileCollection = jest.fn();
 const mockFileTable = jest.fn(
   ({ apiPath, mode }: { readonly apiPath: string; readonly mode: string }) => (
-    <div data-api-path={apiPath} data-mode={mode} data-testid="files-table">
+    <div data-api-path={apiPath} data-mode={mode} data-testid="file-table">
       Files Table
     </div>
   )
@@ -103,13 +103,13 @@ describe("FileCollectionDetails", () => {
       />
     );
 
-    const filesTable = await screen.findByTestId("files-table");
+    const fileTable = await screen.findByTestId("file-table");
 
-    expect(filesTable).toHaveAttribute(
+    expect(fileTable).toHaveAttribute(
       "data-api-path",
       "/api/file-collections/collection-1/files"
     );
-    expect(filesTable).toHaveAttribute("data-mode", "filesCollection");
+    expect(fileTable).toHaveAttribute("data-mode", "filesCollection");
   });
 
   it("loads a file collection by URL ID on the server", async () => {

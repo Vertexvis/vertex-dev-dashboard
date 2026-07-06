@@ -27,7 +27,7 @@ interface Props {
   readonly fileCollection: FileCollection;
 }
 
-const FilesTable = dynamic(() => import("../../components/file/FileTable"), {
+const FileTable = dynamic(() => import("../../components/file/FileTable"), {
   ssr: false,
 });
 
@@ -74,7 +74,7 @@ export default function FileCollectionDetails({
               <FileCollectionMetadataTable fileCollection={fileCollection} />
             </Box>
           </Paper>
-          <FilesTable
+          <FileTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
             mode="filesCollection"

@@ -6,7 +6,7 @@ import { Layout } from "../components/shared/Layout";
 import { File } from "../lib/files";
 import { defaultServerSideProps } from "../lib/with-session";
 
-const FilesTable = dynamic(() => import("../components/file/FileTable"), {
+const FileTable = dynamic(() => import("../components/file/FileTable"), {
   ssr: false,
 });
 
@@ -16,7 +16,7 @@ export default function Files(): JSX.Element {
 
   return (
     <Layout
-      main={<FilesTable activeFileId={file?.id} onFileSelected={setFile} />}
+      main={<FileTable activeFileId={file?.id} onFileSelected={setFile} />}
       rightDrawer={
         <FileDetailsDrawer
           file={file}
