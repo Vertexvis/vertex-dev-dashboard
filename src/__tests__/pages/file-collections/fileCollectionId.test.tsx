@@ -20,16 +20,12 @@ const mockFileTable = jest.fn(
   ({
     apiPath,
     enableSorting,
-    emptyOnLoadError,
-    logLoadError,
     showCreateButton,
     showDeleteAction,
     showSuppliedIdFilter,
   }: {
     readonly apiPath: string;
     readonly enableSorting: boolean;
-    readonly emptyOnLoadError: boolean;
-    readonly logLoadError: boolean;
     readonly showCreateButton: boolean;
     readonly showDeleteAction: boolean;
     readonly showSuppliedIdFilter: boolean;
@@ -37,8 +33,6 @@ const mockFileTable = jest.fn(
     <div
       data-api-path={apiPath}
       data-enable-sorting={enableSorting.toString()}
-      data-empty-on-load-error={emptyOnLoadError.toString()}
-      data-log-load-error={logLoadError.toString()}
       data-show-create-button={showCreateButton.toString()}
       data-show-delete-action={showDeleteAction.toString()}
       data-show-supplied-id-filter={showSuppliedIdFilter.toString()}
@@ -135,8 +129,6 @@ describe("FileCollectionDetails", () => {
       "/api/file-collections/collection-1/files"
     );
     expect(filesTable).toHaveAttribute("data-enable-sorting", "false");
-    expect(filesTable).toHaveAttribute("data-empty-on-load-error", "false");
-    expect(filesTable).toHaveAttribute("data-log-load-error", "false");
     expect(filesTable).toHaveAttribute("data-show-create-button", "false");
     expect(filesTable).toHaveAttribute("data-show-delete-action", "false");
     expect(filesTable).toHaveAttribute("data-show-supplied-id-filter", "false");

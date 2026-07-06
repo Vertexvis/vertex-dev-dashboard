@@ -78,8 +78,6 @@ export default function FileCollectionDetails({
             activeFileId={file?.id}
             apiPath={filesApiPath}
             enableSorting={false}
-            emptyOnLoadError={false}
-            logLoadError={false}
             onFileSelected={setFile}
             showCreateButton={false}
             showDeleteAction={false}

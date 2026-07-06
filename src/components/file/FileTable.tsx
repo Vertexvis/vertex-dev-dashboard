@@ -100,12 +100,9 @@ interface Props {
   readonly activeFileId?: string;
   readonly apiPath?: string;
   readonly enableSorting?: boolean;
-  readonly emptyOnLoadError?: boolean;
-  readonly logLoadError?: boolean;
   readonly showCreateButton?: boolean;
   readonly showDeleteAction?: boolean;
   readonly showSuppliedIdFilter?: boolean;
-  readonly title?: string;
   readonly onFileSelected: (file: File) => void;
 }
 
@@ -113,12 +110,9 @@ export default function FilesTable({
   activeFileId,
   apiPath = "/api/files",
   enableSorting = true,
-  emptyOnLoadError = false,
-  logLoadError = false,
   showCreateButton = true,
   showDeleteAction = true,
   showSuppliedIdFilter = true,
-  title = "Files",
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
@@ -141,7 +135,6 @@ export default function FilesTable({
   >();
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
-  const loggedLoadError = React.useRef<unknown>();
 
   const { data, error, mutate } = useFiles({
     apiPath,
@@ -152,9 +145,7 @@ export default function FilesTable({
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
-  const visiblePage =
-    page ??
-    (loadError && emptyOnLoadError ? { cursors: null, items: [] } : undefined);
+  const visiblePage = page;
   const pageLength = visiblePage ? visiblePage.items.length : 0;
   const paginationCursors = visiblePage?.cursors ?? cursors;
   const emptyRows =
@@ -176,19 +167,6 @@ export default function FilesTable({
 
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
-
-  React.useEffect(() => {
-    if (
-      !logLoadError ||
-      loadError == null ||
-      loggedLoadError.current === loadError
-    ) {
-      return;
-    }
-
-    loggedLoadError.current = loadError;
-    console.error(loadError);
-  }, [loadError, logLoadError]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (visiblePage == null) return;
@@ -254,7 +232,7 @@ export default function FilesTable({
   }
 
   let tableRows: React.ReactNode;
-  if (loadError && !emptyOnLoadError) {
+  if (loadError) {
     tableRows = <DataLoadError colSpan={headCells.length + 1} />;
   } else if (!visiblePage) {
     tableRows = (
@@ -347,7 +325,7 @@ export default function FilesTable({
         <TableToolbar
           numSelected={selected.size}
           onDelete={showDeleteAction ? handleDelete : undefined}
-          title={title}
+          title="Files"
         />
         {(showSuppliedIdFilter || showCreateButton) && (
           <Box
