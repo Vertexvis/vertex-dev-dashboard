@@ -99,23 +99,26 @@ function statusColor(
 interface Props {
   readonly activeFileId?: string;
   readonly apiPath?: string;
-  readonly enableSorting?: boolean;
-  readonly showCreateButton?: boolean;
-  readonly showDeleteAction?: boolean;
-  readonly showSuppliedIdFilter?: boolean;
+  /**
+   * This mode can dissipate once /file-collections/:id/files supports the same
+   * create/delete/filter/sort functionality as the main files endpoint.
+   */
+  readonly mode?: "files" | "filesCollection";
   readonly onFileSelected: (file: File) => void;
 }
 
 export default function FilesTable({
   activeFileId,
   apiPath = "/api/files",
-  enableSorting = true,
-  showCreateButton = true,
-  showDeleteAction = true,
-  showSuppliedIdFilter = true,
+  mode = "files",
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
+  const isFilesCollectionMode = mode === "filesCollection";
+  const enableSorting = !isFilesCollectionMode;
+  const showCreateButton = !isFilesCollectionMode;
+  const showDeleteAction = !isFilesCollectionMode;
+  const showSuppliedIdFilter = !isFilesCollectionMode;
   const [sort, setSort] = React.useState<SortState>({
     field: "created",
     order: "desc",

@@ -17,27 +17,8 @@ const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockGetFileCollection = jest.fn();
 const mockFileTable = jest.fn(
-  ({
-    apiPath,
-    enableSorting,
-    showCreateButton,
-    showDeleteAction,
-    showSuppliedIdFilter,
-  }: {
-    readonly apiPath: string;
-    readonly enableSorting: boolean;
-    readonly showCreateButton: boolean;
-    readonly showDeleteAction: boolean;
-    readonly showSuppliedIdFilter: boolean;
-  }) => (
-    <div
-      data-api-path={apiPath}
-      data-enable-sorting={enableSorting.toString()}
-      data-show-create-button={showCreateButton.toString()}
-      data-show-delete-action={showDeleteAction.toString()}
-      data-show-supplied-id-filter={showSuppliedIdFilter.toString()}
-      data-testid="files-table"
-    >
+  ({ apiPath, mode }: { readonly apiPath: string; readonly mode: string }) => (
+    <div data-api-path={apiPath} data-mode={mode} data-testid="files-table">
       Files Table
     </div>
   )
@@ -128,10 +109,7 @@ describe("FileCollectionDetails", () => {
       "data-api-path",
       "/api/file-collections/collection-1/files"
     );
-    expect(filesTable).toHaveAttribute("data-enable-sorting", "false");
-    expect(filesTable).toHaveAttribute("data-show-create-button", "false");
-    expect(filesTable).toHaveAttribute("data-show-delete-action", "false");
-    expect(filesTable).toHaveAttribute("data-show-supplied-id-filter", "false");
+    expect(filesTable).toHaveAttribute("data-mode", "filesCollection");
   });
 
   it("loads a file collection by URL ID on the server", async () => {

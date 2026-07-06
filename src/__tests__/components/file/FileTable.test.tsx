@@ -160,10 +160,7 @@ describe("FileTable", () => {
 
     renderTable(onFileSelected, {
       apiPath: "/api/file-collections/collection-1/files",
-      enableSorting: false,
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
@@ -234,9 +231,7 @@ describe("FileTable", () => {
 
     renderTable(jest.fn(), {
       apiPath: "/api/file-collections/collection-1/files",
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     expect(await screen.findByText("File One")).toBeInTheDocument();
@@ -273,9 +268,7 @@ describe("FileTable", () => {
 
     renderTable(jest.fn(), {
       apiPath: "/api/file-collections/collection-1/files",
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     const statusLabel = await screen.findByText("ready");
@@ -305,9 +298,7 @@ describe("FileTable", () => {
 
     renderTable(jest.fn(), {
       apiPath: "/api/file-collections/collection-1/files",
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     expect(await screen.findByText("completed")).toBeInTheDocument();
@@ -328,9 +319,7 @@ describe("FileTable", () => {
 
     renderTable(jest.fn(), {
       apiPath: "/api/file-collections/collection-1/files",
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     expect(await screen.findByText("Files")).toBeInTheDocument();
@@ -346,9 +335,7 @@ describe("FileTable", () => {
 
     renderTable(jest.fn(), {
       apiPath: "/api/file-collections/collection-1/files",
-      showCreateButton: false,
-      showDeleteAction: false,
-      showSuppliedIdFilter: false,
+      mode: "filesCollection",
     });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

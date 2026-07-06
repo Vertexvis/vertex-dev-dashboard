@@ -77,11 +77,8 @@ export default function FileCollectionDetails({
           <FilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
-            enableSorting={false}
+            mode="filesCollection"
             onFileSelected={setFile}
-            showCreateButton={false}
-            showDeleteAction={false}
-            showSuppliedIdFilter={false}
           />
         </Box>
       }
