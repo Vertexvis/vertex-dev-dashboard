@@ -77,8 +77,8 @@ export default function FileCollectionDetails({
           <FilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
-            emptyOnLoadError={true}
-            logLoadError={true}
+            emptyOnLoadError={false}
+            logLoadError={false}
             onFileSelected={setFile}
             showCreateButton={false}
             showDeleteAction={false}

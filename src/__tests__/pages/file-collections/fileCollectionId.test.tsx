@@ -131,8 +131,8 @@ describe("FileCollectionDetails", () => {
       "data-api-path",
       "/api/file-collections/collection-1/files"
     );
-    expect(filesTable).toHaveAttribute("data-empty-on-load-error", "true");
-    expect(filesTable).toHaveAttribute("data-log-load-error", "true");
+    expect(filesTable).toHaveAttribute("data-empty-on-load-error", "false");
+    expect(filesTable).toHaveAttribute("data-log-load-error", "false");
     expect(filesTable).toHaveAttribute("data-show-create-button", "false");
     expect(filesTable).toHaveAttribute("data-show-delete-action", "false");
     expect(filesTable).toHaveAttribute("data-show-supplied-id-filter", "false");

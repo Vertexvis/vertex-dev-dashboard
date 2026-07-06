@@ -9,8 +9,7 @@ import type { NextIronRequest } from "../../../lib/with-session";
 import { handleFileCollectionFiles } from "../../../pages/api/file-collections/[id]/files";
 
 const mockGetClientFromSession = jest.fn();
-const mockGetFileCollectionsApi = jest.fn();
-const mockListFileCollectionFiles = jest.fn();
+const mockAxiosGet = jest.fn();
 const mockGetPage = getPage as jest.Mock;
 
 jest.mock("@vertexvis/api-client-node", () => {
@@ -31,15 +30,6 @@ jest.mock("../../../lib/vertex-api", () => {
   };
 });
 
-jest.mock("../../../lib/file-collections", () => {
-  const actual = jest.requireActual("../../../lib/file-collections");
-  return {
-    ...actual,
-    getFileCollectionsApi: (...args: unknown[]) =>
-      mockGetFileCollectionsApi(...args),
-  };
-});
-
 type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
 
 interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
@@ -49,11 +39,12 @@ interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
 
 describe("file collection files API route", () => {
   beforeEach(() => {
-    mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
-    mockGetFileCollectionsApi.mockReturnValue({
-      listFileCollectionFiles: mockListFileCollectionFiles,
+    mockGetClientFromSession.mockResolvedValue({
+      axiosInstance: { get: mockAxiosGet },
+      config: { basePath: "https://example.test" },
+      token: { access_token: "test-token" },
     });
-    mockListFileCollectionFiles.mockResolvedValue({ data: {} });
+    mockAxiosGet.mockResolvedValue({ data: {} });
     mockGetPage.mockImplementation(async (apiCall) => {
       await apiCall();
       return {
@@ -67,21 +58,32 @@ describe("file collection files API route", () => {
     jest.clearAllMocks();
   });
 
-  it("proxies collection file list requests with paging parameters", async () => {
+  it("proxies collection file list requests with paging and sorting parameters", async () => {
     const res = await callFileCollectionFiles({
       method: "GET",
-      query: { id: "collection-1", cursor: "cursor-1", pageSize: "50" },
+      query: {
+        id: "collection-1",
+        cursor: "cursor-1",
+        pageSize: "50",
+        sort: "-created",
+      },
     });
 
     expect(mockGetClientFromSession).toHaveBeenCalled();
-    expect(mockGetFileCollectionsApi).toHaveBeenCalledWith({
-      client: "test-client",
-    });
-    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: "cursor-1",
-      pageSize: 50,
-    });
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+      "https://example.test/file-collections/collection-1/files",
+      {
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: "Bearer test-token",
+        },
+        params: {
+          "page[cursor]": "cursor-1",
+          "page[size]": 50,
+          sort: "-created",
+        },
+      }
+    );
     expect(res.statusCode()).toBe(200);
     expect(res.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
@@ -96,11 +98,16 @@ describe("file collection files API route", () => {
       query: { id: "collection-1" },
     });
 
-    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: undefined,
-      pageSize: 10,
-    });
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+      "https://example.test/file-collections/collection-1/files",
+      expect.objectContaining({
+        params: {
+          "page[cursor]": undefined,
+          "page[size]": 10,
+          sort: undefined,
+        },
+      })
+    );
     expect(res.statusCode()).toBe(200);
   });
 
