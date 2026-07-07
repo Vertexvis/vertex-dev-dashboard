@@ -97,7 +97,9 @@ function useFileCollectionIds({
   readonly fileCollectionIds: string[];
   readonly loading: boolean;
 } {
-  const [fileCollectionIds, setFileCollectionIds] = React.useState<string[]>([]);
+  const [fileCollectionIds, setFileCollectionIds] = React.useState<string[]>(
+    []
+  );
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string>();
 
@@ -109,18 +111,25 @@ function useFileCollectionIds({
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     const loadPage = async (nextCursor?: string): Promise<string[]> => {
+      if (controller.signal.aborted) return [];
+
       const params = new URLSearchParams({
         pageSize: DefaultPageSize.toString(),
       });
       if (nextCursor != null) params.set("cursor", nextCursor);
 
       const res = await fetch(
-        `/api/files/${encodeURIComponent(fileId)}/file-collections?${params.toString()}`
+        `/api/files/${encodeURIComponent(
+          fileId
+        )}/file-collections?${params.toString()}`,
+        { signal: controller.signal }
       );
       const body = await res.json();
+
+      if (controller.signal.aborted) return [];
 
       if (!res.ok) {
         throw new Error(
@@ -144,12 +153,12 @@ function useFileCollectionIds({
       try {
         const ids = await loadPage();
 
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setFileCollectionIds(ids);
           setLoading(false);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setError(
             err instanceof Error
               ? err.message
@@ -163,7 +172,7 @@ function useFileCollectionIds({
     load();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [fileId, open]);
 
