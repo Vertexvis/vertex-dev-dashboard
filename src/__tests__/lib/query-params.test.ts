@@ -1,4 +1,4 @@
-import { parsePositiveQueryInt } from "../../lib/paging";
+import { parsePositiveQueryInt } from "../../lib/query-params";
 
 describe("parsePositiveQueryInt", () => {
   it("returns parsed integer values", () => {

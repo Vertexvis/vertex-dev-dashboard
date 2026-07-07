@@ -24,7 +24,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
-import { parsePositiveQueryInt } from "../../lib/paging";
+import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 

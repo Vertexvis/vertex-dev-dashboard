@@ -15,7 +15,7 @@ import {
   toErrorRes,
 } from "../../../../lib/api";
 import { getFileCollectionsApi } from "../../../../lib/file-collections";
-import { parsePositiveQueryInt } from "../../../../lib/paging";
+import { parsePositiveQueryInt } from "../../../../lib/query-params";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
