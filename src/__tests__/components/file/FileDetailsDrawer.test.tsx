@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 
 import { FileDetailsDrawer } from "../../../components/file/FileDetailsDrawer";
@@ -57,12 +57,55 @@ describe("FileDetailsDrawer", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "/api/files/file-1/file-collections?pageSize=25"
+      "/api/files/file-1/file-collections?pageSize=25",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "/api/files/file-1/file-collections?pageSize=25&cursor=next-page"
+      "/api/files/file-1/file-collections?pageSize=25&cursor=next-page",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
+  });
+
+  it("stops following cursors when the drawer closes", async () => {
+    let resolveFirstPage: (body: unknown) => void = () => undefined;
+    const firstPage = new Promise<unknown>((resolve) => {
+      resolveFirstPage = resolve;
+    });
+    const fetchMock = mockFetch((url) =>
+      url.includes("cursor=next-page")
+        ? {
+            cursors: { self: "page-2" },
+            data: [collectionData("collection-2", "supplied-2")],
+            status: 200,
+          }
+        : firstPage
+    );
+
+    const { rerender } = render(
+      <FileDetailsDrawer file={baseFile} onClose={jest.fn()} open={true} />
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <FileDetailsDrawer file={baseFile} onClose={jest.fn()} open={false} />
+    );
+
+    await act(async () => {
+      resolveFirstPage({
+        cursors: { self: "page-1", next: "next-page" },
+        data: [collectionData("collection-1", "supplied-1")],
+        status: 200,
+      });
+      await firstPage;
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("shows N/A when the file has no associated file collections", async () => {
@@ -72,7 +115,9 @@ describe("FileDetailsDrawer", () => {
       status: 200,
     }));
 
-    render(<FileDetailsDrawer file={baseFile} onClose={jest.fn()} open={true} />);
+    render(
+      <FileDetailsDrawer file={baseFile} onClose={jest.fn()} open={true} />
+    );
 
     expect(await screen.findByText("File Collection IDs")).toBeInTheDocument();
     await waitFor(() => {
