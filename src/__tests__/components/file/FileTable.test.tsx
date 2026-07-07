@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { rest } from "msw";
-import fetch, { Headers, Request, Response } from "node-fetch";
+import nodeFetch, { Headers, Request, Response } from "node-fetch";
 import React from "react";
 import { SWRConfig } from "swr";
 
@@ -23,7 +23,7 @@ const page = {
       attributes: {
         created: "2026-06-10T15:30:00Z",
         name: "alpha.jt",
-        status: "completed",
+        status: "complete",
         suppliedId: "supplied-1",
         uploaded: "2026-06-10T15:45:00Z",
       },
@@ -44,7 +44,7 @@ describe("FileTable", () => {
       Headers,
       Request,
       Response,
-      fetch,
+      fetch: nodeFetch,
     });
     server.listen({ onUnhandledRequest: "error" });
   });
@@ -52,6 +52,7 @@ describe("FileTable", () => {
   afterEach(() => {
     server.resetHandlers();
     jest.restoreAllMocks();
+    Object.assign(global, { fetch: nodeFetch });
   });
 
   afterAll(() => {
@@ -71,7 +72,9 @@ describe("FileTable", () => {
     renderTable();
 
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
-    expect(requests).toContain("http://localhost/api/files?pageSize=25&sort=-created");
+    expect(requests).toContain(
+      "http://localhost/api/files?pageSize=25&sort=-created"
+    );
   });
 
   it("sorts by name and toggles direction", async () => {
@@ -90,12 +93,16 @@ describe("FileTable", () => {
 
     await userEvent.click(screen.getByText("Name"));
     await waitFor(() => {
-      expect(requests).toContain("http://localhost/api/files?pageSize=25&sort=name");
+      expect(requests).toContain(
+        "http://localhost/api/files?pageSize=25&sort=name"
+      );
     });
 
     await userEvent.click(screen.getByText("Name"));
     await waitFor(() => {
-      expect(requests).toContain("http://localhost/api/files?pageSize=25&sort=-name");
+      expect(requests).toContain(
+        "http://localhost/api/files?pageSize=25&sort=-name"
+      );
     });
   });
 
@@ -104,14 +111,16 @@ describe("FileTable", () => {
     const sortedPage = new Promise((resolve) => {
       resolveSortedPage = resolve;
     });
-    server.use(
-      rest.get("*/api/files", (req, res, ctx) => {
-        const sort = req.url.searchParams.get("sort");
-        return sort === "name"
-          ? sortedPage.then((response) => res(ctx.json(response)))
-          : res(ctx.json(pagedPage));
-      })
-    );
+    const fetchMock = jest.fn((input: RequestInfo | URL) => {
+      const url = input.toString();
+
+      return Promise.resolve({
+        json: () =>
+          url.includes("sort=name") ? sortedPage : Promise.resolve(pagedPage),
+        ok: true,
+      });
+    });
+    global.fetch = fetchMock as unknown as typeof nodeFetch;
 
     renderTable();
 
@@ -127,19 +136,22 @@ describe("FileTable", () => {
   });
 });
 
-function renderTable(): void {
+function renderTable(
+  onFileSelected = jest.fn(),
+  props: Partial<React.ComponentProps<typeof FileTable>> = {}
+): void {
   render(
     <SWRConfig
       value={{
         dedupingInterval: 0,
         fetcher: (url: string) =>
-          fetch(new URL(url, window.location.origin).toString()).then((res) =>
-            res.json()
-          ),
+          (global.fetch as typeof nodeFetch)(
+            new URL(url, window.location.origin).toString()
+          ).then((res) => res.json()),
         provider: () => new Map(),
       }}
     >
-      <FileTable onFileSelected={jest.fn()} />
+      <FileTable onFileSelected={onFileSelected} {...props} />
     </SWRConfig>
   );
 }

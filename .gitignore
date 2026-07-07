@@ -4,8 +4,16 @@
 .env.production.local
 .env.test.local
 .env
+mise.local.toml
 yarn-error.log*
+tsconfig.tsbuildinfo
 
 /.next
 /coverage
 /node_modules
+/playwright/
+.idea
+.yarnrc.yml
+.yarn
+
+.playwright-mcp

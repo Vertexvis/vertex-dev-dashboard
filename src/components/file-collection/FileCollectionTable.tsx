@@ -13,14 +13,12 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import {
-  FileCollection,
-  toFileCollectionPage,
-} from "../../lib/file-collections";
+import { toFileCollectionPage } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -45,22 +43,19 @@ function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-interface Props {
-  readonly activeFileCollectionId?: string;
-  readonly onFileCollectionSelected: (fileCollection: FileCollection) => void;
-}
-
-export default function FileCollectionTable({
-  activeFileCollectionId,
-  onFileCollectionSelected,
-}: Props): JSX.Element {
+export default function FileCollectionTable(): JSX.Element {
+  const router = useRouter();
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
@@ -77,7 +72,7 @@ export default function FileCollectionTable({
     () =>
       debounce((value: string) => {
         resetPaging();
-        setSuppliedIdFilter(value === "" ? undefined : value);
+        setSuppliedId(value === "" ? undefined : value);
       }, 300),
     [resetPaging]
   );
@@ -133,6 +128,63 @@ export default function FileCollectionTable({
     mutate();
   }
 
+  function handleViewFiles(fileCollectionId: string) {
+    router.push(`/file-collections/${encodeURIComponent(fileCollectionId)}`);
+  }
+
+  let tableRows: React.ReactNode;
+  if (error) {
+    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
+  } else if (!page) {
+    tableRows = (
+      <SkeletonBody
+        includeCheckbox={true}
+        numCellsPerRow={headCells.length}
+        numRows={pageSize - pageLength}
+        rowHeight={DefaultRowHeight}
+      />
+    );
+  } else {
+    tableRows = page.items.map((row) => {
+      const isSel = selected.has(row.id);
+
+      return (
+        <TableRow
+          hover
+          role="checkbox"
+          tabIndex={-1}
+          key={row.id}
+          selected={isSel}
+          style={{ cursor: "pointer" }}
+          onClick={() => handleViewFiles(row.id)}
+        >
+          <TableCell
+            padding="checkbox"
+            style={{ cursor: "default" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheck(row.id);
+            }}
+          >
+            <Checkbox
+              color="primary"
+              checked={isSel}
+              inputProps={{
+                "aria-label": `Select ${row.name ?? row.id}`,
+              }}
+            />
+          </TableCell>
+          <TableCell component="th" scope="row" padding="none">
+            {row.name}
+          </TableCell>
+          <TableCell>{row.id}</TableCell>
+          <TableCell>{row.suppliedId}</TableCell>
+          <TableCell>{toLocaleString(row.created)}</TableCell>
+        </TableRow>
+      );
+    });
+  }
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
@@ -171,54 +223,7 @@ export default function FileCollectionTable({
               rowCount={pageLength}
             />
             <TableBody>
-              {error ? (
-                <DataLoadError colSpan={headCells.length + 1} />
-              ) : !page ? (
-                <SkeletonBody
-                  includeCheckbox={true}
-                  numCellsPerRow={headCells.length}
-                  numRows={pageSize - pageLength}
-                  rowHeight={DefaultRowHeight}
-                />
-              ) : (
-                page.items.map((row) => {
-                  const isSel = selected.has(row.id);
-                  const isActive = activeFileCollectionId === row.id;
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isSel || isActive}
-                      onClick={() => onFileCollectionSelected(row)}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCheck(row.id);
-                        }}
-                      >
-                        <Checkbox
-                          color="primary"
-                          checked={isSel}
-                          inputProps={{
-                            "aria-label": `Select ${row.name ?? row.id}`,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{row.suppliedId}</TableCell>
-                      <TableCell>{toLocaleString(row.created)}</TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
+              {tableRows}
               {page?.items.length === 0 && (
                 <TableRow style={{ height: DefaultRowHeight }}>
                   <TableCell colSpan={headCells.length + 1}>
@@ -241,7 +246,11 @@ export default function FileCollectionTable({
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: cursors?.next == null },
+            },
+          }}
         />
       </Paper>
       <Snackbar

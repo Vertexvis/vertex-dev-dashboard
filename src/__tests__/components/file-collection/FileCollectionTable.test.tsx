@@ -5,6 +5,14 @@ import { SWRConfig } from "swr";
 
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
+const mockPush = jest.fn();
+
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
 const firstPage = {
   cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
   data: [
@@ -63,6 +71,10 @@ const multiCollectionPage = {
 };
 
 describe("FileCollectionTable", () => {
+  beforeEach(() => {
+    mockPush.mockClear();
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -171,6 +183,18 @@ describe("FileCollectionTable", () => {
       );
     });
   });
+
+  it("navigates to the file collection detail route when a row is clicked", async () => {
+    mockFetch(() => firstPage);
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText("Collection One"));
+
+    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
+  });
 });
 
 function renderTable(): void {
@@ -182,7 +206,7 @@ function renderTable(): void {
         provider: () => new Map(),
       }}
     >
-      <FileCollectionTable onFileCollectionSelected={jest.fn()} />
+      <FileCollectionTable />
     </SWRConfig>
   );
 }

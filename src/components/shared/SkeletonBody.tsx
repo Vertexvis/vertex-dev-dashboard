@@ -41,7 +41,7 @@ function SkeletonRow({
       <TableCell padding={role}>
         {includeCheckbox ? <Checkbox disabled /> : <Skeleton />}
       </TableCell>
-      {Array(includeCheckbox ? numCellsPerRow - 1 : numCellsPerRow)
+      {Array(numCellsPerRow - 1)
         .fill(0)
         .map((_, i) => (
           <TableCell key={i}>
