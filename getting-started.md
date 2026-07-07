@@ -3,7 +3,7 @@
 ## Creating Application Credentials
 
 Before you can start leveraging the dashboard to manage your Vertex Platform data, you must first create a set of credentials unique to you or your application
-that can be used to sign in. These credentials are generated through the creation of an `Application` ([API Reference](https://docs.vertex3d.com/#f7aab897-5276-48e3-8ecb-2b9931c53cc9)), returning a `Client ID` and `Client Secret` which can be used to sign in.
+that can be used to sign in. These credentials are generated through the creation of an `Application` ([API Reference](https://docs.vertex3d.com/#v-create-application)), returning a `Client ID` and `Client Secret` which can be used to sign in.
 
 ### Using Vertex Console (multi-tenant only)
 
@@ -91,7 +91,7 @@ in the account the credentials were created for, which we will revisit as the la
 
 ## Files
 
-The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference](https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca). Through the `Files` page, you can:
+The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference](https://docs.vertex3d.com/#v-files)). Through the `Files` page, you can:
 
 - View existing files
   - Includes both files created through the dashboard as well as files created through our APIs directly
@@ -144,7 +144,7 @@ After pressing `Create`, a new translation will begin running, and can be tracke
 
 ## Parts Library
 
-The `Parts Library` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Parts ([API Reference](https://docs.vertex3d.com/#6de47d1b-0bba-4a3a-a8b6-3f9a23834784)). Through the `Parts Library` page, you can:
+The `Parts Library` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Parts ([API Reference](https://docs.vertex3d.com/#v-parts)). Through the `Parts Library` page, you can:
 
 - View existing parts
   - Includes both parts created through the dashboard as well as parts created through our APIs directly
@@ -182,7 +182,7 @@ After clicking `Create`, your scene will be created from the specified part revi
 
 ## Scenes
 
-The `Scenes` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Scenes ([API Reference](https://docs.vertex3d.com/#72c23aae-e949-4f0e-989a-0c9587a5116c)). Through the `Scenes` page, you can:
+The `Scenes` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Scenes ([API Reference](https://docs.vertex3d.com/#v-scenes)). Through the `Scenes` page, you can:
 
 - View existing scenes
   - Includes both scenes created through the dashboard as well as scenes created through our APIs directly
