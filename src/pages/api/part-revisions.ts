@@ -14,6 +14,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
+import { parsePositiveQueryInt } from "../../lib/paging";
 import { getClientFromSession } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -43,7 +44,7 @@ async function get(
     const { cursors, page } = await getPage(() =>
       c.partRevisions.getPartRevisions({
         id: pId,
-        pageSize: ps ? parseInt(ps, 10) : 10,
+        pageSize: parsePositiveQueryInt(ps, 10),
       })
     );
     return { cursors, data: page.data, status: 200 };

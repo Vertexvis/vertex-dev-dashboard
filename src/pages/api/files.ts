@@ -21,6 +21,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
+import { parsePositiveQueryInt } from "../../lib/paging";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -62,19 +63,20 @@ async function get(
     const sId = head(req.query.suppliedId);
     const sort = head(req.query.sort);
 
-    const { cursors, page } = await getPage(() =>
-      c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
-        headers: {
-          Accept: "application/vnd.api+json",
-          Authorization: `Bearer ${c.token.access_token}`,
-        },
-        params: {
-          "filter[suppliedId]": sId,
-          "page[cursor]": pc,
-          "page[size]": ps ? parseInt(ps, 10) : 10,
-          sort,
-        },
-      }) as Promise<AxiosResponse<FileList>>
+    const { cursors, page } = await getPage(
+      () =>
+        c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
+          headers: {
+            Accept: "application/vnd.api+json",
+            Authorization: `Bearer ${c.token.access_token}`,
+          },
+          params: {
+            "filter[suppliedId]": sId,
+            "page[cursor]": pc,
+            "page[size]": parsePositiveQueryInt(ps, 10),
+            sort,
+          },
+        }) as Promise<AxiosResponse<FileList>>
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {

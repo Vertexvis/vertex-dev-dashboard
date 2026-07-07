@@ -16,6 +16,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
+import { parsePositiveQueryInt } from "../../lib/paging";
 import { getClientFromSession } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -60,7 +61,7 @@ async function get(
       const { cursors, page } = await getPage(() =>
         c.translationInspections.getQueuedTranslationJobs({
           pageCursor: pc,
-          pageSize: ps ? parseInt(ps, 10) : 200,
+          pageSize: parsePositiveQueryInt(ps, 200),
           filterStatus: status,
         })
       );

@@ -15,6 +15,7 @@ import {
   toErrorRes,
 } from "../../../../lib/api";
 import { getFileCollectionsApi } from "../../../../lib/file-collections";
+import { parsePositiveQueryInt } from "../../../../lib/paging";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
@@ -47,7 +48,7 @@ async function get(
       c.listFileCollectionFiles({
         id,
         pageCursor: cursor,
-        pageSize: pageSize ? Number.parseInt(pageSize, 10) : 10,
+        pageSize: parsePositiveQueryInt(pageSize, 10),
       })
     );
 

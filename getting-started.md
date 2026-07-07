@@ -14,7 +14,8 @@ which can be used to sign in to the Vertex Developer Dashboard.
 <details>
   <summary>Creating Credentials through Console</summary>
 
-  ![Console Credentials Creation](./public/console-credentials.png)
+![Console Credentials Creation](./public/console-credentials.png)
+
 </details>
 <br />
 
@@ -26,7 +27,7 @@ This `Client Secret` is confidential, and bundling it with a mobile or browser a
 **NOTE:** This step requires access to the platform account `Client ID` and `Client Secret`, so be sure to have those available before continuing.
 
 If you don't have access to the Vertex Console, generation of these credentials will need to be done using our public APIs directly. For making requests against our
-APIs, we recommend using [Postman](https://www.postman.com/), for which we provide a collection that can be imported to get started quickly. Any non-browser tool supporting 
+APIs, we recommend using [Postman](https://www.postman.com/), for which we provide a collection that can be imported to get started quickly. Any non-browser tool supporting
 the HTTP protocol can be used, but for the purposes of this guide, we will focus on usage of Postman.
 
 In order to access the Postman collection for our platform APIs, first navigate to our [API Docs](https://docs.vertex3d.com/). From here, you can click the `Run in Postman`
@@ -35,7 +36,8 @@ button in the top-right corner of the page. This will prompt you to either downl
 <details>
   <summary>Importing the Postman Collection</summary>
 
-  ![Import Collection](./public/run-in-postman.png)
+![Import Collection](./public/run-in-postman.png)
+
 </details>
 <br />
 
@@ -45,7 +47,8 @@ creating a new Application and credentials. In order to make this request, we fi
 <details>
   <summary>Obtaining an OAuth2 token</summary>
 
-  ![Create OAuth2 Token](./public/create-token.png)
+![Create OAuth2 Token](./public/create-token.png)
+
 </details>
 <br />
 
@@ -58,7 +61,8 @@ This `Client Secret` is confidential, and bundling it with a mobile or browser a
 <details>
   <summary>Setting up a new Application</summary>
 
-  ![Create Application](./public/create-application.png)
+![Create Application](./public/create-application.png)
+
 </details>
 <br />
 
@@ -71,7 +75,8 @@ typically only used for internal development, as individual Vertex Platform depl
 <details>
   <summary>Sign In to the Vertex Developer Dashboard</summary>
 
-  ![Sign In](./public/sign-in.png)
+![Sign In](./public/sign-in.png)
+
 </details>
 <br />
 
@@ -86,12 +91,13 @@ in the account the credentials were created for, which we will revisit as the la
 
 ## Files
 
-The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference]((https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca))). Through the `Files` page, you can:
-* View existing files
-  * Includes both files created through the dashboard as well as files created through our APIs directly
-* Create new files
-* Delete existing files
-* Inspect file status and properties
+The `Files` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Files ([API Reference](<(https://docs.vertex3d.com/#83fe0cae-da2d-4e3f-9c66-258bba1116ca)>)). Through the `Files` page, you can:
+
+- View existing files
+  - Includes both files created through the dashboard as well as files created through our APIs directly
+- Create new files
+- Delete existing files
+- Inspect file status and properties
 
 ### Creating a New File
 
@@ -101,51 +107,53 @@ a set of optional parameters that can be configured to suit a variety of differe
 <details>
   <summary>New File Example</summary>
 
-  ![Create File](./public/list-and-create-file.png)
+![Create File](./public/list-and-create-file.png)
+
 </details>
 <br />
 
-* `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a file. Setting this is useful if you intend to reference these files
-from an external application to avoid the need to store the auto-generated `ID` of the file. Note that this is globally unique across the platform account, and
-no two files can share the same supplied ID.
-* `Root File Name` - indicates the name of the root model file within an assembly file. For non-CAD files, or non-assembly files, this field should be left blank.
-* `Create Part After Upload` - indicates whether we intend to create a part within the `Parts Library` with the data uploaded. If checked, this file will be uploaded 
-to the Vertex Platform and you will automatically navigate to the `Parts Library` tab to complete part creation.
+- `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a file. Setting this is useful if you intend to reference these files
+  from an external application to avoid the need to store the auto-generated `ID` of the file. Note that this is globally unique across the platform account, and
+  no two files can share the same supplied ID.
+- `Root File Name` - indicates the name of the root model file within an assembly file. For non-CAD files, or non-assembly files, this field should be left blank.
+- `Create Part After Upload` - indicates whether we intend to create a part within the `Parts Library` with the data uploaded. If checked, this file will be uploaded
+  to the Vertex Platform and you will automatically navigate to the `Parts Library` tab to complete part creation.
 
 ### Creating a New Part
 
-Once `Upload` is pressed, you will be auto-navigated to the `Parts Library` page, where we can complete the Part creation. The part creation dialog provides 
+Once `Upload` is pressed, you will be auto-navigated to the `Parts Library` page, where we can complete the Part creation. The part creation dialog provides
 a set of inputs to provide `Supplied ID`s, similar to the file creation dialog.
-
 
 <details>
   <summary>New Part Example</summary>
 
-  ![Create Part](./public/create-part.png)
+![Create Part](./public/create-part.png)
+
 </details>
 <br />
 
-* `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a part. Similar to the `Supplied ID` for files, this value is globally unique
-across the platform account, and no two parts can share the same supplied ID.
-* `Supplied Revision ID` - refers to a user-provided string that can be used to uniquely identify a part revision. Contrary the `Supplied ID`, the `Supplied Revision ID`
-is not required to be globally unique within the platform account. However, this ID must be unique for a given part. For instance, a part with a Supplied ID of `part-a` could not have two revisions with a Supplied Revision ID of `rev-1`.
-* `Supplied Iteration ID` - refers to a user-provided string that can be used to uniquely identify a part iteration. Similar to the `Supplied Revision ID`, this ID is not
-required to be globally unique within the platform account. However, this ID must be unique for a given part revision. For instance, a part revision with a Supplied Revision ID of `rev-1` could not have two iterations with a Supplied Iteration ID of `i-1`.
-* `Index Metadata` - indicates whether metadata within the provided CAD file should be indexed and made available for use within Vertex-based applications.
+- `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a part. Similar to the `Supplied ID` for files, this value is globally unique
+  across the platform account, and no two parts can share the same supplied ID.
+- `Supplied Revision ID` - refers to a user-provided string that can be used to uniquely identify a part revision. Contrary the `Supplied ID`, the `Supplied Revision ID`
+  is not required to be globally unique within the platform account. However, this ID must be unique for a given part. For instance, a part with a Supplied ID of `part-a` could not have two revisions with a Supplied Revision ID of `rev-1`.
+- `Supplied Iteration ID` - refers to a user-provided string that can be used to uniquely identify a part iteration. Similar to the `Supplied Revision ID`, this ID is not
+  required to be globally unique within the platform account. However, this ID must be unique for a given part revision. For instance, a part revision with a Supplied Revision ID of `rev-1` could not have two iterations with a Supplied Iteration ID of `i-1`.
+- `Index Metadata` - indicates whether metadata within the provided CAD file should be indexed and made available for use within Vertex-based applications.
 
 After pressing `Create`, a new translation will begin running, and can be tracked using the `Parts Library` page.
 
 ## Parts Library
 
-The `Parts Library` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Parts ([API Reference]((https://docs.vertex3d.com/#6de47d1b-0bba-4a3a-a8b6-3f9a23834784))). Through the `Parts Library` page, you can:
-* View existing parts
-  * Includes both parts created through the dashboard as well as parts created through our APIs directly
-* Create new parts
-* Delete existing parts
-* Inspect a part and its properties
-* Inspect the part revisions for a part and their properties
-* Inspect the status of ongoing file translations
-* Create new scenes
+The `Parts Library` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Parts ([API Reference](<(https://docs.vertex3d.com/#6de47d1b-0bba-4a3a-a8b6-3f9a23834784)>)). Through the `Parts Library` page, you can:
+
+- View existing parts
+  - Includes both parts created through the dashboard as well as parts created through our APIs directly
+- Create new parts
+- Delete existing parts
+- Inspect a part and its properties
+- Inspect the part revisions for a part and their properties
+- Inspect the status of ongoing file translations
+- Create new scenes
 
 ### Inspecting Translation Status
 
@@ -158,14 +166,15 @@ can be clicked to reveal information about the associated part revision that was
 Now that we have a part and a part revision, you'll see that the part revision shows a new action on the right-hand side of the row labeled `New Scene`. Pressing
 this button will begin the process of creating a Scene that we can visually inspect by opening the scene creation dialog.
 
-* `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a scene. Similar to the `Supplied ID` for parts and files, this value is
-globally unique across all scenes in the platform account, and no two scenes can share the same supplied ID.
-* `Name` - the name of the scene to create. This determines how the scene will visually appear in the list on the `Scenes` page.
+- `Supplied ID` - refers to a user-provided string that can be used to uniquely identify a scene. Similar to the `Supplied ID` for parts and files, this value is
+  globally unique across all scenes in the platform account, and no two scenes can share the same supplied ID.
+- `Name` - the name of the scene to create. This determines how the scene will visually appear in the list on the `Scenes` page.
 
 <details>
   <summary>New Scene Example</summary>
 
-  ![Create Scene](./public/create-scene.png)
+![Create Scene](./public/create-scene.png)
+
 </details>
 <br />
 
@@ -173,12 +182,13 @@ After clicking `Create`, your scene will be created from the specified part revi
 
 ## Scenes
 
-The `Scenes` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Scenes ([API Reference]((https://docs.vertex3d.com/#72c23aae-e949-4f0e-989a-0c9587a5116c))). Through the `Scenes` page, you can:
-* View existing scenes
-  * Includes both scenes created through the dashboard as well as scenes created through our APIs directly
-* Update scene names, supplied IDs, or metadata
-* Generate stream keys to access your scene through our SDKs
-* View your scene
+The `Scenes` page within the Vertex Developer Dashboard allows for basic operations on Vertex Platform Scenes ([API Reference](<(https://docs.vertex3d.com/#72c23aae-e949-4f0e-989a-0c9587a5116c)>)). Through the `Scenes` page, you can:
+
+- View existing scenes
+  - Includes both scenes created through the dashboard as well as scenes created through our APIs directly
+- Update scene names, supplied IDs, or metadata
+- Generate stream keys to access your scene through our SDKs
+- View your scene
 
 ### Updating a Scene
 
@@ -190,7 +200,8 @@ Connect (see [Synchronizing with Connect](https://developer.vertex3d.com/docs/gu
 <details>
   <summary>Edit Scene Example</summary>
 
-  ![Edit Scene](./public/edit-scene.png)
+![Edit Scene](./public/edit-scene.png)
+
 </details>
 <br />
 
@@ -203,7 +214,8 @@ this dashboard.
 <details>
   <summary>New Stream Key Example</summary>
 
-  ![Create Stream Key](./public/create-stream-key.png)
+![Create Stream Key](./public/create-stream-key.png)
+
 </details>
 <br />
 
@@ -219,7 +231,8 @@ and parts can be selected or hidden. This panel also provides search functionali
 <details>
   <summary>Assembly Panel Example</summary>
 
-  ![Assembly Panel](./public/assembly-panel.gif)
+![Assembly Panel](./public/assembly-panel.gif)
+
 </details>
 <br />
 
@@ -231,7 +244,8 @@ option is enabled when importing a part.
 <details>
   <summary>Properties Panel Example</summary>
 
-  ![Properties Panel](./public/properties.gif)
+![Properties Panel](./public/properties.gif)
+
 </details>
 <br />
 
@@ -244,7 +258,8 @@ that have been applied to a Scene. Once created, scene view states can be re-app
 <details>
   <summary>Scene View States Panel Example</summary>
 
-  ![Scene View States Panel](./public/scene-view-states-panel.gif)
+![Scene View States Panel](./public/scene-view-states-panel.gif)
+
 </details>
 <br />
 
@@ -256,7 +271,8 @@ with PMI data present in the CAD file. Once loaded, a model view can be clicked 
 <details>
   <summary>Model Views Example</summary>
 
-  ![Model Views](./public/model-views.gif)
+![Model Views](./public/model-views.gif)
+
 </details>
 <br />
 
@@ -269,7 +285,8 @@ In addition to the above features, the viewer also provides a set of utility act
 <details>
   <summary>Reset View Example</summary>
 
-  ![Reset View](./public/reset-view.gif)
+![Reset View](./public/reset-view.gif)
+
 </details>
 <br />
 
@@ -279,7 +296,8 @@ where this button was clicked.
 <details>
   <summary>Update Camera Example</summary>
 
-  ![Update Camera](./public/update-camera.gif)
+![Update Camera](./public/update-camera.gif)
+
 </details>
 <br />
 
@@ -291,7 +309,7 @@ present in this platform account. The camera data can be provided to our SDKs to
 <details>
   <summary>Fit All Example</summary>
 
-  ![Fit All](./public/fit-all.gif)
+![Fit All](./public/fit-all.gif)
+
 </details>
 <br />
-  
