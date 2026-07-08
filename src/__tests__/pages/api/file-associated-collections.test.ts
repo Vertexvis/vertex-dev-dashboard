@@ -60,21 +60,15 @@ describe("file-associated collections API route", () => {
       status: 200,
     });
     expect(mockGet()).toHaveBeenCalledWith(
-      "https://example.vertexvis.io/files/file-1/file-collections",
       {
-        headers: {
-          Accept: "application/vnd.api+json",
-          Authorization: "Bearer test-token",
-        },
-        params: {
-          "page[cursor]": "cursor-1",
-          "page[size]": 50,
-        },
+        id: "file-1",
+        pageCursor: "cursor-1",
+        pageSize: 50,
       }
     );
   });
 
-  it("encodes file IDs in the request path", async () => {
+  it("passes file IDs through to the node client", async () => {
     mockClient({
       data: {
         data: [collectionData("collection-1")],
@@ -88,16 +82,10 @@ describe("file-associated collections API route", () => {
     });
 
     expect(mockGet()).toHaveBeenCalledWith(
-      "https://example.vertexvis.io/files/file%2F1/file-collections",
       {
-        headers: {
-          Accept: "application/vnd.api+json",
-          Authorization: "Bearer test-token",
-        },
-        params: {
-          "page[cursor]": undefined,
-          "page[size]": 10,
-        },
+        id: "file/1",
+        pageCursor: undefined,
+        pageSize: 10,
       }
     );
   });
@@ -117,16 +105,10 @@ describe("file-associated collections API route", () => {
 
     expect(res.statusCode()).toBe(200);
     expect(mockGet()).toHaveBeenCalledWith(
-      "https://example.vertexvis.io/files/file-1/file-collections",
       {
-        headers: {
-          Accept: "application/vnd.api+json",
-          Authorization: "Bearer test-token",
-        },
-        params: {
-          "page[cursor]": undefined,
-          "page[size]": 10,
-        },
+        id: "file-1",
+        pageCursor: undefined,
+        pageSize: 10,
       }
     );
   });
@@ -238,9 +220,7 @@ function mockClient({
   );
 
   (getClientFromSession as jest.Mock).mockResolvedValue({
-    axiosInstance: { get: getMock },
-    config: { basePath: "https://example.vertexvis.io" },
-    token: { access_token: "test-token" },
+    files: { listFileCollectionsForFile: getMock },
   });
 }
 

@@ -1,12 +1,10 @@
 import {
-  FileCollectionList,
   FileCollectionMetadataData,
   getPage,
   head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -45,19 +43,11 @@ async function get(
     const cursor = head(req.query.cursor);
 
     const { cursors, page } = await getPage(() =>
-      client.axiosInstance.get<FileCollectionList>(
-        `${client.config.basePath}/files/${encodeURIComponent(id)}/file-collections`,
-        {
-          headers: {
-            Accept: "application/vnd.api+json",
-            Authorization: `Bearer ${client.token.access_token}`,
-          },
-          params: {
-            "page[cursor]": cursor,
-            "page[size]": pageSize ? parseInt(pageSize, 10) : 10,
-          },
-        }
-      ) as Promise<AxiosResponse<FileCollectionList>>
+      client.files.listFileCollectionsForFile({
+        id,
+        pageCursor: cursor,
+        pageSize: pageSize ? parseInt(pageSize, 10) : 10,
+      })
     );
 
     return { cursors, data: page.data, status: 200 };
