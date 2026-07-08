@@ -43,14 +43,6 @@ describe("FileTable", () => {
     return screen.getByRole("button", { name: "Name" });
   }
 
-  function getAdditionalFiltersButton(): HTMLElement {
-    return screen.getByRole("button", { name: /Additional filters/i });
-  }
-
-  function getCreatedRangeButton(): HTMLElement {
-    return screen.getByRole("button", { name: /Created Range/i });
-  }
-
   beforeAll(() => {
     Object.assign(global, {
       Headers,
@@ -147,7 +139,7 @@ describe("FileTable", () => {
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
   });
 
-  it("reopens the created-date dialog with the selected local dates", async () => {
+  it("preserves the selected local created dates in the inline filters", async () => {
     server.use(
       rest.get("*/api/files", (_req, res, ctx) => {
         return res(ctx.json(page));
@@ -158,22 +150,14 @@ describe("FileTable", () => {
 
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
 
-    await userEvent.click(getAdditionalFiltersButton());
-    await userEvent.click(getCreatedRangeButton());
+    const fromInput = screen.getByLabelText("Created From");
+    const toInput = screen.getByLabelText("Created To");
 
-    await userEvent.type(screen.getByLabelText("From"), "2026-06-01");
-    await userEvent.type(screen.getByLabelText("To"), "2026-06-30");
-    await userEvent.click(screen.getByRole("button", { name: "Apply" }));
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("dialog", { name: "Filter by Created Date" })
-      ).not.toBeInTheDocument();
-    });
+    await userEvent.type(fromInput, "2026-06-01");
+    await userEvent.type(toInput, "2026-06-30");
 
-    await userEvent.click(getCreatedRangeButton());
-
-    expect(screen.getByLabelText("From")).toHaveValue("2026-06-01");
-    expect(screen.getByLabelText("To")).toHaveValue("2026-06-30");
+    expect(fromInput).toHaveValue("2026-06-01");
+    expect(toInput).toHaveValue("2026-06-30");
   });
 });
 

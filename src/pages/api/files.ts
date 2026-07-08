@@ -100,7 +100,9 @@ async function get(
             } satisfies FilterExpression)
           : undefined,
       filterFileId:
-        fileId != null ? ({ eq: fileId } satisfies FilterExpression) : undefined,
+        fileId != null
+          ? ({ contains: fileId } satisfies FilterExpression)
+          : undefined,
       filterName:
         name != null ? ({ contains: name } satisfies FilterExpression) : undefined,
       filterSuppliedId:
