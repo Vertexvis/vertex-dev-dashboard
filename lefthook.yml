@@ -15,3 +15,10 @@ quality-checks:
       run: corepack yarn typecheck
     test:
       run: corepack yarn test --runInBand
+
+quality-fix:
+  commands:
+    format:
+      run: corepack yarn format:staged:write
+    quality-checks:
+      run: corepack yarn lefthook run quality-checks
