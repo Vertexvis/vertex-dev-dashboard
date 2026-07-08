@@ -1,5 +1,5 @@
 import {
-  FileCollectionList,
+  FileCollectionMetadataData,
   getPage,
   head,
   logError,
@@ -25,7 +25,7 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 
 export async function handleFileCollections(
   req: NextIronRequest,
-  res: NextApiResponse<GetRes<FileCollectionList["data"][number]> | Res | ErrorRes>
+  res: NextApiResponse<GetRes<FileCollectionMetadataData> | Res | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -44,7 +44,7 @@ export default withSession(handleFileCollections);
 
 async function get(
   req: NextIronRequest
-): Promise<ErrorRes | GetRes<FileCollectionList["data"][number]>> {
+): Promise<ErrorRes | GetRes<FileCollectionMetadataData>> {
   try {
     const c = getFileCollectionsApi(await getClientFromSession(req.session));
     const ps = head(req.query.pageSize);

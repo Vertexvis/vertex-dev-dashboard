@@ -39,6 +39,10 @@ const pagedPage = {
 };
 
 describe("FileTable", () => {
+  function getNameSortButton(): HTMLElement {
+    return screen.getByRole("button", { name: "Name" });
+  }
+
   beforeAll(() => {
     Object.assign(global, {
       Headers,
@@ -91,14 +95,14 @@ describe("FileTable", () => {
 
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
         "http://localhost/api/files?pageSize=25&sort=name"
       );
     });
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
         "http://localhost/api/files?pageSize=25&sort=-name"
@@ -127,7 +131,7 @@ describe("FileTable", () => {
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
     expect(screen.getByLabelText("Go to next page")).toBeEnabled();
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
 
     expect(screen.getByLabelText("Go to next page")).toBeDisabled();
 
