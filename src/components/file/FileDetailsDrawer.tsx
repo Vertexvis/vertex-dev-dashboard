@@ -4,6 +4,7 @@ import {
   CircularProgress,
   Drawer,
   IconButton,
+  Link,
   Table,
   TableBody,
   TableCell,
@@ -15,7 +16,7 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
-import { toFileCollectionPage } from "../../lib/file-collections";
+import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
 import { File } from "../../lib/files";
 import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
 import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
@@ -27,7 +28,7 @@ interface Props {
 }
 
 export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
-  const { error, fileCollectionIds, loading } = useFileCollectionIds({
+  const { error, fileCollections, loading } = useFileCollections({
     fileId: file?.id,
     open,
   });
@@ -74,7 +75,7 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
               />
               <FileCollectionIdsRow
                 error={error}
-                fileCollectionIds={fileCollectionIds}
+                fileCollections={fileCollections}
                 loading={loading}
               />
             </TableBody>
@@ -87,7 +88,7 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
   );
 }
 
-function useFileCollectionIds({
+function useFileCollections({
   fileId,
   open,
 }: {
@@ -95,10 +96,10 @@ function useFileCollectionIds({
   readonly open: boolean;
 }): {
   readonly error?: string;
-  readonly fileCollectionIds: string[];
+  readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 } {
-  const [fileCollectionIds, setFileCollectionIds] = React.useState<string[]>(
+  const [fileCollections, setFileCollections] = React.useState<FileCollection[]>(
     []
   );
   const [loading, setLoading] = React.useState(false);
@@ -106,7 +107,7 @@ function useFileCollectionIds({
 
   React.useEffect(() => {
     if (!open || fileId == null) {
-      setFileCollectionIds([]);
+      setFileCollections([]);
       setLoading(false);
       setError(undefined);
       return;
@@ -114,7 +115,7 @@ function useFileCollectionIds({
 
     const controller = new AbortController();
 
-    const loadPage = async (nextCursor?: string): Promise<string[]> => {
+    const loadPage = async (nextCursor?: string): Promise<FileCollection[]> => {
       if (controller.signal.aborted) return [];
 
       const params = new URLSearchParams({
@@ -140,22 +141,21 @@ function useFileCollectionIds({
       }
 
       const page = toFileCollectionPage(body);
-      const ids = page.items.map((item) => item.id);
       return body.cursors?.next == null
-        ? ids
-        : [...ids, ...(await loadPage(body.cursors.next))];
+        ? page.items
+        : [...page.items, ...(await loadPage(body.cursors.next))];
     };
 
     const load = async () => {
-      setFileCollectionIds([]);
+      setFileCollections([]);
       setLoading(true);
       setError(undefined);
 
       try {
-        const ids = await loadPage();
+        const collections = await loadPage();
 
         if (!controller.signal.aborted) {
-          setFileCollectionIds(ids);
+          setFileCollections(collections);
           setLoading(false);
         }
       } catch (err) {
@@ -177,7 +177,7 @@ function useFileCollectionIds({
     };
   }, [fileId, open]);
 
-  return { error, fileCollectionIds, loading };
+  return { error, fileCollections, loading };
 }
 
 function DetailsRow({
@@ -279,11 +279,11 @@ function MetadataRow({
 
 function FileCollectionIdsRow({
   error,
-  fileCollectionIds,
+  fileCollections,
   loading,
 }: {
   readonly error?: string;
-  readonly fileCollectionIds: string[];
+  readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 }): JSX.Element {
   return (
@@ -304,30 +304,66 @@ function FileCollectionIdsRow({
           >
             {error}
           </Typography>
-        ) : fileCollectionIds.length > 0 ? (
-          <Box sx={{ mt: 1 }}>
-            {fileCollectionIds.map((id) => (
-              <Box
-                key={id}
-                sx={{
-                  "& + &": { mt: 0.5 },
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: "monospace",
-                    fontSize: "0.7rem",
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1.4,
-                    whiteSpace: "nowrap",
-                  }}
-                  variant="body2"
-                >
-                  {id}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+        ) : fileCollections.length > 0 ? (
+          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ px: 0, py: 0.5, pr: 1, width: "38%" }}>
+                  <Typography variant="subtitle2">Name</Typography>
+                </TableCell>
+                <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
+                  <Typography variant="subtitle2">ID</Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {fileCollections.map((collection) => (
+                <TableRow key={collection.id}>
+                  <TableCell
+                    sx={{ px: 0, py: 0.5, pr: 1, verticalAlign: "top" }}
+                  >
+                    <Link
+                      href={`/file-collections/${encodeURIComponent(
+                        collection.id
+                      )}`}
+                      underline="hover"
+                    >
+                      <Typography
+                        sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                        variant="body2"
+                      >
+                        {toDisplayValue(collection.name ?? collection.id)}
+                      </Typography>
+                    </Link>
+                  </TableCell>
+                  <TableCell
+                    sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}
+                  >
+                    <Link
+                      href={`/file-collections/${encodeURIComponent(
+                        collection.id
+                      )}`}
+                      underline="hover"
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: "monospace",
+                          fontSize: "0.7rem",
+                          letterSpacing: "-0.02em",
+                          lineHeight: 1.4,
+                          overflowWrap: "anywhere",
+                          whiteSpace: "normal",
+                        }}
+                        variant="body2"
+                      >
+                        {collection.id}
+                      </Typography>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <Typography
             sx={{ mt: 1, overflowWrap: "anywhere", whiteSpace: "normal" }}
