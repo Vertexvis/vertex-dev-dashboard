@@ -1,14 +1,14 @@
 pre-commit:
   commands:
     quality-checks:
-      run: corepack yarn lefthook run quality-checks --file {staged_files}
+      run: corepack yarn lefthook run quality-checks
 
 quality-checks:
   parallel: true
   commands:
     format:
       glob: "*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}"
-      run: corepack yarn prettier --check {staged_files}
+      run: corepack yarn format:staged:check
     lint:
       run: corepack yarn lint
     typecheck:

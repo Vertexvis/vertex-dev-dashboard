@@ -67,6 +67,7 @@
     "clean": "rm -rf .next/ node_modules/",
     "dev": "next",
     "format": "prettier --write './**/*.+(js|jsx|ts|tsx|json|yml|yaml|md|mdx|html|css)'",
+    "format:staged:check": "node scripts/check-staged-format.js",
     "lint": "next lint",
     "postinstall": "lefthook install",
     "start": "next start",
