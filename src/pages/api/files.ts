@@ -1,7 +1,9 @@
 import {
   CreateFileRequestDataAttributes,
   FileList,
-  FileMetadataData,
+  FileMetadata,
+  FilesApiGetFilesRequest,
+  FilterExpression,
   getPage,
   head,
   logError,
@@ -25,12 +27,13 @@ import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
 type CreateFileReq = CreateFileRequestDataAttributes;
+type FileData = FileMetadata["data"];
 
-export type CreateFileRes = Res & Pick<FileMetadataData, "id">;
+export type CreateFileRes = Res & Pick<FileData, "id">;
 
 export async function handleFiles(
   req: NextIronRequest,
-  res: NextApiResponse<GetRes<FileMetadataData> | Res | ErrorRes>
+  res: NextApiResponse<GetRes<FileData> | Res | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -52,9 +55,31 @@ export async function handleFiles(
 
 export default withSession(handleFiles);
 
+function setFilterExpression(
+  params: URLSearchParams,
+  field: string,
+  filter?: FilterExpression
+): void {
+  if (filter == null) return;
+
+  const expressions: Array<[keyof FilterExpression, string | undefined]> = [
+    ["eq", filter.eq],
+    ["neq", filter.neq],
+    ["gt", filter.gt],
+    ["gte", filter.gte],
+    ["lt", filter.lt],
+    ["lte", filter.lte],
+    ["contains", filter.contains],
+  ];
+
+  expressions.forEach(([op, value]) => {
+    if (value != null) params.append(`filter[${field}][${op}]`, value);
+  });
+}
+
 async function get(
   req: NextIronRequest
-): Promise<ErrorRes | GetRes<FileMetadataData>> {
+): Promise<ErrorRes | GetRes<FileData>> {
   try {
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
@@ -65,20 +90,42 @@ async function get(
     const createdAtStart = head(req.query.createdAtStart);
     const createdAtEnd = head(req.query.createdAtEnd);
 
+    const params: FilesApiGetFilesRequest = {
+      filterCreatedAt:
+        createdAtStart != null || createdAtEnd != null
+          ? ({
+              ...(createdAtStart != null ? { gte: createdAtStart } : {}),
+              ...(createdAtEnd != null ? { lte: createdAtEnd } : {}),
+            } satisfies FilterExpression)
+          : undefined,
+      filterFileId:
+        fileId != null ? ({ eq: fileId } satisfies FilterExpression) : undefined,
+      filterName:
+        name != null ? ({ contains: name } satisfies FilterExpression) : undefined,
+      filterSuppliedId:
+        sId != null ? ({ contains: sId } satisfies FilterExpression) : undefined,
+      pageCursor: pc,
+      pageSize: ps ? parseInt(ps, 10) : 10,
+    };
+
+    const query = new URLSearchParams();
+    if (params.pageCursor != null) query.set("page[cursor]", params.pageCursor);
+    if (params.pageSize != null) query.set("page[size]", params.pageSize.toString());
+    if (params.sort != null) query.set("sort", params.sort);
+    setFilterExpression(query, "name", params.filterName);
+    setFilterExpression(query, "fileId", params.filterFileId);
+    if (typeof params.filterSuppliedId === "string") {
+      query.set("filter[suppliedId]", params.filterSuppliedId);
+    } else {
+      setFilterExpression(query, "suppliedId", params.filterSuppliedId);
+    }
+    setFilterExpression(query, "createdAt", params.filterCreatedAt);
+
     const { cursors, page } = await getPage(() =>
-      c.axiosInstance.get<FileList>(`${c.config.basePath}/files`, {
+      c.axiosInstance.get(`${c.config.basePath}/files?${query.toString()}`, {
         headers: {
           Accept: "application/vnd.api+json",
           Authorization: `Bearer ${c.token.access_token}`,
-        },
-        params: {
-          "filter[name][contains]": name,
-          "filter[fileId]": fileId,
-          "filter[suppliedId][contains]": sId,
-          "filter[createdAtStart][gte]": createdAtStart,
-          "filter[createdAtEnd][lte]": createdAtEnd,
-          "page[cursor]": pc,
-          "page[size]": ps ? parseInt(ps, 10) : 10,
         },
       }) as Promise<AxiosResponse<FileList>>
     );

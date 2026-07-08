@@ -45,14 +45,32 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
-function toLocalDayStartIso(value: string): string {
-  const date = new Date(`${value}T00:00:00`);
+type SetOptionalString = React.Dispatch<React.SetStateAction<string | undefined>>;
+
+type DateBoundary = "start" | "end";
+
+function toLocalDayIso(value: string, boundary: DateBoundary): string {
+  const [year, month, day] = value.split("-").map(Number);
+  const date =
+    boundary === "start"
+      ? new Date(year, month - 1, day, 0, 0, 0, 0)
+      : new Date(year, month - 1, day, 23, 59, 59, 999);
+
   return date.toISOString();
 }
 
-function toLocalDayEndIso(value: string): string {
-  const date = new Date(`${value}T23:59:59.999`);
-  return date.toISOString();
+function useDebouncedFilter(
+  setFilter: SetOptionalString,
+  resetPaging: () => void
+): (value: string) => void {
+  return React.useMemo(
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging, setFilter]
+  );
 }
 
 export default function FilesTable({
@@ -100,29 +118,14 @@ export default function FilesTable({
     setPrev({});
   }, []);
 
-  const debouncedSetNameFilter = React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setNameFilter(value === "" ? undefined : value);
-      }, 300),
-    [resetPaging]
+  const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
+  const debouncedSetFileIdFilter = useDebouncedFilter(
+    setFileIdFilter,
+    resetPaging
   );
-  const debouncedSetFileIdFilter = React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setFileIdFilter(value === "" ? undefined : value);
-      }, 300),
-    [resetPaging]
-  );
-  const debouncedSetSuppliedIdFilter = React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setSuppliedIdFilter(value === "" ? undefined : value);
-      }, 300),
-    [resetPaging]
+  const debouncedSetSuppliedIdFilter = useDebouncedFilter(
+    setSuppliedIdFilter,
+    resetPaging
   );
 
   React.useEffect(() => {
@@ -258,7 +261,9 @@ export default function FilesTable({
               onChange={(e) => {
                 resetPaging();
                 setCreatedAtStart(
-                  e.target.value ? toLocalDayStartIso(e.target.value) : undefined
+                  e.target.value
+                    ? toLocalDayIso(e.target.value, "start")
+                    : undefined
                 );
               }}
               sx={{ mt: 0, width: "12rem" }}
@@ -274,7 +279,9 @@ export default function FilesTable({
               onChange={(e) => {
                 resetPaging();
                 setCreatedAtEnd(
-                  e.target.value ? toLocalDayEndIso(e.target.value) : undefined
+                  e.target.value
+                    ? toLocalDayIso(e.target.value, "end")
+                    : undefined
                 );
               }}
               sx={{ mt: 0, width: "12rem" }}

@@ -1,13 +1,11 @@
-import {
-  FileMetadataData,
-  FileMetadataDataAttributes,
-} from "@vertexvis/api-client-node";
+import { FileList } from "@vertexvis/api-client-node";
 
 import { GetRes } from "./api";
 import { Paged, toPage } from "./paging";
 
-export type File = Pick<FileMetadataData, "id"> & FileMetadataDataAttributes;
+export type File = FileList["data"][number]["attributes"] &
+  Pick<FileList["data"][number], "id">;
 
-export function toFilePage(res: GetRes<FileMetadataData>): Paged<File> {
-  return toPage<FileMetadataData, FileMetadataDataAttributes>(res);
+export function toFilePage(res: GetRes<FileList["data"][number]>): Paged<File> {
+  return toPage<FileList["data"][number], File>(res);
 }

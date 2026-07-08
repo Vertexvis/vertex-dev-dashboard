@@ -42,9 +42,9 @@ describe("files API route", () => {
 
   it("lists files with filter query parameters", async () => {
     await expectFilesList({
-      "filter[createdAtStart][gte]": ["2026-06-01T00:00:00.000Z"],
-      "filter[createdAtEnd][lte]": ["2026-06-30T23:59:59.999Z"],
-      "filter[fileId]": ["2d6cf3f3-7d20-46ab-ab84-f6cb23877864"],
+      "filter[createdAt][gte]": ["2026-06-01T00:00:00.000Z"],
+      "filter[createdAt][lte]": ["2026-06-30T23:59:59.999Z"],
+      "filter[fileId][eq]": ["2d6cf3f3-7d20-46ab-ab84-f6cb23877864"],
       "filter[name][contains]": ["gear"],
       "filter[suppliedId][contains]": ["sup-123"],
       "page[cursor]": ["cursor-1"],
@@ -71,9 +71,9 @@ describe("files API route", () => {
       status: 200,
     });
     await verifyFilesList({
-      "filter[createdAtStart][gte]": ["2026-06-01T00:00:00.000Z"],
-      "filter[createdAtEnd][lte]": ["2026-06-30T23:59:59.999Z"],
-      "filter[fileId]": ["2d6cf3f3-7d20-46ab-ab84-f6cb23877864"],
+      "filter[createdAt][gte]": ["2026-06-01T00:00:00.000Z"],
+      "filter[createdAt][lte]": ["2026-06-30T23:59:59.999Z"],
+      "filter[fileId][eq]": ["2d6cf3f3-7d20-46ab-ab84-f6cb23877864"],
       "filter[name][contains]": ["gear"],
       "filter[suppliedId][contains]": ["sup-123"],
       "page[cursor]": ["cursor-1"],
