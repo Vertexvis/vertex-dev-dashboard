@@ -112,7 +112,9 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
-type SetOptionalString = React.Dispatch<React.SetStateAction<string | undefined>>;
+type SetOptionalString = React.Dispatch<
+  React.SetStateAction<string | undefined>
+>;
 type DateBoundary = "start" | "end";
 
 function toLocalDayIso(value: string, boundary: DateBoundary): string {
@@ -243,7 +245,9 @@ export default function FileTable({
   function handleCreatedAtStartChange(value: string) {
     resetPaging();
     const nextEndDate =
-      value !== "" && createdAtEndDate !== "" && isAfter(value, createdAtEndDate)
+      value !== "" &&
+      createdAtEndDate !== "" &&
+      isAfter(value, createdAtEndDate)
         ? ""
         : createdAtEndDate;
 
@@ -259,7 +263,9 @@ export default function FileTable({
   function handleCreatedAtEndChange(value: string) {
     resetPaging();
     const nextStartDate =
-      value !== "" && createdAtStartDate !== "" && isAfter(createdAtStartDate, value)
+      value !== "" &&
+      createdAtStartDate !== "" &&
+      isAfter(createdAtStartDate, value)
         ? ""
         : createdAtStartDate;
 

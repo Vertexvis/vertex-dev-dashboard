@@ -108,6 +108,20 @@ describe("file collection files API route", () => {
     expect(res.statusCode()).toBe(200);
   });
 
+  it("uses the default page size when an invalid page size is supplied", async () => {
+    const res = await callFileCollectionFiles({
+      method: "GET",
+      query: { id: "collection-1", pageSize: "not-a-number" },
+    });
+
+    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
+      id: "collection-1",
+      pageCursor: undefined,
+      pageSize: 10,
+    });
+    expect(res.statusCode()).toBe(200);
+  });
+
   it("validates requests before calling Vertex", async () => {
     const missingId = await callFileCollectionFiles({
       method: "GET",

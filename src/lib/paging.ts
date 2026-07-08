@@ -27,7 +27,8 @@ export function buildQuery(
     const leftIndex = QueryParamOrder.indexOf(leftKey);
     const rightIndex = QueryParamOrder.indexOf(rightKey);
 
-    if (leftIndex === -1 && rightIndex === -1) return leftKey.localeCompare(rightKey);
+    if (leftIndex === -1 && rightIndex === -1)
+      return leftKey.localeCompare(rightKey);
     if (leftIndex === -1) return 1;
     if (rightIndex === -1) return -1;
     return leftIndex - rightIndex;
@@ -47,11 +48,11 @@ export function useCursorPagingState(): {
   readonly currentPage: number;
   readonly cursor?: string;
   readonly cursors?: Cursors;
-  readonly handlePageChange: (
-    nextPage: number
-  ) => void;
+  readonly handlePageChange: (nextPage: number) => void;
   readonly resetPaging: () => void;
-  readonly setCursors: React.Dispatch<React.SetStateAction<Cursors | undefined>>;
+  readonly setCursors: React.Dispatch<
+    React.SetStateAction<Cursors | undefined>
+  >;
 } {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
@@ -70,7 +71,10 @@ export function useCursorPagingState(): {
   const handlePageChange = React.useCallback(
     (nextPage: number) => {
       if (currentPage < nextPage) {
-        setPrevious((current) => ({ ...current, [nextPage - 1]: cursors?.self }));
+        setPrevious((current) => ({
+          ...current,
+          [nextPage - 1]: cursors?.self,
+        }));
         setCursor(cursors?.next);
       } else if (currentPage > nextPage) {
         setCursor(previous[nextPage]);
@@ -81,7 +85,14 @@ export function useCursorPagingState(): {
     [currentPage, cursors, previous]
   );
 
-  return { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors };
+  return {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  };
 }
 
 export function toPage<T extends { attributes: TA; id: string }, TA>({

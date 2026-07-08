@@ -64,8 +64,14 @@ export default function PartTable({
 }: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
@@ -216,7 +222,11 @@ export default function PartTable({
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: cursors?.next == null },
+            },
+          }}
         />
       </Paper>
       <CreatePartDialog

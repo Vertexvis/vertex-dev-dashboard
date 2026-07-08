@@ -24,6 +24,7 @@ import {
   toErrorRes,
 } from "../../lib/api";
 import { setFilterExpression } from "../../lib/query-filters";
+import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -56,9 +57,7 @@ export async function handleFiles(
 
 export default withSession(handleFiles);
 
-async function get(
-  req: NextIronRequest
-): Promise<ErrorRes | GetRes<FileData>> {
+async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<FileData>> {
   try {
     const c = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
@@ -83,17 +82,22 @@ async function get(
           ? ({ contains: fileId } satisfies FilterExpression)
           : undefined,
       filterName:
-        name != null ? ({ contains: name } satisfies FilterExpression) : undefined,
+        name != null
+          ? ({ contains: name } satisfies FilterExpression)
+          : undefined,
       filterSuppliedId:
-        sId != null ? ({ contains: sId } satisfies FilterExpression) : undefined,
+        sId != null
+          ? ({ contains: sId } satisfies FilterExpression)
+          : undefined,
       pageCursor: pc,
-      pageSize: ps ? parseInt(ps, 10) : 10,
+      pageSize: parsePositiveQueryInt(ps, 10),
       sort,
     };
 
     const query = new URLSearchParams();
     if (params.pageCursor != null) query.set("page[cursor]", params.pageCursor);
-    if (params.pageSize != null) query.set("page[size]", params.pageSize.toString());
+    if (params.pageSize != null)
+      query.set("page[size]", params.pageSize.toString());
     if (params.sort != null) query.set("sort", params.sort);
     setFilterExpression(query, "name", params.filterName);
     setFilterExpression(query, "fileId", params.filterFileId);
@@ -104,13 +108,14 @@ async function get(
     }
     setFilterExpression(query, "createdAt", params.filterCreatedAt);
 
-    const { cursors, page } = await getPage(() =>
-      c.axiosInstance.get(`${c.config.basePath}/files?${query.toString()}`, {
-        headers: {
-          Accept: "application/vnd.api+json",
-          Authorization: `Bearer ${c.token.access_token}`,
-        },
-      }) as Promise<AxiosResponse<FileList>>
+    const { cursors, page } = await getPage(
+      () =>
+        c.axiosInstance.get(`${c.config.basePath}/files?${query.toString()}`, {
+          headers: {
+            Accept: "application/vnd.api+json",
+            Authorization: `Bearer ${c.token.access_token}`,
+          },
+        }) as Promise<AxiosResponse<FileList>>
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
