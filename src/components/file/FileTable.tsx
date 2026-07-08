@@ -1,10 +1,15 @@
-import { Add, Download } from "@mui/icons-material";
+import { Add, CalendarMonth, Download, ExpandLess, ExpandMore } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
   Chip,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
   Snackbar,
@@ -163,10 +168,15 @@ export default function FileTable({
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
+  const [showAdditionalFilters, setShowAdditionalFilters] =
+    React.useState(false);
+  const [showCreatedAtDialog, setShowCreatedAtDialog] = React.useState(false);
   const [createdAtStart, setCreatedAtStart] = React.useState<
     string | undefined
   >();
   const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>();
+  const [createdAtStartInput, setCreatedAtStartInput] = React.useState("");
+  const [createdAtEndInput, setCreatedAtEndInput] = React.useState("");
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
@@ -232,6 +242,39 @@ export default function FileTable({
   function handleSortChange(field: string) {
     setSort((current) => toggleSort(current, field));
     resetPaging();
+  }
+
+  function handleCreatedAtDialogOpen() {
+    setCreatedAtStartInput(createdAtStart?.slice(0, 10) ?? "");
+    setCreatedAtEndInput(createdAtEnd?.slice(0, 10) ?? "");
+    setShowAdditionalFilters(true);
+    setShowCreatedAtDialog(true);
+  }
+
+  function handleCreatedAtDialogClose() {
+    setShowCreatedAtDialog(false);
+  }
+
+  function handleCreatedAtApply() {
+    resetPaging();
+    setCreatedAtStart(
+      createdAtStartInput
+        ? toLocalDayIso(createdAtStartInput, "start")
+        : undefined
+    );
+    setCreatedAtEnd(
+      createdAtEndInput ? toLocalDayIso(createdAtEndInput, "end") : undefined
+    );
+    setShowCreatedAtDialog(false);
+  }
+
+  function handleCreatedAtClear() {
+    resetPaging();
+    setCreatedAtStart(undefined);
+    setCreatedAtEnd(undefined);
+    setCreatedAtStartInput("");
+    setCreatedAtEndInput("");
+    setShowCreatedAtDialog(false);
   }
 
   async function handleDelete() {
@@ -390,18 +433,6 @@ export default function FileTable({
               variant="standard"
               size="small"
               margin="normal"
-              id="fileIdFilter"
-              label="File ID"
-              type="text"
-              onChange={(e) => {
-                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
-              }}
-              sx={{ mt: 0, width: "16rem" }}
-            />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
               id="suppliedIdFilter"
               label="Supplied ID"
               type="text"
@@ -410,42 +441,15 @@ export default function FileTable({
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
-              id="createdAtStart"
-              label="Created From"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              onChange={(e) => {
-                resetPaging();
-                setCreatedAtStart(
-                  e.target.value
-                    ? toLocalDayIso(e.target.value, "start")
-                    : undefined
-                );
-              }}
-              sx={{ mt: 0, width: "12rem" }}
-            />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
-              id="createdAtEnd"
-              label="Created To"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              onChange={(e) => {
-                resetPaging();
-                setCreatedAtEnd(
-                  e.target.value
-                    ? toLocalDayIso(e.target.value, "end")
-                    : undefined
-                );
-              }}
-              sx={{ mt: 0, width: "12rem" }}
-            />
+            <Button
+              onClick={() => setShowAdditionalFilters((current) => !current)}
+              endIcon={
+                showAdditionalFilters ? <ExpandLess /> : <ExpandMore />
+              }
+              sx={{ alignSelf: "center", whiteSpace: "nowrap" }}
+            >
+              Additional filters
+            </Button>
           </Box>
           <Button
             key="upload"
@@ -456,6 +460,42 @@ export default function FileTable({
             New
           </Button>
         </Box>
+        <Collapse in={showAdditionalFilters}>
+          <Box
+            sx={{
+              px: { sm: 2 },
+              pb: 2,
+              display: "flex",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="fileIdFilter"
+              label="File ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <Button
+              variant="outlined"
+              onClick={handleCreatedAtDialogOpen}
+              startIcon={<CalendarMonth />}
+              sx={{ alignSelf: "center", whiteSpace: "nowrap" }}
+            >
+              {createdAtStart != null || createdAtEnd != null
+                ? `Created Range (${createdAtStartInput || "Any"} to ${
+                    createdAtEndInput || "Any"
+                  })`
+                : "Created Range"}
+            </Button>
+          </Box>
+        </Collapse>
         <TableContainer>
           <Table>
             <TableHead
@@ -499,6 +539,45 @@ export default function FileTable({
           mutate();
         }}
       />
+      <Dialog open={showCreatedAtDialog} onClose={handleCreatedAtDialogClose}>
+        <DialogTitle>Filter by Created Date</DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              flexDirection: { xs: "column", sm: "row" },
+              pt: 1,
+            }}
+          >
+            <TextField
+              fullWidth
+              id="createdAtStart"
+              label="From"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={createdAtStartInput}
+              onChange={(e) => setCreatedAtStartInput(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              id="createdAtEnd"
+              label="To"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={createdAtEndInput}
+              onChange={(e) => setCreatedAtEndInput(e.target.value)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCreatedAtClear}>Clear</Button>
+          <Button onClick={handleCreatedAtDialogClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleCreatedAtApply}>
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Snackbar
         open={showToast}
         autoHideDuration={6000}
