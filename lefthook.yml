@@ -1,4 +1,8 @@
 pre-commit:
   commands:
+    format:
+      glob: "*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}"
+      run: corepack yarn prettier --write {staged_files}
+      stage_fixed: true
     lint:
       run: corepack yarn lint
