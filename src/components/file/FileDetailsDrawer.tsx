@@ -1,4 +1,4 @@
-import { Close } from "@mui/icons-material";
+import { Close, FileCopyOutlined } from "@mui/icons-material";
 import {
   Box,
   CircularProgress,
@@ -11,6 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import React from "react";
@@ -286,10 +287,14 @@ function FileCollectionIdsRow({
   readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 }): JSX.Element {
+  async function copyId(id: string) {
+    await navigator.clipboard.writeText(id);
+  }
+
   return (
     <TableRow>
       <TableCell>
-        <Typography variant="subtitle2">File Collection IDs</Typography>
+        <Typography variant="subtitle2">File Collections</Typography>
         {loading ? (
           <Box
             sx={{ alignItems: "center", display: "flex", gap: 1, mt: 1 }}
@@ -306,22 +311,10 @@ function FileCollectionIdsRow({
           </Typography>
         ) : fileCollections.length > 0 ? (
           <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ px: 0, py: 0.5, pr: 1, width: "38%" }}>
-                  <Typography variant="subtitle2">Name</Typography>
-                </TableCell>
-                <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
-                  <Typography variant="subtitle2">ID</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
             <TableBody>
               {fileCollections.map((collection) => (
                 <TableRow key={collection.id}>
-                  <TableCell
-                    sx={{ px: 0, py: 0.5, pr: 1, verticalAlign: "top" }}
-                  >
+                  <TableCell sx={{ px: 0, py: 0.75, verticalAlign: "top" }}>
                     <Link
                       href={`/file-collections/${encodeURIComponent(
                         collection.id
@@ -335,30 +328,48 @@ function FileCollectionIdsRow({
                         {toDisplayValue(collection.name ?? collection.id)}
                       </Typography>
                     </Link>
-                  </TableCell>
-                  <TableCell
-                    sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}
-                  >
-                    <Link
-                      href={`/file-collections/${encodeURIComponent(
-                        collection.id
-                      )}`}
-                      underline="hover"
+                    <Box
+                      sx={{
+                        alignItems: "center",
+                        display: "flex",
+                        gap: 1,
+                        justifyContent: "space-between",
+                        mt: 0.5,
+                      }}
                     >
-                      <Typography
-                        sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.7rem",
-                          letterSpacing: "-0.02em",
-                          lineHeight: 1.4,
-                          overflowWrap: "anywhere",
-                          whiteSpace: "normal",
-                        }}
-                        variant="body2"
+                      <Link
+                        href={`/file-collections/${encodeURIComponent(
+                          collection.id
+                        )}`}
+                        underline="hover"
+                        sx={{ minWidth: 0 }}
                       >
-                        {collection.id}
-                      </Typography>
-                    </Link>
+                        <Typography
+                          sx={{
+                            color: "text.secondary",
+                            fontFamily: "monospace",
+                            fontSize: "0.7rem",
+                            letterSpacing: "-0.02em",
+                            lineHeight: 1.4,
+                            overflowWrap: "anywhere",
+                            whiteSpace: "normal",
+                          }}
+                          variant="body2"
+                        >
+                          {collection.id}
+                        </Typography>
+                      </Link>
+                      <Tooltip title="Copy file collection ID">
+                        <IconButton
+                          aria-label={`Copy ${collection.id}`}
+                          onClick={() => copyId(collection.id)}
+                          size="small"
+                          sx={{ flexShrink: 0 }}
+                        >
+                          <FileCopyOutlined fontSize="inherit" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
