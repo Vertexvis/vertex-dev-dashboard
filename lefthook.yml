@@ -2,7 +2,10 @@ pre-commit:
   commands:
     format:
       glob: "*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}"
-      run: corepack yarn prettier --write {staged_files}
-      stage_fixed: true
+      run: corepack yarn prettier --check {staged_files}
     lint:
       run: corepack yarn lint
+    typecheck:
+      run: corepack yarn typecheck
+    test:
+      run: corepack yarn test --runInBand

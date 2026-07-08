@@ -73,7 +73,8 @@
     "setup": "bash scripts/setup.sh",
     "test": "jest",
     "test:ci": "CI=true jest --coverage",
-    "playwright:login": "node scripts/test_playwright.js"
+    "playwright:login": "node scripts/test_playwright.js",
+    "typecheck": "tsc --project tsconfig.typecheck.json --noEmit"
   },
   "resolutions": {
     "@babel/runtime": "7.29.2",
