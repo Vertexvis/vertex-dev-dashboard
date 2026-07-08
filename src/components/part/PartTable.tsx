@@ -13,13 +13,12 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { SwrProps } from "../../lib/paging";
+import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartPage } from "../../lib/parts";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
@@ -41,9 +40,11 @@ const headCells: readonly HeadCell[] = [
 
 function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   return useSWR(
-    `/api/parts?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }`,
+    buildQuery("/api/parts", {
+      cursor,
+      pageSize,
+      suppliedId,
+    }),
     { refreshInterval: 30000 }
   );
 }
@@ -63,13 +64,15 @@ export default function PartTable({
 }: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
-  const [curPage, setCurPage] = React.useState(0);
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
-  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
     !!router.query.create
@@ -89,15 +92,19 @@ export default function PartTable({
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
+    () =>
+      debounce((value: string | undefined) => {
+        resetPaging();
+        setSuppliedIdFilter(value);
+      }, 300),
+    [resetPaging]
   );
 
   React.useEffect(() => {
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -119,12 +126,7 @@ export default function PartTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
+    handlePageChange(num);
   }
 
   async function handleDelete() {
@@ -218,9 +220,13 @@ export default function PartTable({
           component="div"
           count={-1}
           rowsPerPage={pageSize}
-          page={curPage}
+          page={currentPage}
           onPageChange={handleChangePage}
-          nextIconButtonProps={{ disabled: cursors?.next == null }}
+          slotProps={{
+            actions: {
+              nextButton: { disabled: cursors?.next == null },
+            },
+          }}
         />
       </Paper>
       <CreatePartDialog

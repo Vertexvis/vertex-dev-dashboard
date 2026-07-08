@@ -1,4 +1,4 @@
-import { TableCell, TableRow } from "@mui/material";
+import { Alert, TableCell, TableRow } from "@mui/material";
 import React from "react";
 
 interface NewType {
@@ -8,7 +8,9 @@ interface NewType {
 export function DataLoadError({ colSpan }: NewType): JSX.Element {
   return (
     <TableRow>
-      <TableCell colSpan={colSpan}>Error loading data.</TableCell>;
+      <TableCell colSpan={colSpan}>
+        <Alert severity="error">Error loading data.</Alert>
+      </TableCell>
     </TableRow>
   );
 }
