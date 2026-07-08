@@ -1,5 +1,6 @@
 import {
   FileCollectionList,
+  FileCollectionMetadataData,
   FileCollectionsApi,
   VertexClient,
 } from "@vertexvis/api-client-node";
@@ -19,7 +20,10 @@ export function toFileCollection(
 export function toFileCollectionPage(
   res: GetRes<FileCollectionList["data"][number]>
 ): Paged<FileCollection> {
-  return toPage<FileCollectionList["data"][number], FileCollection>(res);
+  return toPage<
+    FileCollectionList["data"][number],
+    FileCollectionList["data"][number]["attributes"]
+  >(res);
 }
 
 export function getFileCollectionsApi(
