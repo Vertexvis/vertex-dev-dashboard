@@ -1,6 +1,7 @@
 import { Close } from "@mui/icons-material";
 import {
   Box,
+  CircularProgress,
   Drawer,
   IconButton,
   Table,
@@ -65,16 +66,16 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
                 value={toLocaleString(file.expiresAt)}
               />
               <MetadataRow metadata={file.metadata} />
-              <FileCollectionIdsRow
-                error={error}
-                fileCollectionIds={fileCollectionIds}
-                loading={loading}
-              />
               <DetailsRow label="Root File Name" value={file.rootFileName} />
               <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
               <DetailsRow
                 label="Updated"
                 value={toLocaleString(file.uploaded)}
+              />
+              <FileCollectionIdsRow
+                error={error}
+                fileCollectionIds={fileCollectionIds}
+                loading={loading}
               />
             </TableBody>
           </Table>
@@ -290,15 +291,15 @@ function FileCollectionIdsRow({
       <TableCell>
         <Typography variant="subtitle2">File Collection IDs</Typography>
         {loading ? (
-          <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-            variant="body2"
+          <Box
+            sx={{ alignItems: "center", display: "flex", gap: 1, mt: 1 }}
           >
-            Loading...
-          </Typography>
+            <CircularProgress size={16} />
+            <Typography variant="body2">Loading collections...</Typography>
+          </Box>
         ) : error != null ? (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ mt: 1, overflowWrap: "anywhere", whiteSpace: "normal" }}
             variant="body2"
           >
             {error}
@@ -306,18 +307,30 @@ function FileCollectionIdsRow({
         ) : fileCollectionIds.length > 0 ? (
           <Box sx={{ mt: 1 }}>
             {fileCollectionIds.map((id) => (
-              <Typography
+              <Box
                 key={id}
-                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-                variant="body2"
+                sx={{
+                  "& + &": { mt: 0.5 },
+                }}
               >
-                {id}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontSize: "0.7rem",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1.4,
+                    whiteSpace: "nowrap",
+                  }}
+                  variant="body2"
+                >
+                  {id}
+                </Typography>
+              </Box>
             ))}
           </Box>
         ) : (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ mt: 1, overflowWrap: "anywhere", whiteSpace: "normal" }}
             variant="body2"
           >
             N/A
