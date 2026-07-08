@@ -1,4 +1,5 @@
 pre-commit:
+  parallel: true
   commands:
     format:
       glob: "*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}"
