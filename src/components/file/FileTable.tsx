@@ -397,6 +397,17 @@ export default function FileTable({
     <>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
+          customActions={
+            <Button
+              key="upload"
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setShowDialog(true)}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              Add File
+            </Button>
+          }
           numSelected={selected.size}
           onDelete={handleDelete}
           title="Files"
@@ -449,14 +460,6 @@ export default function FileTable({
               sx={{ mt: 0, width: "16rem" }}
             />
           </Box>
-          <Button
-            key="upload"
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setShowDialog(true)}
-          >
-            New
-          </Button>
         </Box>
         <Box
           sx={{
