@@ -171,6 +171,8 @@ export default function FileTable({
   const [showAdditionalFilters, setShowAdditionalFilters] =
     React.useState(false);
   const [showCreatedAtDialog, setShowCreatedAtDialog] = React.useState(false);
+  const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
+  const [createdAtEndDate, setCreatedAtEndDate] = React.useState("");
   const [createdAtStart, setCreatedAtStart] = React.useState<
     string | undefined
   >();
@@ -245,8 +247,8 @@ export default function FileTable({
   }
 
   function handleCreatedAtDialogOpen() {
-    setCreatedAtStartInput(createdAtStart?.slice(0, 10) ?? "");
-    setCreatedAtEndInput(createdAtEnd?.slice(0, 10) ?? "");
+    setCreatedAtStartInput(createdAtStartDate);
+    setCreatedAtEndInput(createdAtEndDate);
     setShowAdditionalFilters(true);
     setShowCreatedAtDialog(true);
   }
@@ -257,6 +259,8 @@ export default function FileTable({
 
   function handleCreatedAtApply() {
     resetPaging();
+    setCreatedAtStartDate(createdAtStartInput);
+    setCreatedAtEndDate(createdAtEndInput);
     setCreatedAtStart(
       createdAtStartInput
         ? toLocalDayIso(createdAtStartInput, "start")
@@ -270,6 +274,8 @@ export default function FileTable({
 
   function handleCreatedAtClear() {
     resetPaging();
+    setCreatedAtStartDate("");
+    setCreatedAtEndDate("");
     setCreatedAtStart(undefined);
     setCreatedAtEnd(undefined);
     setCreatedAtStartInput("");
