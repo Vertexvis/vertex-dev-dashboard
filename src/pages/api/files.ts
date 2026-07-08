@@ -23,6 +23,7 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
+import { setFilterExpression } from "../../lib/query-filters";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -54,28 +55,6 @@ export async function handleFiles(
 }
 
 export default withSession(handleFiles);
-
-function setFilterExpression(
-  params: URLSearchParams,
-  field: string,
-  filter?: FilterExpression
-): void {
-  if (filter == null) return;
-
-  const expressions: Array<[keyof FilterExpression, string | undefined]> = [
-    ["eq", filter.eq],
-    ["neq", filter.neq],
-    ["gt", filter.gt],
-    ["gte", filter.gte],
-    ["lt", filter.lt],
-    ["lte", filter.lte],
-    ["contains", filter.contains],
-  ];
-
-  expressions.forEach(([op, value]) => {
-    if (value != null) params.append(`filter[${field}][${op}]`, value);
-  });
-}
 
 async function get(
   req: NextIronRequest
