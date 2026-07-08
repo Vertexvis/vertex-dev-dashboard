@@ -39,6 +39,10 @@ const pagedPage = {
 };
 
 describe("FileTable", () => {
+  function getNameSortButton(): HTMLElement {
+    return screen.getByRole("button", { name: "Name" });
+  }
+
   beforeAll(() => {
     Object.assign(global, {
       Headers,
@@ -91,14 +95,14 @@ describe("FileTable", () => {
 
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
         "http://localhost/api/files?pageSize=25&sort=name"
       );
     });
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
         "http://localhost/api/files?pageSize=25&sort=-name"
@@ -127,12 +131,56 @@ describe("FileTable", () => {
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
     expect(screen.getByLabelText("Go to next page")).toBeEnabled();
 
-    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(getNameSortButton());
 
     expect(screen.getByLabelText("Go to next page")).toBeDisabled();
 
     resolveSortedPage?.(page);
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+  });
+
+  it("preserves the selected local created dates in the inline filters", async () => {
+    server.use(
+      rest.get("*/api/files", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+
+    const fromInput = screen.getByLabelText("Created From");
+    const toInput = screen.getByLabelText("Created To");
+
+    await userEvent.type(fromInput, "2026-06-01");
+    await userEvent.type(toInput, "2026-06-30");
+
+    expect(fromInput).toHaveValue("2026-06-01");
+    expect(toInput).toHaveValue("2026-06-30");
+  });
+
+  it("clears the conflicting created to date when created from moves past it", async () => {
+    server.use(
+      rest.get("*/api/files", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+
+    const fromInput = screen.getByLabelText("Created From");
+    const toInput = screen.getByLabelText("Created To");
+
+    await userEvent.type(fromInput, "2026-06-01");
+    await userEvent.type(toInput, "2026-06-30");
+    await userEvent.clear(fromInput);
+    await userEvent.type(fromInput, "2026-07-01");
+
+    expect(fromInput).toHaveValue("2026-07-01");
+    expect(toInput).toHaveValue("");
   });
 });
 

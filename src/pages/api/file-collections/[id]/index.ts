@@ -1,5 +1,5 @@
 import {
-  FileCollectionMetadataData,
+  FileCollectionMetadata,
   head,
   logError,
   VertexError,
@@ -18,9 +18,7 @@ import { getFileCollectionsApi } from "../../../../lib/file-collections";
 import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
-interface GetFileCollectionRes extends Res {
-  readonly data: FileCollectionMetadataData;
-}
+type GetFileCollectionRes = Res & Pick<FileCollectionMetadata, "data">;
 
 export async function handleFileCollection(
   req: NextIronRequest,
