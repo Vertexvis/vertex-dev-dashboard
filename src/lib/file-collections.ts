@@ -10,6 +10,12 @@ import { Paged, toPage } from "./paging";
 export type FileCollection = FileCollectionList["data"][number]["attributes"] &
   Pick<FileCollectionList["data"][number], "id">;
 
+export function toFileCollection(
+  data: FileCollectionMetadataData
+): FileCollection {
+  return { ...data.attributes, id: data.id };
+}
+
 export function toFileCollectionPage(
   res: GetRes<FileCollectionList["data"][number]>
 ): Paged<FileCollection> {

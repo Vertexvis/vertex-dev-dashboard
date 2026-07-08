@@ -13,10 +13,10 @@ import {
   Res,
   ServerError,
   toErrorRes,
-} from "../../../lib/api";
-import { getFileCollectionsApi } from "../../../lib/file-collections";
-import { getClientFromSession, makeCall } from "../../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../../lib/with-session";
+} from "../../../../lib/api";
+import { getFileCollectionsApi } from "../../../../lib/file-collections";
+import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
+import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
 type GetFileCollectionRes = Res & Pick<FileCollectionMetadata, "data">;
 

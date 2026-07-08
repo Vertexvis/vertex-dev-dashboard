@@ -4,8 +4,10 @@
 .env.production.local
 .env.test.local
 .env
+mise.local.toml
 yarn-error.log*
 .worktrees
+tsconfig.tsbuildinfo
 
 /.next
 /coverage
@@ -13,7 +15,5 @@ yarn-error.log*
 .idea
 .yarnrc.yml
 .yarn
-tsconfig.tsbuildinfo
-
-playwright
+/playwright/
 .playwright-mcp

@@ -89,6 +89,7 @@ async function get(
     const sId = head(req.query.suppliedId);
     const createdAtStart = head(req.query.createdAtStart);
     const createdAtEnd = head(req.query.createdAtEnd);
+    const sort = head(req.query.sort);
 
     const params: FilesApiGetFilesRequest = {
       filterCreatedAt:
@@ -106,6 +107,7 @@ async function get(
         sId != null ? ({ contains: sId } satisfies FilterExpression) : undefined,
       pageCursor: pc,
       pageSize: ps ? parseInt(ps, 10) : 10,
+      sort,
     };
 
     const query = new URLSearchParams();
