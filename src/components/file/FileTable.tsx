@@ -125,6 +125,10 @@ function toLocalDayIso(value: string, boundary: DateBoundary): string {
   return date.toISOString();
 }
 
+function isAfter(left: string, right: string): boolean {
+  return left.localeCompare(right) > 0;
+}
+
 function useDebouncedFilter(
   setFilter: SetOptionalString,
   resetPaging: () => void
@@ -238,14 +242,32 @@ export default function FileTable({
 
   function handleCreatedAtStartChange(value: string) {
     resetPaging();
-    setCreatedAtStart(
-      value ? toLocalDayIso(value, "start") : undefined
-    );
+    const nextEndDate =
+      value !== "" && createdAtEndDate !== "" && isAfter(value, createdAtEndDate)
+        ? ""
+        : createdAtEndDate;
+
+    if (nextEndDate !== createdAtEndDate) {
+      setCreatedAtEndDate("");
+      setCreatedAtEnd(undefined);
+    }
+
+    setCreatedAtStart(value ? toLocalDayIso(value, "start") : undefined);
     setCreatedAtStartDate(value);
   }
 
   function handleCreatedAtEndChange(value: string) {
     resetPaging();
+    const nextStartDate =
+      value !== "" && createdAtStartDate !== "" && isAfter(createdAtStartDate, value)
+        ? ""
+        : createdAtStartDate;
+
+    if (nextStartDate !== createdAtStartDate) {
+      setCreatedAtStartDate("");
+      setCreatedAtStart(undefined);
+    }
+
     setCreatedAtEnd(value ? toLocalDayIso(value, "end") : undefined);
     setCreatedAtEndDate(value);
   }
@@ -453,6 +475,7 @@ export default function FileTable({
             label="Created From"
             type="date"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ max: createdAtEndDate || undefined }}
             value={createdAtStartDate}
             onChange={(e) => handleCreatedAtStartChange(e.target.value)}
             sx={{ mt: 0, width: "16rem" }}
@@ -465,6 +488,7 @@ export default function FileTable({
             label="Created To"
             type="date"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: createdAtStartDate || undefined }}
             value={createdAtEndDate}
             onChange={(e) => handleCreatedAtEndChange(e.target.value)}
             sx={{ mt: 0, width: "16rem" }}

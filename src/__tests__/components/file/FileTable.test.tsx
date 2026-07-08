@@ -159,6 +159,29 @@ describe("FileTable", () => {
     expect(fromInput).toHaveValue("2026-06-01");
     expect(toInput).toHaveValue("2026-06-30");
   });
+
+  it("clears the conflicting created to date when created from moves past it", async () => {
+    server.use(
+      rest.get("*/api/files", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+
+    const fromInput = screen.getByLabelText("Created From");
+    const toInput = screen.getByLabelText("Created To");
+
+    await userEvent.type(fromInput, "2026-06-01");
+    await userEvent.type(toInput, "2026-06-30");
+    await userEvent.clear(fromInput);
+    await userEvent.type(fromInput, "2026-07-01");
+
+    expect(fromInput).toHaveValue("2026-07-01");
+    expect(toInput).toHaveValue("");
+  });
 });
 
 function renderTable(
