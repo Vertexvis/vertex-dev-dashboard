@@ -22,6 +22,15 @@ import FileCollectionDetails, {
 const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockGetFileCollection = jest.fn();
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRouter = {
+  isReady: true,
+  pathname: "/file-collections/[fileCollectionId]",
+  push: mockPush,
+  query: { fileCollectionId: "collection-1" },
+  replace: mockReplace,
+};
 const mockFileCollectionFilesTable = jest.fn(
   ({ apiPath }: { readonly apiPath: string }) => (
     <div data-api-path={apiPath} data-testid="file-collection-files-table">
@@ -33,6 +42,10 @@ const originalFetch = global.fetch;
 
 jest.mock("../../../components/shared/Layout", () => ({
   Layout: ({ main }: { readonly main: unknown }) => main,
+}));
+
+jest.mock("next/router", () => ({
+  useRouter: () => mockRouter,
 }));
 
 jest.mock(
@@ -67,6 +80,9 @@ describe("FileCollectionDetails", () => {
         status: 200,
       })
     );
+    mockPush.mockClear();
+    mockReplace.mockClear();
+    mockRouter.query = { fileCollectionId: "collection-1" };
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
     mockGetFileCollectionsApi.mockReturnValue({
       getFileCollection: mockGetFileCollection,

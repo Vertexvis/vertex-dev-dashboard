@@ -20,15 +20,17 @@ import { Part } from "../../lib/parts";
 import { RowActionsMenu } from "../shared/RowActionsMenu";
 
 interface PartRowProps {
+  readonly activePartId?: string;
   readonly activeRevisionId?: string;
   readonly part: Part;
   readonly isSelected: boolean;
   readonly onSelected: (id: string) => void;
-  readonly onRevisionSelected: (revision: PartRevision) => void;
+  readonly onRevisionSelected: (revision: PartRevision, partId: string) => void;
   readonly onCreteSceneFromRevision: (id: string) => void;
 }
 
 export default function PartRow({
+  activePartId,
   activeRevisionId,
   part,
   isSelected,
@@ -37,7 +39,7 @@ export default function PartRow({
   onCreteSceneFromRevision,
 }: PartRowProps): JSX.Element {
   const row = part;
-  const [open, setOpen] = React.useState<boolean>(false);
+  const [open, setOpen] = React.useState<boolean>(activePartId === part.id);
 
   const [revisions, setRevisions] = React.useState<
     Paged<PartRevision> | undefined
@@ -54,6 +56,12 @@ export default function PartRow({
     }
   }, [part.id, open]);
 
+  React.useEffect(() => {
+    if (activePartId === part.id) {
+      setOpen(true);
+    }
+  }, [activePartId, part.id]);
+
   return (
     <>
       <TableRow
@@ -69,8 +77,20 @@ export default function PartRow({
             {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
           </IconButton>
         </TableCell>
-        <TableCell padding="checkbox" onClick={() => onSelected(row.id)}>
-          <Checkbox color="primary" checked={isSelected} />
+        <TableCell
+          padding="checkbox"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelected(row.id);
+          }}
+        >
+          <Checkbox
+            color="primary"
+            checked={isSelected}
+            inputProps={{
+              "aria-label": `Select ${row.name ?? row.id}`,
+            }}
+          />
         </TableCell>
         <TableCell>{row.name}</TableCell>
         <TableCell>{row.suppliedId}</TableCell>
@@ -106,7 +126,7 @@ export default function PartRow({
                     <TableRow
                       key={r.id}
                       hover
-                      onClick={() => onRevisionSelected(r)}
+                      onClick={() => onRevisionSelected(r, part.id)}
                       selected={activeRevisionId === r.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >

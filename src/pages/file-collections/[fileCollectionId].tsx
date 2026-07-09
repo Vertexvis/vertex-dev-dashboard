@@ -12,8 +12,10 @@ import {
 import { head } from "@vertexvis/api-client-node";
 import { GetServerSidePropsResult } from "next";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 import { withIronSession } from "next-iron-session";
 import React from "react";
+import useSWR from "swr";
 
 import { FileDetailsDrawer } from "../../components/file/FileDetailsDrawer";
 import { FileCollectionMetadataTable } from "../../components/file-collection/FileCollectionMetadataTable";
@@ -32,7 +34,8 @@ import {
   toFileCollection,
 } from "../../lib/file-collections";
 import { FileJobRes } from "../../lib/file-jobs";
-import { File, FileDownloadUrlRes } from "../../lib/files";
+import { File, FileDownloadUrlRes, toFile } from "../../lib/files";
+import { queryParamValue, updateRouterQuery } from "../../lib/url-state";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import {
   CommonProps,
@@ -307,7 +310,14 @@ export default function FileCollectionDetails({
   fileCollection,
 }: Props): JSX.Element {
   const fileCollectionIdRef = React.useRef(fileCollection.id);
+  const router = useRouter();
   const [file, setFile] = React.useState<File | undefined>();
+  const fileId = queryParamValue(router.query.fileId);
+  const { data: selectedFile } = useSWR(
+    router.isReady && fileId != null
+      ? `/api/files/${encodeURIComponent(fileId)}`
+      : null
+  );
   const [exportStateCollectionId, setExportStateCollectionId] = React.useState(
     fileCollection.id
   );
@@ -606,6 +616,29 @@ export default function FileCollectionDetails({
     setJobStatus("idle");
   }
 
+  React.useEffect(() => {
+    if (!router.isReady) return;
+
+    if (fileId == null) {
+      setFile(undefined);
+      return;
+    }
+
+    if (selectedFile != null && !isErrorRes(selectedFile)) {
+      setFile(toFile(selectedFile));
+    }
+  }, [fileId, router.isReady, selectedFile]);
+
+  function handleFileSelected(selected: File) {
+    setFile(selected);
+    updateRouterQuery(router, { fileId: selected.id });
+  }
+
+  function handleClose() {
+    setFile(undefined);
+    updateRouterQuery(router, { fileId: undefined });
+  }
+
   return (
     <Layout
       main={
@@ -662,14 +695,14 @@ export default function FileCollectionDetails({
           <FileCollectionFilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
-            onFileSelected={setFile}
+            onFileSelected={handleFileSelected}
           />
         </Box>
       }
       rightDrawer={
         <FileDetailsDrawer
           file={file}
-          onClose={() => setFile(undefined)}
+          onClose={handleClose}
           open={drawerOpen}
         />
       }
