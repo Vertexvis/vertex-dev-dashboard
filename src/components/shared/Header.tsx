@@ -1,7 +1,9 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
-import { Box, Button, Link } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
+
+import { AppLink } from "./AppLink";
 
 export function Header(): JSX.Element {
   const router = useRouter();
@@ -22,9 +24,9 @@ export function Header(): JSX.Element {
       }}
     >
       <Box sx={{ alignItems: "center", display: "flex" }}>
-        <Link href="/" paddingRight={"16px"}>
+        <AppLink href="/" paddingRight={"16px"}>
           <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
-        </Link>
+        </AppLink>
         <p>Vertex Developer Dashboard</p>
       </Box>
       <Box sx={{ ml: "auto" }}>

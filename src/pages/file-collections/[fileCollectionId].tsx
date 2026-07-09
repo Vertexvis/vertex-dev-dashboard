@@ -1,4 +1,4 @@
-import { Box, Breadcrumbs, Link, Paper, Typography } from "@mui/material";
+import { Box, Breadcrumbs, Paper, Typography } from "@mui/material";
 import { head } from "@vertexvis/api-client-node";
 import { GetServerSidePropsResult } from "next";
 import dynamic from "next/dynamic";
@@ -7,6 +7,7 @@ import React from "react";
 
 import { FileDetailsDrawer } from "../../components/file/FileDetailsDrawer";
 import { FileCollectionMetadataTable } from "../../components/file-collection/FileCollectionMetadataTable";
+import { AppLink } from "../../components/shared/AppLink";
 import { Layout } from "../../components/shared/Layout";
 import { isErrorFailure, toErrorRes } from "../../lib/api";
 import {
@@ -57,9 +58,9 @@ export default function FileCollectionDetails({
       main={
         <Box sx={{ p: 2 }}>
           <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
-            <Link href="/file-collections" underline="hover">
+            <AppLink href="/file-collections" underline="hover">
               File Collections
-            </Link>
+            </AppLink>
             <Typography color="text.primary">
               {fileCollection.name ?? fileCollection.id}
             </Typography>
