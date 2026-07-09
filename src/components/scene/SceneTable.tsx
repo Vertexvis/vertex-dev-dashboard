@@ -90,6 +90,7 @@ export default function SceneTable({
   clientId,
   onClick,
   onEditClick,
+  scene,
   vertexEnv,
   invalidationCount,
 }: Props): JSX.Element {
@@ -296,6 +297,7 @@ export default function SceneTable({
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
+                  const isActive = scene?.id === row.id;
 
                   return (
                     <TableRow
@@ -303,7 +305,7 @@ export default function SceneTable({
                       role="checkbox"
                       tabIndex={-1}
                       key={row.id}
-                      selected={isSel}
+                      selected={isSel || isActive}
                       onClick={() => handleClick(row)}
                     >
                       <TableCell
