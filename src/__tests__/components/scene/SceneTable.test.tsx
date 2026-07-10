@@ -9,6 +9,7 @@ import { server } from "../../../../test/msw/server";
 import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
+// todo:PLAT-8812
 jest.mock("next/router", () => ({
   useRouter: () => ({
     push: jest.fn(),
