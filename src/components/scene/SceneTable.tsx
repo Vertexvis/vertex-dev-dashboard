@@ -168,6 +168,7 @@ export default function SceneTable({
   }
 
   function handleClick(s: Scene) {
+    setActiveSceneId(s.id);
     onClick(s);
   }
 
@@ -193,6 +194,7 @@ export default function SceneTable({
   }
 
   function handleEditClick(s: Scene) {
+    setActiveSceneId(s.id);
     onEditClick(s);
   }
 

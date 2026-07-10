@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { rest } from "msw";
 import nodeFetch, { Headers, Request, Response } from "node-fetch";
 import React from "react";
@@ -22,6 +23,14 @@ const scene: Scene = {
   suppliedId: "supplied-scene-1",
 };
 
+const secondScene: Scene = {
+  id: "scene-2",
+  created: "2026-07-02T15:30:00Z",
+  name: "Scene Two",
+  state: "ready",
+  suppliedId: "supplied-scene-2",
+};
+
 const page = {
   cursors: { self: "page-1" },
   data: [
@@ -33,6 +42,16 @@ const page = {
         name: scene.name,
         state: scene.state,
         suppliedId: scene.suppliedId,
+      },
+    },
+    {
+      type: "scene",
+      id: secondScene.id,
+      attributes: {
+        created: secondScene.created,
+        name: secondScene.name,
+        state: secondScene.state,
+        suppliedId: secondScene.suppliedId,
       },
     },
   ],
@@ -79,10 +98,31 @@ describe("SceneTable", () => {
       expect(getSceneRow()).toHaveClass("Mui-selected");
     });
   });
+
+  it("updates the active highlight immediately when another scene is clicked", async () => {
+    server.use(
+      rest.get("*/api/scenes", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable(scene);
+
+    await waitFor(() => {
+      expect(getSceneRow("Scene One")).toHaveClass("Mui-selected");
+    });
+
+    await userEvent.click(screen.getByText("Scene Two"));
+
+    await waitFor(() => {
+      expect(getSceneRow("Scene Two")).toHaveClass("Mui-selected");
+    });
+    expect(getSceneRow("Scene One")).not.toHaveClass("Mui-selected");
+  });
 });
 
-function getSceneRow(): HTMLTableRowElement {
-  const row = screen.getByText("Scene One").closest("tr");
+function getSceneRow(name = "Scene One"): HTMLTableRowElement {
+  const row = screen.getByText(name).closest("tr");
   if (row == null) throw new Error("Could not find scene row.");
 
   return row;
