@@ -22,6 +22,7 @@ import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartPage } from "../../lib/parts";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -219,6 +220,9 @@ export default function PartTable({
           rowsPerPageOptions={[]}
           component="div"
           count={-1}
+          labelDisplayedRows={(displayedRows) =>
+            formatCursorPaginationLabel(displayedRows, cursors?.next != null)
+          }
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
