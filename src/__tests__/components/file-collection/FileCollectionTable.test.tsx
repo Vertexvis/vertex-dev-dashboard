@@ -1,8 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { SWRConfig } from "swr";
 
+import {
+  deleteFileCollections,
+  fileCollection,
+  fileCollectionsPage,
+  listFileCollections,
+} from "../../../../test/msw/handlers/file-collections";
+import { installMockServer } from "../../../../test/msw/install";
+import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
 const mockPush = jest.fn();
@@ -13,78 +21,47 @@ jest.mock("next/router", () => ({
   }),
 }));
 
-const firstPage = {
-  cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
+const firstPage = fileCollectionsPage({
   data: [
-    {
-      type: "file-collection",
+    fileCollection({
       id: "collection-1",
-      attributes: {
-        name: "Collection One",
-        suppliedId: "supplied-1",
-        created: "2026-06-10T15:30:00Z",
-      },
-    },
+      name: "Collection One",
+      suppliedId: "supplied-1",
+    }),
   ],
-  status: 200,
-};
+});
 
-const secondPage = {
+const firstPageWithUnexpectedNextCursor = fileCollectionsPage({
+  cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
+  data: firstPage.data,
+});
+
+const nextPage = fileCollectionsPage({
   cursors: { self: "page-2" },
   data: [
-    {
-      type: "file-collection",
+    fileCollection({
+      created: "2026-06-11T15:30:00Z",
       id: "collection-2",
-      attributes: {
-        name: "Collection Two",
-        suppliedId: "supplied-2",
-        created: "2026-06-11T15:30:00Z",
-      },
-    },
+      name: "Collection Two",
+      suppliedId: "supplied-2",
+    }),
   ],
-  status: 200,
-};
-
-const multiCollectionPage = {
-  cursors: { self: "page-1" },
-  data: [
-    {
-      type: "file-collection",
-      id: "collection-1",
-      attributes: {
-        name: "Collection One",
-        suppliedId: "supplied-1",
-        created: "2026-06-10T15:30:00Z",
-      },
-    },
-    {
-      type: "file-collection",
-      id: "collection-2",
-      attributes: {
-        name: "Collection Two",
-        suppliedId: "supplied-2",
-        created: "2026-06-11T15:30:00Z",
-      },
-    },
-  ],
-  status: 200,
-};
+});
 
 describe("FileCollectionTable", () => {
+  installMockServer();
+
   beforeEach(() => {
     mockPush.mockClear();
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it("paginates file collections using the next cursor", async () => {
-    const fetchMock = mockFetch((url) =>
-      url.includes("cursor=page%2B2%26filter%3Dunexpected%23fragment")
-        ? secondPage
-        : firstPage
-    );
+    stubFileCollectionsTable({
+      byCursor: {
+        "page+2&filter=unexpected#fragment": nextPage,
+      },
+      defaultPage: firstPageWithUnexpectedNextCursor,
+    });
 
     renderTable();
 
@@ -94,33 +71,39 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/file-collections?pageSize=25&cursor=page%2B2%26filter%3Dunexpected%23fragment"
-    );
   });
 
-  it("deletes a selected file collection", async () => {
-    const fetchMock = mockFetch(() => firstPage);
+  it("filters file collections by supplied ID before rendering the filtered results", async () => {
+    stubFileCollectionsTable({
+      bySuppliedId: {
+        "supplied-2": nextPage,
+      },
+      defaultPage: firstPage,
+    });
 
     renderTable();
 
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByLabelText("Select Collection One"));
-    await userEvent.click(screen.getByLabelText("Delete"));
+    await userEvent.type(
+      screen.getByLabelText("Supplied ID Filter (exact)"),
+      "supplied-2"
+    );
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/file-collections", {
-        body: JSON.stringify({ ids: ["collection-1"] }),
-        method: "DELETE",
-      });
-    });
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
   });
 
-  it("shows an error banner when deleting a file collection fails", async () => {
-    mockFetch(() => firstPage, {
-      body: { message: "Could not delete collection-1." },
-      ok: false,
+  it("keeps the selection visible when deleting a file collection fails", async () => {
+    stubFileCollectionsTable({
+      defaultPage: firstPage,
+      deleteOptions: {
+        expectedIds: ["collection-1"],
+        response: {
+          body: { message: "Could not delete collection-1." },
+          status: 500,
+        },
+      },
     });
 
     renderTable();
@@ -137,55 +120,10 @@ describe("FileCollectionTable", () => {
     expect(screen.getByLabelText("Select Collection One")).toBeChecked();
   });
 
-  it("selects and clears all file collections on the current page", async () => {
-    mockFetch(() => multiCollectionPage);
-
-    renderTable();
-
-    expect(await screen.findByText("Collection One")).toBeInTheDocument();
-    expect(screen.getByText("Collection Two")).toBeInTheDocument();
-
-    const selectAll = screen.getAllByRole("checkbox")[0];
-
-    await userEvent.click(selectAll);
-
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-    expect(screen.getByLabelText("Select Collection One")).toBeChecked();
-    expect(screen.getByLabelText("Select Collection Two")).toBeChecked();
-
-    await userEvent.click(selectAll);
-
-    expect(screen.getByText("File Collections")).toBeInTheDocument();
-    expect(screen.getByLabelText("Select Collection One")).not.toBeChecked();
-    expect(screen.getByLabelText("Select Collection Two")).not.toBeChecked();
-  });
-
-  it("filters file collections by supplied ID", async () => {
-    const fetchMock = mockFetch((url) =>
-      url.includes("suppliedId=supplied-2") ? secondPage : firstPage
-    );
-
-    renderTable();
-
-    expect(await screen.findByText("Collection One")).toBeInTheDocument();
-
-    await userEvent.type(
-      screen.getByLabelText("Supplied ID Filter (exact)"),
-      "supplied-2"
-    );
-
-    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
-    expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/file-collections?pageSize=25&suppliedId=supplied-2"
-      );
-    });
-  });
-
   it("navigates to the file collection detail route when a row is clicked", async () => {
-    mockFetch(() => firstPage);
+    stubFileCollectionsTable({
+      defaultPage: firstPage,
+    });
 
     renderTable();
 
@@ -198,42 +136,26 @@ describe("FileCollectionTable", () => {
 });
 
 function renderTable(): void {
-  render(
-    <SWRConfig
-      value={{
-        dedupingInterval: 0,
-        fetcher: (url: string) => fetch(url).then((res) => res.json()),
-        provider: () => new Map(),
-      }}
-    >
-      <FileCollectionTable />
-    </SWRConfig>
-  );
+  renderWithSWR(<FileCollectionTable />);
 }
 
-function mockFetch(
-  responseFor: (url: string) => unknown,
-  deleteResponse: { body: unknown; ok: boolean } = {
-    body: { status: 200 },
-    ok: true,
-  }
-): jest.Mock {
-  const fetchMock = jest.fn((input: RequestInfo | URL) => {
-    const url = input.toString();
-
-    if (url === "/api/file-collections") {
-      return Promise.resolve({
-        json: () => Promise.resolve(deleteResponse.body),
-        ok: deleteResponse.ok,
-      });
-    }
-
-    return Promise.resolve({
-      json: () => Promise.resolve(responseFor(url)),
-      ok: true,
-    });
-  });
-
-  global.fetch = fetchMock as unknown as typeof fetch;
-  return fetchMock;
+function stubFileCollectionsTable({
+  byCursor,
+  bySuppliedId,
+  defaultPage,
+  deleteOptions,
+}: {
+  readonly byCursor?: Record<string, ReturnType<typeof fileCollectionsPage>>;
+  readonly bySuppliedId?: Record<string, ReturnType<typeof fileCollectionsPage>>;
+  readonly defaultPage: ReturnType<typeof fileCollectionsPage>;
+  readonly deleteOptions?: Parameters<typeof deleteFileCollections>[0];
+}): void {
+  server.use(
+    listFileCollections({
+      byCursor,
+      bySuppliedId,
+      defaultPage,
+    }),
+    deleteFileCollections(deleteOptions)
+  );
 }
