@@ -1,11 +1,10 @@
-import { Add, Download } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
   Chip,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -15,7 +14,6 @@ import {
   TablePagination,
   TableRow,
   TextField,
-  Tooltip,
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import React from "react";
@@ -28,6 +26,8 @@ import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
+import { ResourceLink } from "../shared/ResourceLink";
+import { RowActionsMenu } from "../shared/RowActionsMenu";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -40,7 +40,7 @@ export const headCells: readonly HeadCell[] = [
   { id: "id", label: "ID" },
   { id: "created", label: "Created", sortable: true },
   { id: "uploaded", label: "Uploaded" },
-  { id: "download", label: "Download" },
+  { id: "actions", label: "Actions" },
 ];
 
 interface UseFilesProps extends SwrProps {
@@ -336,7 +336,6 @@ export default function FileTable({
           tabIndex={-1}
           key={row.id}
           selected={isSel || isActive}
-          onClick={() => onFileSelected(row)}
         >
           <TableCell
             padding="checkbox"
@@ -354,7 +353,9 @@ export default function FileTable({
             />
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
-            {row.name}
+            <ResourceLink onOpen={() => onFileSelected(row)}>
+              {row.name}
+            </ResourceLink>
           </TableCell>
           <TableCell>{row.suppliedId}</TableCell>
           <TableCell>
@@ -374,25 +375,16 @@ export default function FileTable({
               e.stopPropagation();
             }}
           >
-            <Tooltip
-              title={
-                isAvailable ? "Download file" : "File is not available yet"
-              }
-            >
-              <span>
-                <IconButton
-                  aria-label={`Download ${row.name}`}
-                  disabled={!isAvailable}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isAvailable) handleDownload(row.id);
-                  }}
-                  size="small"
-                >
-                  <Download fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            <RowActionsMenu
+              actions={[
+                {
+                  disabled: !isAvailable,
+                  label: "Download file",
+                  onClick: () => handleDownload(row.id),
+                },
+              ]}
+              ariaLabel={`Actions for ${row.name}`}
+            />
           </TableCell>
         </TableRow>
       );

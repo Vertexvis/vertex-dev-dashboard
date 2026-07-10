@@ -1,17 +1,10 @@
-import {
-  EditOutlined,
-  MergeTypeOutlined,
-  VisibilityOutlined,
-  VpnKeyOutlined,
-} from "@mui/icons-material";
+import { MergeTypeOutlined } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
   Chip,
-  CircularProgress,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -21,7 +14,6 @@ import {
   TablePagination,
   TableRow,
   TextField,
-  Tooltip,
 } from "@mui/material";
 import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import { Environment } from "@vertexvis/viewer";
@@ -38,6 +30,8 @@ import { encodeCreds } from "../../pages/scene-viewer/[sceneId]";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
+import { ResourceLink } from "../shared/ResourceLink";
+import { RowActionsMenu } from "../shared/RowActionsMenu";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -304,7 +298,6 @@ export default function SceneTable({
                       tabIndex={-1}
                       key={row.id}
                       selected={isSel}
-                      onClick={() => handleClick(row)}
                     >
                       <TableCell
                         padding="checkbox"
@@ -316,7 +309,9 @@ export default function SceneTable({
                         <Checkbox color="primary" checked={isSel} />
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
-                        {row.name}
+                        <ResourceLink onOpen={() => handleClick(row)}>
+                          {row.name}
+                        </ResourceLink>
                       </TableCell>
                       <TableCell>{row.suppliedId}</TableCell>
                       <TableCell>
@@ -331,44 +326,26 @@ export default function SceneTable({
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{toLocaleString(row.created)}</TableCell>
                       <TableCell>
-                        <>
-                          {keyLoadingSceneId === row.id && (
-                            <CircularProgress
-                              size={36}
-                              sx={{ position: "absolute" }}
-                            />
-                          )}
-                          <Tooltip title="Generate stream key">
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGetStreamKey(row.id);
-                              }}
-                            >
-                              <VpnKeyOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                        <Tooltip title="View scene">
-                          <IconButton
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewClick(row.id);
-                            }}
-                          >
-                            <VisibilityOutlined />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit scene">
-                          <IconButton
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(row);
-                            }}
-                          >
-                            <EditOutlined />
-                          </IconButton>
-                        </Tooltip>
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              disabled: keyLoadingSceneId === row.id,
+                              label: "Generate stream key",
+                              onClick: () => handleGetStreamKey(row.id),
+                            },
+                            {
+                              disabled: !clientId,
+                              label: "View scene",
+                              onClick: () => handleViewClick(row.id),
+                            },
+                            {
+                              label: "Edit scene",
+                              onClick: () => handleEditClick(row),
+                            },
+                          ]}
+                          ariaLabel={`Actions for ${row.name}`}
+                          loading={keyLoadingSceneId === row.id}
+                        />
                       </TableCell>
                     </TableRow>
                   );
