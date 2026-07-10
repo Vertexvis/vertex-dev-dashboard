@@ -83,7 +83,10 @@ describe("FileCollectionFilesTable", () => {
     });
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Download File One" })
+      screen.getByRole("button", { name: "Actions for File One" })
+    );
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Download file" })
     );
 
     await waitFor(() => {
@@ -121,8 +124,12 @@ describe("FileCollectionFilesTable", () => {
     expect(await screen.findByText("File One")).toBeInTheDocument();
     expect(screen.getByText("pending")).toBeInTheDocument();
 
-    const download = screen.getByRole("button", { name: "Download File One" });
-    expect(download).toBeDisabled();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for File One" })
+    );
+    expect(
+      screen.getByRole("menuitem", { name: "Download file" })
+    ).toHaveAttribute("aria-disabled", "true");
 
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/files/file-1/download-url",
@@ -181,8 +188,12 @@ describe("FileCollectionFilesTable", () => {
 
     expect(await screen.findByText("completed")).toBeInTheDocument();
 
-    const download = screen.getByRole("button", { name: "Download File One" });
-    expect(download).toBeDisabled();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for File One" })
+    );
+    expect(
+      screen.getByRole("menuitem", { name: "Download file" })
+    ).toHaveAttribute("aria-disabled", "true");
 
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/files/file-1/download-url",
