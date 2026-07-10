@@ -102,51 +102,27 @@ function matchRouteSegments(
   routeSegments: readonly string[],
   requestSegments: readonly string[]
 ): ParsedUrlQuery | undefined {
+  if (routeSegments.length !== requestSegments.length) {
+    return undefined;
+  }
+
   const params: ParsedUrlQuery = {};
-  let requestIndex = 0;
 
-  for (let routeIndex = 0; routeIndex < routeSegments.length; routeIndex += 1) {
-    const routeSegment = routeSegments[routeIndex];
-
-    if (isOptionalCatchAllSegment(routeSegment)) {
-      const paramName = getDynamicParamName(routeSegment);
-      const remainingSegments = requestSegments.slice(requestIndex);
-      if (remainingSegments.length > 0) {
-        params[paramName] = remainingSegments.map(decodeURIComponent);
-      }
-      return params;
-    }
-
-    if (isCatchAllSegment(routeSegment)) {
-      if (requestIndex >= requestSegments.length) {
-        return undefined;
-      }
-
-      params[getDynamicParamName(routeSegment)] = requestSegments
-        .slice(requestIndex)
-        .map(decodeURIComponent);
-      return params;
-    }
-
-    const requestSegment = requestSegments[requestIndex];
-    if (requestSegment == null) {
-      return undefined;
-    }
+  for (let index = 0; index < routeSegments.length; index += 1) {
+    const routeSegment = routeSegments[index];
+    const requestSegment = requestSegments[index];
 
     if (isDynamicSegment(routeSegment)) {
       params[getDynamicParamName(routeSegment)] = decodeURIComponent(requestSegment);
-      requestIndex += 1;
       continue;
     }
 
     if (routeSegment !== requestSegment) {
       return undefined;
     }
-
-    requestIndex += 1;
   }
 
-  return requestIndex === requestSegments.length ? params : undefined;
+  return params;
 }
 
 function mergeQuery(
@@ -174,14 +150,6 @@ function isDynamicSegment(segment: string): boolean {
   return /^\[[^./][^/]*\]$/.test(segment);
 }
 
-function isCatchAllSegment(segment: string): boolean {
-  return /^\[\.\.\.[^/]+\]$/.test(segment);
-}
-
-function isOptionalCatchAllSegment(segment: string): boolean {
-  return /^\[\[\.\.\.[^/]+\]\]$/.test(segment);
-}
-
 function getDynamicParamName(segment: string): string {
-  return segment.replace(/^\[\[?\.\.\./, "").replace(/\]?\]$/, "");
+  return segment.replace(/^\[/, "").replace(/\]$/, "");
 }
