@@ -105,10 +105,9 @@ export default function SceneTable({
   const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
     {}
   );
-  const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<
     string | undefined
-  >();
+  >(() => scene?.id);
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
