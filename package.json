@@ -54,10 +54,12 @@
     "mockserver-client": "^7.1.0",
     "msw": "1.3.5",
     "prettier": "^2.4",
+    "supertest": "^7.1.4",
     "testcontainers": "10.28.0",
     "ts-jest": "^29.4.11",
     "tslib": "^2.3",
-    "typescript": "^4"
+    "typescript": "^4",
+    "@types/supertest": "^6.0.3"
   },
   "scripts": {
     "build": "next build",
