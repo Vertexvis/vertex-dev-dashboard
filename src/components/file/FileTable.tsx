@@ -533,7 +533,9 @@ export default function FileTable({
           labelDisplayedRows={(displayedRows) =>
             formatCursorPaginationLabel(
               displayedRows,
-              paginationCursors?.next != null
+              paginationCursors?.next != null,
+              pageLength,
+              visiblePage != null
             )
           }
           rowsPerPage={pageSize}

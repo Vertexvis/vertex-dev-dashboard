@@ -247,7 +247,9 @@ export default function FileCollectionFilesTable({
           labelDisplayedRows={(displayedRows) =>
             formatCursorPaginationLabel(
               displayedRows,
-              paginationCursors?.next != null
+              paginationCursors?.next != null,
+              pageLength,
+              page != null
             )
           }
           rowsPerPage={pageSize}

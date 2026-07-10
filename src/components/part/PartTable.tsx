@@ -221,7 +221,12 @@ export default function PartTable({
           component="div"
           count={-1}
           labelDisplayedRows={(displayedRows) =>
-            formatCursorPaginationLabel(displayedRows, cursors?.next != null)
+            formatCursorPaginationLabel(
+              displayedRows,
+              cursors?.next != null,
+              pageLength,
+              page != null
+            )
           }
           rowsPerPage={pageSize}
           page={currentPage}
