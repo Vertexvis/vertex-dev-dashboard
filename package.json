@@ -70,7 +70,7 @@
     "format:staged:check": "node scripts/format-staged.js --check",
     "format:staged:write": "node scripts/format-staged.js --write",
     "lint": "next lint",
-    "postinstall": "node scripts/install-lefthook.js",
+    "postinstall": "lefthook install",
     "start": "next start",
     "setup": "bash scripts/setup.sh",
     "test": "jest",
