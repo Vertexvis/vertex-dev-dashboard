@@ -14,6 +14,9 @@ export function installNodeMswServer(): void {
         }
 
         print.error();
+        throw new Error(
+          `Unhandled outbound request: ${request.method} ${request.url.toString()}`
+        );
       },
     });
   });
