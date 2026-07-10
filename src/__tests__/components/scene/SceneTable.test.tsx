@@ -1,0 +1,117 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import { rest } from "msw";
+import nodeFetch, { Headers, Request, Response } from "node-fetch";
+import React from "react";
+import { SWRConfig } from "swr";
+
+import { server } from "../../../../test/msw/server";
+import SceneTable from "../../../components/scene/SceneTable";
+import { Scene } from "../../../lib/scenes";
+
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+const scene: Scene = {
+  id: "scene-1",
+  created: "2026-07-01T15:30:00Z",
+  name: "Scene One",
+  state: "ready",
+  suppliedId: "supplied-scene-1",
+};
+
+const page = {
+  cursors: { self: "page-1" },
+  data: [
+    {
+      type: "scene",
+      id: scene.id,
+      attributes: {
+        created: scene.created,
+        name: scene.name,
+        state: scene.state,
+        suppliedId: scene.suppliedId,
+      },
+    },
+  ],
+  status: 200,
+};
+
+describe("SceneTable", () => {
+  beforeAll(() => {
+    Object.assign(global, {
+      Headers,
+      Request,
+      Response,
+      fetch: nodeFetch,
+    });
+    server.listen({ onUnhandledRequest: "error" });
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+    jest.restoreAllMocks();
+    Object.assign(global, { fetch: nodeFetch });
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
+  it("preserves the active scene highlight after the drawer scene clears", async () => {
+    server.use(
+      rest.get("*/api/scenes", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    const { rerender } = renderTable(scene);
+
+    await waitFor(() => {
+      expect(getSceneRow()).toHaveClass("Mui-selected");
+    });
+
+    rerender(renderTableElement(undefined));
+
+    await waitFor(() => {
+      expect(getSceneRow()).toHaveClass("Mui-selected");
+    });
+  });
+});
+
+function getSceneRow(): HTMLTableRowElement {
+  const row = screen.getByText("Scene One").closest("tr");
+  if (row == null) throw new Error("Could not find scene row.");
+
+  return row;
+}
+
+function renderTable(scene?: Scene) {
+  return render(renderTableElement(scene));
+}
+
+function renderTableElement(scene?: Scene): JSX.Element {
+  return (
+    <SWRConfig
+      value={{
+        dedupingInterval: 0,
+        fetcher: (url: string) =>
+          (global.fetch as typeof nodeFetch)(
+            new URL(url, window.location.origin).toString()
+          ).then((res) => res.json()),
+        provider: () => new Map(),
+      }}
+    >
+      <SceneTable
+        clientId="client-id"
+        invalidationCount={0}
+        onClick={jest.fn()}
+        onEditClick={jest.fn()}
+        scene={scene}
+        vertexEnv="platdev"
+      />
+    </SWRConfig>
+  );
+}

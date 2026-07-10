@@ -106,6 +106,9 @@ export default function SceneTable({
     {}
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [activeSceneId, setActiveSceneId] = React.useState<
+    string | undefined
+  >();
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
@@ -144,6 +147,10 @@ export default function SceneTable({
 
     setCursors(page.cursors ?? undefined);
   }, [page]);
+
+  React.useEffect(() => {
+    if (scene != null) setActiveSceneId(scene.id);
+  }, [scene]);
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -297,7 +304,7 @@ export default function SceneTable({
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
-                  const isActive = scene?.id === row.id;
+                  const isActive = activeSceneId === row.id;
 
                   return (
                     <TableRow
