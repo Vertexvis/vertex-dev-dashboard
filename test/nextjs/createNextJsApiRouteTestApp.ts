@@ -1,31 +1,31 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { ParsedUrlQuery } from "querystring";
-import { NextApiHandler } from "next";
+import { NextApiHandler, PageConfig } from "next";
 import { apiResolver } from "next/dist/server/api-utils/node/api-resolver";
+import { ParsedUrlQuery } from "querystring";
 
 import { CookieAttributes } from "../../src/lib/with-session";
 
-export interface NextJsPagesApiRoute {
+export interface NextJsApiRouteTestRoute {
+  readonly config?: PageConfig;
   readonly handler: NextApiHandler;
   readonly pathname: string;
 }
 
-export type NextJsPagesApiTestApp = (
+export type NextJsApiRouteTestApp = (
   req: IncomingMessage,
   res: ServerResponse
 ) => Promise<void>;
 
-const previewModeKeys = {
+const apiResolverContext = {
   previewModeEncryptionKey: "preview-mode-encryption-key",
   previewModeId: "preview-mode-id-123",
   previewModeSigningKey: "preview-mode-signing-key-123",
 };
 
-export function createNextJsPagesApiTestApp(
-  routes: readonly NextJsPagesApiRoute[]
-): NextJsPagesApiTestApp {
-  process.env.COOKIE_SECRET ||= "test-cookie-secret-that-is-long-enough";
-  CookieAttributes.password ||= process.env.COOKIE_SECRET;
+export function createNextJsApiRouteTestApp(
+  routes: readonly NextJsApiRouteTestRoute[]
+): NextJsApiRouteTestApp {
+  ensureTestSessionConfig();
 
   const compiledRoutes = routes.map(createCompiledRoute);
 
@@ -42,8 +42,8 @@ export function createNextJsPagesApiTestApp(
       req,
       res,
       route.query,
-      { default: route.handler },
-      { ...previewModeKeys, dev: false },
+      route.resolverModule,
+      { ...apiResolverContext, dev: false },
       false,
       false,
       route.pathname
@@ -52,21 +52,31 @@ export function createNextJsPagesApiTestApp(
 }
 
 interface CompiledRoute {
-  readonly handler: NextApiHandler;
   readonly pathname: string;
+  readonly resolverModule: ResolverModule;
   readonly segments: readonly string[];
 }
 
 interface MatchedRoute {
-  readonly handler: NextApiHandler;
   readonly pathname: string;
   readonly query: ParsedUrlQuery;
+  readonly resolverModule: ResolverModule;
 }
 
-function createCompiledRoute(route: NextJsPagesApiRoute): CompiledRoute {
+interface ResolverModule {
+  readonly config?: PageConfig;
+  readonly default: NextApiHandler;
+}
+
+function ensureTestSessionConfig(): void {
+  process.env.COOKIE_SECRET ||= "test-cookie-secret-that-is-long-enough";
+  CookieAttributes.password ||= process.env.COOKIE_SECRET;
+}
+
+function createCompiledRoute(route: NextJsApiRouteTestRoute): CompiledRoute {
   return {
-    handler: route.handler,
     pathname: route.pathname,
+    resolverModule: toApiResolverModule(route),
     segments: splitPathname(route.pathname),
   };
 }
@@ -85,13 +95,19 @@ function matchRoute(
     }
 
     return {
-      handler: route.handler,
       pathname: route.pathname,
       query: mergeQuery(params, url.searchParams),
+      resolverModule: route.resolverModule,
     };
   }
 
   return undefined;
+}
+
+function toApiResolverModule(route: NextJsApiRouteTestRoute): ResolverModule {
+  return route.config == null
+    ? { default: route.handler }
+    : { config: route.config, default: route.handler };
 }
 
 function splitPathname(pathname: string): string[] {
