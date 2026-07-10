@@ -37,9 +37,10 @@ export default function Home(): JSX.Element {
       return;
     }
 
-    if (selectedScene != null && !isErrorRes(selectedScene)) {
-      setScene(toScene(selectedScene));
-      setEditing(editingQueryParam === "true");
+    if (selectedScene != null) {
+      const isErr = isErrorRes(selectedScene);
+      setScene(isErr ? undefined : toScene(selectedScene));
+      setEditing(!isErr && editingQueryParam === "true");
     }
   }, [editingQueryParam, router.isReady, sceneId, selectedScene]);
 
