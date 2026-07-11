@@ -12,6 +12,20 @@ import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRouter = {
+  isReady: true,
+  pathname: "/file-collections",
+  push: mockPush,
+  query: {} as Record<string, string | string[] | undefined>,
+  replace: mockReplace,
+};
+
+jest.mock("next/router", () => ({
+  useRouter: () => mockRouter,
+}));
+
 const firstPage = fileCollectionsPage({
   data: [
     fileCollection({
@@ -59,6 +73,12 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
+
+  beforeEach(() => {
+    mockPush.mockClear();
+    mockReplace.mockClear();
+    mockRouter.query = {};
+  });
 
   it("paginates file collections using the next cursor", async () => {
     const requests: string[] = [];
