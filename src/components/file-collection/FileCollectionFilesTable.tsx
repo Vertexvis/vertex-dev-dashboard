@@ -11,6 +11,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -23,7 +24,14 @@ import {
   normalizeFileStatus,
   toFilePage,
 } from "../../lib/files";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import {
+  buildQuery,
+  cursorPagingStateFromQuery,
+  cursorPagingStateToQuery,
+  SwrProps,
+  useCursorPagingState,
+} from "../../lib/paging";
+import { updateRouterQuery } from "../../lib/url-state";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -51,6 +59,8 @@ const headCells = [
   { id: "uploaded", label: "Uploaded" },
   { id: "actions", label: "Actions" },
 ] as const;
+
+const UrlStatePrefix = "file";
 
 function useCollectionFiles({
   apiPath,
@@ -94,10 +104,22 @@ export default function FileCollectionFilesTable({
   apiPath,
   onFileSelected,
 }: Props): JSX.Element {
+  const router = useRouter();
+  const routerReady = router.isReady !== false;
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, cursors, handlePageChange, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    getPageStateForChange,
+    handlePageChange,
+    setCursors,
+    setPagingState,
+  } = useCursorPagingState(
+    cursorPagingStateFromQuery(router.query, UrlStatePrefix)
+  );
   const [downloadError, setDownloadError] = React.useState<string>();
+  const initializedFromQuery = React.useRef(false);
 
   const { data, error } = useCollectionFiles({
     apiPath,
@@ -119,11 +141,26 @@ export default function FileCollectionFilesTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
+  React.useEffect(() => {
+    if (!routerReady || initializedFromQuery.current) return;
+
+    initializedFromQuery.current = true;
+    setPagingState(cursorPagingStateFromQuery(router.query, UrlStatePrefix));
+  }, [router.query, routerReady, setPagingState]);
+
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
+    const nextPagingState = getPageStateForChange(num);
     handlePageChange(num);
+    if (routerReady) {
+      updateRouterQuery(
+        router,
+        cursorPagingStateToQuery(UrlStatePrefix, nextPagingState),
+        "replace"
+      );
+    }
   }
 
   async function handleDownload(id: string) {
