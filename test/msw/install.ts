@@ -10,12 +10,12 @@ interface FetchApis {
 function createRelativeUrlFetch(nativeFetch: typeof fetch): typeof fetch {
   return ((
     input: RequestInfo | URL,
-    init?: RequestInit,
+    init?: RequestInit
   ): Promise<globalThis.Response> => {
     if (typeof input === "string" || input instanceof URL) {
       return nativeFetch(
         new URL(input.toString(), "http://localhost").toString(),
-        init,
+        init
       );
     }
 
