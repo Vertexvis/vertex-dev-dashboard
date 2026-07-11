@@ -16,6 +16,7 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -28,13 +29,20 @@ import {
   normalizeFileStatus,
   toFilePage,
 } from "../../lib/files";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import {
+  buildQuery,
+  cursorPagingStateFromQuery,
+  cursorPagingStateToQuery,
+  SwrProps,
+  useCursorPagingState,
+} from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
 } from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
+import { queryParamValue, updateRouterQuery } from "../../lib/url-state";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { ResourceLink } from "../shared/ResourceLink";
@@ -53,6 +61,9 @@ export const headCells: readonly HeadCell[] = [
   { id: "uploaded", label: "Uploaded" },
   { id: "actions", label: "Actions" },
 ];
+
+const UrlStatePrefix = "file";
+const DefaultSort: SortState = { field: "created", order: "desc" };
 
 interface UseFilesProps extends SwrProps {
   readonly createdAtEnd?: string;
@@ -119,17 +130,47 @@ interface Props {
 type SetOptionalString = React.Dispatch<
   React.SetStateAction<string | undefined>
 >;
+type DateBoundary = "start" | "end";
+
+function toLocalDayIso(value: string, boundary: DateBoundary): string {
+  const [year, month, day] = value.split("-").map(Number);
+  const date =
+    boundary === "start"
+      ? new Date(year, month - 1, day, 0, 0, 0, 0)
+      : new Date(year, month - 1, day, 23, 59, 59, 999);
+
+  return date.toISOString();
+}
+
+function toSortState(value?: string): SortState {
+  switch (value) {
+    case "name":
+      return { field: "name", order: "asc" };
+    case "-name":
+      return { field: "name", order: "desc" };
+    case "created":
+      return { field: "created", order: "asc" };
+    case "-created":
+      return { field: "created", order: "desc" };
+    default:
+      return DefaultSort;
+  }
+}
+
 function useDebouncedFilter(
   setFilter: SetOptionalString,
-  resetPaging: () => void
+  resetPaging: () => void,
+  onFilterChanged: (value: string | undefined) => void
 ): (value: string) => void {
   return React.useMemo(
     () =>
       debounce((value: string) => {
+        const nextValue = value === "" ? undefined : value;
         resetPaging();
-        setFilter(value === "" ? undefined : value);
+        setFilter(nextValue);
+        onFilterChanged(nextValue);
       }, 300),
-    [resetPaging, setFilter]
+    [onFilterChanged, resetPaging, setFilter]
   );
 }
 
@@ -137,34 +178,69 @@ export default function FileTable({
   activeFileId,
   onFileSelected,
 }: Props): JSX.Element {
+  const router = useRouter();
+  const routerReady = router.isReady !== false;
   const pageSize = DefaultPageSize;
-  const [sort, setSort] = React.useState<SortState>({
-    field: "created",
-    order: "desc",
-  });
+  const [sort, setSort] = React.useState<SortState>(() =>
+    toSortState(queryParamValue(router.query.fileSort))
+  );
   const {
     currentPage,
     cursor,
     cursors,
+    getPageStateForChange,
     handlePageChange,
     resetPaging,
     setCursors,
-  } = useCursorPagingState();
+    setPagingState,
+  } = useCursorPagingState(
+    cursorPagingStateFromQuery(router.query, UrlStatePrefix)
+  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
-  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
-  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
-  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>(() =>
+    queryParamValue(router.query.fileName)
+  );
+  const [nameInput, setNameInput] = React.useState(
+    () => queryParamValue(router.query.fileName) ?? ""
+  );
+  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>(() =>
+    queryParamValue(router.query.fileFilterId)
+  );
+  const [fileIdInput, setFileIdInput] = React.useState(
+    () => queryParamValue(router.query.fileFilterId) ?? ""
+  );
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<string | undefined>(
+    () => queryParamValue(router.query.fileSuppliedId)
+  );
+  const [suppliedIdInput, setSuppliedIdInput] = React.useState(
+    () => queryParamValue(router.query.fileSuppliedId) ?? ""
+  );
+  const [createdAtStartDate, setCreatedAtStartDate] = React.useState(
+    () => queryParamValue(router.query.fileCreatedAtStart) ?? ""
+  );
+  const [createdAtEndDate, setCreatedAtEndDate] = React.useState(
+    () => queryParamValue(router.query.fileCreatedAtEnd) ?? ""
+  );
+  const [createdAtStart, setCreatedAtStart] = React.useState<
     string | undefined
-  >();
-  const [createdAtFilters, setCreatedAtFilters] =
-    React.useState<CreatedAtDateRange>({});
+  >(() => {
+    const value = queryParamValue(router.query.fileCreatedAtStart);
+    return value != null ? toLocalDayIso(value, "start") : undefined;
+  });
+  const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>(
+    () => {
+      const value = queryParamValue(router.query.fileCreatedAtEnd);
+      return value != null ? toLocalDayIso(value, "end") : undefined;
+    }
+  );
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
+  const initializedFromQuery = React.useRef(false);
 
   const { data, error, mutate } = useFiles({
-    createdAtEnd: createdAtFilters.createdAtEnd,
-    createdAtStart: createdAtFilters.createdAtStart,
+    createdAtEnd,
+    createdAtStart,
     cursor,
     fileId: fileIdFilter,
     name: nameFilter,
@@ -182,15 +258,81 @@ export default function FileTable({
       ? 0
       : pageSize - pageLength;
 
-  const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
+  const updateFileTableQuery = React.useCallback(
+    (updates: Record<string, string | undefined>) => {
+      if (!routerReady) return;
+
+      updateRouterQuery(router, updates, "replace");
+    },
+    [router, routerReady]
+  );
+
+  const clearPagingQuery = React.useCallback(
+    () => cursorPagingStateToQuery(UrlStatePrefix),
+    []
+  );
+
+  const debouncedSetNameFilter = useDebouncedFilter(
+    setNameFilter,
+    resetPaging,
+    (value) =>
+      updateFileTableQuery({
+        fileName: value,
+        ...clearPagingQuery(),
+      })
+  );
   const debouncedSetFileIdFilter = useDebouncedFilter(
     setFileIdFilter,
-    resetPaging
+    resetPaging,
+    (value) =>
+      updateFileTableQuery({
+        fileFilterId: value,
+        ...clearPagingQuery(),
+      })
   );
   const debouncedSetSuppliedIdFilter = useDebouncedFilter(
     setSuppliedIdFilter,
-    resetPaging
+    resetPaging,
+    (value) =>
+      updateFileTableQuery({
+        fileSuppliedId: value,
+        ...clearPagingQuery(),
+      })
   );
+
+  React.useEffect(() => {
+    if (!routerReady || initializedFromQuery.current) return;
+
+    initializedFromQuery.current = true;
+    setSort(toSortState(queryParamValue(router.query.fileSort)));
+    const nextName = queryParamValue(router.query.fileName);
+    const nextFileId = queryParamValue(router.query.fileFilterId);
+    const nextSuppliedId = queryParamValue(router.query.fileSuppliedId);
+    setNameFilter(nextName);
+    setNameInput(nextName ?? "");
+    setFileIdFilter(nextFileId);
+    setFileIdInput(nextFileId ?? "");
+    setSuppliedIdFilter(nextSuppliedId);
+    setSuppliedIdInput(nextSuppliedId ?? "");
+
+    const nextCreatedAtStart =
+      queryParamValue(router.query.fileCreatedAtStart) ?? "";
+    const nextCreatedAtEnd =
+      queryParamValue(router.query.fileCreatedAtEnd) ?? "";
+    setCreatedAtStartDate(nextCreatedAtStart);
+    setCreatedAtEndDate(nextCreatedAtEnd);
+    setCreatedAtStart(
+      nextCreatedAtStart !== ""
+        ? toLocalDayIso(nextCreatedAtStart, "start")
+        : undefined
+    );
+    setCreatedAtEnd(
+      nextCreatedAtEnd !== ""
+        ? toLocalDayIso(nextCreatedAtEnd, "end")
+        : undefined
+    );
+    setPagingState(cursorPagingStateFromQuery(router.query, UrlStatePrefix));
+  }, [router.query, routerReady, setPagingState]);
 
   React.useEffect(() => {
     if (page == null) return;
@@ -218,17 +360,39 @@ export default function FileTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
+    const nextPagingState = getPageStateForChange(num);
     handlePageChange(num);
+    updateFileTableQuery(
+      cursorPagingStateToQuery(UrlStatePrefix, nextPagingState)
+    );
   }
 
   function handleSortChange(field: string) {
-    setSort((current) => toggleSort(current, field));
+    setSort((current) => {
+      const nextSort = toggleSort(current, field);
+      updateFileTableQuery({
+        fileSort: toSortParam(nextSort),
+        ...clearPagingQuery(),
+      });
+      return nextSort;
+    });
     resetPaging();
   }
 
   function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
-    setCreatedAtFilters(filters);
+    const createdAtStartDate = filters.createdAtStart?.slice(0, 10) ?? "";
+    const createdAtEndDate = filters.createdAtEnd?.slice(0, 10) ?? "";
+
+    setCreatedAtStart(filters.createdAtStart);
+    setCreatedAtStartDate(createdAtStartDate);
+    setCreatedAtEnd(filters.createdAtEnd);
+    setCreatedAtEndDate(createdAtEndDate);
+    updateFileTableQuery({
+      fileCreatedAtEnd: createdAtEndDate || undefined,
+      fileCreatedAtStart: createdAtStartDate || undefined,
+      ...clearPagingQuery(),
+    });
   }
 
   async function handleDelete() {
@@ -393,8 +557,11 @@ export default function FileTable({
               id="nameFilter"
               label="Name"
               type="text"
+              value={nameInput}
               onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+                const value = e.target.value ?? "";
+                setNameInput(value);
+                debouncedSetNameFilter(value.trim());
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
@@ -405,8 +572,11 @@ export default function FileTable({
               id="fileIdFilter"
               label="File ID"
               type="text"
+              value={fileIdInput}
               onChange={(e) => {
-                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
+                const value = e.target.value ?? "";
+                setFileIdInput(value);
+                debouncedSetFileIdFilter(value.trim());
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
@@ -417,14 +587,23 @@ export default function FileTable({
               id="suppliedIdFilter"
               label="Supplied ID"
               type="text"
+              value={suppliedIdInput}
               onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                const value = e.target.value ?? "";
+                setSuppliedIdInput(value);
+                debouncedSetSuppliedIdFilter(value.trim());
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
           </Box>
         </Box>
-        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
+        <CreatedAtDateRangeFilter
+          onChange={handleCreatedAtChange}
+          value={{
+            createdAtEnd: createdAtEndDate,
+            createdAtStart: createdAtStartDate,
+          }}
+        />
         <TableContainer>
           <Table>
             <TableHead
