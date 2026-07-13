@@ -20,10 +20,10 @@ export interface FileCollectionExportAvailability {
   readonly fileCount: number;
 }
 
-export type GetFileCollectionRes = Res &
-  Pick<FileCollectionMetadata, "data"> & {
-    readonly export?: FileCollectionExportAvailability;
-  };
+export type GetFileCollectionRes = Res & {
+  readonly data: FileCollectionMetadataData;
+  readonly export?: FileCollectionExportAvailability;
+};
 
 export function toFileCollection(
   data: FileCollectionMetadataData

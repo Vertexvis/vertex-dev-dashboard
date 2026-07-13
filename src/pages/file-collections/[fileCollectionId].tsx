@@ -19,7 +19,12 @@ import { FileDetailsDrawer } from "../../components/file/FileDetailsDrawer";
 import { FileCollectionMetadataTable } from "../../components/file-collection/FileCollectionMetadataTable";
 import { AppLink } from "../../components/shared/AppLink";
 import { Layout } from "../../components/shared/Layout";
-import { ErrorRes, isErrorFailure, toErrorRes } from "../../lib/api";
+import {
+  ErrorRes,
+  isErrorFailure,
+  isErrorRes,
+  toErrorRes,
+} from "../../lib/api";
 import {
   FileCollection,
   GetFileCollectionRes,
@@ -325,7 +330,7 @@ export default function FileCollectionDetails({
 
         if (fileCollectionIdRef.current !== currentFileCollectionId) return;
 
-        if (!res.ok) {
+        if (!res.ok || "message" in body) {
           setReadiness(undefined);
           setReadinessError(
             ("message" in body ? body.message : undefined) ??
@@ -400,13 +405,16 @@ export default function FileCollectionDetails({
         const res = await fetch(
           `/api/file-jobs/${encodeURIComponent(currentJobId)}`
         );
-        const body = (await res.json()) as FileJobRes;
+        const body = (await res.json()) as FileJobRes | ErrorRes;
 
         if (!active) return;
 
-        if (!res.ok) {
+        if (!res.ok || "message" in body) {
           setJobStatus("error");
-          setExportError(body.message ?? "Archive job failed.");
+          setExportError(
+            ("message" in body ? body.message : undefined) ??
+              "Archive job failed."
+          );
           return;
         }
 
@@ -454,7 +462,7 @@ export default function FileCollectionDetails({
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      body = (await res.json()) as FileJobRes;
+      body = (await res.json()) as FileJobRes | ErrorRes;
     } catch {
       if (fileCollectionIdRef.current === currentFileCollectionId) {
         setJobStatus("error");
@@ -471,9 +479,9 @@ export default function FileCollectionDetails({
       body.data.id == null ||
       body.archiveFileId == null
     ) {
-      const message =
-        ("message" in body ? body.message : undefined) ??
-        "Could not start archive export.";
+      const message = isErrorRes(body)
+        ? body.message
+        : "Could not start archive export.";
       setJobStatus("error");
       setExportError(message);
       setReadiness((current) =>
