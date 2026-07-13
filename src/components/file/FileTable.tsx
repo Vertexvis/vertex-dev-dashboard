@@ -164,9 +164,9 @@ export default function FileTable({
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
-  const [name, setNameFilter] = React.useState<string | undefined>();
-  const [fileId, setFileIdFilter] = React.useState<string | undefined>();
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
+  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
   const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
@@ -182,11 +182,11 @@ export default function FileTable({
     createdAtEnd,
     createdAtStart,
     cursor,
-    fileId,
-    name,
+    fileId: fileIdFilter,
+    name: nameFilter,
     pageSize,
     sort,
-    suppliedId,
+    suppliedId: suppliedIdFilter,
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
