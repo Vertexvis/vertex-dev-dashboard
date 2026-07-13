@@ -19,7 +19,13 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import { File, toFilePage } from "../../lib/files";
+import {
+  File,
+  FileStatusComplete,
+  isCompleteFileStatus,
+  normalizeFileStatus,
+  toFilePage,
+} from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -61,7 +67,7 @@ function useCollectionFiles({
 }
 
 function isFileAvailable(file: File): boolean {
-  return file.status?.toLowerCase() === "complete";
+  return isCompleteFileStatus(file.status);
 }
 
 function statusLabel(status?: string): string {
@@ -71,9 +77,8 @@ function statusLabel(status?: string): string {
 function statusColor(
   status?: string
 ): "default" | "success" | "warning" | "error" {
-  switch (status?.toLowerCase()) {
-    case "complete":
-    case "ready":
+  switch (normalizeFileStatus(status)) {
+    case FileStatusComplete:
       return "success";
     case "pending":
       return "warning";

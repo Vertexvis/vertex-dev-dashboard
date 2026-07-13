@@ -23,7 +23,13 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import { File, toFilePage } from "../../lib/files";
+import {
+  File,
+  FileStatusComplete,
+  isCompleteFileStatus,
+  normalizeFileStatus,
+  toFilePage,
+} from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
@@ -78,13 +84,7 @@ function useFiles({
 }
 
 function isFileAvailable(file: File): boolean {
-  const status = normalizeStatus(file.status);
-
-  return status === "complete";
-}
-
-function normalizeStatus(status?: string): string | undefined {
-  return status?.toLowerCase();
+  return isCompleteFileStatus(file.status);
 }
 
 function statusLabel(status?: string): string {
@@ -94,9 +94,8 @@ function statusLabel(status?: string): string {
 function statusColor(
   status?: string
 ): "default" | "success" | "warning" | "error" {
-  switch (normalizeStatus(status)) {
-    case "complete":
-    case "ready":
+  switch (normalizeFileStatus(status)) {
+    case FileStatusComplete:
       return "success";
     case "pending":
       return "warning";

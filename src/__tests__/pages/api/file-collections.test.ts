@@ -154,6 +154,53 @@ describe("file collection API routes", () => {
     );
   });
 
+  it("includes export availability when requested", async () => {
+    await mockServer.client.mockAnyResponse({
+      httpRequest: { method: "GET", path: "/file-collections/collection-1" },
+      httpResponse: jsonResponse({
+        data: collectionData("collection-1"),
+        links: {},
+      }),
+    });
+    await mockServer.client.mockAnyResponse({
+      httpRequest: {
+        method: "GET",
+        path: "/file-collections/collection-1/files",
+        queryStringParameters: { "page[size]": ["200"] },
+      },
+      httpResponse: jsonResponse({
+        data: [fileData("file-1", "complete")],
+        links: {},
+      }),
+    });
+
+    const res = await callFileCollectionById("collection-1", {
+      method: "GET",
+      query: { includeExportAvailability: "true" },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      data: collectionData("collection-1"),
+      export: { enabled: true, fileCount: 1 },
+      status: 200,
+    });
+    await mockServer.client.verify(
+      { method: "GET", path: "/file-collections/collection-1" },
+      1,
+      1
+    );
+    await mockServer.client.verify(
+      {
+        method: "GET",
+        path: "/file-collections/collection-1/files",
+        queryStringParameters: { "page[size]": ["200"] },
+      },
+      1,
+      1
+    );
+  });
+
   it("validates file collection ID requests before calling Vertex", async () => {
     const missingId = await callFileCollectionById(undefined, {
       method: "GET",
@@ -211,11 +258,14 @@ describe("file collection API routes", () => {
 
   function callFileCollectionById(
     id: string | undefined,
-    req: { readonly method: string }
+    req: {
+      readonly method: string;
+      readonly query?: Record<string, string | string[]>;
+    }
   ): Promise<TestRes> {
     return callApi((r, res) => handleFileCollection(r, res), {
       ...req,
-      query: id == null ? {} : { id },
+      query: id == null ? req.query : { ...req.query, id },
     });
   }
 
@@ -331,6 +381,20 @@ function collectionData(id: string): JsonBody {
     },
     id,
     type: "file-collection",
+  };
+}
+
+function fileData(id: string, status: string): JsonBody {
+  return {
+    attributes: {
+      created: "2026-06-12T15:30:00Z",
+      name: `${id}.jt`,
+      status,
+      suppliedId: `${id}-supplied`,
+      uploaded: "2026-06-12T15:31:00Z",
+    },
+    id,
+    type: "file",
   };
 }
 
