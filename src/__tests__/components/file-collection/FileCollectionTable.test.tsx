@@ -146,7 +146,10 @@ function stubFileCollectionsTable({
   deleteOptions,
 }: {
   readonly byCursor?: Record<string, ReturnType<typeof fileCollectionsPage>>;
-  readonly bySuppliedId?: Record<string, ReturnType<typeof fileCollectionsPage>>;
+  readonly bySuppliedId?: Record<
+    string,
+    ReturnType<typeof fileCollectionsPage>
+  >;
   readonly defaultPage: ReturnType<typeof fileCollectionsPage>;
   readonly deleteOptions?: Parameters<typeof deleteFileCollections>[0];
 }): void {

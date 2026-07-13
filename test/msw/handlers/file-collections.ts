@@ -1,37 +1,21 @@
 import { rest, RestHandler } from "msw";
 
-interface FileCollectionAttributes {
-  readonly created: string;
-  readonly name: string;
-  readonly suppliedId?: string;
-}
-
-interface FileCollectionResource {
-  readonly attributes: FileCollectionAttributes;
-  readonly id: string;
-  readonly type: "file-collection";
-}
-
-interface FileCollectionsPage {
-  readonly cursors: {
-    readonly next?: string;
-    readonly self?: string;
-  };
-  readonly data: readonly FileCollectionResource[];
-  readonly status: 200;
-}
+import type { DeleteReq, ErrorRes, Res } from "../../../src/lib/api";
+import type {
+  FileCollectionPageRes,
+  FileCollectionResource,
+} from "../../../src/lib/file-collections";
 
 interface FileCollectionsQueryMap {
-  readonly byCursor?: Record<string, FileCollectionsPage>;
-  readonly bySuppliedId?: Record<string, FileCollectionsPage>;
-  readonly defaultPage: FileCollectionsPage;
+  readonly byCursor?: Record<string, FileCollectionPageRes>;
+  readonly bySuppliedId?: Record<string, FileCollectionPageRes>;
+  readonly defaultPage: FileCollectionPageRes;
 }
 
 interface DeleteFileCollectionsOptions {
   readonly expectedIds?: readonly string[];
-  readonly response?: {
+  readonly response?: Res & {
     readonly body: Record<string, unknown>;
-    readonly status: number;
   };
 }
 
@@ -61,10 +45,10 @@ export function fileCollectionsPage({
     readonly self?: string;
   };
   readonly data: readonly FileCollectionResource[];
-}): FileCollectionsPage {
+}): FileCollectionPageRes {
   return {
     cursors,
-    data,
+    data: [...data],
     status: 200,
   };
 }
@@ -113,7 +97,7 @@ export function deleteFileCollections(
   };
 
   return rest.delete("*/api/file-collections", async (req, res, ctx) => {
-    const body = (await req.json()) as { ids?: string[] };
+    const body = (await req.json()) as Partial<DeleteReq>;
     const ids = body.ids ?? [];
 
     if (
@@ -122,13 +106,16 @@ export function deleteFileCollections(
     ) {
       return res(
         ctx.status(400),
-        ctx.json({
+        ctx.json<ErrorRes>({
           message: "Unexpected file collection delete payload.",
           status: 400,
         })
       );
     }
 
-    return res(ctx.status(successResponse.status), ctx.json(successResponse.body));
+    return res(
+      ctx.status(successResponse.status),
+      ctx.json(successResponse.body)
+    );
   });
 }
