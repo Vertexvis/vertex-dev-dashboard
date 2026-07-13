@@ -1,10 +1,10 @@
 import { Download } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Breadcrumbs,
   Button,
   CircularProgress,
+  Fade,
   Paper,
   Stack,
   Typography,
@@ -82,11 +82,13 @@ interface ExportControlsProps {
   readonly onExport: () => void;
   readonly onRefreshReadiness: () => void;
   readonly onRetry: () => void;
+  readonly archiveReadyMessageVisible: boolean;
   readonly readinessCheckInFlight: boolean;
   readonly readinessLoading: boolean;
 }
 
 function ExportControls({
+  archiveReadyMessageVisible,
   archiveFileId,
   disabledReason,
   downloadInFlight,
@@ -104,7 +106,7 @@ function ExportControls({
   return (
     <Stack
       alignItems={{ xs: "flex-start", sm: "flex-end" }}
-      spacing={1}
+      spacing={0.75}
       sx={{ flexShrink: 0 }}
     >
       <ExportPrimaryButton
@@ -116,25 +118,29 @@ function ExportControls({
         onDownloadArchive={onDownloadArchive}
         onExport={onExport}
       />
-      <ExportAvailabilityStatus
-        disabledReason={disabledReason}
-        exportDisabled={exportDisabled}
-        exportInFlight={exportInFlight}
-        onRefreshReadiness={onRefreshReadiness}
-        readinessCheckInFlight={readinessCheckInFlight}
-        readinessLoading={readinessLoading}
-      />
-      {jobStatus === "running" && (
-        <Typography color="text.secondary" variant="body2">
-          Archive job is running.
-        </Typography>
-      )}
-      <ExportAlerts
-        archiveFileId={archiveFileId}
-        exportError={exportError}
-        jobStatus={jobStatus}
-        onRetry={onRetry}
-      />
+      <Box
+        sx={{
+          alignItems: "flex-start",
+          display: "flex",
+          justifyContent: { xs: "flex-start", sm: "flex-end" },
+          minHeight: 34,
+          width: "100%",
+        }}
+      >
+        <ExportStatusMessage
+          archiveReadyMessageVisible={archiveReadyMessageVisible}
+          archiveFileId={archiveFileId}
+          disabledReason={disabledReason}
+          exportDisabled={exportDisabled}
+          exportError={exportError}
+          exportInFlight={exportInFlight}
+          jobStatus={jobStatus}
+          onRefreshReadiness={onRefreshReadiness}
+          onRetry={onRetry}
+          readinessCheckInFlight={readinessCheckInFlight}
+          readinessLoading={readinessLoading}
+        />
+      </Box>
     </Stack>
   );
 }
@@ -189,23 +195,76 @@ function ExportPrimaryButton({
   );
 }
 
-interface ExportAvailabilityStatusProps {
+interface ExportStatusMessageProps {
+  readonly archiveReadyMessageVisible: boolean;
+  readonly archiveFileId?: string;
   readonly disabledReason?: string;
   readonly exportDisabled: boolean;
+  readonly exportError?: string;
   readonly exportInFlight: boolean;
+  readonly jobStatus: ExportJobStatus;
   readonly onRefreshReadiness: () => void;
+  readonly onRetry: () => void;
   readonly readinessCheckInFlight: boolean;
   readonly readinessLoading: boolean;
 }
 
-function ExportAvailabilityStatus({
+function ExportStatusMessage({
+  archiveReadyMessageVisible,
+  archiveFileId,
   disabledReason,
   exportDisabled,
+  exportError,
   exportInFlight,
+  jobStatus,
   onRefreshReadiness,
+  onRetry,
   readinessCheckInFlight,
   readinessLoading,
-}: ExportAvailabilityStatusProps): JSX.Element | null {
+}: ExportStatusMessageProps): JSX.Element | null {
+  if (exportError != null) {
+    return (
+      <Stack
+        alignItems="center"
+        direction="row"
+        justifyContent={{ sm: "flex-end" }}
+        spacing={1}
+        sx={{ maxWidth: 360 }}
+      >
+        <Typography
+          color="error.main"
+          sx={{ overflowWrap: "anywhere", textAlign: { sm: "right" } }}
+          variant="body2"
+        >
+          {exportError}
+        </Typography>
+        {jobStatus === "error" && (
+          <Button onClick={onRetry} size="small">
+            Retry
+          </Button>
+        )}
+      </Stack>
+    );
+  }
+
+  if (jobStatus === "complete" && archiveFileId != null) {
+    return (
+      <Fade in={archiveReadyMessageVisible} timeout={500} unmountOnExit>
+        <Typography color="success.main" variant="body2">
+          Archive is ready to download.
+        </Typography>
+      </Fade>
+    );
+  }
+
+  if (jobStatus === "running") {
+    return (
+      <Typography color="text.secondary" variant="body2">
+        Archive job is running.
+      </Typography>
+    );
+  }
+
   if (readinessLoading) {
     return (
       <Typography color="text.secondary" variant="body2">
@@ -217,8 +276,18 @@ function ExportAvailabilityStatus({
   if (!exportDisabled || exportInFlight || disabledReason == null) return null;
 
   return (
-    <Stack alignItems={{ sm: "flex-end" }} spacing={0.5}>
-      <Typography color="text.secondary" variant="body2">
+    <Stack
+      alignItems="center"
+      direction="row"
+      justifyContent={{ sm: "flex-end" }}
+      spacing={1}
+      sx={{ maxWidth: 420 }}
+    >
+      <Typography
+        color="text.secondary"
+        sx={{ overflowWrap: "anywhere", textAlign: { sm: "right" } }}
+        variant="body2"
+      >
         {disabledReason}
       </Typography>
       <Button
@@ -231,46 +300,6 @@ function ExportAvailabilityStatus({
           : "Refresh Availability"}
       </Button>
     </Stack>
-  );
-}
-
-interface ExportAlertsProps {
-  readonly archiveFileId?: string;
-  readonly exportError?: string;
-  readonly jobStatus: ExportJobStatus;
-  readonly onRetry: () => void;
-}
-
-function ExportAlerts({
-  archiveFileId,
-  exportError,
-  jobStatus,
-  onRetry,
-}: ExportAlertsProps): JSX.Element | null {
-  if (exportError != null) {
-    return (
-      <Alert
-        action={
-          jobStatus === "error" ? (
-            <Button color="inherit" onClick={onRetry} size="small">
-              Retry
-            </Button>
-          ) : undefined
-        }
-        severity="error"
-        sx={{ maxWidth: 360 }}
-      >
-        {exportError}
-      </Alert>
-    );
-  }
-
-  if (jobStatus !== "complete" || archiveFileId == null) return null;
-
-  return (
-    <Alert severity="success" sx={{ maxWidth: 360 }}>
-      Archive is ready to download.
-    </Alert>
   );
 }
 
@@ -287,6 +316,8 @@ export default function FileCollectionDetails({
   const [readinessRefreshInFlight, setReadinessRefreshInFlight] =
     React.useState(false);
   const [exportError, setExportError] = React.useState<string>();
+  const [archiveReadyMessageVisible, setArchiveReadyMessageVisible] =
+    React.useState(false);
   const [downloadInFlight, setDownloadInFlight] = React.useState(false);
   const [archiveFileId, setArchiveFileId] = React.useState<string>();
   const [jobId, setJobId] = React.useState<string>();
@@ -300,6 +331,8 @@ export default function FileCollectionDetails({
   )}?includeExportAvailability=true`;
   const exportStateIsCurrent = exportStateCollectionId === fileCollection.id;
   const currentArchiveFileId = exportStateIsCurrent ? archiveFileId : undefined;
+  const currentArchiveReadyMessageVisible =
+    exportStateIsCurrent && archiveReadyMessageVisible;
   const currentDownloadInFlight = exportStateIsCurrent && downloadInFlight;
   const currentExportError = exportStateIsCurrent ? exportError : undefined;
   const currentJobStatus = exportStateIsCurrent ? jobStatus : "idle";
@@ -367,6 +400,7 @@ export default function FileCollectionDetails({
     setReadiness(undefined);
     setReadinessError(undefined);
     setReadinessRefreshInFlight(false);
+    setArchiveReadyMessageVisible(false);
     setExportError(undefined);
     setDownloadInFlight(false);
     setArchiveFileId(undefined);
@@ -381,6 +415,22 @@ export default function FileCollectionDetails({
 
     return () => controller.abort();
   }, [loadReadiness]);
+
+  React.useEffect(() => {
+    if (
+      !exportStateIsCurrent ||
+      jobStatus !== "complete" ||
+      !archiveReadyMessageVisible
+    )
+      return;
+
+    const timeout = window.setTimeout(
+      () => setArchiveReadyMessageVisible(false),
+      6000
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [archiveReadyMessageVisible, exportStateIsCurrent, jobStatus]);
 
   async function handleRefreshReadiness() {
     if (currentReadinessRefreshInFlight || exportInFlight) return;
@@ -423,6 +473,7 @@ export default function FileCollectionDetails({
         const status = body.data?.attributes?.status;
         if (status === "complete") {
           setJobStatus("complete");
+          setArchiveReadyMessageVisible(true);
         } else if (status === "error") {
           setJobStatus("error");
           setExportError("Archive job failed.");
@@ -451,6 +502,7 @@ export default function FileCollectionDetails({
     const currentFileCollectionId = fileCollection.id;
     setExportStateCollectionId(currentFileCollectionId);
     setArchiveFileId(undefined);
+    setArchiveReadyMessageVisible(false);
     setDownloadInFlight(false);
     setExportError(undefined);
     setJobId(undefined);
@@ -508,6 +560,7 @@ export default function FileCollectionDetails({
     if (currentArchiveFileId == null || currentDownloadInFlight) return;
 
     const currentFileCollectionId = fileCollection.id;
+    setArchiveReadyMessageVisible(false);
     setDownloadInFlight(true);
     setExportError(undefined);
 
@@ -546,6 +599,7 @@ export default function FileCollectionDetails({
   function handleRetry() {
     setExportStateCollectionId(fileCollection.id);
     setArchiveFileId(undefined);
+    setArchiveReadyMessageVisible(false);
     setDownloadInFlight(false);
     setExportError(undefined);
     setJobId(undefined);
@@ -585,6 +639,7 @@ export default function FileCollectionDetails({
                 </Typography>
               </Box>
               <ExportControls
+                archiveReadyMessageVisible={currentArchiveReadyMessageVisible}
                 archiveFileId={currentArchiveFileId}
                 disabledReason={disabledReason}
                 downloadInFlight={currentDownloadInFlight}
