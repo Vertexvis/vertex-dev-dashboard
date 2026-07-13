@@ -48,7 +48,7 @@ export function fileCollectionsPage({
 }): FileCollectionPageRes {
   return {
     cursors,
-    data,
+    data: [...data],
     status: 200,
   };
 }
