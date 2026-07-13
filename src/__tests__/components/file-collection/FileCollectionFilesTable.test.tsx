@@ -132,7 +132,7 @@ describe("FileCollectionFilesTable", () => {
     );
   });
 
-  it("styles ready file statuses as success", async () => {
+  it("does not style ready file statuses as success", async () => {
     mockFetch(() => ({
       ...collectionFilesPage,
       data: [
@@ -154,7 +154,7 @@ describe("FileCollectionFilesTable", () => {
 
     const statusLabel = await screen.findByText("ready");
     expect(statusLabel.closest(".MuiChip-root")).toHaveClass(
-      "MuiChip-colorSuccess"
+      "MuiChip-colorDefault"
     );
   });
 
