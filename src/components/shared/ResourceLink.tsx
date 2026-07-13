@@ -48,10 +48,10 @@ export function ResourceLink({
         }}
         sx={[
           {
-            color: "text.secondary",
+            color: "text.primary",
             cursor: disabled ? "not-allowed" : "pointer",
             textDecoration: "underline",
-            textDecorationColor: "transparent",
+            textDecorationColor: "currentColor",
             "&:hover": {
               textDecorationColor: "currentColor",
             },
