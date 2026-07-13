@@ -40,6 +40,7 @@ export function FileCollectionDetailsDrawer({
     fileCollection != null &&
     fetchedFileCollection == null &&
     error == null &&
+    !isErrorRes(data) &&
     (fileCollection.metadata == null || fileCollection.expiresAt == null);
 
   return (

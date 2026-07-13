@@ -1,8 +1,9 @@
 import { Box, BoxProps, Tooltip } from "@mui/material";
 import React from "react";
 
-type ResourceLinkProps = Omit<BoxProps<"span">, "onClick"> & {
+type ResourceLinkProps = Omit<BoxProps<"a">, "onClick"> & {
   readonly disabled?: boolean;
+  readonly href?: string;
   readonly onPrimaryAction: () => void;
   readonly primaryActionLabel: string;
 };
@@ -10,6 +11,7 @@ type ResourceLinkProps = Omit<BoxProps<"span">, "onClick"> & {
 export function ResourceLink({
   children,
   disabled = false,
+  href,
   onPrimaryAction,
   primaryActionLabel,
   sx,
@@ -18,19 +20,21 @@ export function ResourceLink({
   return (
     <Tooltip title={primaryActionLabel}>
       <Box
-        component="span"
-        role="button"
-        tabIndex={disabled ? -1 : 0}
+        component="a"
+        href={disabled ? undefined : href ?? "#"}
+        role="link"
+        tabIndex={disabled ? -1 : undefined}
         aria-disabled={disabled}
         aria-label={primaryActionLabel}
-        onClick={(event: React.MouseEvent<HTMLSpanElement>) => {
+        onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
           if (disabled || event.button !== 0) {
             return;
           }
+          event.preventDefault();
           event.stopPropagation();
           onPrimaryAction();
         }}
-        onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
+        onKeyDown={(event: React.KeyboardEvent<HTMLAnchorElement>) => {
           if (disabled) {
             return;
           }
@@ -44,7 +48,7 @@ export function ResourceLink({
         }}
         sx={[
           {
-            color: "inherit",
+            color: "text.secondary",
             cursor: disabled ? "not-allowed" : "pointer",
             textDecoration: "underline",
             textDecorationColor: "transparent",
@@ -58,6 +62,7 @@ export function ResourceLink({
             },
             ...(disabled && {
               opacity: 0.7,
+              pointerEvents: "none",
               "&:focus-visible": {
                 outline: "none",
               },

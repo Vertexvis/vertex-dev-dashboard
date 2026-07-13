@@ -49,6 +49,7 @@ export function FileCollectionMetadataTable({
 
 function DetailsRow({
   label,
+  status,
   value,
 }: {
   readonly label: string;
@@ -75,6 +76,7 @@ function DetailsRow({
 
 function MetadataRow({
   metadata,
+  status,
 }: {
   readonly metadata?: Record<string, string>;
   readonly status: "loading" | "ready";
