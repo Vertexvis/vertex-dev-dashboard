@@ -1,24 +1,21 @@
-import {
-  FileCollectionMetadata,
-  head,
-  logError,
-  VertexError,
-} from "@vertexvis/api-client-node";
+import { head, logError, VertexError } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import {
   ErrorRes,
   isErrorFailure,
   MethodNotAllowed,
-  Res,
   ServerError,
   toErrorRes,
 } from "../../../../lib/api";
-import { getFileCollectionsApi } from "../../../../lib/file-collections";
+import {
+  fetchAllFileCollectionFiles,
+  getFileCollectionExportAvailability,
+  GetFileCollectionRes,
+  getFileCollectionsApi,
+} from "../../../../lib/file-collections";
 import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
-
-type GetFileCollectionRes = Res & Pick<FileCollectionMetadata, "data">;
 
 export async function handleFileCollection(
   req: NextIronRequest,
@@ -45,6 +42,17 @@ async function get(
     const c = getFileCollectionsApi(await getClientFromSession(req.session));
     const res = await makeCall(() => c.getFileCollection({ id }));
     if (isErrorFailure(res)) return toErrorRes({ failure: res });
+
+    if (head(req.query.includeExportAvailability) === "true") {
+      const files = await fetchAllFileCollectionFiles(c, id);
+      const availability = getFileCollectionExportAvailability(files);
+
+      return {
+        data: res.data,
+        export: availability,
+        status: 200,
+      };
+    }
 
     return { data: res.data, status: 200 };
   } catch (error) {

@@ -23,7 +23,13 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import { File, toFilePage } from "../../lib/files";
+import {
+  File,
+  FileStatusComplete,
+  isCompleteFileStatus,
+  normalizeFileStatus,
+  toFilePage,
+} from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
@@ -78,13 +84,7 @@ function useFiles({
 }
 
 function isFileAvailable(file: File): boolean {
-  const status = normalizeStatus(file.status);
-
-  return status === "complete";
-}
-
-function normalizeStatus(status?: string): string | undefined {
-  return status?.toLowerCase();
+  return isCompleteFileStatus(file.status);
 }
 
 function statusLabel(status?: string): string {
@@ -94,9 +94,8 @@ function statusLabel(status?: string): string {
 function statusColor(
   status?: string
 ): "default" | "success" | "warning" | "error" {
-  switch (normalizeStatus(status)) {
-    case "complete":
-    case "ready":
+  switch (normalizeFileStatus(status)) {
+    case FileStatusComplete:
       return "success";
     case "pending":
       return "warning";
@@ -165,9 +164,9 @@ export default function FileTable({
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
-  const [name, setNameFilter] = React.useState<string | undefined>();
-  const [fileId, setFileIdFilter] = React.useState<string | undefined>();
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
+  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
   const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
@@ -183,11 +182,11 @@ export default function FileTable({
     createdAtEnd,
     createdAtStart,
     cursor,
-    fileId,
-    name,
+    fileId: fileIdFilter,
+    name: nameFilter,
     pageSize,
     sort,
-    suppliedId,
+    suppliedId: suppliedIdFilter,
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
