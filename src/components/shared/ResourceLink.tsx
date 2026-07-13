@@ -20,14 +20,14 @@ export function ResourceLink({
         role="button"
         tabIndex={0}
         aria-label={primaryActionLabel}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLSpanElement>) => {
           if (event.button !== 0) {
             return;
           }
           event.stopPropagation();
           onPrimaryAction();
         }}
-        onKeyDown={(event) => {
+        onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
           if (event.key !== "Enter" && event.key !== " ") {
             return;
           }
