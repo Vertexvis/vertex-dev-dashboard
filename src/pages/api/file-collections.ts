@@ -23,6 +23,7 @@ import {
   toErrorRes,
 } from "../../lib/api";
 import {
+  filterFileCollections,
   getFileCollectionsApi,
   sortFileCollections,
 } from "../../lib/file-collections";
@@ -106,7 +107,10 @@ async function get(
     );
     return {
       cursors,
-      data: sortFileCollections(page.data, sort),
+      data: sortFileCollections(
+        filterFileCollections(page.data, { name, suppliedId }),
+        sort
+      ),
       status: 200,
     };
   } catch (error) {

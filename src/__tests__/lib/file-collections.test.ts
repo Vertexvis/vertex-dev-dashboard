@@ -1,4 +1,5 @@
 import {
+  filterFileCollections,
   toFileCollection,
   toFileCollectionPage,
 } from "../../lib/file-collections";
@@ -59,5 +60,36 @@ describe("file collection paging", () => {
         },
       ],
     });
+  });
+
+  it("filters collections by case-insensitive partial name and supplied ID", () => {
+    const collections = [
+      {
+        type: "file-collection" as const,
+        id: "collection-1",
+        attributes: {
+          name: "Engine Assembly",
+          suppliedId: "PLM-123",
+          created: "2026-06-10T15:30:00Z",
+        },
+      },
+      {
+        type: "file-collection" as const,
+        id: "collection-2",
+        attributes: {
+          name: "Cabin Assembly",
+          suppliedId: "PLM-456",
+          created: "2026-06-11T15:30:00Z",
+        },
+      },
+    ];
+
+    expect(
+      filterFileCollections(collections, {
+        name: "ENGINE",
+        suppliedId: "m-12",
+      })
+    ).toEqual([collections[0]]);
+    expect(filterFileCollections(collections, { name: "missing" })).toEqual([]);
   });
 });
