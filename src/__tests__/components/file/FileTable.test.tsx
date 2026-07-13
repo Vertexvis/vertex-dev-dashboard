@@ -182,64 +182,6 @@ describe("FileTable", () => {
     expect(fromInput).toHaveValue("2026-07-01");
     expect(toInput).toHaveValue("");
   });
-
-  it("uses the file name as the primary download action while keeping row clicks for details", async () => {
-    const onFileSelected = jest.fn();
-    jest.spyOn(window, "open").mockReturnValue({} as Window);
-    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = input.toString();
-
-      if (url === "/api/files/file-1/download-url") {
-        return Promise.resolve({
-          json: () =>
-            Promise.resolve({ url: "https://example.test/download/file-1" }),
-          ok: true,
-        } as Response);
-      }
-
-      return (nodeFetch as typeof global.fetch)(
-        new URL(url, window.location.origin).toString(),
-        init
-      );
-    }) as typeof global.fetch;
-
-    server.use(
-      rest.get("*/api/files", (_req, res, ctx) => {
-        return res(ctx.json(page));
-      })
-    );
-
-    renderTable(onFileSelected);
-
-    const name = await screen.findByLabelText("Download alpha.jt");
-    await userEvent.hover(name);
-
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Download alpha.jt"
-    );
-
-    await userEvent.click(name);
-
-    await waitFor(() => {
-      expect(window.open).toHaveBeenCalledWith(
-        "https://example.test/download/file-1",
-        "_blank",
-        "noopener"
-      );
-    });
-    expect(onFileSelected).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByText("supplied-1"));
-
-    expect(onFileSelected).toHaveBeenCalledWith({
-      created: "2026-06-10T15:30:00Z",
-      id: "file-1",
-      name: "alpha.jt",
-      status: "complete",
-      suppliedId: "supplied-1",
-      uploaded: "2026-06-10T15:45:00Z",
-    });
-  });
 });
 
 function renderTable(

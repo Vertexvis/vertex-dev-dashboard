@@ -184,55 +184,20 @@ describe("FileCollectionTable", () => {
     });
   });
 
-  it("shows an open hint on the collection name", async () => {
+  it("navigates to the file collection detail route when a row is clicked", async () => {
     mockFetch(() => firstPage);
 
     renderTable();
 
-    const name = await screen.findByLabelText("Open Collection One");
-    await userEvent.hover(name);
-
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Open Collection One"
-    );
-  });
-
-  it("opens the file collection route when the name is clicked", async () => {
-    const onFileCollectionSelected = jest.fn();
-
-    mockFetch(() => firstPage);
-
-    renderTable({ onFileCollectionSelected });
-
-    await userEvent.click(await screen.findByLabelText("Open Collection One"));
-
-    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
-    expect(onFileCollectionSelected).not.toHaveBeenCalled();
-  });
-
-  it("opens the details panel when the row is clicked", async () => {
-    const onFileCollectionSelected = jest.fn();
-
-    mockFetch(() => firstPage);
-
-    renderTable({ onFileCollectionSelected });
-
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("supplied-1"));
+    await userEvent.click(screen.getByText("Collection One"));
 
-    expect(onFileCollectionSelected).toHaveBeenCalledWith({
-      created: "2026-06-10T15:30:00Z",
-      id: "collection-1",
-      name: "Collection One",
-      suppliedId: "supplied-1",
-    });
+    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
   });
 });
 
-function renderTable(
-  props: Partial<React.ComponentProps<typeof FileCollectionTable>> = {}
-): void {
+function renderTable(): void {
   render(
     <SWRConfig
       value={{
@@ -241,7 +206,7 @@ function renderTable(
         provider: () => new Map(),
       }}
     >
-      <FileCollectionTable {...props} />
+      <FileCollectionTable />
     </SWRConfig>
   );
 }

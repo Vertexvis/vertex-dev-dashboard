@@ -71,28 +71,7 @@ describe("FileCollectionFilesTable", () => {
       "MuiTableCell-paddingNone"
     );
 
-    const name = screen.getByLabelText("Download File One");
-    await userEvent.hover(name);
-
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Download File One"
-    );
-
-    await userEvent.click(name);
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/files/file-1/download-url", {
-        method: "POST",
-      });
-    });
-    expect(window.open).toHaveBeenCalledWith(
-      "https://example.test/download/file-1",
-      "_blank",
-      "noopener"
-    );
-    expect(onFileSelected).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByText("supplied-file-1"));
+    await userEvent.click(screen.getByText("File One"));
 
     expect(onFileSelected).toHaveBeenCalledWith({
       id: "file-1",
@@ -104,10 +83,7 @@ describe("FileCollectionFilesTable", () => {
     });
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
-    );
-    await userEvent.click(
-      screen.getByRole("menuitem", { name: "Download file" })
+      screen.getByRole("button", { name: "Download File One" })
     );
 
     await waitFor(() => {
@@ -145,12 +121,8 @@ describe("FileCollectionFilesTable", () => {
     expect(await screen.findByText("File One")).toBeInTheDocument();
     expect(screen.getByText("pending")).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
-    );
-    expect(
-      screen.getByRole("menuitem", { name: "Download file" })
-    ).toHaveAttribute("aria-disabled", "true");
+    const download = screen.getByRole("button", { name: "Download File One" });
+    expect(download).toBeDisabled();
 
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/files/file-1/download-url",
@@ -209,12 +181,8 @@ describe("FileCollectionFilesTable", () => {
 
     expect(await screen.findByText("completed")).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
-    );
-    expect(
-      screen.getByRole("menuitem", { name: "Download file" })
-    ).toHaveAttribute("aria-disabled", "true");
+    const download = screen.getByRole("button", { name: "Download File One" });
+    expect(download).toBeDisabled();
 
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/files/file-1/download-url",
