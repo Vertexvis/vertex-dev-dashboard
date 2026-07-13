@@ -26,6 +26,7 @@ import { toLocaleString } from "../../lib/dates";
 import { File, toFilePage } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -529,6 +530,14 @@ export default function FileTable({
           rowsPerPageOptions={[]}
           component="div"
           count={-1}
+          labelDisplayedRows={(displayedRows) =>
+            formatCursorPaginationLabel(
+              displayedRows,
+              paginationCursors?.next != null,
+              pageLength,
+              visiblePage != null
+            )
+          }
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}

@@ -36,6 +36,7 @@ import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer/[sceneId]";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -397,6 +398,14 @@ export default function SceneTable({
           rowsPerPageOptions={[]}
           component="div"
           count={-1}
+          labelDisplayedRows={(displayedRows) =>
+            formatCursorPaginationLabel(
+              displayedRows,
+              cursors?.next != null,
+              pageLength,
+              page != null
+            )
+          }
           rowsPerPage={pageSize}
           page={curPage}
           onPageChange={handleChangePage}
