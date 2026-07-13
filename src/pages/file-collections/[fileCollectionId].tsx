@@ -102,38 +102,40 @@ function ExportControls({
   readinessLoading,
 }: ExportControlsProps): JSX.Element {
   return (
-    <>
-      <Stack alignItems={{ sm: "flex-end" }} spacing={1}>
-        <ExportPrimaryButton
-          archiveFileId={archiveFileId}
-          downloadInFlight={downloadInFlight}
-          exportDisabled={exportDisabled}
-          exportInFlight={exportInFlight}
-          jobStatus={jobStatus}
-          onDownloadArchive={onDownloadArchive}
-          onExport={onExport}
-        />
-        <ExportAvailabilityStatus
-          disabledReason={disabledReason}
-          exportDisabled={exportDisabled}
-          exportInFlight={exportInFlight}
-          onRefreshReadiness={onRefreshReadiness}
-          readinessCheckInFlight={readinessCheckInFlight}
-          readinessLoading={readinessLoading}
-        />
-        {jobStatus === "running" && (
-          <Typography color="text.secondary" variant="body2">
-            Archive job is running.
-          </Typography>
-        )}
-      </Stack>
+    <Stack
+      alignItems={{ xs: "flex-start", sm: "flex-end" }}
+      spacing={1}
+      sx={{ flexShrink: 0 }}
+    >
+      <ExportPrimaryButton
+        archiveFileId={archiveFileId}
+        downloadInFlight={downloadInFlight}
+        exportDisabled={exportDisabled}
+        exportInFlight={exportInFlight}
+        jobStatus={jobStatus}
+        onDownloadArchive={onDownloadArchive}
+        onExport={onExport}
+      />
+      <ExportAvailabilityStatus
+        disabledReason={disabledReason}
+        exportDisabled={exportDisabled}
+        exportInFlight={exportInFlight}
+        onRefreshReadiness={onRefreshReadiness}
+        readinessCheckInFlight={readinessCheckInFlight}
+        readinessLoading={readinessLoading}
+      />
+      {jobStatus === "running" && (
+        <Typography color="text.secondary" variant="body2">
+          Archive job is running.
+        </Typography>
+      )}
       <ExportAlerts
         archiveFileId={archiveFileId}
         exportError={exportError}
         jobStatus={jobStatus}
         onRetry={onRetry}
       />
-    </>
+    </Stack>
   );
 }
 
@@ -256,7 +258,7 @@ function ExportAlerts({
           ) : undefined
         }
         severity="error"
-        sx={{ mt: 2 }}
+        sx={{ maxWidth: 360 }}
       >
         {exportError}
       </Alert>
@@ -266,7 +268,7 @@ function ExportAlerts({
   if (jobStatus !== "complete" || archiveFileId == null) return null;
 
   return (
-    <Alert severity="success" sx={{ mt: 2 }}>
+    <Alert severity="success" sx={{ maxWidth: 360 }}>
       Archive is ready to download.
     </Alert>
   );
