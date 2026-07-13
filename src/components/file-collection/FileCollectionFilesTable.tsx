@@ -162,9 +162,18 @@ export default function FileCollectionFilesTable({
       const isAvailable = isFileAvailable(row);
 
       return (
-        <TableRow hover tabIndex={-1} key={row.id} selected={isActive}>
+        <TableRow
+          hover
+          tabIndex={-1}
+          key={row.id}
+          selected={isActive}
+          onClick={() => onFileSelected(row)}
+        >
           <TableCell component="th" scope="row">
-            <ResourceLink onOpen={() => onFileSelected(row)}>
+            <ResourceLink
+              onPrimaryAction={() => handleDownload(row.id)}
+              primaryActionLabel={`Download ${row.name}`}
+            >
               {row.name}
             </ResourceLink>
           </TableCell>

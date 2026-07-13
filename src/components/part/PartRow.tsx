@@ -17,7 +17,6 @@ import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartRevisionPage } from "../../lib/part-revisions";
 import { Part } from "../../lib/parts";
-import { ResourceLink } from "../shared/ResourceLink";
 import { RowActionsMenu } from "../shared/RowActionsMenu";
 
 interface PartRowProps {
@@ -107,14 +106,11 @@ export default function PartRow({
                     <TableRow
                       key={r.id}
                       hover
+                      onClick={() => onRevisionSelected(r)}
                       selected={activeRevisionId === r.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
-                      <TableCell>
-                        <ResourceLink onOpen={() => onRevisionSelected(r)}>
-                          {r.name}
-                        </ResourceLink>
-                      </TableCell>
+                      <TableCell>{r.name}</TableCell>
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
                       <TableCell>{r.suppliedIterationId}</TableCell>

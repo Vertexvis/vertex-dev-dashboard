@@ -71,7 +71,28 @@ describe("FileCollectionFilesTable", () => {
       "MuiTableCell-paddingNone"
     );
 
-    await userEvent.click(screen.getByText("File One"));
+    const name = screen.getByLabelText("Download File One");
+    await userEvent.hover(name);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Download File One"
+    );
+
+    await userEvent.click(name);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/files/file-1/download-url", {
+        method: "POST",
+      });
+    });
+    expect(window.open).toHaveBeenCalledWith(
+      "https://example.test/download/file-1",
+      "_blank",
+      "noopener"
+    );
+    expect(onFileSelected).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByText("supplied-file-1"));
 
     expect(onFileSelected).toHaveBeenCalledWith({
       id: "file-1",

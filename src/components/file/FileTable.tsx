@@ -336,6 +336,7 @@ export default function FileTable({
           tabIndex={-1}
           key={row.id}
           selected={isSel || isActive}
+          onClick={() => onFileSelected(row)}
         >
           <TableCell
             padding="checkbox"
@@ -353,7 +354,10 @@ export default function FileTable({
             />
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
-            <ResourceLink onOpen={() => onFileSelected(row)}>
+            <ResourceLink
+              onPrimaryAction={() => handleDownload(row.id)}
+              primaryActionLabel={`Download ${row.name}`}
+            >
               {row.name}
             </ResourceLink>
           </TableCell>
