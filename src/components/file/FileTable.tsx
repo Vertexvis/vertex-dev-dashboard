@@ -355,8 +355,13 @@ export default function FileTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
+              disabled={!isAvailable}
               onPrimaryAction={() => handleDownload(row.id)}
-              primaryActionLabel={`Download ${row.name}`}
+              primaryActionLabel={
+                isAvailable
+                  ? `Download ${row.name}`
+                  : `${row.name} is not available for download`
+              }
             >
               {row.name}
             </ResourceLink>

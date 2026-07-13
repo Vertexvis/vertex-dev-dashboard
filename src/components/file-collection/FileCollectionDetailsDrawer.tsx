@@ -1,7 +1,14 @@
 import { Close } from "@mui/icons-material";
 import { Box, Drawer, IconButton, Typography } from "@mui/material";
+import React from "react";
+import useSWR from "swr";
 
-import { FileCollection } from "../../lib/file-collections";
+import { isErrorRes } from "../../lib/api";
+import {
+  FileCollection,
+  GetFileCollectionRes,
+  toFileCollection,
+} from "../../lib/file-collections";
 import { RightDrawerWidth } from "../shared/Layout";
 import { FileCollectionMetadataTable } from "./FileCollectionMetadataTable";
 
@@ -16,6 +23,25 @@ export function FileCollectionDetailsDrawer({
   onClose,
   open,
 }: Props): JSX.Element {
+  const { data, error } = useSWR<GetFileCollectionRes | undefined>(
+    fileCollection == null
+      ? null
+      : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`
+  );
+  const fetchedFileCollection =
+    data != null && !isErrorRes(data) ? toFileCollection(data.data) : undefined;
+  const fileCollectionDetails =
+    fileCollection == null
+      ? undefined
+      : fetchedFileCollection == null
+      ? fileCollection
+      : { ...fileCollection, ...fetchedFileCollection };
+  const showOptionalFieldLoading =
+    fileCollection != null &&
+    fetchedFileCollection == null &&
+    error == null &&
+    (fileCollection.metadata == null || fileCollection.expiresAt == null);
+
   return (
     <Drawer
       anchor="right"
@@ -35,9 +61,12 @@ export function FileCollectionDetailsDrawer({
           <Close />
         </IconButton>
       </Box>
-      {fileCollection ? (
+      {fileCollectionDetails ? (
         <Box sx={{ px: 2 }}>
-          <FileCollectionMetadataTable fileCollection={fileCollection} />
+          <FileCollectionMetadataTable
+            fileCollection={fileCollectionDetails}
+            optionalFieldStatus={showOptionalFieldLoading ? "loading" : "ready"}
+          />
         </Box>
       ) : (
         <></>
