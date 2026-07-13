@@ -4,7 +4,6 @@ import {
   CircularProgress,
   Drawer,
   IconButton,
-  Link,
   Table,
   TableBody,
   TableCell,
@@ -17,9 +16,13 @@ import {
 import React from "react";
 
 import { toLocaleString } from "../../lib/dates";
-import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
+import {
+  FileCollection,
+  toFileCollectionPage,
+} from "../../lib/file-collections";
 import { File } from "../../lib/files";
 import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
+import { AppLink } from "../shared/AppLink";
 import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
@@ -100,9 +103,9 @@ function useFileCollections({
   readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 } {
-  const [fileCollections, setFileCollections] = React.useState<FileCollection[]>(
-    []
-  );
+  const [fileCollections, setFileCollections] = React.useState<
+    FileCollection[]
+  >([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string>();
 
@@ -296,9 +299,7 @@ function FileCollectionIdsRow({
       <TableCell>
         <Typography variant="subtitle2">File Collections</Typography>
         {loading ? (
-          <Box
-            sx={{ alignItems: "center", display: "flex", gap: 1, mt: 1 }}
-          >
+          <Box sx={{ alignItems: "center", display: "flex", gap: 1, mt: 1 }}>
             <CircularProgress size={16} />
             <Typography variant="body2">Loading collections...</Typography>
           </Box>
@@ -315,7 +316,7 @@ function FileCollectionIdsRow({
               {fileCollections.map((collection) => (
                 <TableRow key={collection.id}>
                   <TableCell sx={{ px: 0, py: 0.75, verticalAlign: "top" }}>
-                    <Link
+                    <AppLink
                       href={`/file-collections/${encodeURIComponent(
                         collection.id
                       )}`}
@@ -327,7 +328,7 @@ function FileCollectionIdsRow({
                       >
                         {toDisplayValue(collection.name ?? collection.id)}
                       </Typography>
-                    </Link>
+                    </AppLink>
                     <Box
                       sx={{
                         alignItems: "center",
@@ -337,7 +338,7 @@ function FileCollectionIdsRow({
                         mt: 0.5,
                       }}
                     >
-                      <Link
+                      <AppLink
                         href={`/file-collections/${encodeURIComponent(
                           collection.id
                         )}`}
@@ -358,7 +359,7 @@ function FileCollectionIdsRow({
                         >
                           {collection.id}
                         </Typography>
-                      </Link>
+                      </AppLink>
                       <Tooltip title="Copy file collection ID">
                         <IconButton
                           aria-label={`Copy ${collection.id}`}

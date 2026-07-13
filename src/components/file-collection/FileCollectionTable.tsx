@@ -20,6 +20,7 @@ import useSWR from "swr";
 import { toLocaleString } from "../../lib/dates";
 import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { ResourceLink } from "../shared/ResourceLink";
@@ -257,6 +258,14 @@ export default function FileCollectionTable({
           rowsPerPageOptions={[]}
           component="div"
           count={-1}
+          labelDisplayedRows={(displayedRows) =>
+            formatCursorPaginationLabel(
+              displayedRows,
+              cursors?.next != null,
+              pageLength,
+              page != null
+            )
+          }
           rowsPerPage={pageSize}
           page={currentPage}
           onPageChange={handleChangePage}
