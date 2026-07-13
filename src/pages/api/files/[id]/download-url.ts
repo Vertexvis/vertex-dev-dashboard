@@ -5,22 +5,18 @@ import {
   ErrorRes,
   InvalidBody,
   MethodNotAllowed,
-  Res,
   ServerError,
   toErrorRes,
 } from "../../../../lib/api";
+import { FileDownloadUrlRes } from "../../../../lib/files";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
 const DefaultDownloadExpirySeconds = 30;
 
-interface CreateDownloadUrlRes extends Res {
-  readonly url: string;
-}
-
 export default withSession(async function handle(
   req: NextIronRequest,
-  res: NextApiResponse<CreateDownloadUrlRes | ErrorRes>
+  res: NextApiResponse<FileDownloadUrlRes | ErrorRes>
 ): Promise<void> {
   if (req.method === "POST") {
     const r = await create(req);
@@ -32,7 +28,7 @@ export default withSession(async function handle(
 
 async function create(
   req: NextIronRequest
-): Promise<CreateDownloadUrlRes | ErrorRes> {
+): Promise<FileDownloadUrlRes | ErrorRes> {
   try {
     const id = head(req.query.id);
     if (id == null) return InvalidBody;

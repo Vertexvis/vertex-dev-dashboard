@@ -36,6 +36,7 @@ import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
 import { encodeCreds } from "../../pages/scene-viewer/[sceneId]";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
@@ -90,6 +91,7 @@ export default function SceneTable({
   clientId,
   onClick,
   onEditClick,
+  scene,
   vertexEnv,
   invalidationCount,
 }: Props): JSX.Element {
@@ -105,6 +107,9 @@ export default function SceneTable({
     {}
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
+    () => scene?.id
+  );
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
   >();
@@ -144,6 +149,10 @@ export default function SceneTable({
     setCursors(page.cursors ?? undefined);
   }, [page]);
 
+  React.useEffect(() => {
+    if (scene != null) setActiveSceneId(scene.id);
+  }, [scene]);
+
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
 
@@ -161,6 +170,7 @@ export default function SceneTable({
   }
 
   function handleClick(s: Scene) {
+    setActiveSceneId(s.id);
     onClick(s);
   }
 
@@ -186,6 +196,7 @@ export default function SceneTable({
   }
 
   function handleEditClick(s: Scene) {
+    setActiveSceneId(s.id);
     onEditClick(s);
   }
 
@@ -296,6 +307,7 @@ export default function SceneTable({
               ) : (
                 page.items.map((row) => {
                   const isSel = selected.has(row.id);
+                  const isActive = activeSceneId === row.id;
 
                   return (
                     <TableRow
@@ -303,7 +315,7 @@ export default function SceneTable({
                       role="checkbox"
                       tabIndex={-1}
                       key={row.id}
-                      selected={isSel}
+                      selected={isSel || isActive}
                       onClick={() => handleClick(row)}
                     >
                       <TableCell
@@ -386,6 +398,14 @@ export default function SceneTable({
           rowsPerPageOptions={[]}
           component="div"
           count={-1}
+          labelDisplayedRows={(displayedRows) =>
+            formatCursorPaginationLabel(
+              displayedRows,
+              cursors?.next != null,
+              pageLength,
+              page != null
+            )
+          }
           rowsPerPage={pageSize}
           page={curPage}
           onPageChange={handleChangePage}
