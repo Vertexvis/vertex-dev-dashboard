@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http,HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import React from "react";
 
 import {
@@ -62,6 +62,8 @@ const multiCollectionPage = fileCollectionsPage({
     }),
   ],
 });
+
+const emptyCollectionPage = fileCollectionsPage({ data: [] });
 
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
@@ -157,7 +159,7 @@ describe("FileCollectionTable", () => {
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
     await userEvent.type(
-      screen.getByLabelText("Supplied ID Filter (exact)"),
+      screen.getByLabelText("Supplied ID"),
       "supplied-2"
     );
 
@@ -232,6 +234,103 @@ describe("FileCollectionTable", () => {
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).toBeChecked();
     expect(deletedIds).toEqual([["collection-1"]]);
+  });
+
+  it("filters file collections by a partial supplied ID", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.get("suppliedId") === "LIED-2"
+            ? nextPage
+            : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Supplied ID"), "LIED-2");
+
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
+
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return (
+          params.get("pageSize") === "25" &&
+          params.get("suppliedId") === "LIED-2"
+        );
+      })
+    ).toBe(true);
+  });
+
+  it("sends name and supplied ID filters together", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.get("name") === "Collection" &&
+            url.searchParams.get("suppliedId") === "2"
+            ? nextPage
+            : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Name"), "Collection");
+    await userEvent.type(screen.getByLabelText("Supplied ID"), "2");
+
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return (
+          params.get("pageSize") === "25" &&
+          params.get("name") === "Collection" &&
+          params.get("suppliedId") === "2"
+        );
+      })
+    ).toBe(true);
+  });
+
+  it("renders an empty filtered result", async () => {
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+
+        return HttpResponse.json(
+          url.searchParams.get("name") === "missing"
+            ? emptyCollectionPage
+            : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Name"), "missing");
+
+    expect(
+      await screen.findByText("No file collections found.")
+    ).toBeInTheDocument();
   });
 
   it("navigates to the file collection detail route when a row is clicked", async () => {

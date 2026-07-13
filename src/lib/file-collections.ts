@@ -32,6 +32,36 @@ export type GetFileCollectionRes = Res & {
   readonly export?: FileCollectionExportAvailability;
 };
 
+export interface FileCollectionFilters {
+  readonly name?: string;
+  readonly suppliedId?: string;
+}
+
+/**
+ * Temporary client-side stand-in for the File Collections API filter contract.
+ *
+ * The dashboard also sends these filters upstream, but the API has not
+ * published the contract yet. Applying them here preserves the expected
+ * behavior when the upstream service ignores those parameters.
+ */
+export function filterFileCollections(
+  fileCollections: FileCollectionList["data"],
+  filters: FileCollectionFilters
+): FileCollectionList["data"] {
+  return fileCollections.filter(({ attributes }) => {
+    const nameMatches =
+      filters.name == null ||
+      attributes.name?.toLowerCase().includes(filters.name.toLowerCase());
+    const suppliedIdMatches =
+      filters.suppliedId == null ||
+      attributes.suppliedId
+        ?.toLowerCase()
+        .includes(filters.suppliedId.toLowerCase());
+
+    return nameMatches && suppliedIdMatches;
+  });
+}
+
 export function toFileCollection(
   data: FileCollectionMetadataData
 ): FileCollection {

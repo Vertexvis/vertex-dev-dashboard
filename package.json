@@ -54,6 +54,7 @@
     "jest-fixed-jsdom": "^0.0.11",
     "mockserver-client": "^7.1.0",
     "msw": "^2.15.0",
+    "playwright": "^1.61.1",
     "prettier": "^2.4",
     "testcontainers": "10.28.0",
     "ts-jest": "^29.4.11",
@@ -67,8 +68,10 @@
     "format": "prettier --write './**/*.+(js|jsx|ts|tsx|json|yml|yaml|md|mdx|html|css)'",
     "lint": "next lint",
     "start": "next start",
+    "setup": "bash scripts/setup.sh",
     "test": "jest",
-    "test:ci": "CI=true jest --coverage"
+    "test:ci": "CI=true jest --coverage",
+    "playwright:login": "node scripts/test_playwright.js"
   },
   "resolutions": {
     "@babel/runtime": "7.29.2",

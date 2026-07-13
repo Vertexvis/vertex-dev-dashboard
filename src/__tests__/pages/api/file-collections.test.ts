@@ -44,15 +44,21 @@ describe("file collection API routes", () => {
     await mockServer.client.reset();
   });
 
-  it("lists file collections with query parameters", async () => {
+  it("passes partial filters upstream and applies them locally", async () => {
     await expectFileCollectionList({
-      "filter[suppliedId]": ["supplied-1"],
+      "filter[name][contains]": ["COLLECT"],
+      "filter[suppliedId][contains]": ["LIED-1"],
       "page[cursor]": ["cursor-1"],
       "page[size]": ["50"],
     });
     const res = await callFileCollections({
       method: "GET",
-      query: { cursor: "cursor-1", pageSize: "50", suppliedId: "supplied-1" },
+      query: {
+        cursor: "cursor-1",
+        name: "COLLECT",
+        pageSize: "50",
+        suppliedId: "LIED-1",
+      },
     });
 
     expect(res.statusCode()).toBe(200);
@@ -62,9 +68,33 @@ describe("file collection API routes", () => {
       status: 200,
     });
     await verifyListFileCollections({
-      "filter[suppliedId]": ["supplied-1"],
+      "filter[name][contains]": ["COLLECT"],
+      "filter[suppliedId][contains]": ["LIED-1"],
       "page[cursor]": ["cursor-1"],
       "page[size]": ["50"],
+    });
+  });
+
+  it("returns an empty collection page when no local filters match", async () => {
+    await expectFileCollectionList({
+      "filter[name][contains]": ["missing"],
+      "page[size]": ["10"],
+    });
+
+    const res = await callFileCollections({
+      method: "GET",
+      query: { name: "missing" },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [],
+      status: 200,
+    });
+    await verifyListFileCollections({
+      "filter[name][contains]": ["missing"],
+      "page[size]": ["10"],
     });
   });
 
