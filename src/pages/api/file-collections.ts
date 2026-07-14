@@ -88,6 +88,8 @@ async function get(
         : undefined
     );
 
+    // TODO: Use FileCollectionsApi.listFileCollections once the SDK supports
+    // createdAt filter expressions.
     const { cursors, page } = await getPage(
       (): Promise<AxiosResponse<FileCollectionList>> =>
         client.axiosInstance.get<FileCollectionList>(
