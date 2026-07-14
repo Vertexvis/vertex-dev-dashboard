@@ -9,10 +9,11 @@ import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
-// todo:PLAT-8812
+const mockPush = jest.fn();
+
 jest.mock("next/router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -64,6 +65,7 @@ describe("SceneTable", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    mockPush.mockClear();
   });
 
   it("preserves the active scene highlight after the drawer scene clears", async () => {
@@ -99,12 +101,53 @@ describe("SceneTable", () => {
       expect(getSceneRow("Scene One")).toHaveClass("Mui-selected");
     });
 
-    await userEvent.click(screen.getByText("Scene Two"));
+    await userEvent.click(getSceneRow("Scene Two"));
 
     await waitFor(() => {
       expect(getSceneRow("Scene Two")).toHaveClass("Mui-selected");
     });
     expect(getSceneRow("Scene One")).not.toHaveClass("Mui-selected");
+  });
+
+  it("shows an open hint on the scene name", async () => {
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      })
+    );
+
+    renderTable(scene);
+
+    const name = await screen.findByLabelText("Open Scene One");
+    await userEvent.hover(name);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Open Scene One"
+    );
+  });
+
+  it("opens the scene viewer when the scene name is clicked", async () => {
+    const onClick = jest.fn();
+
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      }),
+      http.post("*/api/stream-keys", () => {
+        return HttpResponse.json({ key: "stream-key-1" });
+      })
+    );
+
+    renderTable(scene, { onClick });
+
+    await userEvent.click(await screen.findByLabelText("Open Scene One"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(
+        "scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev"
+      );
+    });
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
@@ -115,11 +158,17 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
   return row;
 }
 
-function renderTable(scene?: Scene) {
-  return renderWithSWR(renderTableElement(scene));
+function renderTable(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+) {
+  return renderWithSWR(renderTableElement(scene, props));
 }
 
-function renderTableElement(scene?: Scene): JSX.Element {
+function renderTableElement(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+): JSX.Element {
   return (
     <SceneTable
       clientId="client-id"
@@ -128,6 +177,7 @@ function renderTableElement(scene?: Scene): JSX.Element {
       onEditClick={jest.fn()}
       scene={scene}
       vertexEnv="platdev"
+      {...props}
     />
   );
 }

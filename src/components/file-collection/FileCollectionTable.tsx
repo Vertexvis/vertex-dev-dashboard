@@ -18,11 +18,12 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import { toFileCollectionPage } from "../../lib/file-collections";
+import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
+import { ResourceLink } from "../shared/ResourceLink";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
@@ -44,7 +45,15 @@ function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-export default function FileCollectionTable(): JSX.Element {
+interface Props {
+  readonly activeFileCollectionId?: string;
+  readonly onFileCollectionSelected?: (fileCollection: FileCollection) => void;
+}
+
+export default function FileCollectionTable({
+  activeFileCollectionId,
+  onFileCollectionSelected,
+}: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
   const {
@@ -129,7 +138,7 @@ export default function FileCollectionTable(): JSX.Element {
     mutate();
   }
 
-  function handleViewFiles(fileCollectionId: string) {
+  function handleOpenFileCollection(fileCollectionId: string) {
     router.push(`/file-collections/${encodeURIComponent(fileCollectionId)}`);
   }
 
@@ -148,6 +157,7 @@ export default function FileCollectionTable(): JSX.Element {
   } else {
     tableRows = page.items.map((row) => {
       const isSel = selected.has(row.id);
+      const isActive = activeFileCollectionId === row.id;
 
       return (
         <TableRow
@@ -155,9 +165,8 @@ export default function FileCollectionTable(): JSX.Element {
           role="checkbox"
           tabIndex={-1}
           key={row.id}
-          selected={isSel}
-          style={{ cursor: "pointer" }}
-          onClick={() => handleViewFiles(row.id)}
+          selected={isSel || isActive}
+          onClick={() => onFileCollectionSelected?.(row)}
         >
           <TableCell
             padding="checkbox"
@@ -176,7 +185,12 @@ export default function FileCollectionTable(): JSX.Element {
             />
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
-            {row.name}
+            <ResourceLink
+              onPrimaryAction={() => handleOpenFileCollection(row.id)}
+              primaryActionLabel={`Open ${row.name}`}
+            >
+              {row.name}
+            </ResourceLink>
           </TableCell>
           <TableCell>{row.id}</TableCell>
           <TableCell>{row.suppliedId}</TableCell>
