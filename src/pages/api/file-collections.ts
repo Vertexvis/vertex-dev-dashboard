@@ -58,6 +58,7 @@ async function get(
     const suppliedId = head(req.query.suppliedId);
     const createdAtStart = head(req.query.createdAtStart);
     const createdAtEnd = head(req.query.createdAtEnd);
+    const sort = head(req.query.sort);
 
     const query = new URLSearchParams();
     if (pc != null) query.set("page[cursor]", pc);
@@ -74,6 +75,7 @@ async function get(
         ? ({ contains: suppliedId } satisfies FilterExpression)
         : undefined
     );
+    if (sort != null) query.set("sort", sort);
     setFilterExpression(
       query,
       "createdAt",

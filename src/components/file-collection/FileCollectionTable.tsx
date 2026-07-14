@@ -23,6 +23,7 @@ import {
   toFileCollectionPage,
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
@@ -36,16 +37,19 @@ import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name" },
+  { id: "name", disablePadding: true, label: "Name", sortable: true },
   { id: "id", label: "ID" },
   { id: "supplied-id", label: "Supplied ID" },
-  { id: "created", label: "Created At" },
+  { id: "created", label: "Created At", sortable: true },
 ];
 
 interface UseFileCollectionsProps extends SwrProps {
   readonly createdAtEnd?: string;
   readonly createdAtStart?: string;
+  readonly sort?: SortState<FileCollectionSortField>;
 }
+
+type FileCollectionSortField = "created" | "name";
 
 function useFileCollections({
   createdAtEnd,
@@ -53,6 +57,7 @@ function useFileCollections({
   cursor,
   name,
   pageSize,
+  sort,
   suppliedId,
 }: UseFileCollectionsProps) {
   return useSWR(
@@ -62,6 +67,7 @@ function useFileCollections({
       cursor,
       name,
       pageSize,
+      sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
     })
   );
@@ -88,6 +94,9 @@ export default function FileCollectionTable({
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [name, setName] = React.useState<string | undefined>();
+  const [sort, setSort] = React.useState<
+    SortState<FileCollectionSortField> | undefined
+  >();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [createdAtFilters, setCreatedAtFilters] =
     React.useState<CreatedAtDateRange>({});
@@ -99,6 +108,7 @@ export default function FileCollectionTable({
     cursor,
     name,
     pageSize,
+    sort,
     suppliedId,
   });
   const page = data ? toFileCollectionPage(data) : undefined;
@@ -133,6 +143,15 @@ export default function FileCollectionTable({
   function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
     setCreatedAtFilters(filters);
+  }
+
+  function handleSortChange(field: string) {
+    if (field !== "created" && field !== "name") return;
+
+    setSort((current) =>
+      current == null ? { field, order: "asc" } : toggleSort(current, field)
+    );
+    resetPaging();
   }
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
@@ -294,7 +313,9 @@ export default function FileCollectionTable({
               headCells={headCells}
               numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
+              onSortChange={handleSortChange}
               rowCount={pageLength}
+              sort={sort}
             />
             <TableBody>
               {tableRows}
