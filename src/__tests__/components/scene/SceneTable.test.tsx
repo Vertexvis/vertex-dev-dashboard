@@ -10,9 +10,11 @@ import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
 // todo:PLAT-8812
+const mockPush = jest.fn();
+
 jest.mock("next/router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -73,6 +75,7 @@ describe("SceneTable", () => {
   afterEach(() => {
     server.resetHandlers();
     jest.restoreAllMocks();
+    mockPush.mockClear();
     Object.assign(global, { fetch: nodeFetch });
   });
 
@@ -113,12 +116,63 @@ describe("SceneTable", () => {
       expect(getSceneRow("Scene One")).toHaveClass("Mui-selected");
     });
 
-    await userEvent.click(screen.getByText("Scene Two"));
+    await userEvent.click(getSceneRow("Scene Two"));
 
     await waitFor(() => {
       expect(getSceneRow("Scene Two")).toHaveClass("Mui-selected");
     });
     expect(getSceneRow("Scene One")).not.toHaveClass("Mui-selected");
+  });
+
+  it("shows an open hint on the scene name", async () => {
+    server.use(
+      rest.get("*/api/scenes", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable(scene);
+
+    const name = await screen.findByLabelText("Open Scene One");
+    await userEvent.hover(name);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Open Scene One"
+    );
+  });
+
+  it("opens the scene viewer when the scene name is clicked", async () => {
+    const onClick = jest.fn();
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+
+      if (url === "/api/stream-keys") {
+        return Promise.resolve({
+          json: () => Promise.resolve({ key: "stream-key-1" }),
+          ok: true,
+        } as Response);
+      }
+
+      return (nodeFetch as typeof global.fetch)(
+        new URL(url, window.location.origin).toString(),
+        init
+      );
+    }) as typeof global.fetch;
+
+    server.use(
+      rest.get("*/api/scenes", (_req, res, ctx) => {
+        return res(ctx.json(page));
+      })
+    );
+
+    renderTable(scene, { onClick });
+
+    await userEvent.click(await screen.findByLabelText("Open Scene One"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalled();
+    });
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
@@ -129,11 +183,17 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
   return row;
 }
 
-function renderTable(scene?: Scene) {
-  return render(renderTableElement(scene));
+function renderTable(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+) {
+  return render(renderTableElement(scene, props));
 }
 
-function renderTableElement(scene?: Scene): JSX.Element {
+function renderTableElement(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+): JSX.Element {
   return (
     <SWRConfig
       value={{
@@ -152,6 +212,7 @@ function renderTableElement(scene?: Scene): JSX.Element {
         onEditClick={jest.fn()}
         scene={scene}
         vertexEnv="platdev"
+        {...props}
       />
     </SWRConfig>
   );
