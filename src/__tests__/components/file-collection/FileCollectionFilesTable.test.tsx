@@ -1,48 +1,61 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import nodeFetch, { Headers, Request, Response } from "node-fetch";
+import { http,HttpResponse } from "msw";
 import React from "react";
-import { SWRConfig } from "swr";
 
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
+import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionFilesTable from "../../../components/file-collection/FileCollectionFilesTable";
+import { DefaultPageSize } from "../../../components/shared/Layout";
 
-const collectionFilesPage = {
-  cursors: { self: "page-1" },
-  data: [
-    {
-      type: "file",
-      id: "file-1",
-      attributes: {
-        name: "File One",
-        status: "complete",
-        suppliedId: "supplied-file-1",
-        created: "2026-06-12T15:30:00Z",
-        uploaded: "2026-06-12T15:31:00Z",
-      },
-    },
-  ],
-  status: 200,
-};
+const collectionFilesApiPath = "/api/file-collections/collection-1/files";
+const downloadUrlById = {
+  "file-1": "https://example.test/download/file-1",
+} as const;
 
 describe("FileCollectionFilesTable", () => {
-  beforeAll(() => {
-    Object.assign(global, {
-      Headers,
-      Request,
-      Response,
-      fetch: nodeFetch,
-    });
-  });
+  installJsdomMockServer();
 
   afterEach(() => {
     jest.restoreAllMocks();
-    Object.assign(global, { fetch: nodeFetch });
   });
 
   it("loads collection files while keeping row interactions", async () => {
-    const fetchMock = mockFetch(() => collectionFilesPage);
+    const listCollectionFiles = jest.fn(({ request }) => {
+      const url = new URL(request.url);
+
+      expect(request.url).toBe(
+        `http://localhost${collectionFilesApiPath}?pageSize=${DefaultPageSize}`
+      );
+      expect(url.searchParams.get("pageSize")).toBe(DefaultPageSize.toString());
+      expect(url.searchParams.get("cursor")).toBeNull();
+
+      return HttpResponse.json(
+        filePage([
+          fileResource({
+            id: "file-1",
+            name: "File One",
+            status: "complete",
+            suppliedId: "supplied-file-1",
+            created: "2026-06-12T15:30:00Z",
+            uploaded: "2026-06-12T15:31:00Z",
+          }),
+        ])
+      );
+    });
+    const createDownloadUrl = jest.fn(({ params }) => {
+      return HttpResponse.json({
+        url: downloadUrlById[params.id as keyof typeof downloadUrlById],
+      });
+    });
     const onFileSelected = jest.fn();
     jest.spyOn(window, "open").mockReturnValue({} as Window);
+
+    mockFileCollectionFilesApi({
+      createDownloadUrl,
+      listCollectionFiles,
+    });
 
     renderTable(onFileSelected);
 
@@ -51,9 +64,7 @@ describe("FileCollectionFilesTable", () => {
     expect(statusLabel.closest(".MuiChip-root")).toHaveStyle({
       textTransform: "uppercase",
     });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost/api/file-collections/collection-1/files?pageSize=25"
-    );
+    expect(listCollectionFiles).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Name")).not.toHaveAttribute("role", "button");
     expect(
       screen.queryByLabelText("Supplied ID Filter (exact)")
@@ -81,12 +92,10 @@ describe("FileCollectionFilesTable", () => {
     await userEvent.click(name);
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/files/file-1/download-url", {
-        method: "POST",
-      });
+      expect(createDownloadUrl).toHaveBeenCalledTimes(1);
     });
     expect(window.open).toHaveBeenCalledWith(
-      "https://example.test/download/file-1",
+      downloadUrlById["file-1"],
       "_blank",
       "noopener"
     );
@@ -111,34 +120,31 @@ describe("FileCollectionFilesTable", () => {
     );
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/files/file-1/download-url", {
-        method: "POST",
-      });
+      expect(createDownloadUrl).toHaveBeenCalledTimes(2);
     });
-    expect(window.open).toHaveBeenCalledWith(
-      "https://example.test/download/file-1",
+    expect(window.open).toHaveBeenLastCalledWith(
+      downloadUrlById["file-1"],
       "_blank",
       "noopener"
     );
   });
 
   it("disables download for files that are not complete", async () => {
-    const fetchMock = mockFetch(() => ({
-      ...collectionFilesPage,
-      data: [
-        {
-          type: "file",
+    const createDownloadUrl = jest.fn();
+
+    mockFileCollectionFilesApi({
+      createDownloadUrl,
+      files: [
+        fileResource({
           id: "file-1",
-          attributes: {
-            name: "File One",
-            status: "pending",
-            suppliedId: "supplied-file-1",
-            created: "2026-06-12T15:30:00Z",
-            uploaded: "2026-06-12T15:31:00Z",
-          },
-        },
+          name: "File One",
+          status: "pending",
+          suppliedId: "supplied-file-1",
+          created: "2026-06-12T15:30:00Z",
+          uploaded: "2026-06-12T15:31:00Z",
+        }),
       ],
-    }));
+    });
 
     renderTable();
 
@@ -151,32 +157,22 @@ describe("FileCollectionFilesTable", () => {
     expect(
       screen.getByRole("menuitem", { name: "Download file" })
     ).toHaveAttribute("aria-disabled", "true");
-
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      "/api/files/file-1/download-url",
-      {
-        method: "POST",
-      }
-    );
+    expect(createDownloadUrl).not.toHaveBeenCalled();
   });
 
   it("does not style ready file statuses as success", async () => {
-    mockFetch(() => ({
-      ...collectionFilesPage,
-      data: [
-        {
-          type: "file",
+    mockFileCollectionFilesApi({
+      files: [
+        fileResource({
           id: "file-1",
-          attributes: {
-            name: "File One",
-            status: "ready",
-            suppliedId: "supplied-file-1",
-            created: "2026-06-12T15:30:00Z",
-            uploaded: "2026-06-12T15:31:00Z",
-          },
-        },
+          name: "File One",
+          status: "ready",
+          suppliedId: "supplied-file-1",
+          created: "2026-06-12T15:30:00Z",
+          uploaded: "2026-06-12T15:31:00Z",
+        }),
       ],
-    }));
+    });
 
     renderTable();
 
@@ -187,23 +183,22 @@ describe("FileCollectionFilesTable", () => {
   });
 
   it("does not treat completed as an available file state", async () => {
-    const fetchMock = mockFetch(() => ({
-      ...collectionFilesPage,
-      data: [
-        {
-          type: "file",
-          id: "file-1",
-          attributes: {
-            name: "File One",
-            status: "completed",
-            suppliedId: "supplied-file-1",
-            created: "2026-06-12T15:30:00Z",
-            uploaded: "2026-06-12T15:31:00Z",
-          },
-        },
-      ],
-    }));
+    const createDownloadUrl = jest.fn();
     jest.spyOn(window, "open").mockReturnValue({} as Window);
+
+    mockFileCollectionFilesApi({
+      createDownloadUrl,
+      files: [
+        fileResource({
+          id: "file-1",
+          name: "File One",
+          status: "completed",
+          suppliedId: "supplied-file-1",
+          created: "2026-06-12T15:30:00Z",
+          uploaded: "2026-06-12T15:31:00Z",
+        }),
+      ],
+    });
 
     renderTable();
 
@@ -215,17 +210,12 @@ describe("FileCollectionFilesTable", () => {
     expect(
       screen.getByRole("menuitem", { name: "Download file" })
     ).toHaveAttribute("aria-disabled", "true");
-
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      "/api/files/file-1/download-url",
-      {
-        method: "POST",
-      }
-    );
+    expect(createDownloadUrl).not.toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
   });
 
   it("renders an empty files table for an empty collection", async () => {
-    mockFetch(() => ({ cursors: { self: "page-1" }, data: [], status: 200 }));
+    mockFileCollectionFilesApi({ files: [] });
 
     renderTable();
 
@@ -235,10 +225,15 @@ describe("FileCollectionFilesTable", () => {
   });
 
   it("renders load errors with an error indicator", async () => {
-    mockFetch(() => ({
-      message: "Could not load collection files.",
-      status: 500,
-    }));
+    mockFileCollectionFilesApi({
+      listResponse: HttpResponse.json(
+        {
+          message: "Could not load collection files.",
+          status: 500,
+        },
+        { status: 500 }
+      ),
+    });
 
     renderTable();
 
@@ -249,43 +244,88 @@ describe("FileCollectionFilesTable", () => {
 });
 
 function renderTable(onFileSelected = jest.fn()): void {
-  render(
-    <SWRConfig
-      value={{
-        dedupingInterval: 0,
-        fetcher: (url: string) =>
-          (global.fetch as typeof nodeFetch)(
-            new URL(url, window.location.origin).toString()
-          ).then((res) => res.json()),
-        provider: () => new Map(),
-      }}
-    >
-      <FileCollectionFilesTable
-        apiPath="/api/file-collections/collection-1/files"
-        onFileSelected={onFileSelected}
-      />
-    </SWRConfig>
+  renderWithSWR(
+    <FileCollectionFilesTable
+      apiPath={collectionFilesApiPath}
+      onFileSelected={onFileSelected}
+    />
   );
 }
 
-function mockFetch(responseFor: (url: string) => unknown): jest.Mock {
-  const fetchMock = jest.fn((input: RequestInfo | URL) => {
-    const url = input.toString();
+interface MockFileCollectionFilesApiOptions {
+  readonly createDownloadUrl?: jest.Mock;
+  readonly files?: ReturnType<typeof fileResource>[];
+  readonly listCollectionFiles?: jest.Mock;
+  readonly listResponse?: Response;
+}
 
-    if (url.endsWith("/api/files/file-1/download-url")) {
-      return Promise.resolve({
-        json: () =>
-          Promise.resolve({ url: "https://example.test/download/file-1" }),
-        ok: true,
-      });
-    }
+function mockFileCollectionFilesApi({
+  createDownloadUrl = jest.fn(({ params }) =>
+    HttpResponse.json({
+      url: `https://example.test/download/${params.id as string}`,
+    })
+  ),
+  files = [
+    fileResource({
+      id: "file-1",
+      name: "File One",
+      status: "complete",
+      suppliedId: "supplied-file-1",
+      created: "2026-06-12T15:30:00Z",
+      uploaded: "2026-06-12T15:31:00Z",
+    }),
+  ],
+  listCollectionFiles = jest.fn(() => HttpResponse.json(filePage(files))),
+  listResponse,
+}: MockFileCollectionFilesApiOptions = {}): void {
+  server.use(
+    http.get("*/api/file-collections/collection-1/files", (info) => {
+      if (listResponse != null) return listResponse;
 
-    return Promise.resolve({
-      json: () => Promise.resolve(responseFor(url)),
-      ok: true,
-    });
-  });
+      return listCollectionFiles(info);
+    }),
+    http.post("*/api/files/:id/download-url", (info) => createDownloadUrl(info))
+  );
+}
 
-  global.fetch = fetchMock as unknown as typeof nodeFetch;
-  return fetchMock;
+function filePage(
+  data: ReturnType<typeof fileResource>[]
+): {
+  cursors: { self: string };
+  data: ReturnType<typeof fileResource>[];
+  status: number;
+} {
+  return {
+    cursors: { self: "page-1" },
+    data,
+    status: 200,
+  };
+}
+
+function fileResource({
+  created = "2026-06-12T15:30:00Z",
+  id,
+  name,
+  status,
+  suppliedId,
+  uploaded = "2026-06-12T15:31:00Z",
+}: {
+  readonly created?: string;
+  readonly id: string;
+  readonly name: string;
+  readonly status: string;
+  readonly suppliedId: string;
+  readonly uploaded?: string;
+}) {
+  return {
+    type: "file",
+    id,
+    attributes: {
+      created,
+      name,
+      status,
+      suppliedId,
+      uploaded,
+    },
+  } as const;
 }
