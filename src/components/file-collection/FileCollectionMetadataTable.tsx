@@ -14,10 +14,12 @@ import { toDisplayValue } from "../../lib/formatting";
 
 interface Props {
   readonly fileCollection: FileCollection;
+  readonly optionalFieldStatus?: "loading" | "ready";
 }
 
 export function FileCollectionMetadataTable({
   fileCollection,
+  optionalFieldStatus = "ready",
 }: Props): JSX.Element {
   return (
     <TableContainer>
@@ -33,8 +35,12 @@ export function FileCollectionMetadataTable({
           <DetailsRow
             label="Expires"
             value={toLocaleString(fileCollection.expiresAt)}
+            status={optionalFieldStatus}
           />
-          <MetadataRow metadata={fileCollection.metadata} />
+          <MetadataRow
+            metadata={fileCollection.metadata}
+            status={optionalFieldStatus}
+          />
         </TableBody>
       </Table>
     </TableContainer>
@@ -43,11 +49,16 @@ export function FileCollectionMetadataTable({
 
 function DetailsRow({
   label,
+  status,
   value,
 }: {
   readonly label: string;
+  readonly status?: "loading" | "ready";
   readonly value?: string;
 }): JSX.Element {
+  const displayValue =
+    status === "loading" && value == null ? "Loading..." : toDisplayValue(value);
+
   return (
     <TableRow>
       <TableCell>
@@ -56,7 +67,7 @@ function DetailsRow({
           sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
           variant="body2"
         >
-          {toDisplayValue(value)}
+          {displayValue}
         </Typography>
       </TableCell>
     </TableRow>
@@ -65,8 +76,10 @@ function DetailsRow({
 
 function MetadataRow({
   metadata,
+  status,
 }: {
   readonly metadata?: Record<string, string>;
+  readonly status: "loading" | "ready";
 }): JSX.Element {
   const entries = metadata == null ? [] : Object.entries(metadata);
 
@@ -109,6 +122,13 @@ function MetadataRow({
               ))}
             </TableBody>
           </Table>
+        ) : status === "loading" ? (
+          <Typography
+            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            variant="body2"
+          >
+            Loading...
+          </Typography>
         ) : (
           <Typography
             sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}

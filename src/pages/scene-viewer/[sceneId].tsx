@@ -187,5 +187,4 @@ export function encodeCreds({
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
   return `${path}/?${cId}&${sk}&${ve}`;
 }
-
 export const getServerSideProps = defaultServerSideProps;

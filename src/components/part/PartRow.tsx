@@ -1,6 +1,5 @@
-import { Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import {
-  Button,
   Checkbox,
   Collapse,
   IconButton,
@@ -18,6 +17,7 @@ import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartRevisionPage } from "../../lib/part-revisions";
 import { Part } from "../../lib/parts";
+import { RowActionsMenu } from "../shared/RowActionsMenu";
 
 interface PartRowProps {
   readonly activeRevisionId?: string;
@@ -110,22 +110,21 @@ export default function PartRow({
                       selected={activeRevisionId === r.id}
                       sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                     >
-                      <TableCell> {r.name} </TableCell>
+                      <TableCell>{r.name}</TableCell>
                       <TableCell> {r.id} </TableCell>
                       <TableCell>{r.suppliedId}</TableCell>
                       <TableCell>{r.suppliedIterationId}</TableCell>
                       <TableCell>{toLocaleString(r.created)}</TableCell>
                       <TableCell align="right">
-                        <Button
-                          color="secondary"
-                          startIcon={<Add />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreteSceneFromRevision(r.id);
-                          }}
-                        >
-                          New Scene
-                        </Button>
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              label: "New scene",
+                              onClick: () => onCreteSceneFromRevision(r.id),
+                            },
+                          ]}
+                          ariaLabel={`Actions for ${r.name}`}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

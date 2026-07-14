@@ -1,6 +1,9 @@
 import dynamic from "next/dynamic";
+import React from "react";
 
+import { FileCollectionDetailsDrawer } from "../components/file-collection/FileCollectionDetailsDrawer";
 import { Layout } from "../components/shared/Layout";
+import { FileCollection } from "../lib/file-collections";
 export { defaultServerSideProps as getServerSideProps } from "../lib/with-session";
 
 const FileCollectionsTable = dynamic(
@@ -11,5 +14,27 @@ const FileCollectionsTable = dynamic(
 );
 
 export default function FileCollections(): JSX.Element {
-  return <Layout main={<FileCollectionsTable />} />;
+  const [fileCollection, setFileCollection] = React.useState<
+    FileCollection | undefined
+  >();
+  const drawerOpen = Boolean(fileCollection);
+
+  return (
+    <Layout
+      main={
+        <FileCollectionsTable
+          activeFileCollectionId={fileCollection?.id}
+          onFileCollectionSelected={setFileCollection}
+        />
+      }
+      rightDrawer={
+        <FileCollectionDetailsDrawer
+          fileCollection={fileCollection}
+          onClose={() => setFileCollection(undefined)}
+          open={drawerOpen}
+        />
+      }
+      rightDrawerOpen={drawerOpen}
+    />
+  );
 }
