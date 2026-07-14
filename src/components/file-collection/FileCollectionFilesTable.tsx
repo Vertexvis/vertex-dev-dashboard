@@ -1,8 +1,6 @@
-import { Download } from "@mui/icons-material";
 import {
   Alert,
   Chip,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -12,7 +10,6 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Tooltip,
 } from "@mui/material";
 import React from "react";
 import useSWR from "swr";
@@ -30,6 +27,8 @@ import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
+import { ResourceLink } from "../shared/ResourceLink";
+import { RowActionsMenu } from "../shared/RowActionsMenu";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { TableToolbar } from "../shared/TableToolbar";
 
@@ -50,7 +49,7 @@ const headCells = [
   { id: "id", label: "ID" },
   { id: "created", label: "Created" },
   { id: "uploaded", label: "Uploaded" },
-  { id: "download", label: "Download" },
+  { id: "actions", label: "Actions" },
 ] as const;
 
 function useCollectionFiles({
@@ -177,7 +176,17 @@ export default function FileCollectionFilesTable({
           onClick={() => onFileSelected(row)}
         >
           <TableCell component="th" scope="row">
-            {row.name}
+            <ResourceLink
+              disabled={!isAvailable}
+              onPrimaryAction={() => handleDownload(row.id)}
+              primaryActionLabel={
+                isAvailable
+                  ? `Download ${row.name}`
+                  : `${row.name} is not available for download`
+              }
+            >
+              {row.name}
+            </ResourceLink>
           </TableCell>
           <TableCell>{row.suppliedId}</TableCell>
           <TableCell>
@@ -197,25 +206,16 @@ export default function FileCollectionFilesTable({
               e.stopPropagation();
             }}
           >
-            <Tooltip
-              title={
-                isAvailable ? "Download file" : "File is not available yet"
-              }
-            >
-              <span>
-                <IconButton
-                  aria-label={`Download ${row.name}`}
-                  disabled={!isAvailable}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isAvailable) handleDownload(row.id);
-                  }}
-                  size="small"
-                >
-                  <Download fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            <RowActionsMenu
+              actions={[
+                {
+                  disabled: !isAvailable,
+                  label: "Download file",
+                  onClick: () => handleDownload(row.id),
+                },
+              ]}
+              ariaLabel={`Actions for ${row.name}`}
+            />
           </TableCell>
         </TableRow>
       );

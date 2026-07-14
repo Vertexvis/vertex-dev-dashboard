@@ -27,7 +27,7 @@ export function createNextJsApiRouteTestApp(
 ): NextJsApiRouteTestApp {
   ensureTestSessionConfig();
 
-  const compiledRoutes = routes.map(createCompiledRoute);
+  const compiledRoutes = routes.map(createCompiledRoute).sort(compareRoutesBySpecificity);
 
   return async (req, res) => {
     const route = matchRoute(compiledRoutes, req);
@@ -52,6 +52,7 @@ export function createNextJsApiRouteTestApp(
 }
 
 interface CompiledRoute {
+  readonly dynamicSegmentCount: number;
   readonly pathname: string;
   readonly resolverModule: ResolverModule;
   readonly segments: readonly string[];
@@ -74,10 +75,13 @@ function ensureTestSessionConfig(): void {
 }
 
 function createCompiledRoute(route: NextJsApiRouteTestRoute): CompiledRoute {
+  const segments = splitPathname(route.pathname);
+
   return {
+    dynamicSegmentCount: segments.filter(isDynamicSegment).length,
     pathname: route.pathname,
     resolverModule: toApiResolverModule(route),
-    segments: splitPathname(route.pathname),
+    segments,
   };
 }
 
@@ -108,6 +112,14 @@ function toApiResolverModule(route: NextJsApiRouteTestRoute): ResolverModule {
   return route.config == null
     ? { default: route.handler }
     : { config: route.config, default: route.handler };
+}
+
+function compareRoutesBySpecificity(a: CompiledRoute, b: CompiledRoute): number {
+  if (a.dynamicSegmentCount !== b.dynamicSegmentCount) {
+    return a.dynamicSegmentCount - b.dynamicSegmentCount;
+  }
+
+  return b.segments.length - a.segments.length;
 }
 
 function splitPathname(pathname: string): string[] {

@@ -1,18 +1,19 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { rest } from "msw";
-import nodeFetch, { Headers, Request, Response } from "node-fetch";
+import { http,HttpResponse } from "msw";
 import React from "react";
-import { SWRConfig } from "swr";
 
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
-// todo:PLAT-8812
+const mockPush = jest.fn();
+
 jest.mock("next/router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -60,30 +61,17 @@ const page = {
 };
 
 describe("SceneTable", () => {
-  beforeAll(() => {
-    Object.assign(global, {
-      Headers,
-      Request,
-      Response,
-      fetch: nodeFetch,
-    });
-    server.listen({ onUnhandledRequest: "error" });
-  });
+  installJsdomMockServer();
 
   afterEach(() => {
-    server.resetHandlers();
     jest.restoreAllMocks();
-    Object.assign(global, { fetch: nodeFetch });
-  });
-
-  afterAll(() => {
-    server.close();
+    mockPush.mockClear();
   });
 
   it("preserves the active scene highlight after the drawer scene clears", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -102,8 +90,8 @@ describe("SceneTable", () => {
 
   it("updates the active highlight immediately when another scene is clicked", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -113,12 +101,53 @@ describe("SceneTable", () => {
       expect(getSceneRow("Scene One")).toHaveClass("Mui-selected");
     });
 
-    await userEvent.click(screen.getByText("Scene Two"));
+    await userEvent.click(getSceneRow("Scene Two"));
 
     await waitFor(() => {
       expect(getSceneRow("Scene Two")).toHaveClass("Mui-selected");
     });
     expect(getSceneRow("Scene One")).not.toHaveClass("Mui-selected");
+  });
+
+  it("shows an open hint on the scene name", async () => {
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      })
+    );
+
+    renderTable(scene);
+
+    const name = await screen.findByLabelText("Open Scene One");
+    await userEvent.hover(name);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Open Scene One"
+    );
+  });
+
+  it("opens the scene viewer when the scene name is clicked", async () => {
+    const onClick = jest.fn();
+
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      }),
+      http.post("*/api/stream-keys", () => {
+        return HttpResponse.json({ key: "stream-key-1" });
+      })
+    );
+
+    renderTable(scene, { onClick });
+
+    await userEvent.click(await screen.findByLabelText("Open Scene One"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(
+        "scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev"
+      );
+    });
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
@@ -129,30 +158,26 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
   return row;
 }
 
-function renderTable(scene?: Scene) {
-  return render(renderTableElement(scene));
+function renderTable(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+) {
+  return renderWithSWR(renderTableElement(scene, props));
 }
 
-function renderTableElement(scene?: Scene): JSX.Element {
+function renderTableElement(
+  scene?: Scene,
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+): JSX.Element {
   return (
-    <SWRConfig
-      value={{
-        dedupingInterval: 0,
-        fetcher: (url: string) =>
-          (global.fetch as typeof nodeFetch)(
-            new URL(url, window.location.origin).toString()
-          ).then((res) => res.json()),
-        provider: () => new Map(),
-      }}
-    >
-      <SceneTable
-        clientId="client-id"
-        invalidationCount={0}
-        onClick={jest.fn()}
-        onEditClick={jest.fn()}
-        scene={scene}
-        vertexEnv="platdev"
-      />
-    </SWRConfig>
+    <SceneTable
+      clientId="client-id"
+      invalidationCount={0}
+      onClick={jest.fn()}
+      onEditClick={jest.fn()}
+      scene={scene}
+      vertexEnv="platdev"
+      {...props}
+    />
   );
 }
