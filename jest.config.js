@@ -12,8 +12,14 @@ module.exports = {
   preset: "ts-jest",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testEnvironment: "jsdom",
+  testEnvironmentOptions: {
+    customExportConditions: [""],
+  },
   testMatch: ["**/?(*.)+(test).ts", "**/?(*.)+(test).tsx"],
   transform: {
-    "^.+\\.(ts|tsx)$": ["ts-jest", { tsconfig: "tsconfig.jest.json" }],
+    "^.+\\.(ts|tsx|js|jsx|mjs)$": ["ts-jest", { tsconfig: "tsconfig.jest.json" }],
   },
+  transformIgnorePatterns: [
+    "/node_modules/(?!(@mswjs|@open-draft|msw|rettime|until-async|headers-polyfill|is-node-process|outvariant|strict-event-emitter|path-to-regexp)/)",
+  ],
 };

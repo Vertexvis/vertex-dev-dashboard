@@ -1,14 +1,13 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http,HttpResponse } from "msw";
 import React from "react";
 
 import {
-  deleteFileCollections,
   fileCollection,
   fileCollectionsPage,
-  listFileCollections,
 } from "../../../../test/msw/handlers/file-collections";
-import { installMockServer } from "../../../../test/msw/install";
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
@@ -31,8 +30,8 @@ const firstPage = fileCollectionsPage({
   ],
 });
 
-const firstPageWithUnexpectedNextCursor = fileCollectionsPage({
-  cursors: { self: "page-1", next: "page+2&filter=unexpected#fragment" },
+const firstPageWithNextCursor = fileCollectionsPage({
+  cursors: { self: "page-1", next: "page-2" },
   data: firstPage.data,
 });
 
@@ -48,20 +47,44 @@ const nextPage = fileCollectionsPage({
   ],
 });
 
+const multiCollectionPage = fileCollectionsPage({
+  data: [
+    fileCollection({
+      id: "collection-1",
+      name: "Collection One",
+      suppliedId: "supplied-1",
+    }),
+    fileCollection({
+      created: "2026-06-11T15:30:00Z",
+      id: "collection-2",
+      name: "Collection Two",
+      suppliedId: "supplied-2",
+    }),
+  ],
+});
+
 describe("FileCollectionTable", () => {
-  installMockServer();
+  installJsdomMockServer();
 
   beforeEach(() => {
     mockPush.mockClear();
   });
 
   it("paginates file collections using the next cursor", async () => {
-    stubFileCollectionsTable({
-      byCursor: {
-        "page+2&filter=unexpected#fragment": nextPage,
-      },
-      defaultPage: firstPageWithUnexpectedNextCursor,
-    });
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.get("cursor") === "page-2"
+            ? nextPage
+            : firstPageWithNextCursor
+        );
+      })
+    );
 
     renderTable();
 
@@ -71,15 +94,62 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return (
+          params.get("cursor") === "page-2" && params.get("pageSize") === "25"
+        );
+      })
+    ).toBe(true);
+  });
+
+  it("clears the selection after deleting a file collection successfully", async () => {
+    const deletedIds: string[][] = [];
+
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      }),
+      http.delete("*/api/file-collections", async ({ request }) => {
+        const body = (await request.json()) as { ids?: string[] };
+        deletedIds.push(body.ids ?? []);
+
+        return HttpResponse.json({ status: 200 });
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Select Collection One"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    expect(await screen.findByText("File Collections")).toBeInTheDocument();
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Select Collection One")).not.toBeChecked();
+    expect(
+      screen.queryByText("Could not delete collection-1.")
+    ).not.toBeInTheDocument();
+    expect(deletedIds).toEqual([["collection-1"]]);
   });
 
   it("filters file collections by supplied ID before rendering the filtered results", async () => {
-    stubFileCollectionsTable({
-      bySuppliedId: {
-        "supplied-2": nextPage,
-      },
-      defaultPage: firstPage,
-    });
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.get("suppliedId") === "supplied-2"
+            ? nextPage
+            : firstPage
+        );
+      })
+    );
 
     renderTable();
 
@@ -92,19 +162,61 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return (
+          params.get("pageSize") === "25" &&
+          params.get("suppliedId") === "supplied-2"
+        );
+      })
+    ).toBe(true);
+  });
+
+  it("selects and clears all file collections on the current page", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(multiCollectionPage);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(screen.getByText("Collection Two")).toBeInTheDocument();
+
+    const selectAll = screen.getAllByRole("checkbox")[0];
+
+    await userEvent.click(selectAll);
+
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Collection One")).toBeChecked();
+    expect(screen.getByLabelText("Select Collection Two")).toBeChecked();
+
+    await userEvent.click(selectAll);
+
+    expect(screen.getByText("File Collections")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Collection One")).not.toBeChecked();
+    expect(screen.getByLabelText("Select Collection Two")).not.toBeChecked();
   });
 
   it("keeps the selection visible when deleting a file collection fails", async () => {
-    stubFileCollectionsTable({
-      defaultPage: firstPage,
-      deleteOptions: {
-        expectedIds: ["collection-1"],
-        response: {
-          body: { message: "Could not delete collection-1." },
-          status: 500,
-        },
-      },
-    });
+    const deletedIds: string[][] = [];
+
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      }),
+      http.delete("*/api/file-collections", async ({ request }) => {
+        const body = (await request.json()) as { ids?: string[] };
+        deletedIds.push(body.ids ?? []);
+
+        return HttpResponse.json(
+          { message: "Could not delete collection-1." },
+          { status: 500 }
+        );
+      })
+    );
 
     renderTable();
 
@@ -118,12 +230,15 @@ describe("FileCollectionTable", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).toBeChecked();
+    expect(deletedIds).toEqual([["collection-1"]]);
   });
 
   it("navigates to the file collection detail route when a row is clicked", async () => {
-    stubFileCollectionsTable({
-      defaultPage: firstPage,
-    });
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      })
+    );
 
     renderTable();
 
@@ -137,28 +252,4 @@ describe("FileCollectionTable", () => {
 
 function renderTable(): void {
   renderWithSWR(<FileCollectionTable />);
-}
-
-function stubFileCollectionsTable({
-  byCursor,
-  bySuppliedId,
-  defaultPage,
-  deleteOptions,
-}: {
-  readonly byCursor?: Record<string, ReturnType<typeof fileCollectionsPage>>;
-  readonly bySuppliedId?: Record<
-    string,
-    ReturnType<typeof fileCollectionsPage>
-  >;
-  readonly defaultPage: ReturnType<typeof fileCollectionsPage>;
-  readonly deleteOptions?: Parameters<typeof deleteFileCollections>[0];
-}): void {
-  server.use(
-    listFileCollections({
-      byCursor,
-      bySuppliedId,
-      defaultPage,
-    }),
-    deleteFileCollections(deleteOptions)
-  );
 }

@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { rest } from "msw";
-import nodeFetch, { Headers, Request, Response } from "node-fetch";
+import { http,HttpResponse } from "msw";
 import React from "react";
-import { SWRConfig } from "swr";
 
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
@@ -60,30 +60,16 @@ const page = {
 };
 
 describe("SceneTable", () => {
-  beforeAll(() => {
-    Object.assign(global, {
-      Headers,
-      Request,
-      Response,
-      fetch: nodeFetch,
-    });
-    server.listen({ onUnhandledRequest: "error" });
-  });
+  installJsdomMockServer();
 
   afterEach(() => {
-    server.resetHandlers();
     jest.restoreAllMocks();
-    Object.assign(global, { fetch: nodeFetch });
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   it("preserves the active scene highlight after the drawer scene clears", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -102,8 +88,8 @@ describe("SceneTable", () => {
 
   it("updates the active highlight immediately when another scene is clicked", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -130,29 +116,18 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
 }
 
 function renderTable(scene?: Scene) {
-  return render(renderTableElement(scene));
+  return renderWithSWR(renderTableElement(scene));
 }
 
 function renderTableElement(scene?: Scene): JSX.Element {
   return (
-    <SWRConfig
-      value={{
-        dedupingInterval: 0,
-        fetcher: (url: string) =>
-          (global.fetch as typeof nodeFetch)(
-            new URL(url, window.location.origin).toString()
-          ).then((res) => res.json()),
-        provider: () => new Map(),
-      }}
-    >
-      <SceneTable
-        clientId="client-id"
-        invalidationCount={0}
-        onClick={jest.fn()}
-        onEditClick={jest.fn()}
-        scene={scene}
-        vertexEnv="platdev"
-      />
-    </SWRConfig>
+    <SceneTable
+      clientId="client-id"
+      invalidationCount={0}
+      onClick={jest.fn()}
+      onEditClick={jest.fn()}
+      scene={scene}
+      vertexEnv="platdev"
+    />
   );
 }
