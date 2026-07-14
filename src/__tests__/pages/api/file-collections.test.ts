@@ -71,6 +71,29 @@ describe("file collection API routes", () => {
     });
   });
 
+  it("uses the default page size when one is not supplied", async () => {
+    nodeMswServer.use(
+      stubListFileCollections(
+        {
+          data: [fileCollectionData("collection-1")],
+          links: {},
+        },
+        ({ searchParams }) => {
+          expect(searchParams.get("page[size]")).toBe("10");
+        }
+      )
+    );
+
+    const agent = await createAuthenticatedApiAgent();
+    const response = await agent.get("/api/file-collections").expect(200);
+
+    expect(response.body).toEqual({
+      cursors: {},
+      data: [fileCollectionData("collection-1")],
+      status: 200,
+    });
+  });
+
   it("validates delete request bodies before contacting Vertex", async () => {
     const agent = await createAuthenticatedApiAgent();
 
@@ -307,8 +330,8 @@ function stubTokenExchange() {
 function stubListFileCollections(body: {
   data: ReturnType<typeof fileCollectionData>[];
   links: {
-    next: { href: string };
-    self: { href: string };
+    next?: { href: string };
+    self?: { href: string };
   };
 }, assertRequest?: (request: URL) => void) {
   return http.get(`${vertexApiOrigin}/file-collections`, ({ request }) => {
