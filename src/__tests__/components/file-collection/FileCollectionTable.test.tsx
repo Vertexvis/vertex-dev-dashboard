@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import React from "react";
@@ -331,6 +331,62 @@ describe("FileCollectionTable", () => {
     expect(
       await screen.findByText("No file collections found.")
     ).toBeInTheDocument();
+  });
+
+  it("filters file collections by an inclusive created date range", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.has("createdAtStart") &&
+            url.searchParams.has("createdAtEnd")
+            ? nextPage
+            : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Created From"), {
+      target: { value: "2026-06-11" },
+    });
+    fireEvent.change(screen.getByLabelText("Created To"), {
+      target: { value: "2026-06-11" },
+    });
+
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.has("createdAtStart") && params.has("createdAtEnd");
+      })
+    ).toBe(true);
+  });
+
+  it("clears the opposing created date when the range becomes invalid", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      })
+    );
+
+    renderTable();
+
+    const createdFrom = await screen.findByLabelText("Created From");
+    const createdTo = screen.getByLabelText("Created To");
+    fireEvent.change(createdFrom, { target: { value: "2026-06-11" } });
+    fireEvent.change(createdTo, { target: { value: "2026-06-10" } });
+
+    expect(createdFrom).toHaveValue("");
+    expect(createdTo).toHaveValue("2026-06-10");
   });
 
   it("navigates to the file collection detail route when a row is clicked", async () => {

@@ -22,7 +22,10 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
-import { getFileCollectionsApi } from "../../lib/file-collections";
+import {
+  filterFileCollections,
+  getFileCollectionsApi,
+} from "../../lib/file-collections";
 import { setFilterExpression } from "../../lib/query-filters";
 import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
@@ -56,6 +59,8 @@ async function get(
     const pc = head(req.query.cursor);
     const name = head(req.query.name);
     const suppliedId = head(req.query.suppliedId);
+    const createdAtStart = head(req.query.createdAtStart);
+    const createdAtEnd = head(req.query.createdAtEnd);
 
     const query = new URLSearchParams();
     if (pc != null) query.set("page[cursor]", pc);
@@ -70,6 +75,16 @@ async function get(
       "suppliedId",
       suppliedId != null
         ? ({ contains: suppliedId } satisfies FilterExpression)
+        : undefined
+    );
+    setFilterExpression(
+      query,
+      "createdAt",
+      createdAtStart != null || createdAtEnd != null
+        ? ({
+            ...(createdAtStart != null ? { gte: createdAtStart } : {}),
+            ...(createdAtEnd != null ? { lte: createdAtEnd } : {}),
+          } satisfies FilterExpression)
         : undefined
     );
 
@@ -87,7 +102,7 @@ async function get(
     );
     return {
       cursors,
-      data: page.data,
+      data: filterFileCollections(page.data, { createdAtEnd, createdAtStart }),
       status: 200,
     };
   } catch (error) {

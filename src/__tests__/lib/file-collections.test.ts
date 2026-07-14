@@ -1,4 +1,5 @@
 import {
+  filterFileCollections,
   toFileCollection,
   toFileCollectionPage,
 } from "../../lib/file-collections";
@@ -59,5 +60,35 @@ describe("file collection paging", () => {
         },
       ],
     });
+  });
+
+  it("filters collections inclusively by creation time", () => {
+    const collections = [
+      {
+        type: "file-collection" as const,
+        id: "collection-1",
+        attributes: {
+          name: "Created first",
+          suppliedId: "first",
+          created: "2026-06-10T23:59:59.999Z",
+        },
+      },
+      {
+        type: "file-collection" as const,
+        id: "collection-2",
+        attributes: {
+          name: "Created second",
+          suppliedId: "second",
+          created: "2026-06-11T00:00:00.000Z",
+        },
+      },
+    ];
+
+    expect(
+      filterFileCollections(collections, {
+        createdAtEnd: "2026-06-10T23:59:59.999Z",
+        createdAtStart: "2026-06-10T00:00:00.000Z",
+      })
+    ).toEqual([collections[0]]);
   });
 });
