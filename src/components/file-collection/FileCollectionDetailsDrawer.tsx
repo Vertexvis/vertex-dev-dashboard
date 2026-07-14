@@ -28,20 +28,22 @@ export function FileCollectionDetailsDrawer({
       ? null
       : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`
   );
+  const detailRequestFailed = error != null || isErrorRes(data);
   const fetchedFileCollection =
     data != null && !isErrorRes(data) ? toFileCollection(data.data) : undefined;
+  const isMissingOptionalFields =
+    fileCollection?.metadata == null || fileCollection?.expiresAt == null;
+  const showOptionalFieldLoading =
+    fileCollection != null &&
+    fetchedFileCollection == null &&
+    !detailRequestFailed &&
+    isMissingOptionalFields;
   const fileCollectionDetails =
     fileCollection == null
       ? undefined
       : fetchedFileCollection == null
       ? fileCollection
       : { ...fileCollection, ...fetchedFileCollection };
-  const showOptionalFieldLoading =
-    fileCollection != null &&
-    fetchedFileCollection == null &&
-    error == null &&
-    !isErrorRes(data) &&
-    (fileCollection.metadata == null || fileCollection.expiresAt == null);
 
   return (
     <Drawer

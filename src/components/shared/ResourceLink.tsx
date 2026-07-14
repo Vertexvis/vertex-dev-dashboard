@@ -62,7 +62,6 @@ export function ResourceLink({
             },
             ...(disabled && {
               opacity: 0.7,
-              pointerEvents: "none",
               "&:focus-visible": {
                 outline: "none",
               },
