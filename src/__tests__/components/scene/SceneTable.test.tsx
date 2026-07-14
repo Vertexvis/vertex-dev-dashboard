@@ -1,15 +1,14 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { rest } from "msw";
-import nodeFetch, { Headers, Request, Response } from "node-fetch";
+import { http,HttpResponse } from "msw";
 import React from "react";
-import { SWRConfig } from "swr";
 
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
-// todo:PLAT-8812
 const mockPush = jest.fn();
 
 jest.mock("next/router", () => ({
@@ -62,31 +61,17 @@ const page = {
 };
 
 describe("SceneTable", () => {
-  beforeAll(() => {
-    Object.assign(global, {
-      Headers,
-      Request,
-      Response,
-      fetch: nodeFetch,
-    });
-    server.listen({ onUnhandledRequest: "error" });
-  });
+  installJsdomMockServer();
 
   afterEach(() => {
-    server.resetHandlers();
     jest.restoreAllMocks();
     mockPush.mockClear();
-    Object.assign(global, { fetch: nodeFetch });
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   it("preserves the active scene highlight after the drawer scene clears", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -105,8 +90,8 @@ describe("SceneTable", () => {
 
   it("updates the active highlight immediately when another scene is clicked", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -126,8 +111,8 @@ describe("SceneTable", () => {
 
   it("shows an open hint on the scene name", async () => {
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
       })
     );
 
@@ -143,25 +128,13 @@ describe("SceneTable", () => {
 
   it("opens the scene viewer when the scene name is clicked", async () => {
     const onClick = jest.fn();
-    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = input.toString();
-
-      if (url === "/api/stream-keys") {
-        return Promise.resolve({
-          json: () => Promise.resolve({ key: "stream-key-1" }),
-          ok: true,
-        } as Response);
-      }
-
-      return (nodeFetch as typeof global.fetch)(
-        new URL(url, window.location.origin).toString(),
-        init
-      );
-    }) as typeof global.fetch;
 
     server.use(
-      rest.get("*/api/scenes", (_req, res, ctx) => {
-        return res(ctx.json(page));
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      }),
+      http.post("*/api/stream-keys", () => {
+        return HttpResponse.json({ key: "stream-key-1" });
       })
     );
 
@@ -170,7 +143,9 @@ describe("SceneTable", () => {
     await userEvent.click(await screen.findByLabelText("Open Scene One"));
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith(
+        "scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev"
+      );
     });
     expect(onClick).not.toHaveBeenCalled();
   });
@@ -187,7 +162,7 @@ function renderTable(
   scene?: Scene,
   props: Partial<React.ComponentProps<typeof SceneTable>> = {}
 ) {
-  return render(renderTableElement(scene, props));
+  return renderWithSWR(renderTableElement(scene, props));
 }
 
 function renderTableElement(
@@ -195,25 +170,14 @@ function renderTableElement(
   props: Partial<React.ComponentProps<typeof SceneTable>> = {}
 ): JSX.Element {
   return (
-    <SWRConfig
-      value={{
-        dedupingInterval: 0,
-        fetcher: (url: string) =>
-          (global.fetch as typeof nodeFetch)(
-            new URL(url, window.location.origin).toString()
-          ).then((res) => res.json()),
-        provider: () => new Map(),
-      }}
-    >
-      <SceneTable
-        clientId="client-id"
-        invalidationCount={0}
-        onClick={jest.fn()}
-        onEditClick={jest.fn()}
-        scene={scene}
-        vertexEnv="platdev"
-        {...props}
-      />
-    </SWRConfig>
+    <SceneTable
+      clientId="client-id"
+      invalidationCount={0}
+      onClick={jest.fn()}
+      onEditClick={jest.fn()}
+      scene={scene}
+      vertexEnv="platdev"
+      {...props}
+    />
   );
 }
