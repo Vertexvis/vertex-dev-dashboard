@@ -31,7 +31,7 @@ module.exports = {
       ...projectConfig,
       displayName: "browser",
       setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-      testEnvironment: "jsdom",
+      testEnvironment: "jest-fixed-jsdom",
       testEnvironmentOptions: {
         customExportConditions: [""],
       },

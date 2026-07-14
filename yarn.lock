@@ -4746,6 +4746,11 @@ jest-environment-node@^29.7.0:
     jest-mock "^29.7.0"
     jest-util "^29.7.0"
 
+jest-fixed-jsdom@^0.0.11:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/jest-fixed-jsdom/-/jest-fixed-jsdom-0.0.11.tgz#67b5d5c4e9821bfb1e09a43139bfb0b9f4ec4f18"
+  integrity sha512-3UkjgM79APnmLVDnelrxdwz4oybD5qw6NLyayl7iCX8C8tJHeqjL9fmNrRlIrNiVJSXkF5t9ZPJ+xlM0kSwwYg==
+
 jest-get-type@^29.6.3:
   version "29.6.3"
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-29.6.3.tgz#36f499fdcea197c1045a127319c0481723908fd1"
