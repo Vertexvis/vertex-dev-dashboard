@@ -260,7 +260,7 @@ export default function SceneTable({
             size="small"
             margin="normal"
             id="nameFilter"
-            label="Name Filter (exact)"
+            label="Name Filter"
             type="text"
             onChange={(e) => {
               debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
@@ -272,7 +272,7 @@ export default function SceneTable({
             size="small"
             margin="normal"
             id="suppliedIdFilter"
-            label="Supplied ID Filter (exact)"
+            label="Supplied ID Filter"
             type="text"
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
