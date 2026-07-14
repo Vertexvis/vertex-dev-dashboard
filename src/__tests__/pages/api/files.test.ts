@@ -6,10 +6,11 @@ import request from "supertest";
 
 import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
-import { createNextJsApiRouteTestApp } from "../../../../test/nextjs/createNextJsApiRouteTestApp";
-import withSession, { CookieAttributes } from "../../../lib/with-session";
-import { handleFiles } from "../../../pages/api/files";
-import { handleLogin } from "../../../pages/api/login";
+import {
+  createNextJsApiTestServer,
+  NextJsApiTestServer,
+} from "../../../../test/nextjs/createNextJsApiTestServer";
+import { CookieAttributes } from "../../../lib/with-session";
 
 jest.setTimeout(120_000);
 
@@ -20,12 +21,17 @@ installNodeMswServer();
 process.env.COOKIE_SECRET ||= "test-cookie-secret-that-is-long-enough";
 CookieAttributes.password = process.env.COOKIE_SECRET;
 
-const nextJsApiRouteTestApp = createNextJsApiRouteTestApp([
-  { handler: withSession(handleLogin), pathname: "/api/login" },
-  { handler: withSession(handleFiles), pathname: "/api/files" },
-]);
+let nextJsApiTestServer: NextJsApiTestServer;
 
 describe("files API route", () => {
+  beforeAll(async () => {
+    nextJsApiTestServer = await createNextJsApiTestServer();
+  });
+
+  afterAll(async () => {
+    await nextJsApiTestServer?.close();
+  });
+
   beforeEach(() => {
     nodeMswServer.use(stubTokenExchange());
   });
@@ -67,8 +73,7 @@ describe("files API route", () => {
 });
 
 async function createAuthenticatedApiAgent() {
-  const agent = request.agent(nextJsApiRouteTestApp);
-  const response = await agent
+  const response = await request(nextJsApiTestServer.server)
     .post("/api/login")
     .set("Content-Type", "text/plain;charset=UTF-8")
     .send(
@@ -88,7 +93,21 @@ async function createAuthenticatedApiAgent() {
     .expect(200);
 
   expect(response.body).toEqual({ status: 200 });
-  return agent;
+
+  return createAuthenticatedApiRequest(getSessionCookie(response));
+}
+
+function createAuthenticatedApiRequest(sessionCookie: string) {
+  return {
+    get: (url: string) =>
+      request(nextJsApiTestServer.server).get(url).set("Cookie", sessionCookie),
+  };
+}
+
+function getSessionCookie(response: request.Response): string {
+  const cookie = response.headers["set-cookie"]?.[0];
+  expect(cookie).toBeDefined();
+  return cookie.split(";", 1)[0];
 }
 
 function stubTokenExchange() {

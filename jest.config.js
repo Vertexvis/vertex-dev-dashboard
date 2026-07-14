@@ -45,6 +45,7 @@ module.exports = {
     {
       ...projectConfig,
       displayName: "node",
+      globalSetup: "<rootDir>/test/nextjs/buildNextJsApiTestApplication.js",
       testEnvironment: "node",
       testMatch: ["**/src/__tests__/pages/api/**/*.test.ts"],
     },
