@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http,HttpResponse } from "msw";
 import React from "react";
@@ -126,13 +126,14 @@ describe("FileCollectionTable", () => {
     await userEvent.click(screen.getByLabelText("Select Collection One"));
     await userEvent.click(screen.getByLabelText("Delete"));
 
-    expect(await screen.findByText("File Collections")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(deletedIds).toEqual([["collection-1"]]);
+    });
     expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).not.toBeChecked();
     expect(
       screen.queryByText("Could not delete collection-1.")
     ).not.toBeInTheDocument();
-    expect(deletedIds).toEqual([["collection-1"]]);
   });
 
   it("filters file collections by supplied ID before rendering the filtered results", async () => {
