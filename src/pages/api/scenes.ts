@@ -7,13 +7,11 @@ import {
   PartDataRelationshipsPartRevisionsTypeEnum,
   QueuedJobData,
   SceneData,
-  SceneList,
   ScenesApiUpdateSceneRequest,
   UpdateSceneRequestDataAttributes,
   UpdateSceneRequestDataAttributesStateEnum,
   VertexError,
 } from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -27,7 +25,6 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
-import { setFilterExpression } from "../../lib/query-filters";
 import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
@@ -87,24 +84,16 @@ async function get(
       n != null ? ({ contains: n } satisfies FilterExpression) : undefined;
     const filterSuppliedId =
       sId != null ? ({ contains: sId } satisfies FilterExpression) : undefined;
-    const query = new URLSearchParams();
-    if (pc != null) query.set("page[cursor]", pc);
-    query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
-    query.set(
-      "fields[scene]",
-      "metadata,state,camera,worldOrientation,name,suppliedId,created,modified,sceneItemCount"
-    );
-    setFilterExpression(query, "name", filterName);
-    setFilterExpression(query, "suppliedId", filterSuppliedId);
 
-    const { cursors, page } = await getPage(
-      () =>
-        c.axiosInstance.get(`${c.config.basePath}/scenes?${query.toString()}`, {
-          headers: {
-            Accept: "application/vnd.api+json",
-            Authorization: `Bearer ${c.token.access_token}`,
-          },
-        }) as Promise<AxiosResponse<SceneList>>
+    const { cursors, page } = await getPage(() =>
+      c.scenes.getScenes({
+        pageCursor: pc,
+        pageSize: parsePositiveQueryInt(ps, 10),
+        filterSuppliedId,
+        filterName,
+        fieldsScene:
+          "metadata,state,camera,worldOrientation,name,suppliedId,created,modified,sceneItemCount",
+      })
     );
     return { cursors, data: page.data, status: 200 };
   } catch (error) {
