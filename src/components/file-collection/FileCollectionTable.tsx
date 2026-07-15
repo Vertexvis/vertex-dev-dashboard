@@ -18,8 +18,15 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
+import {
+  FileCollection,
+  toFileCollectionPage,
+} from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import {
+  CreatedAtDateRange,
+  CreatedAtDateRangeFilter,
+} from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -65,22 +72,6 @@ interface Props {
   readonly onFileCollectionSelected?: (fileCollection: FileCollection) => void;
 }
 
-type DateBoundary = "start" | "end";
-
-function toLocalDayIso(value: string, boundary: DateBoundary): string {
-  const [year, month, day] = value.split("-").map(Number);
-  const date =
-    boundary === "start"
-      ? new Date(year, month - 1, day, 0, 0, 0, 0)
-      : new Date(year, month - 1, day, 23, 59, 59, 999);
-
-  return date.toISOString();
-}
-
-function isAfter(left: string, right: string): boolean {
-  return left.localeCompare(right) > 0;
-}
-
 export default function FileCollectionTable({
   activeFileCollectionId,
   onFileCollectionSelected,
@@ -98,17 +89,13 @@ export default function FileCollectionTable({
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [name, setName] = React.useState<string | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
-  const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
-  const [createdAtEndDate, setCreatedAtEndDate] = React.useState("");
-  const [createdAtStart, setCreatedAtStart] = React.useState<
-    string | undefined
-  >();
-  const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>();
+  const [createdAtFilters, setCreatedAtFilters] =
+    React.useState<CreatedAtDateRange>({});
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
-    createdAtEnd,
-    createdAtStart,
+    createdAtEnd: createdAtFilters.createdAtEnd,
+    createdAtStart: createdAtFilters.createdAtStart,
     cursor,
     name,
     pageSize,
@@ -143,40 +130,9 @@ export default function FileCollectionTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleCreatedAtStartChange(value: string) {
+  function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
-    const nextEndDate =
-      value !== "" &&
-      createdAtEndDate !== "" &&
-      isAfter(value, createdAtEndDate)
-        ? ""
-        : createdAtEndDate;
-
-    if (nextEndDate !== createdAtEndDate) {
-      setCreatedAtEndDate("");
-      setCreatedAtEnd(undefined);
-    }
-
-    setCreatedAtStart(value ? toLocalDayIso(value, "start") : undefined);
-    setCreatedAtStartDate(value);
-  }
-
-  function handleCreatedAtEndChange(value: string) {
-    resetPaging();
-    const nextStartDate =
-      value !== "" &&
-      createdAtStartDate !== "" &&
-      isAfter(createdAtStartDate, value)
-        ? ""
-        : createdAtStartDate;
-
-    if (nextStartDate !== createdAtStartDate) {
-      setCreatedAtStartDate("");
-      setCreatedAtStart(undefined);
-    }
-
-    setCreatedAtEnd(value ? toLocalDayIso(value, "end") : undefined);
-    setCreatedAtEndDate(value);
+    setCreatedAtFilters(filters);
   }
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
@@ -331,42 +287,7 @@ export default function FileCollectionTable({
             />
           </Box>
         </Box>
-        <Box
-          sx={{
-            px: { sm: 2 },
-            pb: 2,
-            display: "flex",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          <TextField
-            variant="standard"
-            size="small"
-            margin="normal"
-            id="createdAtStart"
-            label="Created From"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ max: createdAtEndDate || undefined }}
-            value={createdAtStartDate}
-            onChange={(e) => handleCreatedAtStartChange(e.target.value)}
-            sx={{ mt: 0, width: "16rem" }}
-          />
-          <TextField
-            variant="standard"
-            size="small"
-            margin="normal"
-            id="createdAtEnd"
-            label="Created To"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ min: createdAtStartDate || undefined }}
-            value={createdAtEndDate}
-            onChange={(e) => handleCreatedAtEndChange(e.target.value)}
-            sx={{ mt: 0, width: "16rem" }}
-          />
-        </Box>
+        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
         <TableContainer>
           <Table>
             <TableHead
