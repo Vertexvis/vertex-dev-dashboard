@@ -36,7 +36,7 @@ describe("file collection API routes", () => {
     nodeMswServer.use(stubTokenExchange());
   });
 
-  it("lists file collections through the route surface", async () => {
+  it("passes name and supplied ID filters through the route surface", async () => {
     nodeMswServer.use(
       stubListFileCollections(
         {
@@ -53,7 +53,8 @@ describe("file collection API routes", () => {
         ({ searchParams }) => {
           expect(searchParams.get("page[cursor]")).toBe("cursor-1");
           expect(searchParams.get("page[size]")).toBe("50");
-          expect(searchParams.get("filter[suppliedId]")).toBe("supplied-1");
+          expect(searchParams.get("filter[name][contains]")).toBe("COLLECT");
+          expect(searchParams.get("filter[suppliedId][contains]")).toBe("LIED-1");
         }
       )
     );
@@ -61,7 +62,46 @@ describe("file collection API routes", () => {
     const agent = await createAuthenticatedApiAgent();
     const response = await agent
       .get("/api/file-collections")
-      .query({ cursor: "cursor-1", pageSize: "50", suppliedId: "supplied-1" })
+      .query({
+        cursor: "cursor-1",
+        name: "COLLECT",
+        pageSize: "50",
+        suppliedId: "LIED-1",
+      })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [fileCollectionData("collection-1")],
+      status: 200,
+    });
+  });
+
+  it("returns the collection page supplied by the service without local filtering", async () => {
+    nodeMswServer.use(
+      stubListFileCollections(
+        {
+          data: [fileCollectionData("collection-1")],
+          links: {
+            next: {
+              href: `${vertexApiOrigin}/file-collections?page[cursor]=next-page`,
+            },
+            self: {
+              href: `${vertexApiOrigin}/file-collections?page[cursor]=self-page`,
+            },
+          },
+        },
+        ({ searchParams }) => {
+          expect(searchParams.get("filter[name][contains]")).toBe("missing");
+          expect(searchParams.get("page[size]")).toBe("10");
+        }
+      )
+    );
+
+    const agent = await createAuthenticatedApiAgent();
+    const response = await agent
+      .get("/api/file-collections")
+      .query({ name: "missing" })
       .expect(200);
 
     expect(response.body).toEqual({
