@@ -44,7 +44,7 @@ describe("file collection API routes", () => {
     await mockServer.client.reset();
   });
 
-  it("passes partial filters upstream and applies them locally", async () => {
+  it("passes name and supplied ID filters upstream", async () => {
     await expectFileCollectionList({
       "filter[name][contains]": ["COLLECT"],
       "filter[suppliedId][contains]": ["LIED-1"],
@@ -75,7 +75,7 @@ describe("file collection API routes", () => {
     });
   });
 
-  it("returns an empty collection page when no local filters match", async () => {
+  it("returns the collection page supplied by the service without local filtering", async () => {
     await expectFileCollectionList({
       "filter[name][contains]": ["missing"],
       "page[size]": ["10"],
@@ -89,7 +89,7 @@ describe("file collection API routes", () => {
     expect(res.statusCode()).toBe(200);
     expect(res.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
-      data: [],
+      data: [collectionData("collection-1")],
       status: 200,
     });
     await verifyListFileCollections({
