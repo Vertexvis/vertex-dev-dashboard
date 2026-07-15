@@ -74,8 +74,8 @@ async function get(
     );
 
     const { cursors, page } = await getPage(
-      () =>
-        client.axiosInstance.get(
+      (): Promise<AxiosResponse<FileCollectionList>> =>
+        client.axiosInstance.get<FileCollectionList>(
           `${client.config.basePath}/file-collections?${query.toString()}`,
           {
             headers: {
@@ -83,7 +83,7 @@ async function get(
               Authorization: `Bearer ${client.token.access_token}`,
             },
           }
-        ) as Promise<AxiosResponse<FileCollectionList>>
+        )
     );
     return {
       cursors,
