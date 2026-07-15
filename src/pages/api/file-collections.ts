@@ -1,10 +1,13 @@
 import {
+  FileCollectionList,
   FileCollectionMetadataData,
+  FilterExpression,
   getPage,
   head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
+import { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -20,6 +23,7 @@ import {
   toErrorRes,
 } from "../../lib/api";
 import { getFileCollectionsApi } from "../../lib/file-collections";
+import { setFilterExpression } from "../../lib/query-filters";
 import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
@@ -47,19 +51,45 @@ async function get(
   req: NextIronRequest
 ): Promise<ErrorRes | GetRes<FileCollectionMetadataData>> {
   try {
-    const c = getFileCollectionsApi(await getClientFromSession(req.session));
+    const client = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
-    const sId = head(req.query.suppliedId);
+    const name = head(req.query.name);
+    const suppliedId = head(req.query.suppliedId);
 
-    const { cursors, page } = await getPage(() =>
-      c.listFileCollections({
-        pageCursor: pc,
-        pageSize: parsePositiveQueryInt(ps, 10),
-        filterSuppliedId: sId,
-      })
+    const query = new URLSearchParams();
+    if (pc != null) query.set("page[cursor]", pc);
+    query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
+    setFilterExpression(
+      query,
+      "name",
+      name != null ? ({ contains: name } satisfies FilterExpression) : undefined
     );
-    return { cursors, data: page.data, status: 200 };
+    setFilterExpression(
+      query,
+      "suppliedId",
+      suppliedId != null
+        ? ({ contains: suppliedId } satisfies FilterExpression)
+        : undefined
+    );
+
+    const { cursors, page } = await getPage(
+      () =>
+        client.axiosInstance.get(
+          `${client.config.basePath}/file-collections?${query.toString()}`,
+          {
+            headers: {
+              Accept: "application/vnd.api+json",
+              Authorization: `Bearer ${client.token.access_token}`,
+            },
+          }
+        ) as Promise<AxiosResponse<FileCollectionList>>
+    );
+    return {
+      cursors,
+      data: page.data,
+      status: 200,
+    };
   } catch (error) {
     const e = error as VertexError;
     logError(e);
