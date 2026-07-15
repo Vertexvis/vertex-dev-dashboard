@@ -35,10 +35,11 @@ export const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created At" },
 ];
 
-function useFileCollections({ cursor, pageSize, suppliedId }: SwrProps) {
+function useFileCollections({ cursor, name, pageSize, suppliedId }: SwrProps) {
   return useSWR(
     buildQuery("/api/file-collections", {
       cursor,
+      name,
       pageSize,
       suppliedId,
     })
@@ -65,11 +66,13 @@ export default function FileCollectionTable({
     setCursors,
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [name, setName] = React.useState<string | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
     cursor,
+    name,
     pageSize,
     suppliedId,
   });
@@ -77,6 +80,15 @@ export default function FileCollectionTable({
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
+
+  const debouncedSetNameFilter = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setName(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging]
+  );
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
@@ -214,20 +226,36 @@ export default function FileCollectionTable({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
           }}
         >
-          <TextField
-            variant="standard"
-            size="small"
-            margin="normal"
-            id="suppliedIdFilter"
-            label="Supplied ID Filter (exact)"
-            type="text"
-            onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
-            }}
-            sx={{ mt: 0, width: "20rem" }}
-          />
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="nameFilter"
+              label="Name"
+              type="text"
+              onChange={(e) => {
+                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="suppliedIdFilter"
+              label="Supplied ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+          </Box>
         </Box>
         <TableContainer>
           <Table>
