@@ -59,7 +59,7 @@ describe("file collection API routes", () => {
     });
   });
 
-  it("returns an empty collection page when no local filters match", async () => {
+  it("returns the collection page supplied by the service without local filtering", async () => {
     nodeMswServer.use(
       stubListFileCollections(
         {
@@ -88,7 +88,7 @@ describe("file collection API routes", () => {
     expect(response.statusCode()).toBe(200);
     expect(response.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
-      data: [],
+      data: [fileCollectionData("collection-1")],
       status: 200,
     });
   });
