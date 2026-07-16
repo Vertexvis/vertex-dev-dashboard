@@ -98,6 +98,42 @@ describe("file collection API routes", () => {
     });
   });
 
+  it("passes creation dates upstream and returns the service page", async () => {
+    await expectFileCollectionList(
+      {
+        "filter[createdAt][gte]": ["2026-06-11T00:00:00.000Z"],
+        "filter[createdAt][lte]": ["2026-06-11T23:59:59.999Z"],
+        "page[size]": ["10"],
+      },
+      [
+        collectionData("collection-1", "2026-06-10T15:30:00Z"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z"),
+      ]
+    );
+    const res = await callFileCollections({
+      method: "GET",
+      query: {
+        createdAtEnd: "2026-06-11T23:59:59.999Z",
+        createdAtStart: "2026-06-11T00:00:00.000Z",
+      },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [
+        collectionData("collection-1", "2026-06-10T15:30:00Z"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z"),
+      ],
+      status: 200,
+    });
+    await verifyListFileCollections({
+      "filter[createdAt][gte]": ["2026-06-11T00:00:00.000Z"],
+      "filter[createdAt][lte]": ["2026-06-11T23:59:59.999Z"],
+      "page[size]": ["10"],
+    });
+  });
+
   it("uses the default page size when one is not supplied", async () => {
     await expectFileCollectionList({ "page[size]": ["10"] });
 
@@ -331,7 +367,8 @@ describe("file collection API routes", () => {
   }
 
   async function expectFileCollectionList(
-    queryStringParameters: Record<string, string[]>
+    queryStringParameters: Record<string, string[]>,
+    data: JsonBody[] = [collectionData("collection-1")]
   ): Promise<void> {
     await mockServer.client.mockAnyResponse({
       httpRequest: {
@@ -340,7 +377,7 @@ describe("file collection API routes", () => {
         queryStringParameters,
       },
       httpResponse: jsonResponse({
-        data: [collectionData("collection-1")],
+        data,
         links: {
           next: {
             href: `${mockServer.apiHost}/file-collections?page[cursor]=next-page`,
@@ -402,10 +439,13 @@ function createRes(): TestRes {
   return res;
 }
 
-function collectionData(id: string): JsonBody {
+function collectionData(
+  id: string,
+  created = "2026-06-10T15:30:00Z"
+): JsonBody {
   return {
     attributes: {
-      created: "2026-06-10T15:30:00Z",
+      created,
       name: "Collection One",
       suppliedId: "supplied-1",
     },
