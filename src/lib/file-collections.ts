@@ -32,6 +32,54 @@ export type GetFileCollectionRes = Res & {
   readonly export?: FileCollectionExportAvailability;
 };
 
+const FileCollectionSortFields = ["created", "name"] as const;
+type FileCollectionSortField = (typeof FileCollectionSortFields)[number];
+
+interface FileCollectionSort {
+  readonly field: FileCollectionSortField;
+  readonly order: "asc" | "desc";
+}
+
+/**
+ * Temporary client-side stand-in for the File Collections API sort contract.
+ *
+ * The dashboard forwards the selected sort upstream, but applies supported
+ * sorts here until the service honors the new query parameter.
+ */
+export function sortFileCollections(
+  fileCollections: FileCollectionList["data"],
+  sort?: string
+): FileCollectionList["data"] {
+  const parsedSort = parseFileCollectionSort(sort);
+  if (parsedSort == null) return fileCollections;
+
+  return [...fileCollections].sort((left, right) => {
+    const comparison = (left.attributes[parsedSort.field] ?? "").localeCompare(
+      right.attributes[parsedSort.field] ?? ""
+    );
+
+    return parsedSort.order === "asc" ? comparison : -comparison;
+  });
+}
+
+function parseFileCollectionSort(
+  sort?: string
+): FileCollectionSort | undefined {
+  if (sort == null) return undefined;
+
+  const order = sort.startsWith("-") ? "desc" : "asc";
+  const field = order === "desc" ? sort.slice(1) : sort;
+  if (!isFileCollectionSortField(field)) return undefined;
+
+  return { field, order };
+}
+
+function isFileCollectionSortField(
+  field: string
+): field is FileCollectionSortField {
+  return FileCollectionSortFields.includes(field as FileCollectionSortField);
+}
+
 export function toFileCollection(
   data: FileCollectionMetadataData
 ): FileCollection {
