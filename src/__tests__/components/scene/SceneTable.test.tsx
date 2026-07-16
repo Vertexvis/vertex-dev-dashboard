@@ -12,9 +12,7 @@ import { Scene } from "../../../lib/scenes";
 const mockPush = jest.fn();
 
 jest.mock("next/router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
 const scene: Scene = {
@@ -126,28 +124,21 @@ describe("SceneTable", () => {
     );
   });
 
-  it("opens the scene viewer when the scene name is clicked", async () => {
+  it("renders a dedicated scene viewer href", async () => {
     const onClick = jest.fn();
 
     server.use(
       http.get("*/api/scenes", () => {
         return HttpResponse.json(page);
-      }),
-      http.post("*/api/stream-keys", () => {
-        return HttpResponse.json({ key: "stream-key-1" });
       })
     );
 
     renderTable(scene, { onClick });
 
-    await userEvent.click(await screen.findByLabelText("Open Scene One"));
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(
-        "scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev"
-      );
-    });
-    expect(onClick).not.toHaveBeenCalled();
+    expect(await screen.findByLabelText("Open Scene One")).toHaveAttribute(
+      "href",
+      "/scene-viewer/scene-1"
+    );
   });
 });
 
@@ -171,12 +162,10 @@ function renderTableElement(
 ): JSX.Element {
   return (
     <SceneTable
-      clientId="client-id"
       invalidationCount={0}
       onClick={jest.fn()}
       onEditClick={jest.fn()}
       scene={scene}
-      vertexEnv="platdev"
       {...props}
     />
   );

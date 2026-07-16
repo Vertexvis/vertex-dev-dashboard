@@ -309,7 +309,7 @@ export default function FileTable({
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
               disabled={!isAvailable}
-              onPrimaryAction={() => handleDownload(row.id)}
+              href={`/api/files/${encodeURIComponent(row.id)}/download`}
               primaryActionLabel={
                 isAvailable
                   ? `Download ${row.name}`

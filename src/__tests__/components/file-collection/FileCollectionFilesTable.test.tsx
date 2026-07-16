@@ -89,16 +89,7 @@ describe("FileCollectionFilesTable", () => {
       "Download File One"
     );
 
-    await userEvent.click(name);
-
-    await waitFor(() => {
-      expect(createDownloadUrl).toHaveBeenCalledTimes(1);
-    });
-    expect(window.open).toHaveBeenCalledWith(
-      downloadUrlById["file-1"],
-      "_blank",
-      "noopener"
-    );
+    expect(name).toHaveAttribute("href", "/api/files/file-1/download");
     expect(onFileSelected).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByText("supplied-file-1"));
@@ -120,7 +111,7 @@ describe("FileCollectionFilesTable", () => {
     );
 
     await waitFor(() => {
-      expect(createDownloadUrl).toHaveBeenCalledTimes(2);
+      expect(createDownloadUrl).toHaveBeenCalledTimes(1);
     });
     expect(window.open).toHaveBeenLastCalledWith(
       downloadUrlById["file-1"],

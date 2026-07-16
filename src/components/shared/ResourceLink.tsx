@@ -4,7 +4,7 @@ import React from "react";
 type ResourceLinkProps = Omit<BoxProps<"a">, "onClick"> & {
   readonly disabled?: boolean;
   readonly href?: string;
-  readonly onPrimaryAction: () => void;
+  readonly onPrimaryAction?: () => void;
   readonly primaryActionLabel: string;
 };
 
@@ -27,15 +27,15 @@ export function ResourceLink({
         aria-disabled={disabled}
         aria-label={primaryActionLabel}
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
-          if (disabled || event.button !== 0) {
+          if (disabled || event.button !== 0 || href != null) {
             return;
           }
           event.preventDefault();
           event.stopPropagation();
-          onPrimaryAction();
+          onPrimaryAction?.();
         }}
         onKeyDown={(event: React.KeyboardEvent<HTMLAnchorElement>) => {
-          if (disabled) {
+          if (disabled || href != null) {
             return;
           }
           if (event.key !== "Enter" && event.key !== " ") {
@@ -44,7 +44,7 @@ export function ResourceLink({
 
           event.preventDefault();
           event.stopPropagation();
-          onPrimaryAction();
+          onPrimaryAction?.();
         }}
         sx={[
           {
