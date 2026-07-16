@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http,HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import React from "react";
 
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
@@ -148,6 +148,25 @@ describe("FileTable", () => {
 
     expect(fromInput).toHaveValue("2026-06-01");
     expect(toInput).toHaveValue("2026-06-30");
+    expect(fromInput).not.toHaveClass("emptyDateInput");
+    expect(toInput).not.toHaveClass("emptyDateInput");
+  });
+
+  it("renders empty created date filters initially", async () => {
+    server.use(
+      http.get("*/api/files", () => {
+        return HttpResponse.json(page);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+
+    expect(screen.getByLabelText("Created From")).toHaveValue("");
+    expect(screen.getByLabelText("Created To")).toHaveValue("");
+    expect(screen.getByLabelText("Created From")).toHaveClass("emptyDateInput");
+    expect(screen.getByLabelText("Created To")).toHaveClass("emptyDateInput");
   });
 
   it("clears the conflicting created to date when created from moves past it", async () => {

@@ -64,6 +64,7 @@
     "clean": "rm -rf .next/ node_modules/",
     "dev": "next",
     "format": "prettier --write './**/*.+(js|jsx|ts|tsx|json|yml|yaml|md|mdx|html|css)'",
+    "format:check": "prettier --check './**/*.+(js|jsx|ts|tsx|json|yml|yaml|md|mdx|html|css)'",
     "lint": "next lint",
     "start": "next start",
     "setup": "bash scripts/setup.sh",

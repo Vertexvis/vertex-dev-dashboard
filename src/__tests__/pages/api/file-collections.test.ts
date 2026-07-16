@@ -96,6 +96,53 @@ describe("file collection API routes", () => {
     });
   });
 
+  it("passes creation dates upstream and returns the service page", async () => {
+    const data = [
+      fileCollectionData("collection-1", "2026-06-10T15:30:00Z"),
+      fileCollectionData("collection-2", "2026-06-11T15:30:00Z"),
+    ];
+
+    nodeMswServer.use(
+      stubListFileCollections(
+        {
+          data,
+          links: {
+            next: {
+              href: `${vertexApiOrigin}/file-collections?page[cursor]=next-page`,
+            },
+            self: {
+              href: `${vertexApiOrigin}/file-collections?page[cursor]=self-page`,
+            },
+          },
+        },
+        ({ searchParams }) => {
+          expect(searchParams.get("filter[createdAt][gte]")).toBe(
+            "2026-06-11T00:00:00.000Z"
+          );
+          expect(searchParams.get("filter[createdAt][lte]")).toBe(
+            "2026-06-11T23:59:59.999Z"
+          );
+          expect(searchParams.get("page[size]")).toBe("10");
+        }
+      )
+    );
+
+    const response = await callFileCollections({
+      method: "GET",
+      query: {
+        createdAtEnd: "2026-06-11T23:59:59.999Z",
+        createdAtStart: "2026-06-11T00:00:00.000Z",
+      },
+    });
+
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data,
+      status: 200,
+    });
+  });
+
   it("uses the default page size when one is not supplied", async () => {
     nodeMswServer.use(
       stubListFileCollections(
@@ -292,10 +339,10 @@ function callApi(
   });
 }
 
-function fileCollectionData(id: string) {
+function fileCollectionData(id: string, created = "2026-06-10T15:30:00Z") {
   return {
     attributes: {
-      created: "2026-06-10T15:30:00Z",
+      created,
       name: "Collection One",
       suppliedId: "supplied-1",
     },

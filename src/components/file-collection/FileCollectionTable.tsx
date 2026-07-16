@@ -18,8 +18,15 @@ import React from "react";
 import useSWR from "swr";
 
 import { toLocaleString } from "../../lib/dates";
-import { FileCollection, toFileCollectionPage } from "../../lib/file-collections";
+import {
+  FileCollection,
+  toFileCollectionPage,
+} from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import {
+  CreatedAtDateRange,
+  CreatedAtDateRangeFilter,
+} from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -35,9 +42,23 @@ export const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created At" },
 ];
 
-function useFileCollections({ cursor, name, pageSize, suppliedId }: SwrProps) {
+interface UseFileCollectionsProps extends SwrProps {
+  readonly createdAtEnd?: string;
+  readonly createdAtStart?: string;
+}
+
+function useFileCollections({
+  createdAtEnd,
+  createdAtStart,
+  cursor,
+  name,
+  pageSize,
+  suppliedId,
+}: UseFileCollectionsProps) {
   return useSWR(
     buildQuery("/api/file-collections", {
+      createdAtEnd,
+      createdAtStart,
       cursor,
       name,
       pageSize,
@@ -68,9 +89,13 @@ export default function FileCollectionTable({
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [name, setName] = React.useState<string | undefined>();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
+  const [createdAtFilters, setCreatedAtFilters] =
+    React.useState<CreatedAtDateRange>({});
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
+    createdAtEnd: createdAtFilters.createdAtEnd,
+    createdAtStart: createdAtFilters.createdAtStart,
     cursor,
     name,
     pageSize,
@@ -104,6 +129,11 @@ export default function FileCollectionTable({
 
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
+
+  function handleCreatedAtChange(filters: CreatedAtDateRange) {
+    resetPaging();
+    setCreatedAtFilters(filters);
+  }
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -257,6 +287,7 @@ export default function FileCollectionTable({
             />
           </Box>
         </Box>
+        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
         <TableContainer>
           <Table>
             <TableHead
