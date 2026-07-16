@@ -13,6 +13,8 @@ jobs:
         with: { node-version: 22.x }
       - name: Install
         run: yarn install --frozen-lockfile
+      - name: Format Check
+        run: yarn format:check
       - name: Lint
         run: yarn lint
       - name: Test
