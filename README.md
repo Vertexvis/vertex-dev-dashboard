@@ -44,3 +44,5 @@ A few options for deployment,
 - [Vercel](https://nextjs.org/docs/deployment)
 - [Netlify](https://www.netlify.com/blog/2020/11/30/how-to-deploy-next.js-sites-to-netlify/)
 - [AWS CDK](https://github.com/serverless-nextjs/serverless-next.js#readme)
+
+### Quality Checks
