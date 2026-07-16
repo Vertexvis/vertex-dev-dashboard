@@ -98,7 +98,7 @@ describe("file collection API routes", () => {
     });
   });
 
-  it("passes creation dates upstream and applies them locally", async () => {
+  it("passes creation dates upstream and returns the service page", async () => {
     await expectFileCollectionList(
       {
         "filter[createdAt][gte]": ["2026-06-11T00:00:00.000Z"],
@@ -121,7 +121,10 @@ describe("file collection API routes", () => {
     expect(res.statusCode()).toBe(200);
     expect(res.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
-      data: [collectionData("collection-2", "2026-06-11T15:30:00Z")],
+      data: [
+        collectionData("collection-1", "2026-06-10T15:30:00Z"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z"),
+      ],
       status: 200,
     });
     await verifyListFileCollections({

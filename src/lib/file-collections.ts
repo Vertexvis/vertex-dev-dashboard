@@ -32,40 +32,6 @@ export type GetFileCollectionRes = Res & {
   readonly export?: FileCollectionExportAvailability;
 };
 
-export interface FileCollectionFilters {
-  readonly createdAtEnd?: string;
-  readonly createdAtStart?: string;
-}
-
-/**
- * Temporary client-side stand-in for the File Collections API filter contract.
- *
- * The dashboard also sends these filters upstream, but the API has not
- * published the contract yet. Applying them here preserves the expected
- * behavior when the upstream service ignores those parameters.
- */
-export function filterFileCollections(
-  fileCollections: FileCollectionList["data"],
-  filters: FileCollectionFilters
-): FileCollectionList["data"] {
-  return fileCollections.filter(({ attributes }) => {
-    const createdAt =
-      attributes.created == null ? undefined : new Date(attributes.created);
-    const createdAtStart =
-      filters.createdAtStart == null
-        ? undefined
-        : new Date(filters.createdAtStart);
-    const createdAtEnd =
-      filters.createdAtEnd == null ? undefined : new Date(filters.createdAtEnd);
-
-    return (
-      (createdAtStart == null ||
-        (createdAt != null && createdAt >= createdAtStart)) &&
-      (createdAtEnd == null || (createdAt != null && createdAt <= createdAtEnd))
-    );
-  });
-}
-
 export function toFileCollection(
   data: FileCollectionMetadataData
 ): FileCollection {
