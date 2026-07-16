@@ -17,7 +17,11 @@ import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { toLocaleString, toLocalDayBoundaryIso } from "../../lib/dates";
+import {
+  toLocalDateInputValue,
+  toLocaleString,
+  toLocalDayBoundaryIso,
+} from "../../lib/dates";
 import {
   FileCollection,
   toFileCollectionPage,
@@ -239,8 +243,8 @@ export default function FileCollectionTable({
 
   function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
-    const createdAtStartDate = filters.createdAtStart?.slice(0, 10) ?? "";
-    const createdAtEndDate = filters.createdAtEnd?.slice(0, 10) ?? "";
+    const createdAtStartDate = toLocalDateInputValue(filters.createdAtStart);
+    const createdAtEndDate = toLocalDateInputValue(filters.createdAtEnd);
     setCreatedAtStart(filters.createdAtStart);
     setCreatedAtStartDate(createdAtStartDate);
     setCreatedAtEnd(filters.createdAtEnd);
@@ -487,5 +491,3 @@ export default function FileCollectionTable({
     </>
   );
 }
-    setName(nextName);
-    setNameInput(nextName ?? "");
