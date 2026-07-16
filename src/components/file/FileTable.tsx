@@ -21,7 +21,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
+import { toLocalDateInputValue, toLocaleString } from "../../lib/dates";
 import {
   File,
   FileStatusComplete,
@@ -381,8 +381,8 @@ export default function FileTable({
 
   function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
-    const createdAtStartDate = filters.createdAtStart?.slice(0, 10) ?? "";
-    const createdAtEndDate = filters.createdAtEnd?.slice(0, 10) ?? "";
+    const createdAtStartDate = toLocalDateInputValue(filters.createdAtStart);
+    const createdAtEndDate = toLocalDateInputValue(filters.createdAtEnd);
 
     setCreatedAtStart(filters.createdAtStart);
     setCreatedAtStartDate(createdAtStartDate);
