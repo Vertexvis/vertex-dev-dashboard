@@ -247,10 +247,7 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
-    await userEvent.type(
-      screen.getByLabelText("Supplied ID"),
-      "supplied-2"
-    );
+    await userEvent.type(screen.getByLabelText("Supplied ID"), "supplied-2");
 
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(screen.queryByText("Collection One")).not.toBeInTheDocument();
@@ -334,9 +331,7 @@ describe("FileCollectionTable", () => {
         requests.push(url.search);
 
         return HttpResponse.json(
-          url.searchParams.get("suppliedId") === "LIED-2"
-            ? nextPage
-            : firstPage
+          url.searchParams.get("suppliedId") === "LIED-2" ? nextPage : firstPage
         );
       })
     );
