@@ -2,8 +2,11 @@ import { Box, BoxProps, Tooltip } from "@mui/material";
 import NextLink from "next/link";
 import React from "react";
 
+import { shouldHandleWithAppNavigation } from "./AppLink";
+
 type ResourceLinkProps = Omit<BoxProps<"a">, "component" | "onClick"> & {
   readonly component?: React.ElementType;
+
   readonly disabled?: boolean;
   readonly href?: string;
   readonly onPrimaryAction?: () => void;
@@ -40,6 +43,7 @@ export function ResourceLink({
             event.preventDefault();
             return;
           }
+          if (!shouldHandleWithAppNavigation(event)) return;
 
           event.stopPropagation();
           if (event.button !== 0 || href != null) return;
