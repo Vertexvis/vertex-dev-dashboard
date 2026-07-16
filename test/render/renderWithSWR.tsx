@@ -9,8 +9,8 @@ export function renderWithSWR(ui: React.ReactElement) {
         value={{
           dedupingInterval: 0,
           fetcher: (url: string) =>
-            fetch(new URL(url, window.location.origin).toString()).then(
-              (res) => res.json()
+            fetch(new URL(url, window.location.origin).toString()).then((res) =>
+              res.json()
             ),
           provider: () => new Map(),
         }}
