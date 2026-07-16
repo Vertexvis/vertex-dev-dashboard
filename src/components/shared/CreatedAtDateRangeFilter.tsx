@@ -64,6 +64,12 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         display: "flex",
         gap: 2,
         flexWrap: "wrap",
+        // Safari displays today's date as a placeholder for empty native date
+        // inputs. Hide that placeholder without hiding dates the user selects.
+        "& .emptyDateInput::-webkit-datetime-edit-day-field, & .emptyDateInput::-webkit-datetime-edit-month-field, & .emptyDateInput::-webkit-datetime-edit-year-field, & .emptyDateInput::-webkit-datetime-edit-text":
+          {
+            opacity: 0,
+          },
       }}
     >
       <TextField
@@ -74,7 +80,10 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         label="Created From"
         type="date"
         InputLabelProps={{ shrink: true }}
-        inputProps={{ max: createdAtEndDate || undefined }}
+        inputProps={{
+          className: createdAtStartDate === "" ? "emptyDateInput" : undefined,
+          max: createdAtEndDate || undefined,
+        }}
         value={createdAtStartDate}
         onChange={(e) => handleCreatedAtStartChange(e.target.value)}
         sx={{ mt: 0, width: "16rem" }}
@@ -87,7 +96,10 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         label="Created To"
         type="date"
         InputLabelProps={{ shrink: true }}
-        inputProps={{ min: createdAtStartDate || undefined }}
+        inputProps={{
+          className: createdAtEndDate === "" ? "emptyDateInput" : undefined,
+          min: createdAtStartDate || undefined,
+        }}
         value={createdAtEndDate}
         onChange={(e) => handleCreatedAtEndChange(e.target.value)}
         sx={{ mt: 0, width: "16rem" }}

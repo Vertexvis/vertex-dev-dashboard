@@ -371,6 +371,23 @@ describe("FileCollectionTable", () => {
     ).toBe(true);
   });
 
+  it("renders empty created date filters initially", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    expect(screen.getByLabelText("Created From")).toHaveValue("");
+    expect(screen.getByLabelText("Created To")).toHaveValue("");
+    expect(screen.getByLabelText("Created From")).toHaveClass("emptyDateInput");
+    expect(screen.getByLabelText("Created To")).toHaveClass("emptyDateInput");
+  });
+
   it("clears the opposing created date when the range becomes invalid", async () => {
     server.use(
       http.get("*/api/file-collections", () => {
