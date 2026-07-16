@@ -182,9 +182,7 @@ describe("FileCollectionTable", () => {
     await userEvent.click(screen.getByLabelText("Go to next page"));
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Created At" })
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Created At" }));
 
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
     expect(
