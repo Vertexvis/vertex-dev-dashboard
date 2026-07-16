@@ -7,5 +7,5 @@ export function toDisplayValue(value?: string): string {
 export function toFileSizeDisplay(size?: number): string | undefined {
   if (size == null) return undefined;
 
-  return filesize(size, { pad: true, round: 1, standard: "jedec" });
+  return filesize(size, {pad: true, round: 1, standard: "jedec" });
 }
