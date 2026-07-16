@@ -19,8 +19,8 @@ import useSWR from "swr";
 
 import {
   toLocalDateInputValue,
-  toLocaleString,
   toLocalDayBoundaryIso,
+  toLocaleString,
 } from "../../lib/dates";
 import {
   FileCollection,

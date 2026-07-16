@@ -66,40 +66,6 @@ const page = {
   status: 200,
 };
 
-const firstPage = {
-  cursors: { self: "scene-page-1", next: "scene-page-2" },
-  data: [
-    {
-      type: "scene",
-      id: "scene-1",
-      attributes: {
-        created: "2026-06-10T15:30:00Z",
-        name: "Scene One",
-        state: "ready",
-        suppliedId: "supplied-1",
-      },
-    },
-  ],
-  status: 200,
-};
-
-const secondPage = {
-  cursors: { self: "scene-page-2" },
-  data: [
-    {
-      type: "scene",
-      id: "scene-2",
-      attributes: {
-        created: "2026-06-11T15:30:00Z",
-        name: "Scene Two",
-        state: "ready",
-        suppliedId: "supplied-2",
-      },
-    },
-  ],
-  status: 200,
-};
-
 describe("SceneTable", () => {
   installJsdomMockServer();
 
