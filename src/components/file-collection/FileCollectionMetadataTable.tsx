@@ -1,12 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import { toLocaleString } from "../../lib/dates";
 import { FileCollection } from "../../lib/file-collections";
@@ -21,125 +13,73 @@ export function FileCollectionMetadataTable({
   fileCollection,
   optionalFieldStatus = "ready",
 }: Props): JSX.Element {
-  return (
-    <TableContainer>
-      <Table size="small" sx={{ whiteSpace: "nowrap" }}>
-        <TableBody>
-          <DetailsRow label="Name" value={fileCollection.name} />
-          <DetailsRow label="ID" value={fileCollection.id} />
-          <DetailsRow label="Supplied ID" value={fileCollection.suppliedId} />
-          <DetailsRow
-            label="Created"
-            value={toLocaleString(fileCollection.created)}
-          />
-          <DetailsRow
-            label="Expires"
-            value={toLocaleString(fileCollection.expiresAt)}
-            status={optionalFieldStatus}
-          />
-          <MetadataRow
-            metadata={fileCollection.metadata}
-            status={optionalFieldStatus}
-          />
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
-function DetailsRow({
-  label,
-  status,
-  value,
-}: {
-  readonly label: string;
-  readonly status?: "loading" | "ready";
-  readonly value?: string;
-}): JSX.Element {
-  const displayValue =
-    status === "loading" && value == null
-      ? "Loading..."
-      : toDisplayValue(value);
+  const details = [
+    { label: "Name", value: fileCollection.name },
+    { label: "ID", value: fileCollection.id },
+    { label: "Supplied ID", value: fileCollection.suppliedId },
+    { label: "Created", value: toLocaleString(fileCollection.created) },
+    {
+      label: "Expires",
+      status: optionalFieldStatus,
+      value: toLocaleString(fileCollection.expiresAt),
+    },
+  ];
+  const metadata = Object.entries(fileCollection.metadata ?? {});
 
   return (
-    <TableRow>
-      <TableCell>
-        <Typography variant="subtitle2">{label}</Typography>
-        <Typography
-          sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-          variant="body2"
-        >
-          {displayValue}
-        </Typography>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function MetadataRow({
-  metadata,
-  status,
-}: {
-  readonly metadata?: Record<string, string>;
-  readonly status: "loading" | "ready";
-}): JSX.Element {
-  const entries = metadata == null ? [] : Object.entries(metadata);
-
-  return (
-    <TableRow>
-      <TableCell>
-        <Typography variant="subtitle2">Metadata</Typography>
-        {entries.length > 0 ? (
-          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ px: 0, py: 0.5, width: "40%", pr: 1 }}>
-                  <Typography variant="subtitle2">Key</Typography>
-                </TableCell>
-                <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
-                  <Typography variant="subtitle2">Value</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {entries.map(([key, value]) => (
-                <TableRow key={key}>
-                  <TableCell sx={{ px: 0, py: 0.5, pr: 1 }}>
-                    <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-                      variant="body2"
-                    >
-                      {toDisplayValue(key)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
-                    <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-                      variant="body2"
-                    >
-                      {toDisplayValue(value)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : status === "loading" ? (
+    <Box sx={{ whiteSpace: "nowrap" }}>
+      {details.map(({ label, status, value }) => (
+        <Box key={label} sx={{ py: 2 }}>
+          <Typography variant="subtitle2">{label}</Typography>
           <Typography
             sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
             variant="body2"
           >
-            Loading...
+            {status === "loading" && value == null
+              ? "Loading..."
+              : toDisplayValue(value)}
           </Typography>
+        </Box>
+      ))}
+      <Box sx={{ py: 2 }}>
+        <Typography variant="subtitle2">Metadata</Typography>
+        {metadata.length > 0 ? (
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1,
+              gridTemplateColumns: "minmax(0, 40%) minmax(0, 1fr)",
+              mt: 1,
+            }}
+          >
+            <Typography variant="subtitle2">Key</Typography>
+            <Typography variant="subtitle2">Value</Typography>
+            {metadata.flatMap(([key, value]) => [
+              <Typography
+                key={`${key}-key`}
+                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                variant="body2"
+              >
+                {toDisplayValue(key)}
+              </Typography>,
+              <Typography
+                key={`${key}-value`}
+                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                variant="body2"
+              >
+                {toDisplayValue(value)}
+              </Typography>,
+            ])}
+          </Box>
         ) : (
           <Typography
             sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
             variant="body2"
           >
-            N/A
+            {optionalFieldStatus === "loading" ? "Loading..." : "N/A"}
           </Typography>
         )}
-      </TableCell>
-    </TableRow>
+      </Box>
+    </Box>
   );
 }
