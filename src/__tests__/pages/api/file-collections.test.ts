@@ -2,41 +2,24 @@
  * @jest-environment node
  */
 import { http, HttpResponse } from "msw";
-import request from "supertest";
 
+import {
+  type ApiRouteRequest,
+  type ApiRouteResponse,
+  createAuthenticatedVertexApiTestSession,
+  invokeNextJsApiRouteHandler,
+} from "../../../../test/api/nextJsApiRouteTest";
 import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
-import {
-  createNextJsApiTestServer,
-  NextJsApiTestServer,
-} from "../../../../test/nextjs/createNextJsApiTestServer";
-import { CookieAttributes } from "../../../lib/with-session";
-
-jest.setTimeout(120_000);
+import { handleFileCollections } from "../../../pages/api/file-collections";
+import { handleFileCollection } from "../../../pages/api/file-collections/[id]";
 
 const vertexApiOrigin = "https://vertex-api.test";
 
 installNodeMswServer();
 
-process.env.COOKIE_SECRET ||= "test-cookie-secret-that-is-long-enough";
-CookieAttributes.password = process.env.COOKIE_SECRET;
-
-let nextJsApiTestServer: NextJsApiTestServer;
-
 describe("file collection API routes", () => {
-  beforeAll(async () => {
-    nextJsApiTestServer = await createNextJsApiTestServer();
-  });
-
-  afterAll(async () => {
-    await nextJsApiTestServer?.close();
-  });
-
-  beforeEach(() => {
-    nodeMswServer.use(stubTokenExchange());
-  });
-
-  it("passes name and supplied ID filters through the route surface", async () => {
+  it("passes name and supplied ID filters to Vertex", async () => {
     nodeMswServer.use(
       stubListFileCollections(
         {
@@ -54,23 +37,25 @@ describe("file collection API routes", () => {
           expect(searchParams.get("page[cursor]")).toBe("cursor-1");
           expect(searchParams.get("page[size]")).toBe("50");
           expect(searchParams.get("filter[name][contains]")).toBe("COLLECT");
-          expect(searchParams.get("filter[suppliedId][contains]")).toBe("LIED-1");
+          expect(searchParams.get("filter[suppliedId][contains]")).toBe(
+            "LIED-1"
+          );
         }
       )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/file-collections")
-      .query({
+    const response = await callFileCollections({
+      method: "GET",
+      query: {
         cursor: "cursor-1",
         name: "COLLECT",
         pageSize: "50",
         suppliedId: "LIED-1",
-      })
-      .expect(200);
+      },
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
       data: [fileCollectionData("collection-1")],
       status: 200,
@@ -98,13 +83,13 @@ describe("file collection API routes", () => {
       )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/file-collections")
-      .query({ name: "missing" })
-      .expect(200);
+    const response = await callFileCollections({
+      method: "GET",
+      query: { name: "missing" },
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
       data: [fileCollectionData("collection-1")],
       status: 200,
@@ -124,10 +109,10 @@ describe("file collection API routes", () => {
       )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent.get("/api/file-collections").expect(200);
+    const response = await callFileCollections({ method: "GET" });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       cursors: {},
       data: [fileCollectionData("collection-1")],
       status: 200,
@@ -135,23 +120,19 @@ describe("file collection API routes", () => {
   });
 
   it("validates delete request bodies before contacting Vertex", async () => {
-    const agent = await createAuthenticatedApiAgent();
+    const missingBodyResponse = await callFileCollections({ method: "DELETE" });
+    const invalidBodyResponse = await callFileCollections({
+      body: JSON.stringify({}),
+      method: "DELETE",
+    });
 
-    const missingBodyResponse = await agent
-      .delete("/api/file-collections")
-      .expect(400);
-
-    const invalidBodyResponse = await agent
-      .delete("/api/file-collections")
-      .set("Content-Type", "text/plain;charset=UTF-8")
-      .send(JSON.stringify({}))
-      .expect(400);
-
-    expect(missingBodyResponse.body).toEqual({
+    expect(missingBodyResponse.statusCode()).toBe(400);
+    expect(missingBodyResponse.body()).toEqual({
       message: "Body required.",
       status: 400,
     });
-    expect(invalidBodyResponse.body).toEqual({
+    expect(invalidBodyResponse.statusCode()).toBe(400);
+    expect(invalidBodyResponse.body()).toEqual({
       message: "Invalid body.",
       status: 400,
     });
@@ -165,14 +146,13 @@ describe("file collection API routes", () => {
       stubDeleteCollection("collection-2", undefined, deletedIds)
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .delete("/api/file-collections")
-      .set("Content-Type", "text/plain;charset=UTF-8")
-      .send(JSON.stringify({ ids: ["collection-1", "collection-2"] }))
-      .expect(200);
+    const response = await callFileCollections({
+      body: JSON.stringify({ ids: ["collection-1", "collection-2"] }),
+      method: "DELETE",
+    });
 
-    expect(response.body).toEqual({ status: 200 });
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({ status: 200 });
     expect(deletedIds).toEqual(["collection-1", "collection-2"]);
   });
 
@@ -183,14 +163,13 @@ describe("file collection API routes", () => {
       })
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .delete("/api/file-collections")
-      .set("Content-Type", "text/plain;charset=UTF-8")
-      .send(JSON.stringify({ ids: ["collection-1"] }))
-      .expect(404);
+    const response = await callFileCollections({
+      body: JSON.stringify({ ids: ["collection-1"] }),
+      method: "DELETE",
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(404);
+    expect(response.body()).toEqual({
       message: "Collection not found.",
       status: 404,
     });
@@ -204,12 +183,12 @@ describe("file collection API routes", () => {
       })
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/file-collections/collection-1")
-      .expect(200);
+    const response = await callFileCollectionById("collection-1", {
+      method: "GET",
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       data: fileCollectionData("collection-1"),
       status: 200,
     });
@@ -233,13 +212,13 @@ describe("file collection API routes", () => {
       )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/file-collections/collection-1")
-      .query({ includeExportAvailability: "true" })
-      .expect(200);
+    const response = await callFileCollectionById("collection-1", {
+      method: "GET",
+      query: { includeExportAvailability: "true" },
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       data: fileCollectionData("collection-1"),
       export: { enabled: true, fileCount: 1 },
       status: 200,
@@ -248,81 +227,69 @@ describe("file collection API routes", () => {
 
   it("returns Vertex API failures from get requests", async () => {
     nodeMswServer.use(
-      stubGetFileCollection("collection-1", failureBody("500", "Vertex is upset."), 500)
+      stubGetFileCollection(
+        "collection-1",
+        failureBody("500", "Vertex is upset."),
+        500
+      )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/file-collections/collection-1")
-      .expect(500);
+    const response = await callFileCollectionById("collection-1", {
+      method: "GET",
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(500);
+    expect(response.body()).toEqual({
       message: "Vertex is upset.",
       status: 500,
     });
   });
 
-  it("rejects unsupported collection methods through the route surface", async () => {
-    const response = await request(nextJsApiTestServer.server)
-      .post("/api/file-collections")
-      .expect(405);
+  it("rejects unsupported collection methods", async () => {
+    const response = await callFileCollections({ method: "POST" });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(405);
+    expect(response.body()).toEqual({
       message: "Method not allowed.",
       status: 405,
     });
   });
 
-  it("rejects unsupported file collection methods through the route surface", async () => {
-    const response = await request(nextJsApiTestServer.server)
-      .delete("/api/file-collections/collection-1")
-      .expect(405);
+  it("rejects unsupported file collection methods", async () => {
+    const response = await callFileCollectionById("collection-1", {
+      method: "DELETE",
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(405);
+    expect(response.body()).toEqual({
       message: "Method not allowed.",
       status: 405,
     });
   });
 });
 
-async function createAuthenticatedApiAgent() {
-  const response = await request(nextJsApiTestServer.server)
-    .post("/api/login")
-    .set("Content-Type", "text/plain;charset=UTF-8")
-    .send(
-      JSON.stringify({
-        env: "custom",
-        id: "test-client-id",
-        networkConfig: {
-          apiHost: vertexApiOrigin,
-          name: "test",
-          renderingHost: "https://example.test",
-          sceneTreeHost: "https://example.test",
-          sceneViewHost: "https://example.test",
-        },
-        secret: "test-client-secret",
-      })
-    )
-    .expect(200);
-
-  expect(response.body).toEqual({ status: 200 });
-
-  return createAuthenticatedApiRequest(getSessionCookie(response));
+function callFileCollections(req: ApiRouteRequest): Promise<ApiRouteResponse> {
+  return callApi(handleFileCollections, req);
 }
 
-function createAuthenticatedApiRequest(sessionCookie: string) {
-  return {
-    delete: (url: string) =>
-      request(nextJsApiTestServer.server).delete(url).set("Cookie", sessionCookie),
-    get: (url: string) =>
-      request(nextJsApiTestServer.server).get(url).set("Cookie", sessionCookie),
-  };
+function callFileCollectionById(
+  id: string,
+  req: ApiRouteRequest
+): Promise<ApiRouteResponse> {
+  return callApi(handleFileCollection, {
+    ...req,
+    query: { ...req.query, id },
+  });
 }
 
-function getSessionCookie(response: request.Response): string {
-  const cookie = response.headers["set-cookie"]?.[0];
-  expect(cookie).toBeDefined();
-  return cookie.split(";", 1)[0];
+function callApi(
+  handler: Parameters<typeof invokeNextJsApiRouteHandler>[0],
+  req: ApiRouteRequest
+): Promise<ApiRouteResponse> {
+  return invokeNextJsApiRouteHandler(handler, {
+    ...req,
+    session: createAuthenticatedVertexApiTestSession(vertexApiOrigin),
+  });
 }
 
 function fileCollectionData(id: string) {
@@ -357,23 +324,16 @@ function failureBody(status: string, title: string) {
   };
 }
 
-function stubTokenExchange() {
-  return http.post(`${vertexApiOrigin}/oauth2/token`, () => {
-    return HttpResponse.json({
-      access_token: "test-access-token",
-      expires_in: 3600,
-      token_type: "Bearer",
-    });
-  });
-}
-
-function stubListFileCollections(body: {
-  data: ReturnType<typeof fileCollectionData>[];
-  links: {
-    next?: { href: string };
-    self?: { href: string };
-  };
-}, assertRequest?: (request: URL) => void) {
+function stubListFileCollections(
+  body: {
+    data: ReturnType<typeof fileCollectionData>[];
+    links: {
+      next?: { href: string };
+      self?: { href: string };
+    };
+  },
+  assertRequest?: (request: URL) => void
+) {
   return http.get(`${vertexApiOrigin}/file-collections`, ({ request }) => {
     const url = new URL(request.url);
     assertRequest?.(url);
@@ -388,26 +348,25 @@ function stubListFileCollections(body: {
 
 function stubDeleteCollection(
   id: string,
-  failure: { errors: Array<{ status: string; title: string }> } | undefined = undefined,
+  failure:
+    | { errors: Array<{ status: string; title: string }> }
+    | undefined = undefined,
   deletedIds?: string[]
 ) {
-  return http.delete(
-    `${vertexApiOrigin}/file-collections/${id}`,
-    () => {
-      deletedIds?.push(id);
+  return http.delete(`${vertexApiOrigin}/file-collections/${id}`, () => {
+    deletedIds?.push(id);
 
-      if (failure == null) {
-        return new HttpResponse(null, { status: 204 });
-      }
-
-      return HttpResponse.json(failure, {
-        status: parseInt(failure.errors[0].status, 10),
-        headers: {
-          "content-type": "application/vnd.api+json",
-        },
-      });
+    if (failure == null) {
+      return new HttpResponse(null, { status: 204 });
     }
-  );
+
+    return HttpResponse.json(failure, {
+      status: parseInt(failure.errors[0].status, 10),
+      headers: {
+        "content-type": "application/vnd.api+json",
+      },
+    });
+  });
 }
 
 function stubGetFileCollection(

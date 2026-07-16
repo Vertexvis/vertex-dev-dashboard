@@ -2,40 +2,22 @@
  * @jest-environment node
  */
 import { http, HttpResponse } from "msw";
-import request from "supertest";
 
+import {
+  type ApiRouteRequest,
+  type ApiRouteResponse,
+  createAuthenticatedVertexApiTestSession,
+  invokeNextJsApiRouteHandler,
+} from "../../../../test/api/nextJsApiRouteTest";
 import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
-import {
-  createNextJsApiTestServer,
-  NextJsApiTestServer,
-} from "../../../../test/nextjs/createNextJsApiTestServer";
-import { CookieAttributes } from "../../../lib/with-session";
-
-jest.setTimeout(120_000);
+import { handleFiles } from "../../../pages/api/files";
 
 const vertexApiOrigin = "https://vertex-api.test";
 
 installNodeMswServer();
 
-process.env.COOKIE_SECRET ||= "test-cookie-secret-that-is-long-enough";
-CookieAttributes.password = process.env.COOKIE_SECRET;
-
-let nextJsApiTestServer: NextJsApiTestServer;
-
 describe("files API route", () => {
-  beforeAll(async () => {
-    nextJsApiTestServer = await createNextJsApiTestServer();
-  });
-
-  afterAll(async () => {
-    await nextJsApiTestServer?.close();
-  });
-
-  beforeEach(() => {
-    nodeMswServer.use(stubTokenExchange());
-  });
-
   it("lists files with sort query parameters", async () => {
     nodeMswServer.use(
       stubListFiles(
@@ -58,13 +40,13 @@ describe("files API route", () => {
       )
     );
 
-    const agent = await createAuthenticatedApiAgent();
-    const response = await agent
-      .get("/api/files")
-      .query({ cursor: "cursor-1", pageSize: "50", sort: "-created" })
-      .expect(200);
+    const response = await callFiles({
+      method: "GET",
+      query: { cursor: "cursor-1", pageSize: "50", sort: "-created" },
+    });
 
-    expect(response.body).toEqual({
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
       data: [fileData("file-1")],
       status: 200,
@@ -72,51 +54,10 @@ describe("files API route", () => {
   });
 });
 
-async function createAuthenticatedApiAgent() {
-  const response = await request(nextJsApiTestServer.server)
-    .post("/api/login")
-    .set("Content-Type", "text/plain;charset=UTF-8")
-    .send(
-      JSON.stringify({
-        env: "custom",
-        id: "test-client-id",
-        networkConfig: {
-          apiHost: vertexApiOrigin,
-          name: "test",
-          renderingHost: "https://example.test",
-          sceneTreeHost: "https://example.test",
-          sceneViewHost: "https://example.test",
-        },
-        secret: "test-client-secret",
-      })
-    )
-    .expect(200);
-
-  expect(response.body).toEqual({ status: 200 });
-
-  return createAuthenticatedApiRequest(getSessionCookie(response));
-}
-
-function createAuthenticatedApiRequest(sessionCookie: string) {
-  return {
-    get: (url: string) =>
-      request(nextJsApiTestServer.server).get(url).set("Cookie", sessionCookie),
-  };
-}
-
-function getSessionCookie(response: request.Response): string {
-  const cookie = response.headers["set-cookie"]?.[0];
-  expect(cookie).toBeDefined();
-  return cookie.split(";", 1)[0];
-}
-
-function stubTokenExchange() {
-  return http.post(`${vertexApiOrigin}/oauth2/token`, () => {
-    return HttpResponse.json({
-      access_token: "test-access-token",
-      expires_in: 3600,
-      token_type: "Bearer",
-    });
+function callFiles(req: ApiRouteRequest): Promise<ApiRouteResponse> {
+  return invokeNextJsApiRouteHandler(handleFiles, {
+    ...req,
+    session: createAuthenticatedVertexApiTestSession(vertexApiOrigin),
   });
 }
 
