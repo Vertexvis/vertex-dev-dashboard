@@ -134,7 +134,7 @@ describe("file collection API routes", () => {
     });
   });
 
-  it("passes a selected sort upstream and returns the service page", async () => {
+  it("passes a selected sort upstream and applies it locally", async () => {
     await expectFileCollectionList(
       {
         "page[size]": ["10"],
@@ -154,14 +154,45 @@ describe("file collection API routes", () => {
     expect(res.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
       data: [
-        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
         collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
       ],
       status: 200,
     });
     await verifyListFileCollections({
       "page[size]": ["10"],
       sort: ["-created"],
+    });
+  });
+
+  it("sorts file collections by name locally", async () => {
+    await expectFileCollectionList(
+      {
+        "page[size]": ["10"],
+        sort: ["name"],
+      },
+      [
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+      ]
+    );
+    const res = await callFileCollections({
+      method: "GET",
+      query: { sort: "name" },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+      ],
+      status: 200,
+    });
+    await verifyListFileCollections({
+      "page[size]": ["10"],
+      sort: ["name"],
     });
   });
 

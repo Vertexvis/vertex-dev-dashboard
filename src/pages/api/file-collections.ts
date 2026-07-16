@@ -22,7 +22,10 @@ import {
   ServerError,
   toErrorRes,
 } from "../../lib/api";
-import { getFileCollectionsApi } from "../../lib/file-collections";
+import {
+  getFileCollectionsApi,
+  sortFileCollections,
+} from "../../lib/file-collections";
 import { setFilterExpression } from "../../lib/query-filters";
 import { parsePositiveQueryInt } from "../../lib/query-params";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
@@ -103,7 +106,7 @@ async function get(
     );
     return {
       cursors,
-      data: page.data,
+      data: sortFileCollections(page.data, sort),
       status: 200,
     };
   } catch (error) {
