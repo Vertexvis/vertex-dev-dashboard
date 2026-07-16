@@ -129,7 +129,8 @@ function matchRouteSegments(
     const requestSegment = requestSegments[index];
 
     if (isDynamicSegment(routeSegment)) {
-      params[getDynamicParamName(routeSegment)] = decodeURIComponent(requestSegment);
+      params[getDynamicParamName(routeSegment)] =
+        decodeURIComponent(requestSegment);
       continue;
     }
 

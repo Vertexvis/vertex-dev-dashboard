@@ -57,7 +57,9 @@ function DetailsRow({
   readonly value?: string;
 }): JSX.Element {
   const displayValue =
-    status === "loading" && value == null ? "Loading..." : toDisplayValue(value);
+    status === "loading" && value == null
+      ? "Loading..."
+      : toDisplayValue(value);
 
   return (
     <TableRow>

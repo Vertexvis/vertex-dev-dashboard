@@ -1,10 +1,7 @@
 import { server } from "./server";
 
 function createRelativeUrlFetch(nativeFetch: typeof fetch): typeof fetch {
-  return ((
-    input: RequestInfo | URL,
-    init?: RequestInit
-  ): Promise<Response> => {
+  return ((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (typeof input === "string" || input instanceof URL) {
       return nativeFetch(
         new URL(input.toString(), "http://localhost").toString(),

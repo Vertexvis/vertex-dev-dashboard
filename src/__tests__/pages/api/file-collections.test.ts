@@ -162,15 +162,13 @@ function stubTokenExchange() {
   });
 }
 
-function stubListFileCollections(
-  body: {
-    data: ReturnType<typeof fileCollectionData>[];
-    links: {
-      next: { href: string };
-      self: { href: string };
-    };
-  }
-) {
+function stubListFileCollections(body: {
+  data: ReturnType<typeof fileCollectionData>[];
+  links: {
+    next: { href: string };
+    self: { href: string };
+  };
+}) {
   return rest.get(`${vertexApiOrigin}/file-collections`, (_req, res, ctx) => {
     return res(
       ctx.status(200),
