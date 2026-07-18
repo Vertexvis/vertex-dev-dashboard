@@ -41,15 +41,15 @@ export function ResourceLink({
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
           if (disabled) {
             event.preventDefault();
+            event.stopPropagation();
             return;
           }
-          if (!shouldHandleWithAppNavigation(event)) return;
-
           event.stopPropagation();
-          if (event.button !== 0 || href != null) return;
+          if (!shouldHandleWithAppNavigation(event)) return;
+          if (onPrimaryAction == null) return;
 
           event.preventDefault();
-          onPrimaryAction?.();
+          onPrimaryAction();
         }}
         onKeyDown={(event: React.KeyboardEvent<HTMLAnchorElement>) => {
           event.stopPropagation();

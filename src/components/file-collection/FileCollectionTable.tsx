@@ -65,6 +65,33 @@ interface UseFileCollectionsProps extends SwrProps {
 
 type FileCollectionSortField = "created" | "name";
 
+function isFileCollectionSortField(
+  field: string
+): field is FileCollectionSortField {
+  return field === "created" || field === "name";
+}
+
+function toFileCollectionSortState(
+  value?: string
+): SortState<FileCollectionSortField> | undefined {
+  switch (value) {
+    case "name":
+      return { field: "name", order: "asc" };
+    case "-name":
+      return { field: "name", order: "desc" };
+    case "created":
+      return { field: "created", order: "asc" };
+    case "-created":
+      return { field: "created", order: "desc" };
+    default:
+      return undefined;
+  }
+}
+
+function fileCollectionPath(fileCollectionId: string): string {
+  return `/file-collections/${encodeURIComponent(fileCollectionId)}`;
+}
+
 function useFileCollections({
   createdAtEnd,
   createdAtStart,
@@ -114,7 +141,9 @@ export default function FileCollectionTable({
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [sort, setSort] = React.useState<
     SortState<FileCollectionSortField> | undefined
-  >();
+  >(() =>
+    toFileCollectionSortState(queryParamValue(router.query.fileCollectionSort))
+  );
   const [name, setName] = React.useState<string | undefined>(() =>
     queryParamValue(router.query.fileCollectionName)
   );
@@ -208,6 +237,11 @@ export default function FileCollectionTable({
     if (!routerReady || initializedFromQuery.current) return;
 
     initializedFromQuery.current = true;
+    setSort(
+      toFileCollectionSortState(
+        queryParamValue(router.query.fileCollectionSort)
+      )
+    );
     const nextName = queryParamValue(router.query.fileCollectionName);
     const nextSuppliedId = queryParamValue(
       router.query.fileCollectionSuppliedId
@@ -257,11 +291,17 @@ export default function FileCollectionTable({
   }
 
   function handleSortChange(field: string) {
-    if (field !== "created" && field !== "name") return;
+    if (!isFileCollectionSortField(field)) return;
 
-    setSort((current) =>
-      current == null ? { field, order: "asc" } : toggleSort(current, field)
-    );
+    setSort((current) => {
+      const nextSort: SortState<FileCollectionSortField> =
+        current == null ? { field, order: "asc" } : toggleSort(current, field);
+      updateFileCollectionTableQuery({
+        fileCollectionSort: toSortParam(nextSort),
+        ...clearPagingQuery(),
+      });
+      return nextSort;
+    });
     resetPaging();
   }
 
@@ -314,6 +354,10 @@ export default function FileCollectionTable({
     mutate();
   }
 
+  function handleOpenFileCollection(fileCollectionId: string) {
+    router.push(fileCollectionPath(fileCollectionId));
+  }
+
   let tableRows: React.ReactNode;
   if (error) {
     tableRows = <DataLoadError colSpan={headCells.length + 1} />;
@@ -358,7 +402,8 @@ export default function FileCollectionTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
-              href={`/file-collections/${encodeURIComponent(row.id)}`}
+              href={fileCollectionPath(row.id)}
+              onPrimaryAction={() => handleOpenFileCollection(row.id)}
               primaryActionLabel={`Open ${row.name}`}
             >
               {row.name}
