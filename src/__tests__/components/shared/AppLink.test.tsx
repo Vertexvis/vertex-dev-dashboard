@@ -127,4 +127,34 @@ describe("ResourceLink", () => {
     expect(defaultAllowed).toBe(true);
     expect(onPrimaryAction).not.toHaveBeenCalled();
   });
+
+  it("does not bubble browser-handled clicks to row handlers", () => {
+    const onPrimaryAction = jest.fn();
+    const onRowClick = jest.fn();
+    render(
+      <div onClick={onRowClick}>
+        <ResourceLink
+          href="#"
+          onPrimaryAction={onPrimaryAction}
+          primaryActionLabel="Open file collection"
+        >
+          Collection One
+        </ResourceLink>
+      </div>
+    );
+
+    const link = screen.getByRole("link", { name: "Open file collection" });
+    const defaultAllowed = link.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        button: 0,
+        cancelable: true,
+        metaKey: true,
+      })
+    );
+
+    expect(defaultAllowed).toBe(true);
+    expect(onPrimaryAction).not.toHaveBeenCalled();
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
 });
