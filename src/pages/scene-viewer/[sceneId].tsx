@@ -14,12 +14,12 @@ import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
-import { ErrorRes, GetRes } from "../../lib/api";
+import { ErrorRes, GetRes, isErrorFailure, toErrorRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadataFromItem } from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
-import { getClientFromSession } from "../../lib/vertex-api";
+import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import { useViewer } from "../../lib/viewer";
 import {
   CommonProps,
@@ -214,21 +214,34 @@ export async function serverSidePropsHandler({
     return authResult;
   }
 
+  const props = await authResult.props;
   const client = await getClientFromSession(req.session);
-  const keyRes = await client.streamKeys.createSceneStreamKey({
-    id: sceneId,
-    createStreamKeyRequest: {
-      data: { type: "stream-key", attributes: { expiry: 86400 } },
-    },
-  });
-  const streamKey = keyRes.data.data.attributes.key;
+  const keyRes = await makeCall(() =>
+    client.streamKeys.createSceneStreamKey({
+      id: sceneId,
+      createStreamKeyRequest: {
+        data: { type: "stream-key", attributes: { expiry: 86400 } },
+      },
+    })
+  );
+  if (isErrorFailure(keyRes)) {
+    const error = toErrorRes({ failure: keyRes });
+    if (error.status >= 400 && error.status < 500) return { notFound: true };
+
+    throw new Error(error.message);
+  }
+
+  const streamKey = keyRes.data.attributes.key;
   if (streamKey == null) throw new Error("Created scene stream key was empty.");
 
   return {
     redirect: {
-      destination: `/scene-viewer/${encodeURIComponent(
-        sceneId
-      )}?streamKey=${encodeURIComponent(streamKey)}`,
+      destination: encodeCreds({
+        clientId: props.clientId,
+        sceneId,
+        streamKey,
+        vertexEnv: props.vertexEnv,
+      }),
       permanent: false,
     },
   };

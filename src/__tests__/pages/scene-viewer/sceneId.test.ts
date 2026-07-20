@@ -11,6 +11,7 @@ import { serverSidePropsHandler } from "../../../pages/scene-viewer/[sceneId]";
 const mockCreateSceneStreamKey = jest.fn();
 
 jest.mock("../../../lib/vertex-api", () => ({
+  ...jest.requireActual("../../../lib/vertex-api"),
   getClientFromSession: jest.fn(() => ({
     streamKeys: { createSceneStreamKey: mockCreateSceneStreamKey },
   })),
@@ -19,6 +20,10 @@ jest.mock("../../../lib/vertex-api", () => ({
 describe("scene viewer route", () => {
   beforeEach(() => {
     mockCreateSceneStreamKey.mockReset();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("creates a stream key and redirects when the URL only specifies a scene", async () => {
@@ -39,10 +44,29 @@ describe("scene viewer route", () => {
     });
     expect(result).toEqual({
       redirect: {
-        destination: "/scene-viewer/scene-1?streamKey=stream-key-1",
+        destination:
+          "/scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev",
         permanent: false,
       },
     });
+  });
+
+  it("returns notFound when stream-key creation rejects with a client error", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    mockCreateSceneStreamKey.mockRejectedValue({
+      response: {
+        data: {
+          errors: [{ status: "404", title: "Scene not found." }],
+        },
+      },
+    });
+
+    const result = await serverSidePropsHandler({
+      query: { sceneId: "missing-scene" },
+      req: createReq(),
+    });
+
+    expect(result).toEqual({ notFound: true });
   });
 
   it("uses a supplied stream key without creating a replacement", async () => {

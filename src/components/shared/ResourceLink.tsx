@@ -1,7 +1,8 @@
 import { Box, BoxProps, Tooltip } from "@mui/material";
 import React from "react";
 
-type ResourceLinkProps = Omit<BoxProps<"a">, "onClick"> & {
+type ResourceLinkProps = Omit<BoxProps<"a">, "component" | "onClick"> & {
+  readonly component?: React.ElementType;
   readonly disabled?: boolean;
   readonly href?: string;
   readonly onPrimaryAction?: () => void;
@@ -10,6 +11,7 @@ type ResourceLinkProps = Omit<BoxProps<"a">, "onClick"> & {
 
 export function ResourceLink({
   children,
+  component = "a",
   disabled = false,
   href,
   onPrimaryAction,
@@ -20,30 +22,31 @@ export function ResourceLink({
   return (
     <Tooltip title={primaryActionLabel}>
       <Box
-        component="a"
+        component={component}
         href={disabled ? undefined : href ?? "#"}
         role="link"
         tabIndex={disabled ? -1 : undefined}
         aria-disabled={disabled}
         aria-label={primaryActionLabel}
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
-          if (disabled || event.button !== 0 || href != null) {
+          event.stopPropagation();
+          if (disabled) {
+            event.preventDefault();
             return;
           }
+          if (event.button !== 0 || href != null) return;
+
           event.preventDefault();
-          event.stopPropagation();
           onPrimaryAction?.();
         }}
         onKeyDown={(event: React.KeyboardEvent<HTMLAnchorElement>) => {
-          if (disabled || href != null) {
-            return;
-          }
+          event.stopPropagation();
+          if (disabled || href != null) return;
           if (event.key !== "Enter" && event.key !== " ") {
             return;
           }
 
           event.preventDefault();
-          event.stopPropagation();
           onPrimaryAction?.();
         }}
         sx={[
