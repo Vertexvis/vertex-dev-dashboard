@@ -177,8 +177,9 @@ export default function FileCollectionFilesTable({
         >
           <TableCell component="th" scope="row">
             <ResourceLink
+              component="a"
               disabled={!isAvailable}
-              onPrimaryAction={() => handleDownload(row.id)}
+              href={`/api/files/${encodeURIComponent(row.id)}/download`}
               primaryActionLabel={
                 isAvailable
                   ? `Download ${row.name}`
