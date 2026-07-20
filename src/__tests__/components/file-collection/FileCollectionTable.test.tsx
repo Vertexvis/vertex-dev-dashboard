@@ -12,14 +12,6 @@ import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
-const mockPush = jest.fn();
-
-jest.mock("next/router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}));
-
 const firstPage = fileCollectionsPage({
   data: [
     fileCollection({
@@ -67,10 +59,6 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
-
-  beforeEach(() => {
-    mockPush.mockClear();
-  });
 
   it("paginates file collections using the next cursor", async () => {
     const requests: string[] = [];
@@ -506,7 +494,7 @@ describe("FileCollectionTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates to the file collection detail route when a row is clicked", async () => {
+  it("renders the existing file collection detail route as an href", async () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(firstPage);
@@ -517,9 +505,10 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Collection One"));
-
-    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
+    expect(screen.getByLabelText("Open Collection One")).toHaveAttribute(
+      "href",
+      "/file-collections/collection-1"
+    );
   });
 });
 

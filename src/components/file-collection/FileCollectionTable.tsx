@@ -13,7 +13,6 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
-import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -82,7 +81,6 @@ export default function FileCollectionTable({
   activeFileCollectionId,
   onFileCollectionSelected,
 }: Props): JSX.Element {
-  const router = useRouter();
   const pageSize = DefaultPageSize;
   const {
     currentPage,
@@ -199,10 +197,6 @@ export default function FileCollectionTable({
     mutate();
   }
 
-  function handleOpenFileCollection(fileCollectionId: string) {
-    router.push(`/file-collections/${encodeURIComponent(fileCollectionId)}`);
-  }
-
   let tableRows: React.ReactNode;
   if (error) {
     tableRows = <DataLoadError colSpan={headCells.length + 1} />;
@@ -247,7 +241,7 @@ export default function FileCollectionTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
-              onPrimaryAction={() => handleOpenFileCollection(row.id)}
+              href={`/file-collections/${encodeURIComponent(row.id)}`}
               primaryActionLabel={`Open ${row.name}`}
             >
               {row.name}
