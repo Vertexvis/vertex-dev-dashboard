@@ -41,7 +41,6 @@ export function ResourceLink({
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
           if (disabled) {
             event.preventDefault();
-            event.stopPropagation();
             return;
           }
           event.stopPropagation();
