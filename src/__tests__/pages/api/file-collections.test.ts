@@ -134,6 +134,68 @@ describe("file collection API routes", () => {
     });
   });
 
+  it("passes a selected sort upstream and applies it locally", async () => {
+    await expectFileCollectionList(
+      {
+        "page[size]": ["10"],
+        sort: ["-created"],
+      },
+      [
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+      ]
+    );
+    const res = await callFileCollections({
+      method: "GET",
+      query: { sort: "-created" },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+      ],
+      status: 200,
+    });
+    await verifyListFileCollections({
+      "page[size]": ["10"],
+      sort: ["-created"],
+    });
+  });
+
+  it("sorts file collections by name locally", async () => {
+    await expectFileCollectionList(
+      {
+        "page[size]": ["10"],
+        sort: ["name"],
+      },
+      [
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+      ]
+    );
+    const res = await callFileCollections({
+      method: "GET",
+      query: { sort: "name" },
+    });
+
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [
+        collectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+        collectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+      ],
+      status: 200,
+    });
+    await verifyListFileCollections({
+      "page[size]": ["10"],
+      sort: ["name"],
+    });
+  });
+
   it("uses the default page size when one is not supplied", async () => {
     await expectFileCollectionList({ "page[size]": ["10"] });
 
@@ -441,12 +503,13 @@ function createRes(): TestRes {
 
 function collectionData(
   id: string,
-  created = "2026-06-10T15:30:00Z"
+  created = "2026-06-10T15:30:00Z",
+  name = "Collection One"
 ): JsonBody {
   return {
     attributes: {
       created,
-      name: "Collection One",
+      name,
       suppliedId: "supplied-1",
     },
     id,

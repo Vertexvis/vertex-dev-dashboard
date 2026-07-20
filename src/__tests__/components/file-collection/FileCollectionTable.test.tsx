@@ -94,6 +94,93 @@ describe("FileCollectionTable", () => {
     ).toBe(true);
   });
 
+  it("keeps the default API sort when no sort control is selected", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        requests.push(new URL(request.url).search);
+        return HttpResponse.json(firstPage);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.get("pageSize") === "25" && !params.has("sort");
+      })
+    ).toBe(true);
+  });
+
+  it("sorts by name and toggles the sort direction", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+        return HttpResponse.json(
+          url.searchParams.get("sort") === "name" ? nextPage : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(
+      requests.some(
+        (search) => new URLSearchParams(search).get("sort") === "name"
+      )
+    ).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some(
+        (search) => new URLSearchParams(search).get("sort") === "-name"
+      )
+    ).toBe(true);
+  });
+
+  it("resets cursor pagination when the sort changes", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+        return HttpResponse.json(
+          url.searchParams.get("cursor") === "page-2"
+            ? nextPage
+            : firstPageWithNextCursor
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Created At" }));
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.get("sort") === "created" && !params.has("cursor");
+      })
+    ).toBe(true);
+  });
+
   it("clears the selection after deleting a file collection successfully", async () => {
     const deletedIds: string[][] = [];
 
@@ -387,6 +474,24 @@ describe("FileCollectionTable", () => {
 
     expect(createdFrom).toHaveValue("");
     expect(createdTo).toHaveValue("2026-06-10");
+  });
+
+  it("renders an empty sorted result", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(
+          fileCollectionsPage({ cursors: { self: "page-1" }, data: [] })
+        );
+      })
+    );
+
+    renderTable();
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(
+      await screen.findByText("No file collections found.")
+    ).toBeInTheDocument();
   });
 
   it("renders the existing file collection detail route as an href", async () => {
