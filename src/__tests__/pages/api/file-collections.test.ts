@@ -143,6 +143,58 @@ describe("file collection API routes", () => {
     });
   });
 
+  it("passes a selected sort upstream and applies it locally", async () => {
+    const data = [
+      fileCollectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+      fileCollectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+    ];
+
+    nodeMswServer.use(
+      stubListFileCollections(fileCollectionsList(data), ({ searchParams }) => {
+        expect(searchParams.get("page[size]")).toBe("10");
+        expect(searchParams.get("sort")).toBe("-created");
+      })
+    );
+
+    const response = await callFileCollections({
+      method: "GET",
+      query: { sort: "-created" },
+    });
+
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [data[1], data[0]],
+      status: 200,
+    });
+  });
+
+  it("sorts file collections by name locally", async () => {
+    const data = [
+      fileCollectionData("collection-1", "2026-06-10T15:30:00Z", "Zulu"),
+      fileCollectionData("collection-2", "2026-06-11T15:30:00Z", "Alpha"),
+    ];
+
+    nodeMswServer.use(
+      stubListFileCollections(fileCollectionsList(data), ({ searchParams }) => {
+        expect(searchParams.get("page[size]")).toBe("10");
+        expect(searchParams.get("sort")).toBe("name");
+      })
+    );
+
+    const response = await callFileCollections({
+      method: "GET",
+      query: { sort: "name" },
+    });
+
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
+      cursors: { next: "next-page", self: "self-page" },
+      data: [data[1], data[0]],
+      status: 200,
+    });
+  });
+
   it("uses the default page size when one is not supplied", async () => {
     nodeMswServer.use(
       stubListFileCollections(
@@ -339,11 +391,15 @@ function callApi(
   });
 }
 
-function fileCollectionData(id: string, created = "2026-06-10T15:30:00Z") {
+function fileCollectionData(
+  id: string,
+  created = "2026-06-10T15:30:00Z",
+  name = "Collection One"
+) {
   return {
     attributes: {
       created,
-      name: "Collection One",
+      name,
       suppliedId: "supplied-1",
     },
     id,
@@ -368,6 +424,20 @@ function fileData(id: string, status: string) {
 function failureBody(status: string, title: string) {
   return {
     errors: [{ status, title }],
+  };
+}
+
+function fileCollectionsList(data: ReturnType<typeof fileCollectionData>[]) {
+  return {
+    data,
+    links: {
+      next: {
+        href: `${vertexApiOrigin}/file-collections?page[cursor]=next-page`,
+      },
+      self: {
+        href: `${vertexApiOrigin}/file-collections?page[cursor]=self-page`,
+      },
+    },
   };
 }
 
