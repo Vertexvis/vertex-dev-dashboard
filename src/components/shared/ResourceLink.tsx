@@ -1,4 +1,5 @@
 import { Box, BoxProps, Tooltip } from "@mui/material";
+import NextLink from "next/link";
 import React from "react";
 
 type ResourceLinkProps = Omit<BoxProps<"a">, "component" | "onClick"> & {
@@ -6,15 +7,18 @@ type ResourceLinkProps = Omit<BoxProps<"a">, "component" | "onClick"> & {
   readonly disabled?: boolean;
   readonly href?: string;
   readonly onPrimaryAction?: () => void;
+  /** Disable viewport prefetching for resource pages with request-time side effects. */
+  readonly prefetch?: boolean;
   readonly primaryActionLabel: string;
 };
 
 export function ResourceLink({
   children,
-  component = "a",
+  component = NextLink,
   disabled = false,
   href,
   onPrimaryAction,
+  prefetch = false,
   primaryActionLabel,
   sx,
   ...props
@@ -24,6 +28,7 @@ export function ResourceLink({
       <Box
         component={component}
         href={disabled ? undefined : href ?? "#"}
+        {...(component === NextLink ? { prefetch } : {})}
         role="link"
         tabIndex={disabled ? -1 : undefined}
         aria-disabled={disabled}

@@ -13,7 +13,6 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
-import NextLink from "next/link";
 import React from "react";
 import useSWR from "swr";
 
@@ -242,7 +241,6 @@ export default function FileCollectionTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
-              component={NextLink}
               href={`/file-collections/${encodeURIComponent(row.id)}`}
               primaryActionLabel={`Open ${row.name}`}
             >

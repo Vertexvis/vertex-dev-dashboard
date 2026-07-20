@@ -308,6 +308,7 @@ export default function FileTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
+              component="a"
               disabled={!isAvailable}
               href={`/api/files/${encodeURIComponent(row.id)}/download`}
               primaryActionLabel={
