@@ -38,4 +38,20 @@ describe("ResourceLink", () => {
     expect(onParentClick).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
   });
+
+  it("lets disabled link clicks bubble to the resource row", () => {
+    const onParentClick = jest.fn();
+
+    render(
+      <div onClick={onParentClick}>
+        <ResourceLink disabled primaryActionLabel="Download unavailable">
+          Resource
+        </ResourceLink>
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "Download unavailable" }));
+
+    expect(onParentClick).toHaveBeenCalledTimes(1);
+  });
 });

@@ -23,22 +23,25 @@ export function ResourceLink({
   sx,
   ...props
 }: ResourceLinkProps): JSX.Element {
+  const linkComponent = disabled ? "a" : component;
+
   return (
     <Tooltip title={primaryActionLabel}>
       <Box
-        component={component}
+        component={linkComponent}
         href={disabled ? undefined : href ?? "#"}
-        {...(component === NextLink ? { prefetch } : {})}
+        {...(linkComponent === NextLink ? { prefetch } : {})}
         role="link"
         tabIndex={disabled ? -1 : undefined}
         aria-disabled={disabled}
         aria-label={primaryActionLabel}
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
-          event.stopPropagation();
           if (disabled) {
             event.preventDefault();
             return;
           }
+
+          event.stopPropagation();
           if (event.button !== 0 || href != null) return;
 
           event.preventDefault();

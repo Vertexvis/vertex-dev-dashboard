@@ -14,12 +14,11 @@ import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
-import { ErrorRes, GetRes, isErrorFailure, toErrorRes } from "../../lib/api";
+import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadataFromItem } from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import { useViewer } from "../../lib/viewer";
 import {
   CommonProps,
@@ -52,6 +51,8 @@ export default function SceneViewer({
   const [credentials, setCredentials] = React.useState<
     StreamCredentials | undefined
   >();
+  const [streamKeyError, setStreamKeyError] = React.useState<string>();
+  const requestedStreamKeyForScene = React.useRef<string>();
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
@@ -66,21 +67,38 @@ export default function SceneViewer({
     viewerState,
   });
 
-  // Prefer credentials in URL to enable easy scene sharing. If empty, use defaults.
+  // Prefer credentials in URL to enable easy scene sharing. Create a stream key only
+  // after this page has mounted so route prefetching remains read-only.
   React.useEffect(() => {
     if (!router.isReady) return;
 
     const cId = head(router.query.clientId) ?? clientId;
     const sk = head(router.query.streamKey);
     const ve = (head(router.query.vertexEnv) as Environment) ?? vertexEnv;
+    const sceneId = head(router.query.sceneId);
 
-    setCredentials(
-      cId && sk && ve
-        ? { clientId: cId, streamKey: sk, vertexEnv: ve }
-        : undefined
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady]);
+    if (cId && sk && ve) {
+      setCredentials({ clientId: cId, streamKey: sk, vertexEnv: ve });
+      return;
+    }
+    if (!cId || !sceneId || requestedStreamKeyForScene.current === sceneId) {
+      return;
+    }
+
+    requestedStreamKeyForScene.current = sceneId;
+    setStreamKeyError(undefined);
+    void createStreamKey(sceneId)
+      .then((streamKey) =>
+        router.replace(
+          encodeCreds({ clientId: cId, sceneId, streamKey, vertexEnv: ve }),
+          undefined,
+          { shallow: true }
+        )
+      )
+      .catch(() =>
+        setStreamKeyError("Unable to create a stream key for this scene.")
+      );
+  }, [clientId, router, vertexEnv]);
 
   async function handleSelect(
     detail: TapEventDetails,
@@ -114,6 +132,10 @@ export default function SceneViewer({
   }, [selectedItem.data]);
 
   const featureLines = { width: 0.5, color: "#444444" };
+
+  if (streamKeyError) {
+    return <p role="alert">{streamKeyError}</p>;
+  }
 
   return router.isReady && credentials ? (
     <Layout
@@ -180,6 +202,18 @@ export default function SceneViewer({
   );
 }
 
+async function createStreamKey(sceneId: string): Promise<string> {
+  const response = await fetch("/api/stream-keys", {
+    body: JSON.stringify({ id: sceneId }),
+    method: "POST",
+  });
+  if (!response.ok) throw new Error("Stream-key creation failed.");
+
+  const { key } = (await response.json()) as { key?: string };
+  if (!key) throw new Error("Created scene stream key was empty.");
+  return key;
+}
+
 export function encodeCreds({
   clientId,
   streamKey,
@@ -198,53 +232,19 @@ export function encodeCreds({
   return `${path}/?${cId}&${sk}&${ve}`;
 }
 
-export async function serverSidePropsHandler({
+export function serverSidePropsHandler({
   query,
   req,
 }: Pick<GetServerSidePropsContext, "query"> & {
   readonly req: NextIronRequest;
-}): Promise<GetServerSidePropsResult<CommonProps>> {
+}): GetServerSidePropsResult<CommonProps> {
   const authResult = commonServerSidePropsHandler({ req });
   if (!("props" in authResult)) return authResult;
 
   const sceneId = head(query.sceneId);
   if (sceneId == null) return { notFound: true };
 
-  if (head(query.streamKey) != null) {
-    return authResult;
-  }
-
-  const props = await authResult.props;
-  const client = await getClientFromSession(req.session);
-  const keyRes = await makeCall(() =>
-    client.streamKeys.createSceneStreamKey({
-      id: sceneId,
-      createStreamKeyRequest: {
-        data: { type: "stream-key", attributes: { expiry: 86400 } },
-      },
-    })
-  );
-  if (isErrorFailure(keyRes)) {
-    const error = toErrorRes({ failure: keyRes });
-    if (error.status >= 400 && error.status < 500) return { notFound: true };
-
-    throw new Error(error.message);
-  }
-
-  const streamKey = keyRes.data.attributes.key;
-  if (streamKey == null) throw new Error("Created scene stream key was empty.");
-
-  return {
-    redirect: {
-      destination: encodeCreds({
-        clientId: props.clientId,
-        sceneId,
-        streamKey,
-        vertexEnv: props.vertexEnv,
-      }),
-      permanent: false,
-    },
-  };
+  return authResult;
 }
 
 export const getServerSideProps = withIronSession(

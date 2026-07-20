@@ -8,74 +8,28 @@ import {
 } from "../../../lib/with-session";
 import { serverSidePropsHandler } from "../../../pages/scene-viewer/[sceneId]";
 
-const mockCreateSceneStreamKey = jest.fn();
-
-jest.mock("../../../lib/vertex-api", () => ({
-  ...jest.requireActual("../../../lib/vertex-api"),
-  getClientFromSession: jest.fn(() => ({
-    streamKeys: { createSceneStreamKey: mockCreateSceneStreamKey },
-  })),
-}));
-
 describe("scene viewer route", () => {
-  beforeEach(() => {
-    mockCreateSceneStreamKey.mockReset();
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("creates a stream key and redirects when the URL only specifies a scene", async () => {
-    mockCreateSceneStreamKey.mockResolvedValue({
-      data: { data: { attributes: { key: "stream-key-1" } } },
-    });
-
+  it("does not create a stream key while serving a scene route", async () => {
     const result = await serverSidePropsHandler({
       query: { sceneId: "scene-1" },
       req: createReq(),
     });
 
-    expect(mockCreateSceneStreamKey).toHaveBeenCalledWith({
-      id: "scene-1",
-      createStreamKeyRequest: {
-        data: { type: "stream-key", attributes: { expiry: 86400 } },
-      },
-    });
     expect(result).toEqual({
-      redirect: {
-        destination:
-          "/scene-viewer/scene-1/?clientId=client-id&streamKey=stream-key-1&vertexEnv=platdev",
-        permanent: false,
+      props: {
+        clientId: "client-id",
+        networkConfig: undefined,
+        vertexEnv: "platdev",
       },
     });
   });
 
-  it("returns notFound when stream-key creation rejects with a client error", async () => {
-    jest.spyOn(console, "error").mockImplementation(() => undefined);
-    mockCreateSceneStreamKey.mockRejectedValue({
-      response: {
-        data: {
-          errors: [{ status: "404", title: "Scene not found." }],
-        },
-      },
-    });
-
-    const result = await serverSidePropsHandler({
-      query: { sceneId: "missing-scene" },
-      req: createReq(),
-    });
-
-    expect(result).toEqual({ notFound: true });
-  });
-
-  it("uses a supplied stream key without creating a replacement", async () => {
+  it("does not mutate when a supplied stream key is present", async () => {
     const result = await serverSidePropsHandler({
       query: { sceneId: "scene-1", streamKey: "provided-key" },
       req: createReq(),
     });
 
-    expect(mockCreateSceneStreamKey).not.toHaveBeenCalled();
     expect(result).toEqual({
       props: {
         clientId: "client-id",
