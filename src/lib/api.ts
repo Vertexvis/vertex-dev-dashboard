@@ -1,21 +1,7 @@
-import { Cursors, defined, Failure } from "@vertexvis/api-client-node";
+import { defined, Failure } from "@vertexvis/api-client-node";
 
-export interface DeleteReq {
-  readonly ids: string[];
-}
-
-export interface ErrorRes extends Res {
-  readonly message: string;
-}
-
-export interface GetRes<T> extends Res {
-  readonly cursors: Cursors;
-  readonly data: T[];
-}
-
-export interface Res {
-  readonly status: number;
-}
+export type { DeleteReq, ErrorRes, GetRes, Res } from "./api/contracts";
+import type { ErrorRes } from "./api/contracts";
 
 export const BodyRequired: ErrorRes = {
   message: "Body required.",

@@ -17,7 +17,7 @@ import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
 import { useRouter } from "next/router";
 import React from "react";
 
-import { CreateFileRes } from "../../pages/api/files";
+import { CreateFileRes } from "../../lib/resources/core-import-library/files.contracts";
 
 interface CreateFileDialogProps {
   readonly open: boolean;
