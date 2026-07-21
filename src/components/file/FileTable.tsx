@@ -204,15 +204,15 @@ export default function FileTable({
   const [nameInput, setNameInput] = React.useState(
     () => queryParamValue(router.query.fileName) ?? ""
   );
-  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>(() =>
-    queryParamValue(router.query.fileFilterId)
+  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>(
+    () => queryParamValue(router.query.fileFilterId)
   );
   const [fileIdInput, setFileIdInput] = React.useState(
     () => queryParamValue(router.query.fileFilterId) ?? ""
   );
-  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<string | undefined>(
-    () => queryParamValue(router.query.fileSuppliedId)
-  );
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >(() => queryParamValue(router.query.fileSuppliedId));
   const [suppliedIdInput, setSuppliedIdInput] = React.useState(
     () => queryParamValue(router.query.fileSuppliedId) ?? ""
   );
