@@ -60,6 +60,14 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
 
+  beforeEach(() => {
+    mockPush.mockClear();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("paginates file collections using the next cursor", async () => {
     const requests: string[] = [];
 
@@ -183,6 +191,7 @@ describe("FileCollectionTable", () => {
 
   it("clears the selection after deleting a file collection successfully", async () => {
     const deletedIds: string[][] = [];
+    jest.spyOn(window, "confirm").mockReturnValue(true);
 
     server.use(
       http.get("*/api/file-collections", () => {
@@ -277,6 +286,7 @@ describe("FileCollectionTable", () => {
 
   it("keeps the selection visible when deleting a file collection fails", async () => {
     const deletedIds: string[][] = [];
+    jest.spyOn(window, "confirm").mockReturnValue(true);
 
     server.use(
       http.get("*/api/file-collections", () => {
@@ -306,6 +316,27 @@ describe("FileCollectionTable", () => {
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).toBeChecked();
     expect(deletedIds).toEqual([["collection-1"]]);
+  });
+
+  it("does not request collection deletion when it is cancelled", async () => {
+    const deleteCollections = jest.fn();
+    jest.spyOn(window, "confirm").mockReturnValue(false);
+    server.use(
+      http.get("*/api/file-collections", () => HttpResponse.json(firstPage)),
+      http.delete("*/api/file-collections", (info) => deleteCollections(info))
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Select Collection One"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Delete 1 selected file collection? This cannot be undone."
+    );
+    expect(deleteCollections).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Select Collection One")).toBeChecked();
   });
 
   it("filters file collections by a partial supplied ID", async () => {

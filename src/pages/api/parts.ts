@@ -13,7 +13,9 @@ import {
   ErrorRes,
   GetRes,
   InvalidBody,
+  isErrorFailure,
   Res,
+  toErrorRes,
 } from "../../lib/api";
 import { methodRouter } from "../../lib/api-handler";
 import { parsePositiveQueryInt } from "../../lib/query-params";
@@ -29,9 +31,13 @@ export type CreatePartReq = Pick<
 
 export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
 
-export default withSession(
-  methodRouter({ GET: get, DELETE: del, POST: create })
-);
+export const handleParts = methodRouter({
+  GET: get,
+  DELETE: del,
+  POST: create,
+});
+
+export default withSession(handleParts);
 
 async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
   const c = await getClientFromSession(req.session);
@@ -50,45 +56,112 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
 }
 
 async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
-  if (!req.body) return BodyRequired;
-
-  const b: DeleteReq = JSON.parse(req.body);
-  if (!b.ids) return InvalidBody;
+  const b = parseDeleteReq(req.body);
+  if (b == null) return req.body == null ? BodyRequired : InvalidBody;
 
   const c = await getClientFromSession(req.session);
-  await Promise.all(
+  const results = await Promise.all(
     b.ids.map((id) => makeCall(() => c.parts.deletePart({ id })))
   );
-  return { status: 200 };
+  const failure = results.find(isErrorFailure);
+  return failure == null ? { status: 200 } : toErrorRes({ failure });
 }
 
 async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
-  if (!req.body) return BodyRequired;
-
-  const b: CreatePartReq = JSON.parse(req.body);
+  const b = parseCreatePartReq(req.body);
+  if (b == null) return req.body == null ? BodyRequired : InvalidBody;
 
   const c = await getClientFromSession(req.session);
-  const res = await c.parts.createPart({
-    createPartRequest: {
-      data: {
-        type: "part",
-        attributes: {
-          suppliedId: b.suppliedId,
-          suppliedRevisionId: b.suppliedRevisionId,
-          suppliedIterationId: b.suppliedIterationId,
-          indexMetadata: b.indexMetadata,
-        },
-        relationships: {
-          source: {
-            data: {
-              type: FileRelationshipDataTypeEnum.File,
-              id: b.fileId,
+  const result = await makeCall(() =>
+    c.parts.createPart({
+      createPartRequest: {
+        data: {
+          type: "part",
+          attributes: {
+            suppliedId: b.suppliedId,
+            suppliedRevisionId: b.suppliedRevisionId,
+            suppliedIterationId: b.suppliedIterationId,
+            indexMetadata: b.indexMetadata,
+          },
+          relationships: {
+            source: {
+              data: {
+                type: FileRelationshipDataTypeEnum.File,
+                id: b.fileId,
+              },
             },
           },
         },
       },
-    },
-  });
+    })
+  );
+  if (isErrorFailure(result)) return toErrorRes({ failure: result });
 
-  return { status: 200, id: res.data.data.id };
+  return { status: 200, id: result.data.id };
+}
+
+function parseDeleteReq(body: unknown): DeleteReq | undefined {
+  const parsed = parseJsonObject(body);
+  const ids = parsed?.ids;
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    ids.some((id) => typeof id !== "string" || id.trim() === "")
+  )
+    return undefined;
+
+  return { ids: [...new Set(ids.map((id) => id.trim()))] };
+}
+
+function parseCreatePartReq(body: unknown): CreatePartReq | undefined {
+  const parsed = parseJsonObject(body);
+  if (parsed == null || typeof parsed.fileId !== "string") return undefined;
+
+  const fileId = parsed.fileId.trim();
+  if (fileId === "") return undefined;
+
+  const optionalStringFields = [
+    "suppliedId",
+    "suppliedRevisionId",
+    "suppliedIterationId",
+  ] as const;
+  if (
+    optionalStringFields.some(
+      (field) => parsed[field] != null && typeof parsed[field] !== "string"
+    ) ||
+    (parsed.indexMetadata != null && typeof parsed.indexMetadata !== "boolean")
+  )
+    return undefined;
+
+  return {
+    fileId,
+    ...(typeof parsed.suppliedId === "string"
+      ? { suppliedId: parsed.suppliedId }
+      : {}),
+    ...(typeof parsed.suppliedRevisionId === "string"
+      ? { suppliedRevisionId: parsed.suppliedRevisionId }
+      : {}),
+    ...(typeof parsed.suppliedIterationId === "string"
+      ? { suppliedIterationId: parsed.suppliedIterationId }
+      : {}),
+    ...(typeof parsed.indexMetadata === "boolean"
+      ? { indexMetadata: parsed.indexMetadata }
+      : {}),
+  };
+}
+
+function parseJsonObject(body: unknown): Record<string, unknown> | undefined {
+  if (body == null) return undefined;
+
+  try {
+    const parsed =
+      typeof body === "string" ? (JSON.parse(body) as unknown) : body;
+    return typeof parsed === "object" &&
+      parsed != null &&
+      !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }

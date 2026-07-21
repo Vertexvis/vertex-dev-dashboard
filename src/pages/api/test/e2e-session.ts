@@ -40,9 +40,9 @@ export async function handleE2eSession(
   }
 
   req.session.set(CredsKey, { id: "e2e-client", secret: "e2e-secret" });
-  req.session.set(EnvKey, "platdev");
+  req.session.set(EnvKey, "custom");
   req.session.set(NetworkConfigKey, {
-    apiHost: "http://127.0.0.1:3100/e2e-upstream",
+    apiHost: "http://127.0.0.1:3100/api/e2e-upstream",
     name: "local-e2e",
     renderingHost: "http://127.0.0.1:3100/e2e-rendering",
     sceneTreeHost: "http://127.0.0.1:3100/e2e-scene-tree",

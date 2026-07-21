@@ -14,8 +14,10 @@ import { GetServerSidePropsResult } from "next";
 import dynamic from "next/dynamic";
 import { withIronSession } from "next-iron-session";
 import React from "react";
+import { mutate as mutateCache } from "swr";
 
 import { FileDetailsDrawer } from "../../components/file/FileDetailsDrawer";
+import { AddFilesToCollectionDialog } from "../../components/file-collection/AddFilesToCollectionDialog";
 import { FileCollectionMetadataTable } from "../../components/file-collection/FileCollectionMetadataTable";
 import { AppLink } from "../../components/shared/AppLink";
 import { Layout } from "../../components/shared/Layout";
@@ -308,6 +310,8 @@ export default function FileCollectionDetails({
 }: Props): JSX.Element {
   const fileCollectionIdRef = React.useRef(fileCollection.id);
   const [file, setFile] = React.useState<File | undefined>();
+  const [addFilesOpen, setAddFilesOpen] = React.useState(false);
+  const [membershipVersion, setMembershipVersion] = React.useState(0);
   const [exportStateCollectionId, setExportStateCollectionId] = React.useState(
     fileCollection.id
   );
@@ -415,6 +419,21 @@ export default function FileCollectionDetails({
 
     return () => controller.abort();
   }, [loadReadiness]);
+
+  async function handleMembershipChanged() {
+    setMembershipVersion((current) => current + 1);
+    await Promise.all([
+      loadReadiness(),
+      mutateCache(
+        (key: unknown) =>
+          typeof key === "string" &&
+          (key.startsWith("/api/file-collections") ||
+            key.startsWith("/api/files")),
+        undefined,
+        { revalidate: true }
+      ),
+    ]);
+  }
 
   React.useEffect(() => {
     if (
@@ -662,13 +681,24 @@ export default function FileCollectionDetails({
           <FileCollectionFilesTable
             activeFileId={file?.id}
             apiPath={filesApiPath}
+            collectionId={fileCollection.id}
+            key={membershipVersion}
+            onAddFiles={() => setAddFilesOpen(true)}
             onFileSelected={setFile}
+            onMembersChanged={handleMembershipChanged}
+          />
+          <AddFilesToCollectionDialog
+            collectionId={fileCollection.id}
+            onClose={() => setAddFilesOpen(false)}
+            onMembersAdded={handleMembershipChanged}
+            open={addFilesOpen}
           />
         </Box>
       }
       rightDrawer={
         <FileDetailsDrawer
           file={file}
+          membershipVersion={membershipVersion}
           onClose={() => setFile(undefined)}
           open={drawerOpen}
         />

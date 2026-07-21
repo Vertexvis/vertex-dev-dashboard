@@ -164,11 +164,15 @@ export function createVertexRoute<TInput, TQuery, TResult extends Res>(
 
     let context: Partial<RouteContext<TInput, TQuery>> = { req, res, method };
     try {
-      const client = await getClientFromSession(req.session);
       const input = operation.parse?.(req) as TInput | ErrorRes | undefined;
       if (isErrorRes(input)) return send(res, input);
       const query = operation.query?.(req) as TQuery | ErrorRes | undefined;
       if (isErrorRes(query)) return send(res, query);
+
+      // Keep resource-owned parsing and query validation on the safe side of
+      // the session/client boundary. This makes malformed dashboard requests
+      // fail before they can construct an upstream Vertex client.
+      const client = await getClientFromSession(req.session);
 
       context = {
         client,
