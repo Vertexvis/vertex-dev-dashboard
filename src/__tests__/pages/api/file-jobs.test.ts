@@ -1,186 +1,56 @@
 /**
  * @jest-environment node
  */
-import { getPage } from "@vertexvis/api-client-node";
-import type { NextApiResponse } from "next";
-import type { Session } from "next-iron-session";
+import { http, HttpResponse } from "msw";
 
-import type { NextIronRequest } from "../../../lib/with-session";
+import {
+  type ApiRouteRequest,
+  type ApiRouteResponse,
+  createAuthenticatedVertexApiTestSession,
+  invokeNextJsApiRouteHandler,
+} from "../../../../test/api/nextJsApiRouteTest";
+import { nodeMswServer } from "../../../../test/msw/server";
 import { handleFileJobs } from "../../../pages/api/file-jobs";
 import { handleFileJob } from "../../../pages/api/file-jobs/[id]";
 
-const mockGetClientFromSession = jest.fn();
-const mockGetFileCollectionsApi = jest.fn();
-const mockGetFileJobsApi = jest.fn();
-const mockListFileCollectionFiles = jest.fn();
-const mockCreateFile = jest.fn();
-const mockCreateFileJob = jest.fn();
-const mockGetFileJob = jest.fn();
-const mockGetPage = getPage as jest.Mock;
-
-// todo:PLAT-8812
-jest.mock("@vertexvis/api-client-node", () => {
-  const actual = jest.requireActual("@vertexvis/api-client-node");
-  return {
-    ...actual,
-    getPage: jest.fn(),
-    logError: jest.fn(),
-  };
-});
-
-jest.mock("../../../lib/vertex-api", () => {
-  const actual = jest.requireActual("../../../lib/vertex-api");
-  return {
-    ...actual,
-    getClientFromSession: (...args: unknown[]) =>
-      mockGetClientFromSession(...args),
-  };
-});
-
-jest.mock("../../../lib/file-collections", () => {
-  const actual = jest.requireActual("../../../lib/file-collections");
-  return {
-    ...actual,
-    getFileCollectionsApi: (...args: unknown[]) =>
-      mockGetFileCollectionsApi(...args),
-  };
-});
-
-jest.mock("../../../lib/file-jobs", () => {
-  const actual = jest.requireActual("../../../lib/file-jobs");
-  return {
-    ...actual,
-    getFileJobsApi: (...args: unknown[]) => mockGetFileJobsApi(...args),
-  };
-});
-
-type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
-
-interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
-  body: () => unknown;
-  statusCode: () => number | undefined;
-}
+const vertexApiOrigin = "https://vertex-api.test";
 
 describe("file jobs API routes", () => {
-  beforeEach(() => {
-    mockGetClientFromSession.mockResolvedValue({
-      client: "test-client",
-      files: { createFile: mockCreateFile },
-    });
-    mockGetFileCollectionsApi.mockReturnValue({
-      listFileCollectionFiles: mockListFileCollectionFiles,
-    });
-    mockGetFileJobsApi.mockReturnValue({
-      createFileJob: mockCreateFileJob,
-      getFileJob: mockGetFileJob,
-    });
-    mockCreateFileJob.mockResolvedValue({
-      data: queuedJob("job-1", { links: { archive: { href: "https://zip" } } }),
-    });
-    mockCreateFile.mockResolvedValue({
-      data: { data: fileData("archive-file-1", "created") },
-    });
-    mockGetFileJob.mockResolvedValue({
-      data: queuedJob("job-1", {
-        links: { download: { href: "https://zip" } },
-      }),
-    });
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it("creates an output file and archive job with every collection file ID", async () => {
-    mockGetPage.mockImplementation(async (apiCall) => {
-      await apiCall();
-      const lastCall =
-        mockListFileCollectionFiles.mock.calls[
-          mockListFileCollectionFiles.mock.calls.length - 1
-        ][0];
+    nodeMswServer.use(
+      stubListFileCollectionFiles("collection-1", {
+        "": [fileData("file-1", "complete"), fileData("file-2", " COMPLETE ")],
+        "cursor-2": [fileData("file-3", "complete")],
+      }),
+      stubCreateFile("collection-1", "file-collection-collection-1.zip"),
+      stubCreateFileJob(["file-1", "file-2", "file-3"])
+    );
 
-      return lastCall.pageCursor == null
-        ? {
-            cursors: { next: "cursor-2", self: "cursor-1" },
-            page: {
-              data: [
-                fileData("file-1", "complete"),
-                fileData("file-2", " COMPLETE "),
-              ],
-            },
-          }
-        : {
-            cursors: { next: undefined, self: "cursor-2" },
-            page: { data: [fileData("file-3", "complete")] },
-          };
-    });
-
-    const res = await callFileJobs({
+    const response = await callFileJobs({
       body: JSON.stringify({ fileCollectionId: "collection-1" }),
       method: "POST",
     });
 
-    expect(mockListFileCollectionFiles).toHaveBeenCalledTimes(2);
-    expect(mockListFileCollectionFiles).toHaveBeenNthCalledWith(1, {
-      id: "collection-1",
-      pageCursor: undefined,
-      pageSize: 200,
-    });
-    expect(mockListFileCollectionFiles).toHaveBeenNthCalledWith(2, {
-      id: "collection-1",
-      pageCursor: "cursor-2",
-      pageSize: 200,
-    });
-    expect(mockCreateFile).toHaveBeenCalledWith({
-      createFileRequest: {
-        data: {
-          attributes: {
-            expiry: 86400,
-            metadata: { fileCollectionId: "collection-1" },
-            name: "file-collection-collection-1.zip",
-          },
-          type: "file",
-        },
-      },
-    });
-    expect(mockCreateFileJob).toHaveBeenCalledWith({
-      createFileJobRequest: {
-        data: {
-          attributes: {
-            operation: {
-              fileId: "archive-file-1",
-              manifest: [
-                { selector: { id: "file-1", type: "file-by-id" } },
-                { selector: { id: "file-2", type: "file-by-id" } },
-                { selector: { id: "file-3", type: "file-by-id" } },
-              ],
-              type: "file-archive-operation",
-            },
-          },
-          type: "file-job",
-        },
-      },
-    });
-    expect(res.statusCode()).toBe(201);
-    expect(res.body()).toEqual({
+    expect(response.statusCode()).toBe(201);
+    expect(response.body()).toEqual({
       archiveFileId: "archive-file-1",
-      data: queuedJob("job-1", {
+      data: queuedJobData("job-1", {
         links: { archive: { href: "https://zip" } },
-      }).data,
+      }),
       status: 201,
     });
   });
 
   it("uses an optional archive name when creating the output file", async () => {
-    mockGetPage.mockImplementation(async (apiCall) => {
-      await apiCall();
-      return {
-        cursors: { next: undefined, self: undefined },
-        page: { data: [fileData("file-1", "complete")] },
-      };
-    });
+    nodeMswServer.use(
+      stubListFileCollectionFiles("collection-1", {
+        "": [fileData("file-1", "complete")],
+      }),
+      stubCreateFile("collection-1", "Custom collection.zip"),
+      stubCreateFileJob(["file-1"])
+    );
 
-    const res = await callFileJobs({
+    const response = await callFileJobs({
       body: JSON.stringify({
         archiveName: "Custom collection.zip",
         fileCollectionId: "collection-1",
@@ -188,101 +58,75 @@ describe("file jobs API routes", () => {
       method: "POST",
     });
 
-    expect(mockCreateFile).toHaveBeenCalledWith({
-      createFileRequest: {
-        data: {
-          attributes: {
-            expiry: 86400,
-            metadata: { fileCollectionId: "collection-1" },
-            name: "Custom collection.zip",
-          },
-          type: "file",
-        },
-      },
-    });
-    expect(res.body()).toMatchObject({
+    expect(response.body()).toMatchObject({
       archiveFileId: "archive-file-1",
       status: 201,
     });
   });
 
   it("rejects zero-file collections before creating a job", async () => {
-    mockGetPage.mockImplementation(async (apiCall) => {
-      await apiCall();
-      return {
-        cursors: { next: undefined, self: undefined },
-        page: { data: [] },
-      };
-    });
+    nodeMswServer.use(stubListFileCollectionFiles("collection-1", { "": [] }));
 
-    const res = await callFileJobs({
+    const response = await callFileJobs({
       body: JSON.stringify({ fileCollectionId: "collection-1" }),
       method: "POST",
     });
 
-    expect(res.statusCode()).toBe(400);
-    expect(res.body()).toEqual({
+    expect(response.statusCode()).toBe(400);
+    expect(response.body()).toEqual({
       message: "File collection has no files to export.",
       status: 400,
     });
-    expect(mockCreateFile).not.toHaveBeenCalled();
-    expect(mockCreateFileJob).not.toHaveBeenCalled();
   });
 
   it("rejects collections containing non-complete files", async () => {
-    mockGetPage.mockImplementation(async (apiCall) => {
-      await apiCall();
-      return {
-        cursors: { next: undefined, self: undefined },
-        page: {
-          data: [fileData("file-1", "completed"), fileData("file-2", "ready")],
-        },
-      };
-    });
+    nodeMswServer.use(
+      stubListFileCollectionFiles("collection-1", {
+        "": [fileData("file-1", "completed"), fileData("file-2", "ready")],
+      })
+    );
 
-    const res = await callFileJobs({
+    const response = await callFileJobs({
       body: JSON.stringify({ fileCollectionId: "collection-1" }),
       method: "POST",
     });
 
-    expect(res.statusCode()).toBe(400);
-    expect(res.body()).toEqual({
+    expect(response.statusCode()).toBe(400);
+    expect(response.body()).toEqual({
       message: "File collection contains files that are not ready to export.",
       status: 400,
     });
-    expect(mockCreateFile).not.toHaveBeenCalled();
-    expect(mockCreateFileJob).not.toHaveBeenCalled();
   });
 
   it("proxies file job reads", async () => {
-    const res = await callFileJobById({
-      method: "GET",
-      query: { id: "job-1" },
-    });
+    nodeMswServer.use(
+      stubGetFileJob("job-1", {
+        data: queuedJobData("job-1", {
+          links: { download: { href: "https://zip" } },
+        }),
+      })
+    );
 
-    expect(mockGetFileJob).toHaveBeenCalledWith({ id: "job-1" });
-    expect(res.statusCode()).toBe(200);
-    expect(res.body()).toEqual({
-      data: queuedJob("job-1", {
+    const response = await callFileJobById("job-1", { method: "GET" });
+
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({
+      data: queuedJobData("job-1", {
         links: { download: { href: "https://zip" } },
-      }).data,
+      }),
       status: 200,
     });
   });
 
-  it("validates file job requests before calling Vertex", async () => {
+  it("validates file job requests before contacting Vertex", async () => {
     const missingBody = await callFileJobs({ method: "POST" });
     const invalidBody = await callFileJobs({
       body: "{}",
       method: "POST",
     });
-    const missingId = await callFileJobById({
-      method: "GET",
-      query: {},
-    });
-    const unsupportedMethod = await callFileJobById({
+    const missingId = await callFileJobById(undefined, { method: "GET" });
+    const unsupportedMethod = await callFileJobById("job-1", {
       method: "DELETE",
-      query: { id: "job-1" },
     });
 
     expect(missingBody.statusCode()).toBe(400);
@@ -305,92 +149,134 @@ describe("file jobs API routes", () => {
       message: "Method not allowed.",
       status: 405,
     });
-    expect(mockGetClientFromSession).not.toHaveBeenCalled();
   });
 });
 
-function callFileJobs(req: {
-  readonly body?: string;
-  readonly method: string;
-  readonly query?: Record<string, string | string[]>;
-}): Promise<TestRes> {
-  return callApi((r, res) => handleFileJobs(r, res), req);
+function callFileJobs(req: ApiRouteRequest): Promise<ApiRouteResponse> {
+  return callApi(handleFileJobs, req);
 }
 
-function callFileJobById(req: {
-  readonly body?: string;
-  readonly method: string;
-  readonly query?: Record<string, string | string[]>;
-}): Promise<TestRes> {
-  return callApi((r, res) => handleFileJob(r, res), req);
-}
-
-async function callApi(
-  handler: (req: NextIronRequest, res: NextApiResponse) => Promise<void>,
-  req: {
-    readonly body?: string;
-    readonly method: string;
-    readonly query?: Record<string, string | string[]>;
-  }
-): Promise<TestRes> {
-  const res = createRes();
-  await handler(createReq(req), res as unknown as NextApiResponse);
-  return res;
-}
-
-function createReq({
-  body,
-  method,
-  query = {},
-}: {
-  readonly body?: string;
-  readonly method: string;
-  readonly query?: Record<string, string | string[]>;
-}): NextIronRequest {
-  const req: TestReq = {
-    body,
-    method,
-    query,
-    session: {} as Session,
-  };
-  return req as NextIronRequest;
-}
-
-function createRes(): TestRes {
-  let responseBody: unknown;
-  let responseStatus: number | undefined;
-  const res = {} as TestRes;
-  res.body = () => responseBody;
-  res.statusCode = () => responseStatus;
-  res.status = jest.fn((statusCode: number): NextApiResponse => {
-    responseStatus = statusCode;
-    return res as unknown as NextApiResponse;
+function callFileJobById(
+  id: string | undefined,
+  req: ApiRouteRequest
+): Promise<ApiRouteResponse> {
+  return callApi(handleFileJob, {
+    ...req,
+    query: id == null ? req.query : { ...req.query, id },
   });
-  res.json = jest.fn((body: unknown): NextApiResponse => {
-    responseBody = body;
-    return res as unknown as NextApiResponse;
-  });
-  return res;
 }
 
-function queuedJob(
+function callApi(
+  handler: Parameters<typeof invokeNextJsApiRouteHandler>[0],
+  req: ApiRouteRequest
+): Promise<ApiRouteResponse> {
+  return invokeNextJsApiRouteHandler(handler, {
+    ...req,
+    session: createAuthenticatedVertexApiTestSession(vertexApiOrigin),
+  });
+}
+
+function stubListFileCollectionFiles(
+  id: string,
+  pages: Record<string, ReturnType<typeof fileData>[]>
+) {
+  return http.get(
+    `${vertexApiOrigin}/file-collections/${id}/files`,
+    ({ request }) => {
+      const url = new URL(request.url);
+      const cursor = url.searchParams.get("page[cursor]") ?? "";
+      const data = pages[cursor];
+      const cursors = Object.keys(pages);
+      const currentPageIndex = cursors.indexOf(cursor);
+
+      expect(url.searchParams.get("page[size]")).toBe("200");
+      expect(data).toBeDefined();
+      expect(currentPageIndex).toBeGreaterThanOrEqual(0);
+
+      const nextCursor = cursors[currentPageIndex + 1];
+
+      return HttpResponse.json({
+        data,
+        links:
+          nextCursor == null
+            ? {}
+            : {
+                next: {
+                  href: `${vertexApiOrigin}/file-collections/${id}/files?page[cursor]=${nextCursor}`,
+                },
+              },
+      });
+    }
+  );
+}
+
+function stubCreateFile(fileCollectionId: string, name: string) {
+  return http.post(`${vertexApiOrigin}/files`, async ({ request }) => {
+    expect(await request.json()).toEqual({
+      data: {
+        attributes: {
+          expiry: 86400,
+          metadata: { fileCollectionId },
+          name,
+        },
+        type: "file",
+      },
+    });
+
+    return HttpResponse.json({ data: fileData("archive-file-1", "created") });
+  });
+}
+
+function stubCreateFileJob(fileIds: string[]) {
+  return http.post(`${vertexApiOrigin}/file-jobs`, async ({ request }) => {
+    expect(await request.json()).toEqual({
+      data: {
+        attributes: {
+          operation: {
+            fileId: "archive-file-1",
+            manifest: fileIds.map((id) => ({
+              selector: { id, type: "file-by-id" },
+            })),
+            type: "file-archive-operation",
+          },
+        },
+        type: "file-job",
+      },
+    });
+
+    return HttpResponse.json({
+      data: queuedJobData("job-1", {
+        links: { archive: { href: "https://zip" } },
+      }),
+    });
+  });
+}
+
+function stubGetFileJob(
+  id: string,
+  body: { data: ReturnType<typeof queuedJobData> }
+) {
+  return http.get(`${vertexApiOrigin}/file-jobs/${id}`, () => {
+    return HttpResponse.json(body);
+  });
+}
+
+function queuedJobData(
   id: string,
   dataOverrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+) {
   return {
-    data: {
-      attributes: {
-        created: "2026-06-29T15:30:00Z",
-        status: "running",
-      },
-      id,
-      type: "queued-job",
-      ...dataOverrides,
+    attributes: {
+      created: "2026-06-29T15:30:00Z",
+      status: "running",
     },
+    id,
+    type: "queued-job",
+    ...dataOverrides,
   };
 }
 
-function fileData(id: string, status: string): Record<string, unknown> {
+function fileData(id: string, status: string) {
   return {
     attributes: {
       created: "2026-06-12T15:30:00Z",
