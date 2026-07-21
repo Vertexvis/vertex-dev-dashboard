@@ -12,14 +12,6 @@ import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
-const mockPush = jest.fn();
-
-jest.mock("next/router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}));
-
 const firstPage = fileCollectionsPage({
   data: [
     fileCollection({
@@ -68,14 +60,9 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
 
-  beforeEach(() => {
-    mockPush.mockClear();
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });
-
   it("paginates file collections using the next cursor", async () => {
     const requests: string[] = [];
 
@@ -106,6 +93,93 @@ describe("FileCollectionTable", () => {
         return (
           params.get("cursor") === "page-2" && params.get("pageSize") === "25"
         );
+      })
+    ).toBe(true);
+  });
+
+  it("keeps the default API sort when no sort control is selected", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        requests.push(new URL(request.url).search);
+        return HttpResponse.json(firstPage);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.get("pageSize") === "25" && !params.has("sort");
+      })
+    ).toBe(true);
+  });
+
+  it("sorts by name and toggles the sort direction", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+        return HttpResponse.json(
+          url.searchParams.get("sort") === "name" ? nextPage : firstPage
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+    expect(
+      requests.some(
+        (search) => new URLSearchParams(search).get("sort") === "name"
+      )
+    ).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some(
+        (search) => new URLSearchParams(search).get("sort") === "-name"
+      )
+    ).toBe(true);
+  });
+
+  it("resets cursor pagination when the sort changes", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url.search);
+        return HttpResponse.json(
+          url.searchParams.get("cursor") === "page-2"
+            ? nextPage
+            : firstPageWithNextCursor
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+    expect(await screen.findByText("Collection Two")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Created At" }));
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+    expect(
+      requests.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.get("sort") === "created" && !params.has("cursor");
       })
     ).toBe(true);
   });
@@ -428,7 +502,25 @@ describe("FileCollectionTable", () => {
     expect(createdTo).toHaveValue("2026-06-10");
   });
 
-  it("navigates to the file collection detail route when a row is clicked", async () => {
+  it("renders an empty sorted result", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(
+          fileCollectionsPage({ cursors: { self: "page-1" }, data: [] })
+        );
+      })
+    );
+
+    renderTable();
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(
+      await screen.findByText("No file collections found.")
+    ).toBeInTheDocument();
+  });
+
+  it("renders the existing file collection detail route as an href", async () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(firstPage);
@@ -439,9 +531,10 @@ describe("FileCollectionTable", () => {
 
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Collection One"));
-
-    expect(mockPush).toHaveBeenCalledWith("/file-collections/collection-1");
+    expect(screen.getByLabelText("Open Collection One")).toHaveAttribute(
+      "href",
+      "/file-collections/collection-1"
+    );
   });
 });
 

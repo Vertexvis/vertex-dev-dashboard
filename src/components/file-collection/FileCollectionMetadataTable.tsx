@@ -1,9 +1,9 @@
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -90,53 +90,39 @@ function MetadataRow({
       <TableCell>
         <Typography variant="subtitle2">Metadata</Typography>
         {entries.length > 0 ? (
-          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ px: 0, py: 0.5, width: "40%", pr: 1 }}>
-                  <Typography variant="subtitle2">Key</Typography>
-                </TableCell>
-                <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
-                  <Typography variant="subtitle2">Value</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {entries.map(([key, value]) => (
-                <TableRow key={key}>
-                  <TableCell sx={{ px: 0, py: 0.5, pr: 1 }}>
-                    <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-                      variant="body2"
-                    >
-                      {toDisplayValue(key)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ px: 0, py: 0.5, pl: 1 }}>
-                    <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-                      variant="body2"
-                    >
-                      {toDisplayValue(value)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : status === "loading" ? (
-          <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
-            variant="body2"
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1,
+              gridTemplateColumns: "minmax(0, 40%) minmax(0, 1fr)",
+              mt: 1,
+            }}
           >
-            Loading...
-          </Typography>
+            <Typography variant="subtitle2">Key</Typography>
+            <Typography variant="subtitle2">Value</Typography>
+            {entries.flatMap(([key, value]) => [
+              <Typography
+                key={`${key}-key`}
+                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                variant="body2"
+              >
+                {toDisplayValue(key)}
+              </Typography>,
+              <Typography
+                key={`${key}-value`}
+                sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                variant="body2"
+              >
+                {toDisplayValue(value)}
+              </Typography>,
+            ])}
+          </Box>
         ) : (
           <Typography
             sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
             variant="body2"
           >
-            N/A
+            {status === "loading" ? "Loading..." : "N/A"}
           </Typography>
         )}
       </TableCell>

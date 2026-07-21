@@ -16,17 +16,15 @@ import {
   TextField,
 } from "@mui/material";
 import { Cursors, SceneData } from "@vertexvis/api-client-node";
-import { Environment } from "@vertexvis/viewer";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import useSWR from "swr";
 
-import { ErrorRes, GetRes, isErrorRes } from "../../lib/api";
+import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
-import { encodeCreds } from "../../pages/scene-viewer/[sceneId]";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -38,11 +36,9 @@ import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 
 interface Props {
-  readonly clientId?: string;
   readonly onClick: (s: Scene) => void;
   readonly onEditClick: (s: Scene) => void;
   readonly scene?: Scene;
-  readonly vertexEnv: Environment;
   readonly invalidationCount: number;
 }
 
@@ -82,11 +78,9 @@ function stateColor(
 }
 
 export default function SceneTable({
-  clientId,
   onClick,
   onEditClick,
   scene,
-  vertexEnv,
   invalidationCount,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
@@ -194,21 +188,8 @@ export default function SceneTable({
     onEditClick(s);
   }
 
-  async function handleViewClick(sceneId: string) {
-    if (!clientId) return;
-
-    const json = await (
-      await fetch("/api/stream-keys", {
-        body: JSON.stringify({ id: sceneId }),
-        method: "POST",
-      })
-    ).json();
-
-    if (isErrorRes(json)) console.error("Error creating stream key.", json);
-    else
-      router.push(
-        encodeCreds({ clientId, streamKey: json.key, vertexEnv, sceneId })
-      );
+  function handleViewClick(sceneId: string) {
+    router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
   }
 
   async function handleGetStreamKey(sceneId: string) {
@@ -323,7 +304,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          onPrimaryAction={() => handleViewClick(row.id)}
+                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}
@@ -350,7 +331,6 @@ export default function SceneTable({
                               onClick: () => handleGetStreamKey(row.id),
                             },
                             {
-                              disabled: !clientId,
                               label: "View scene",
                               onClick: () => handleViewClick(row.id),
                             },

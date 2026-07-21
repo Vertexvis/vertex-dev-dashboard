@@ -67,6 +67,21 @@ describe("FileTable", () => {
     );
   });
 
+  it("renders an available file as a dedicated download href", async () => {
+    server.use(
+      http.get("*/api/files", () => {
+        return HttpResponse.json(page);
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByLabelText("Download alpha.jt")).toHaveAttribute(
+      "href",
+      "/api/files/file-1/download"
+    );
+  });
+
   it("sorts by name and toggles direction", async () => {
     const requests: string[] = [];
 
