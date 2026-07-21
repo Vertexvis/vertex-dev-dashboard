@@ -21,10 +21,10 @@ export interface LoginReq {
   readonly networkConfig?: NetworkConfig;
 }
 
-export default withSession(async function (
+export async function handleLogin(
   req: NextIronRequest,
   res: NextApiResponse<Res | ErrorRes>
-) {
+): Promise<void> {
   if (req.method === "POST") {
     const b: LoginReq = JSON.parse(req.body);
 
@@ -51,4 +51,6 @@ export default withSession(async function (
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+}
+
+export default withSession(handleLogin);

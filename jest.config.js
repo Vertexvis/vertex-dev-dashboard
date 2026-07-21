@@ -45,6 +45,7 @@ module.exports = {
     {
       ...projectConfig,
       displayName: "node",
+      setupFilesAfterEnv: ["<rootDir>/test/msw/setupNode.ts"],
       testEnvironment: "node",
       testMatch: ["**/src/__tests__/pages/api/**/*.test.ts"],
     },
