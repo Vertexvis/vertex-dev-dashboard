@@ -17,7 +17,8 @@ import { drawerClasses } from "@mui/material/Drawer";
 import { useRouter } from "next/router";
 import React from "react";
 
-import { LeftDrawerWidth } from "../shared/Layout";
+import { AppLinkBehavior } from "./AppLink";
+import { LeftDrawerWidth } from "./Layout";
 
 export type Content = "settings" | "instructions" | "parts";
 
@@ -41,7 +42,8 @@ export function LeftDrawer(): JSX.Element {
         }}
       >
         <ListItemButton
-          onClick={() => router.push("/")}
+          component={AppLinkBehavior}
+          href="/"
           selected={router.route === "/"}
         >
           <ListItemIcon>
@@ -50,7 +52,8 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Scenes" />
         </ListItemButton>
         <ListItemButton
-          onClick={() => router.push("/files")}
+          component={AppLinkBehavior}
+          href="/files"
           selected={router.route === "/files"}
         >
           <ListItemIcon>
@@ -59,7 +62,8 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Files" />
         </ListItemButton>
         <ListItemButton
-          onClick={() => router.push("/file-collections")}
+          component={AppLinkBehavior}
+          href="/file-collections"
           selected={router.route === "/file-collections"}
         >
           <ListItemIcon>
@@ -68,7 +72,8 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="File Collections" />
         </ListItemButton>
         <ListItemButton
-          onClick={() => router.push("/parts")}
+          component={AppLinkBehavior}
+          href="/parts"
           selected={router.route === "/parts"}
         >
           <ListItemIcon>
@@ -77,7 +82,8 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Parts Library" />
         </ListItemButton>
         <ListItemButton
-          onClick={() => router.push("/translations")}
+          component={AppLinkBehavior}
+          href="/translations"
           selected={router.route === "/translations"}
         >
           <ListItemIcon>

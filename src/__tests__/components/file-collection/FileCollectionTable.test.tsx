@@ -12,6 +12,20 @@ import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
 import FileCollectionTable from "../../../components/file-collection/FileCollectionTable";
 
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRouter = {
+  isReady: true,
+  pathname: "/file-collections",
+  push: mockPush,
+  query: {} as Record<string, string | string[] | undefined>,
+  replace: mockReplace,
+};
+
+jest.mock("next/router", () => ({
+  useRouter: () => mockRouter,
+}));
+
 const firstPage = fileCollectionsPage({
   data: [
     fileCollection({
@@ -59,6 +73,12 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
+
+  beforeEach(() => {
+    mockPush.mockClear();
+    mockReplace.mockClear();
+    mockRouter.query = {};
+  });
 
   it("paginates file collections using the next cursor", async () => {
     const requests: string[] = [];
@@ -510,8 +530,38 @@ describe("FileCollectionTable", () => {
       "/file-collections/collection-1"
     );
   });
+
+  it("does not select a file collection locally when cmd-clicking its link", async () => {
+    const onFileCollectionSelected = jest.fn();
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      })
+    );
+
+    renderTable({ onFileCollectionSelected });
+
+    const link = await screen.findByRole("link", {
+      name: "Open Collection One",
+    });
+    link.setAttribute("href", "#");
+    const defaultAllowed = link.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        button: 0,
+        cancelable: true,
+        metaKey: true,
+      })
+    );
+
+    expect(defaultAllowed).toBe(true);
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(onFileCollectionSelected).not.toHaveBeenCalled();
+  });
 });
 
-function renderTable(): void {
-  renderWithSWR(<FileCollectionTable />);
+function renderTable(
+  props: React.ComponentProps<typeof FileCollectionTable> = {}
+): void {
+  renderWithSWR(<FileCollectionTable {...props} />);
 }
