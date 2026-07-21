@@ -1,0 +1,22 @@
+{
+  "resources": [
+    {
+      "name": "files",
+      "group": "core-import-library",
+      "displayName": "Files",
+      "route": "files",
+      "resourceType": "file",
+      "operations": ["list", "create"],
+      "list": {
+        "defaultPageSize": 10,
+        "filters": [
+          "name",
+          "fileId",
+          "suppliedId",
+          "createdAtStart",
+          "createdAtEnd"
+        ]
+      }
+    }
+  ]
+}
