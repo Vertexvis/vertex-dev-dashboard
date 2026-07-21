@@ -19,6 +19,12 @@ const projectConfig = {
       { tsconfig: "tsconfig.jest.json" },
     ],
   },
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "<rootDir>/.worktrees/",
+    "<rootDir>/.codex[^/]*/",
+    "/src/__tests__/pages/api/",
+  ],
   transformIgnorePatterns: [
     "/node_modules/(?!(@mswjs|@open-draft|msw|rettime|until-async|headers-polyfill|is-node-process|outvariant|strict-event-emitter|path-to-regexp)/)",
   ],
@@ -40,11 +46,11 @@ module.exports = {
         "**/?(*.)+(test).ts",
         "!**/src/__tests__/pages/api/**/*.test.ts",
       ],
-      testPathIgnorePatterns: ["/src/__tests__/pages/api/"],
     },
     {
       ...projectConfig,
       displayName: "node",
+      setupFilesAfterEnv: ["<rootDir>/test/msw/setupNode.ts"],
       testEnvironment: "node",
       testMatch: ["**/src/__tests__/pages/api/**/*.test.ts"],
     },
