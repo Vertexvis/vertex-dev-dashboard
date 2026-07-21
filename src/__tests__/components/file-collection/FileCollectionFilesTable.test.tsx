@@ -1,11 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http,HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import React from "react";
 
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
+import { AddFilesToCollectionDialog } from "../../../components/file-collection/AddFilesToCollectionDialog";
 import FileCollectionFilesTable from "../../../components/file-collection/FileCollectionFilesTable";
 import { DefaultPageSize } from "../../../components/shared/Layout";
 
@@ -241,6 +242,133 @@ describe("FileCollectionFilesTable", () => {
       "Error loading data."
     );
   });
+
+  it("adds only completed files through the collection membership route", async () => {
+    const addFiles = jest.fn(async ({ request }) => {
+      expect(await request.json()).toEqual({ fileIds: ["complete-file"] });
+      return HttpResponse.json({ status: 200 });
+    });
+    const onMembersAdded = jest.fn();
+    const onClose = jest.fn();
+    server.use(
+      http.get("*/api/files", () =>
+        HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "complete-file",
+              name: "Complete file",
+              status: "complete",
+              suppliedId: "complete",
+            }),
+            fileResource({
+              id: "pending-file",
+              name: "Pending file",
+              status: "pending",
+              suppliedId: "pending",
+            }),
+          ])
+        )
+      ),
+      http.post("*/api/file-collections/collection-1/files", (info) =>
+        addFiles(info)
+      )
+    );
+
+    renderWithSWR(
+      <AddFilesToCollectionDialog
+        collectionId="collection-1"
+        onClose={onClose}
+        onMembersAdded={onMembersAdded}
+        open
+      />
+    );
+
+    expect(
+      await screen.findByText("Complete file (complete)")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pending file (pending)")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Complete file (complete)" })
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Pending file (pending)" })
+    ).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Add files" }));
+
+    await waitFor(() => expect(addFiles).toHaveBeenCalledTimes(1));
+    expect(onMembersAdded).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not remove source files when membership removal is cancelled", async () => {
+    const removeFiles = jest.fn();
+    jest.spyOn(window, "confirm").mockReturnValue(false);
+    mockFileCollectionFilesApi();
+    server.use(
+      http.delete("*/api/file-collections/collection-1/files", (info) =>
+        removeFiles(info)
+      )
+    );
+
+    renderWithSWR(
+      <FileCollectionFilesTable
+        apiPath={collectionFilesApiPath}
+        collectionId="collection-1"
+        onFileSelected={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select File One" })
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove from collection" })
+    );
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Remove File One from this collection? This does not delete the source file."
+    );
+    expect(removeFiles).not.toHaveBeenCalled();
+  });
+
+  it("removes only the membership and refreshes collection consumers", async () => {
+    const removeFiles = jest.fn(async ({ request }) => {
+      expect(await request.json()).toEqual({ fileIds: ["file-1"] });
+      return HttpResponse.json({ status: 200 });
+    });
+    const onMembersChanged = jest.fn();
+    jest.spyOn(window, "confirm").mockReturnValue(true);
+    mockFileCollectionFilesApi();
+    server.use(
+      http.delete("*/api/file-collections/collection-1/files", (info) =>
+        removeFiles(info)
+      )
+    );
+
+    renderWithSWR(
+      <FileCollectionFilesTable
+        apiPath={collectionFilesApiPath}
+        collectionId="collection-1"
+        onFileSelected={jest.fn()}
+        onMembersChanged={onMembersChanged}
+      />
+    );
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select File One" })
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove from collection" })
+    );
+
+    await waitFor(() => expect(removeFiles).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onMembersChanged).toHaveBeenCalledTimes(1));
+    expect(
+      screen.queryByRole("button", { name: "Remove from collection" })
+    ).not.toBeInTheDocument();
+  });
 });
 
 function renderTable(onFileSelected = jest.fn()): void {
@@ -288,9 +416,7 @@ function mockFileCollectionFilesApi({
   );
 }
 
-function filePage(
-  data: ReturnType<typeof fileResource>[]
-): {
+function filePage(data: ReturnType<typeof fileResource>[]): {
   cursors: { self: string };
   data: ReturnType<typeof fileResource>[];
   status: number;

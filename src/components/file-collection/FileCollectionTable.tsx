@@ -23,6 +23,7 @@ import {
   toFileCollectionPage,
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { confirmResourceDeletion } from "../shared/confirm-delete";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
@@ -159,6 +160,12 @@ export default function FileCollectionTable({
   }
 
   async function handleDelete() {
+    if (
+      selected.size === 0 ||
+      !confirmResourceDeletion(selected.size, "file collection")
+    )
+      return;
+
     setDeleteError(undefined);
     const ids = [...selected];
     setSelected(new Set());

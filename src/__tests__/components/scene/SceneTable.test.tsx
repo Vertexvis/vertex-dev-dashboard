@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http,HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import React from "react";
 
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
@@ -148,6 +148,22 @@ describe("SceneTable", () => {
       );
     });
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("offers the additive workspace without changing the existing viewer action", async () => {
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      })
+    );
+    renderTable(scene);
+
+    await userEvent.click(
+      await screen.findByLabelText("Actions for Scene One")
+    );
+    await userEvent.click(screen.getByText("Open workspace"));
+
+    expect(mockPush).toHaveBeenCalledWith("/scene-workspace/scene-1");
   });
 });
 

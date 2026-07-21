@@ -16,6 +16,7 @@ import {
   ErrorRes,
   GetRes,
   InvalidBody,
+  isErrorFailure,
   MethodNotAllowed,
   Res,
   ServerError,
@@ -34,7 +35,7 @@ export type CreatePartReq = Pick<
 
 export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
 
-export default withSession(async function handle(
+export async function handleParts(
   req: NextIronRequest,
   res: NextApiResponse<GetRes<PartData> | Res | ErrorRes>
 ): Promise<void> {
@@ -54,7 +55,9 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+}
+
+export default withSession(handleParts);
 
 async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
   try {
@@ -81,44 +84,128 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
 }
 
 async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
-  if (!req.body) return BodyRequired;
+  const b = parseDeleteReq(req.body);
+  if (b == null) return req.body == null ? BodyRequired : InvalidBody;
 
-  const b: DeleteReq = JSON.parse(req.body);
-  if (!b.ids) return InvalidBody;
-
-  const c = await getClientFromSession(req.session);
-  await Promise.all(
-    b.ids.map((id) => makeCall(() => c.parts.deletePart({ id })))
-  );
-  return { status: 200 };
+  try {
+    const c = await getClientFromSession(req.session);
+    const results = await Promise.all(
+      b.ids.map((id) => makeCall(() => c.parts.deletePart({ id })))
+    );
+    const failure = results.find(isErrorFailure);
+    return failure == null ? { status: 200 } : toErrorRes({ failure });
+  } catch (error) {
+    return toRouteError(error);
+  }
 }
 
 async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
-  const b: CreatePartReq = JSON.parse(req.body);
-  if (!req.body) return InvalidBody;
+  const b = parseCreatePartReq(req.body);
+  if (b == null) return req.body == null ? BodyRequired : InvalidBody;
 
-  const c = await getClientFromSession(req.session);
-  const res = await c.parts.createPart({
-    createPartRequest: {
-      data: {
-        type: "part",
-        attributes: {
-          suppliedId: b.suppliedId,
-          suppliedRevisionId: b.suppliedRevisionId,
-          suppliedIterationId: b.suppliedIterationId,
-          indexMetadata: b.indexMetadata,
-        },
-        relationships: {
-          source: {
-            data: {
-              type: FileRelationshipDataTypeEnum.File,
-              id: b.fileId,
+  try {
+    const c = await getClientFromSession(req.session);
+    const result = await makeCall(() =>
+      c.parts.createPart({
+        createPartRequest: {
+          data: {
+            type: "part",
+            attributes: {
+              suppliedId: b.suppliedId,
+              suppliedRevisionId: b.suppliedRevisionId,
+              suppliedIterationId: b.suppliedIterationId,
+              indexMetadata: b.indexMetadata,
+            },
+            relationships: {
+              source: {
+                data: {
+                  type: FileRelationshipDataTypeEnum.File,
+                  id: b.fileId,
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      })
+    );
+    if (isErrorFailure(result)) return toErrorRes({ failure: result });
 
-  return { status: 200, id: res.data.data.id };
+    return { status: 200, id: result.data.id };
+  } catch (error) {
+    return toRouteError(error);
+  }
+}
+
+function parseDeleteReq(body: unknown): DeleteReq | undefined {
+  const parsed = parseJsonObject(body);
+  const ids = parsed?.ids;
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    ids.some((id) => typeof id !== "string" || id.trim() === "")
+  )
+    return undefined;
+
+  return { ids: [...new Set(ids.map((id) => id.trim()))] };
+}
+
+function parseCreatePartReq(body: unknown): CreatePartReq | undefined {
+  const parsed = parseJsonObject(body);
+  if (parsed == null || typeof parsed.fileId !== "string") return undefined;
+
+  const fileId = parsed.fileId.trim();
+  if (fileId === "") return undefined;
+
+  const optionalStringFields = [
+    "suppliedId",
+    "suppliedRevisionId",
+    "suppliedIterationId",
+  ] as const;
+  if (
+    optionalStringFields.some(
+      (field) => parsed[field] != null && typeof parsed[field] !== "string"
+    ) ||
+    (parsed.indexMetadata != null && typeof parsed.indexMetadata !== "boolean")
+  )
+    return undefined;
+
+  return {
+    fileId,
+    ...(typeof parsed.suppliedId === "string"
+      ? { suppliedId: parsed.suppliedId }
+      : {}),
+    ...(typeof parsed.suppliedRevisionId === "string"
+      ? { suppliedRevisionId: parsed.suppliedRevisionId }
+      : {}),
+    ...(typeof parsed.suppliedIterationId === "string"
+      ? { suppliedIterationId: parsed.suppliedIterationId }
+      : {}),
+    ...(typeof parsed.indexMetadata === "boolean"
+      ? { indexMetadata: parsed.indexMetadata }
+      : {}),
+  };
+}
+
+function parseJsonObject(body: unknown): Record<string, unknown> | undefined {
+  if (body == null) return undefined;
+
+  try {
+    const parsed =
+      typeof body === "string" ? (JSON.parse(body) as unknown) : body;
+    return typeof parsed === "object" &&
+      parsed != null &&
+      !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function toRouteError(error: unknown): ErrorRes {
+  const e = error as VertexError;
+  logError(e);
+  return e.vertexError?.res
+    ? toErrorRes({ failure: e.vertexError.res })
+    : ServerError;
 }

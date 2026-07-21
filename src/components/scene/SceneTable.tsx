@@ -355,6 +355,15 @@ export default function SceneTable({
                               onClick: () => handleViewClick(row.id),
                             },
                             {
+                              label: "Open workspace",
+                              onClick: () =>
+                                router.push(
+                                  `/scene-workspace/${encodeURIComponent(
+                                    row.id
+                                  )}`
+                                ),
+                            },
+                            {
                               label: "Edit scene",
                               onClick: () => handleEditClick(row),
                             },

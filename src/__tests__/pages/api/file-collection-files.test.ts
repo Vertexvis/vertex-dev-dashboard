@@ -10,7 +10,9 @@ import { handleFileCollectionFiles } from "../../../pages/api/file-collections/[
 
 const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
+const mockAddFileCollectionFiles = jest.fn();
 const mockListFileCollectionFiles = jest.fn();
+const mockRemoveFileCollectionFiles = jest.fn();
 const mockGetPage = getPage as jest.Mock;
 
 jest.mock("@vertexvis/api-client-node", () => {
@@ -51,9 +53,13 @@ describe("file collection files API route", () => {
   beforeEach(() => {
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
     mockGetFileCollectionsApi.mockReturnValue({
+      addFileCollectionFiles: mockAddFileCollectionFiles,
       listFileCollectionFiles: mockListFileCollectionFiles,
+      removeFileCollectionFiles: mockRemoveFileCollectionFiles,
     });
+    mockAddFileCollectionFiles.mockResolvedValue({ data: {} });
     mockListFileCollectionFiles.mockResolvedValue({ data: {} });
+    mockRemoveFileCollectionFiles.mockResolvedValue({ data: {} });
     mockGetPage.mockImplementation(async (apiCall) => {
       await apiCall();
       return {
@@ -128,7 +134,7 @@ describe("file collection files API route", () => {
       query: {},
     });
     const unsupportedMethod = await callFileCollectionFiles({
-      method: "DELETE",
+      method: "PATCH",
       query: { id: "collection-1" },
     });
 
@@ -144,9 +150,99 @@ describe("file collection files API route", () => {
     });
     expect(mockGetClientFromSession).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["GET", undefined],
+    ["GET", ""],
+    ["GET", "   "],
+    ["GET", ["collection-1", "collection-2"]],
+    ["POST", undefined],
+    ["POST", ""],
+    ["POST", "   "],
+    ["POST", ["collection-1", "collection-2"]],
+    ["DELETE", undefined],
+    ["DELETE", ""],
+    ["DELETE", "   "],
+    ["DELETE", ["collection-1", "collection-2"]],
+  ])(
+    "rejects an invalid parent ID for %s before calling Vertex",
+    async (method, id) => {
+      const res = await callFileCollectionFiles({
+        body:
+          method === "GET"
+            ? undefined
+            : JSON.stringify({ fileIds: ["file-1"] }),
+        method,
+        query: id == null ? {} : { id },
+      });
+
+      expect(res.statusCode()).toBe(400);
+      expect(res.body()).toEqual({
+        message: "File Collection ID required.",
+        status: 400,
+      });
+      expect(mockGetClientFromSession).not.toHaveBeenCalled();
+      expect(mockAddFileCollectionFiles).not.toHaveBeenCalled();
+      expect(mockListFileCollectionFiles).not.toHaveBeenCalled();
+      expect(mockRemoveFileCollectionFiles).not.toHaveBeenCalled();
+    }
+  );
+
+  it("adds validated file membership without deleting a source file", async () => {
+    const res = await callFileCollectionFiles({
+      body: JSON.stringify({ fileIds: ["file-1", "file-2", "file-1"] }),
+      method: "POST",
+      query: { id: "collection-1" },
+    });
+
+    expect(mockAddFileCollectionFiles).toHaveBeenCalledWith({
+      fileIdList: { data: ["file-1", "file-2"] },
+      id: "collection-1",
+    });
+    expect(mockRemoveFileCollectionFiles).not.toHaveBeenCalled();
+    expect(res.statusCode()).toBe(200);
+    expect(res.body()).toEqual({ status: 200 });
+  });
+
+  it("removes validated membership without deleting the source file", async () => {
+    const res = await callFileCollectionFiles({
+      body: JSON.stringify({ fileIds: ["file-1", "file-2"] }),
+      method: "DELETE",
+      query: { id: "collection-1" },
+    });
+
+    expect(mockRemoveFileCollectionFiles).toHaveBeenCalledWith({
+      filterFileId: "file-1,file-2",
+      id: "collection-1",
+    });
+    expect(mockAddFileCollectionFiles).not.toHaveBeenCalled();
+    expect(res.statusCode()).toBe(200);
+  });
+
+  it.each([
+    undefined,
+    "not-json",
+    JSON.stringify({}),
+    JSON.stringify({ fileIds: [] }),
+    JSON.stringify({ fileIds: ["", 42] }),
+  ])(
+    "rejects an invalid membership body before calling Vertex",
+    async (body) => {
+      const res = await callFileCollectionFiles({
+        body,
+        method: "POST",
+        query: { id: "collection-1" },
+      });
+
+      expect(res.statusCode()).toBe(400);
+      expect(mockGetClientFromSession).not.toHaveBeenCalled();
+      expect(mockAddFileCollectionFiles).not.toHaveBeenCalled();
+    }
+  );
 });
 
 async function callFileCollectionFiles(req: {
+  readonly body?: string;
   readonly method: string;
   readonly query?: Record<string, string | string[]>;
 }): Promise<TestRes> {
@@ -159,13 +255,16 @@ async function callFileCollectionFiles(req: {
 }
 
 function createReq({
+  body,
   method,
   query = {},
 }: {
+  readonly body?: string;
   readonly method: string;
   readonly query?: Record<string, string | string[]>;
 }): NextIronRequest {
   const req: TestReq = {
+    body,
     method,
     query,
     session: {} as Session,

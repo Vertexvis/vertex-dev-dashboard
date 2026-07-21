@@ -59,6 +59,15 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Files" />
         </ListItemButton>
         <ListItemButton
+          onClick={() => router.push("/documents")}
+          selected={router.route === "/documents"}
+        >
+          <ListItemIcon>
+            <DescriptionOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Documents (Preview)" />
+        </ListItemButton>
+        <ListItemButton
           onClick={() => router.push("/file-collections")}
           selected={router.route === "/file-collections"}
         >

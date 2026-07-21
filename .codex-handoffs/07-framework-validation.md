@@ -9,17 +9,17 @@
 
 ## Commands and results
 
-| Command | Result |
-| --- | --- |
-| `yarn api:generate:check` | Passed. The current single `files` manifest entry renders without drift. |
-| `yarn lint` | Passed; no warnings/errors. |
-| `yarn test --selectProjects browser --runInBand src/__tests__/lib/api-client.test.ts src/__tests__/lib/api-query.test.ts` | Passed: 4 tests. |
-| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/api-framework.test.ts` | Passed: 4 tests. |
-| `yarn test --selectProjects browser --runInBand src/__tests__/components/file/FileTable.test.tsx` | Passed: 6 tests (existing Files sorting/filter/loading UI coverage). |
-| `yarn test:e2e` | Passed: 3 Playwright tests (authenticated Files fixture render and visible error state). Initial sandbox attempt could not bind port 3100; the same command passed when run with local port permission. |
-| `yarn build` | Passed. |
-| `git diff --check` | Passed. No whitespace errors or unrelated formatter churn were observed. |
-| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/files.test.ts` | **Not run to completion**: Testcontainers failed before the test body with `Could not find a working container runtime strategy`. |
+| Command                                                                                                                   | Result                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn api:generate:check`                                                                                                 | Passed. The current single `files` manifest entry renders without drift.                                                                                                                                |
+| `yarn lint`                                                                                                               | Passed; no warnings/errors.                                                                                                                                                                             |
+| `yarn test --selectProjects browser --runInBand src/__tests__/lib/api-client.test.ts src/__tests__/lib/api-query.test.ts` | Passed: 4 tests.                                                                                                                                                                                        |
+| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/api-framework.test.ts`                               | Passed: 4 tests.                                                                                                                                                                                        |
+| `yarn test --selectProjects browser --runInBand src/__tests__/components/file/FileTable.test.tsx`                         | Passed: 6 tests (existing Files sorting/filter/loading UI coverage).                                                                                                                                    |
+| `yarn test:e2e`                                                                                                           | Passed: 3 Playwright tests (authenticated Files fixture render and visible error state). Initial sandbox attempt could not bind port 3100; the same command passed when run with local port permission. |
+| `yarn build`                                                                                                              | Passed.                                                                                                                                                                                                 |
+| `git diff --check`                                                                                                        | Passed. No whitespace errors or unrelated formatter churn were observed.                                                                                                                                |
+| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/files.test.ts`                                       | **Not run to completion**: Testcontainers failed before the test body with `Could not find a working container runtime strategy`.                                                                       |
 
 ## Findings
 
@@ -158,16 +158,16 @@ original blocker. This section supersedes the preceding disposition only where s
 
 ### Evidence run
 
-| Command | Result |
-| --- | --- |
-| `yarn api:generate:check` | Passed. |
-| `yarn lint` | Passed; no warnings/errors. |
-| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/generator.test.ts src/__tests__/pages/api/files-validation.test.ts src/__tests__/pages/api/e2e-session.test.ts src/__tests__/pages/api/api-framework.test.ts` | Passed: 22 tests. |
-| `yarn test --selectProjects browser --runInBand src/__tests__/lib/api-client.test.ts src/__tests__/lib/api-query.test.ts src/__tests__/components/file/FileTable.test.tsx` | Passed: 10 tests. |
-| `yarn test:e2e` | Passed with the new random-secret launcher: 3 Playwright tests. First sandbox run was blocked from binding port 3100; the identical command passed with local port permission. |
-| `yarn build` | Passed. |
-| `git diff --check` | Passed; no whitespace regression observed. |
-| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/files.test.ts` | Still blocked before test execution: Testcontainers reports `Could not find a working container runtime strategy`. |
+| Command                                                                                                                                                                                                                            | Result                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `yarn api:generate:check`                                                                                                                                                                                                          | Passed.                                                                                                                                                                        |
+| `yarn lint`                                                                                                                                                                                                                        | Passed; no warnings/errors.                                                                                                                                                    |
+| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/generator.test.ts src/__tests__/pages/api/files-validation.test.ts src/__tests__/pages/api/e2e-session.test.ts src/__tests__/pages/api/api-framework.test.ts` | Passed: 22 tests.                                                                                                                                                              |
+| `yarn test --selectProjects browser --runInBand src/__tests__/lib/api-client.test.ts src/__tests__/lib/api-query.test.ts src/__tests__/components/file/FileTable.test.tsx`                                                         | Passed: 10 tests.                                                                                                                                                              |
+| `yarn test:e2e`                                                                                                                                                                                                                    | Passed with the new random-secret launcher: 3 Playwright tests. First sandbox run was blocked from binding port 3100; the identical command passed with local port permission. |
+| `yarn build`                                                                                                                                                                                                                       | Passed.                                                                                                                                                                        |
+| `git diff --check`                                                                                                                                                                                                                 | Passed; no whitespace regression observed.                                                                                                                                     |
+| `yarn test --selectProjects node --runInBand src/__tests__/pages/api/files.test.ts`                                                                                                                                                | Still blocked before test execution: Testcontainers reports `Could not find a working container runtime strategy`.                                                             |
 
 ### Original blockers rechecked
 
@@ -264,15 +264,15 @@ with the new sentinel helper in place.
 
 ### Evidence run
 
-| Command | Result |
-| --- | --- |
-| `yarn api:generate:check` | Passed. |
-| `yarn lint` | Passed; no warnings/errors. |
+| Command                                                             | Result                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn api:generate:check`                                           | Passed.                                                                                                                                                                                                                                              |
+| `yarn lint`                                                         | Passed; no warnings/errors.                                                                                                                                                                                                                          |
 | focused Node framework/generator/Files-validation/E2E-session tests | Passed: 26 tests. The Files tests explicitly cover response-shaped POST and DELETE bodies with status `200` and `451`, assert fixed `{ message: "Invalid body.", status: 400 }`, and assert the corresponding resource client method was not called. |
-| focused browser client/query/Files-table tests | Passed: 10 tests. |
-| `yarn test:e2e` | Passed: 3 Playwright tests using the ephemeral-secret launcher. Port binding required local permission in this environment. |
-| `yarn build` | Passed. |
-| `git diff --check` | Passed. |
+| focused browser client/query/Files-table tests                      | Passed: 10 tests.                                                                                                                                                                                                                                    |
+| `yarn test:e2e`                                                     | Passed: 3 Playwright tests using the ephemeral-secret launcher. Port binding required local permission in this environment.                                                                                                                          |
+| `yarn build`                                                        | Passed.                                                                                                                                                                                                                                              |
+| `git diff --check`                                                  | Passed.                                                                                                                                                                                                                                              |
 
 ### Remaining external gate
 

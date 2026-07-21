@@ -27,13 +27,20 @@ import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
 
 interface Props {
   readonly file?: File;
+  readonly membershipVersion?: number;
   readonly onClose: () => void;
   readonly open: boolean;
 }
 
-export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
+export function FileDetailsDrawer({
+  file,
+  membershipVersion,
+  onClose,
+  open,
+}: Props): JSX.Element {
   const { error, fileCollections, loading } = useFileCollections({
     fileId: file?.id,
+    membershipVersion,
     open,
   });
 
@@ -94,9 +101,11 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
 
 function useFileCollections({
   fileId,
+  membershipVersion,
   open,
 }: {
   readonly fileId?: string;
+  readonly membershipVersion?: number;
   readonly open: boolean;
 }): {
   readonly error?: string;
@@ -179,7 +188,7 @@ function useFileCollections({
     return () => {
       controller.abort();
     };
-  }, [fileId, open]);
+  }, [fileId, membershipVersion, open]);
 
   return { error, fileCollections, loading };
 }

@@ -1,5 +1,8 @@
 import {
   Alert,
+  Box,
+  Button,
+  Checkbox,
   Chip,
   Paper,
   Snackbar,
@@ -35,7 +38,10 @@ import { TableToolbar } from "../shared/TableToolbar";
 interface Props {
   readonly activeFileId?: string;
   readonly apiPath: string;
+  readonly collectionId?: string;
+  readonly onAddFiles?: () => void;
   readonly onFileSelected: (file: File) => void;
+  readonly onMembersChanged?: () => void;
 }
 
 interface UseCollectionFilesProps extends SwrProps {
@@ -92,14 +98,20 @@ function statusColor(
 export default function FileCollectionFilesTable({
   activeFileId,
   apiPath,
+  collectionId,
+  onAddFiles,
   onFileSelected,
+  onMembersChanged,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const { currentPage, cursor, cursors, handlePageChange, setCursors } =
     useCursorPagingState();
   const [downloadError, setDownloadError] = React.useState<string>();
+  const [membershipError, setMembershipError] = React.useState<string>();
+  const [removingMembers, setRemovingMembers] = React.useState(false);
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
-  const { data, error } = useCollectionFiles({
+  const { data, error, mutate } = useCollectionFiles({
     apiPath,
     cursor,
     pageSize,
@@ -112,6 +124,7 @@ export default function FileCollectionFilesTable({
     paginationCursors?.next == null && paginationCursors?.self == null
       ? 0
       : pageSize - pageLength;
+  const manageMembers = collectionId != null;
 
   React.useEffect(() => {
     if (page == null) return;
@@ -150,9 +163,63 @@ export default function FileCollectionFilesTable({
     }
   }
 
+  function handleMemberSelection(id: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleRemoveMembers() {
+    if (collectionId == null || selected.size === 0 || removingMembers) return;
+
+    const ids = [...selected];
+    const names = page?.items
+      .filter((item) => selected.has(item.id))
+      .map((item) => item.name ?? item.id)
+      .join(", ");
+    if (
+      !window.confirm(
+        `Remove ${
+          names ?? ids.join(", ")
+        } from this collection? This does not delete the source file.`
+      )
+    )
+      return;
+
+    setMembershipError(undefined);
+    setRemovingMembers(true);
+    try {
+      const res = await fetch(apiPath, {
+        body: JSON.stringify({ fileIds: ids }),
+        headers: { "Content-Type": "application/json" },
+        method: "DELETE",
+      });
+      const body = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        setMembershipError(
+          body.message ?? "Could not remove files from this collection."
+        );
+        return;
+      }
+
+      setSelected(new Set());
+      await mutate();
+      onMembersChanged?.();
+    } catch {
+      setMembershipError("Could not remove files from this collection.");
+    } finally {
+      setRemovingMembers(false);
+    }
+  }
+
   let tableRows: React.ReactNode;
   if (loadError) {
-    tableRows = <DataLoadError colSpan={headCells.length} />;
+    tableRows = (
+      <DataLoadError colSpan={headCells.length + (manageMembers ? 1 : 0)} />
+    );
   } else if (!page) {
     tableRows = (
       <SkeletonBody
@@ -175,6 +242,20 @@ export default function FileCollectionFilesTable({
           selected={isActive}
           onClick={() => onFileSelected(row)}
         >
+          {manageMembers && (
+            <TableCell
+              padding="checkbox"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleMemberSelection(row.id);
+              }}
+            >
+              <Checkbox
+                checked={selected.has(row.id)}
+                inputProps={{ "aria-label": `Select ${row.name ?? row.id}` }}
+              />
+            </TableCell>
+          )}
           <TableCell component="th" scope="row">
             <ResourceLink
               disabled={!isAvailable}
@@ -225,11 +306,34 @@ export default function FileCollectionFilesTable({
   return (
     <>
       <Paper sx={{ m: 2 }}>
-        <TableToolbar numSelected={0} title="Files" />
+        <TableToolbar
+          customActions={
+            manageMembers ? (
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button onClick={onAddFiles} size="small" variant="outlined">
+                  Add completed files
+                </Button>
+                {selected.size > 0 && (
+                  <Button
+                    color="warning"
+                    disabled={removingMembers}
+                    onClick={handleRemoveMembers}
+                    size="small"
+                  >
+                    {removingMembers ? "Removing" : "Remove from collection"}
+                  </Button>
+                )}
+              </Box>
+            ) : undefined
+          }
+          numSelected={selected.size}
+          title="Files"
+        />
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
+                {manageMembers && <TableCell padding="checkbox" />}
                 {headCells.map((headCell) => (
                   <TableCell key={headCell.id}>{headCell.label}</TableCell>
                 ))}
@@ -239,7 +343,9 @@ export default function FileCollectionFilesTable({
               {tableRows}
               {emptyRows > 0 && (
                 <TableRow style={{ height: DefaultRowHeight * emptyRows }}>
-                  <TableCell colSpan={headCells.length} />
+                  <TableCell
+                    colSpan={headCells.length + (manageMembers ? 1 : 0)}
+                  />
                 </TableRow>
               )}
             </TableBody>
@@ -274,6 +380,15 @@ export default function FileCollectionFilesTable({
       >
         <Alert onClose={() => setDownloadError(undefined)} severity="error">
           {downloadError}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        autoHideDuration={6000}
+        onClose={() => setMembershipError(undefined)}
+        open={membershipError != null}
+      >
+        <Alert onClose={() => setMembershipError(undefined)} severity="error">
+          {membershipError}
         </Alert>
       </Snackbar>
     </>

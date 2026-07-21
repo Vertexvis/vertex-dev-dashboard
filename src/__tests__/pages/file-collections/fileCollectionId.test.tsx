@@ -23,16 +23,51 @@ const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockGetFileCollection = jest.fn();
 const mockFileCollectionFilesTable = jest.fn(
-  ({ apiPath }: { readonly apiPath: string }) => (
+  ({
+    apiPath,
+    onFileSelected,
+    onMembersChanged,
+  }: {
+    readonly apiPath: string;
+    readonly onFileSelected?: (file: Record<string, unknown>) => void;
+    readonly onMembersChanged?: () => void;
+  }) => (
     <div data-api-path={apiPath} data-testid="file-collection-files-table">
       File Collection Files Table
+      <button
+        onClick={() =>
+          onFileSelected?.({
+            id: "file-1",
+            name: "File One",
+            status: "complete",
+          })
+        }
+        type="button"
+      >
+        Select collection file
+      </button>
+      <button onClick={onMembersChanged} type="button">
+        Refresh membership
+      </button>
     </div>
   )
 );
+const mockFileDetailsDrawer = jest.fn(() => <div data-testid="file-details" />);
 const originalFetch = global.fetch;
 
 jest.mock("../../../components/shared/Layout", () => ({
-  Layout: ({ main }: { readonly main: unknown }) => main,
+  Layout: ({
+    main,
+    rightDrawer,
+  }: {
+    readonly main: unknown;
+    readonly rightDrawer: unknown;
+  }) => (
+    <>
+      {main}
+      {rightDrawer}
+    </>
+  ),
 }));
 
 jest.mock(
@@ -40,6 +75,11 @@ jest.mock(
   () => () => (props: Record<string, unknown>) =>
     mockFileCollectionFilesTable(props)
 );
+
+jest.mock("../../../components/file/FileDetailsDrawer", () => ({
+  FileDetailsDrawer: (props: Record<string, unknown>) =>
+    mockFileDetailsDrawer(props),
+}));
 
 jest.mock("../../../lib/vertex-api", () => {
   const actual = jest.requireActual("../../../lib/vertex-api");
@@ -200,6 +240,67 @@ describe("FileCollectionDetails", () => {
     );
 
     await waitFor(() => expect(exportButton).toBeEnabled());
+  });
+
+  it("refreshes readiness and selected-file memberships after membership changes", async () => {
+    const readinessPath =
+      "/api/file-collections/collection-1?includeExportAvailability=true";
+    (global.fetch as jest.Mock).mockImplementation((input: string) => {
+      if (input === readinessPath) {
+        return Promise.resolve(
+          jsonResponse({
+            export: { enabled: true, fileCount: 1 },
+            status: 200,
+          })
+        );
+      }
+
+      throw new Error(`Unexpected request: ${input}`);
+    });
+
+    render(<FileCollectionDetails fileCollection={fileCollection()} />);
+
+    await screen.findByRole("button", { name: "Export Archive" });
+    await waitFor(() =>
+      expect(mockFileCollectionFilesTable).toHaveBeenCalled()
+    );
+    act(() => {
+      const props = mockFileCollectionFilesTable.mock.calls.at(-1)?.[0] as {
+        onFileSelected: (file: Record<string, unknown>) => void;
+      };
+      props.onFileSelected({
+        id: "file-1",
+        name: "File One",
+        status: "complete",
+      });
+    });
+
+    await waitFor(() =>
+      expect(mockFileDetailsDrawer).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          file: expect.objectContaining({ id: "file-1" }),
+          membershipVersion: 0,
+        })
+      )
+    );
+
+    act(() => {
+      const props = mockFileCollectionFilesTable.mock.calls.at(-1)?.[0] as {
+        onMembersChanged: () => void;
+      };
+      props.onMembersChanged();
+    });
+
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(readinessPath, {
+        signal: undefined,
+      })
+    );
+    await waitFor(() =>
+      expect(mockFileDetailsDrawer).toHaveBeenLastCalledWith(
+        expect.objectContaining({ membershipVersion: 1 })
+      )
+    );
   });
 
   it("refreshes export availability after a transient readiness failure", async () => {

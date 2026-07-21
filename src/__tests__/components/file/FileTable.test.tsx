@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http,HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import React from "react";
 
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
@@ -190,6 +190,48 @@ describe("FileTable", () => {
 
     expect(fromInput).toHaveValue("2026-07-01");
     expect(toInput).toHaveValue("");
+  });
+
+  it("does not request file deletion when it is cancelled", async () => {
+    const deleteFiles = jest.fn();
+    jest.spyOn(window, "confirm").mockReturnValue(false);
+    server.use(
+      http.get("*/api/files", () => HttpResponse.json(page)),
+      http.delete("*/api/files", (info) => deleteFiles(info))
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Select alpha.jt"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Delete 1 selected file? This cannot be undone."
+    );
+    expect(deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it("deletes files through the existing request after confirmation", async () => {
+    const deletedIds: string[][] = [];
+    jest.spyOn(window, "confirm").mockReturnValue(true);
+    server.use(
+      http.get("*/api/files", () => HttpResponse.json(page)),
+      http.delete("*/api/files", async ({ request }) => {
+        const body = (await request.json()) as { ids?: string[] };
+        deletedIds.push(body.ids ?? []);
+        return HttpResponse.json({ status: 200 });
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Select alpha.jt"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    await waitFor(() => expect(deletedIds).toEqual([["file-1"]]));
+    expect(screen.getByLabelText("Select alpha.jt")).not.toBeChecked();
   });
 });
 

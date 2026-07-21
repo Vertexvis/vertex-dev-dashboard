@@ -17,6 +17,42 @@
           "createdAtEnd"
         ]
       }
+    },
+    {
+      "name": "scene-workspace-items",
+      "group": "scene-workspace",
+      "displayName": "Scene Workspace Items",
+      "route": "scene-workspace-items",
+      "resourceType": "scene-item",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["sceneId", "suppliedId"]
+      }
+    },
+    {
+      "name": "scene-workspace-views",
+      "group": "scene-workspace",
+      "displayName": "Scene Workspace Views",
+      "route": "scene-workspace-views",
+      "resourceType": "scene-view",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["sceneId"]
+      }
+    },
+    {
+      "name": "documents",
+      "group": "exports-documents",
+      "displayName": "Documents Preview",
+      "route": "documents",
+      "resourceType": "document",
+      "operations": ["list", "create", "get"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["suppliedId"]
+      }
     }
   ]
 }

@@ -74,6 +74,8 @@ export default function PartTable({
     setCursors,
   } = useCursorPagingState();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [deleteError, setDeleteError] = React.useState<string | undefined>();
+  const [deleting, setDeleting] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
     !!router.query.create
@@ -131,12 +133,30 @@ export default function PartTable({
   }
 
   async function handleDelete() {
-    setSelected(new Set());
-    await fetch("/api/parts", {
-      body: JSON.stringify({ ids: [...selected] }),
-      method: "DELETE",
-    });
-    mutate();
+    if (selected.size === 0 || deleting) return;
+
+    const ids = [...selected];
+    setDeleteError(undefined);
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/parts", {
+        body: JSON.stringify({ ids }),
+        headers: { "Content-Type": "application/json" },
+        method: "DELETE",
+      });
+      const body = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        setDeleteError(body.message ?? "Could not delete the selected parts.");
+        return;
+      }
+
+      setSelected(new Set());
+      await mutate();
+    } catch {
+      setDeleteError("Could not delete the selected parts.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -265,6 +285,15 @@ export default function PartTable({
       >
         <Alert onClose={() => setToastMsg(undefined)} severity="success">
           {toastMsg}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={deleteError != null}
+        autoHideDuration={6000}
+        onClose={() => setDeleteError(undefined)}
+      >
+        <Alert onClose={() => setDeleteError(undefined)} severity="error">
+          {deleteError}
         </Alert>
       </Snackbar>
     </>
