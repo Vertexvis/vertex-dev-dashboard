@@ -12,6 +12,10 @@ export interface FileDownloadUrlRes extends Res {
 
 export const FileStatusComplete = "complete";
 
+export function toFile(data: FileList["data"][number]): File {
+  return { ...data.attributes, id: data.id };
+}
+
 export function normalizeFileStatus(status?: string): string | undefined {
   return status?.trim().toLowerCase();
 }
