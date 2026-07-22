@@ -101,11 +101,9 @@ describe("Artifacts API routes", () => {
         },
       },
     });
-    getFile
-      .mockReset()
-      .mockResolvedValue({
-        data: { data: { attributes: { status: "complete" } } },
-      });
+    getFile.mockReset().mockResolvedValue({
+      data: { data: { attributes: { status: "complete" } } },
+    });
     getDocuments
       .mockReset()
       .mockResolvedValue({ data: { data: [], links: {} } });

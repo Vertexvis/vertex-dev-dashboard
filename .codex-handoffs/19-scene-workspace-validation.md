@@ -143,17 +143,17 @@ Both findings above are resolved.
 
 ### Independent revalidation evidence
 
-| Check | Result |
-| --- | --- |
-| `yarn api:generate:check` | Passed. |
-| `yarn lint` | Passed with no warnings/errors. |
-| Focused route unit suite | Passed: 4 tests. |
-| Focused Docker/MockServer route contracts | Passed: 4 tests with Docker socket access. A sandbox-only attempt cannot access Docker and is not a product failure. |
-| Focused Workspace/SceneTable browser suite | Passed: 6 tests. |
-| `yarn test:ci` | Passed: 28 suites, 166 tests, including both new Docker contract tests. Expected fixture error logging and an unrelated pre-existing React `act(...)` warning were non-fatal. |
-| `yarn build` | Passed. |
-| Focused Playwright `e2e/scene-workspace.spec.ts` | Passed: local auth setup plus Workspace flow. It verifies the deferred-state notice, no state/stream-key request, and no stream key in the URL. |
-| `git diff --check 1b7bb24 --` | Passed. |
+| Check                                            | Result                                                                                                                                                                        |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn api:generate:check`                        | Passed.                                                                                                                                                                       |
+| `yarn lint`                                      | Passed with no warnings/errors.                                                                                                                                               |
+| Focused route unit suite                         | Passed: 4 tests.                                                                                                                                                              |
+| Focused Docker/MockServer route contracts        | Passed: 4 tests with Docker socket access. A sandbox-only attempt cannot access Docker and is not a product failure.                                                          |
+| Focused Workspace/SceneTable browser suite       | Passed: 6 tests.                                                                                                                                                              |
+| `yarn test:ci`                                   | Passed: 28 suites, 166 tests, including both new Docker contract tests. Expected fixture error logging and an unrelated pre-existing React `act(...)` warning were non-fatal. |
+| `yarn build`                                     | Passed.                                                                                                                                                                       |
+| Focused Playwright `e2e/scene-workspace.spec.ts` | Passed: local auth setup plus Workspace flow. It verifies the deferred-state notice, no state/stream-key request, and no stream key in the URL.                               |
+| `git diff --check 1b7bb24 --`                    | Passed.                                                                                                                                                                       |
 
 ### Final disposition
 

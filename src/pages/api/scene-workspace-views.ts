@@ -3,5 +3,7 @@ import { createVertexRoute } from "../../lib/api/route";
 import { sceneWorkspaceViewsCollectionRouteSpec } from "../../lib/resources/scene-workspace/scene-workspace-views.hooks";
 import withSession from "../../lib/with-session";
 
-export const handleSceneWorkspaceViews = createVertexRoute(sceneWorkspaceViewsCollectionRouteSpec);
+export const handleSceneWorkspaceViews = createVertexRoute(
+  sceneWorkspaceViewsCollectionRouteSpec
+);
 export default withSession(handleSceneWorkspaceViews);

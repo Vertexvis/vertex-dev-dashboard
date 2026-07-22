@@ -3,5 +3,7 @@ import { createVertexRoute } from "../../../lib/api/route";
 import { documentsDetailRouteSpec } from "../../../lib/resources/exports-documents/documents.hooks";
 import withSession from "../../../lib/with-session";
 
-export const handleDocumentsDetail = createVertexRoute(documentsDetailRouteSpec);
+export const handleDocumentsDetail = createVertexRoute(
+  documentsDetailRouteSpec
+);
 export default withSession(handleDocumentsDetail);

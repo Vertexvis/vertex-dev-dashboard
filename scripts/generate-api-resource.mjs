@@ -146,7 +146,9 @@ function routeTemplate(resource, detail) {
 import { ${hook} } from "${relative}/resources/${resource.group}/${resource.name}.hooks";
 import withSession from "${relative}/with-session";
 
-export const ${handler} = createVertexRoute(${hook});
+export const ${handler} = createVertexRoute(
+  ${hook}
+);
 export default withSession(${handler});
 `;
 }

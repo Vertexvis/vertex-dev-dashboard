@@ -1,3 +1,4 @@
+import { PictureAsPdf } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -12,10 +13,12 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { DocumentData, FileList } from "@vertexvis/api-client-node";
-import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
@@ -34,14 +37,38 @@ function fileViewHref(fileId: string): string {
   return `/files?fileId=${encodeURIComponent(fileId)}`;
 }
 
+function DocumentTypeIcon({ type }: { readonly type: string }): JSX.Element {
+  if (type.toLowerCase() === "pdf") {
+    return (
+      <Tooltip title="PDF">
+        <Box
+          aria-label="PDF document"
+          role="img"
+          sx={{ display: "inline-flex" }}
+        >
+          <PictureAsPdf color="error" fontSize="small" />
+        </Box>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Typography component="span" variant="body2">
+      {type.toUpperCase()}
+    </Typography>
+  );
+}
+
+type FileDisplay = "id" | "name";
+
 export function DocumentsPage(): JSX.Element {
-  const router = useRouter();
   const [suppliedId, setSuppliedId] = React.useState("");
   const [filter, setFilter] = React.useState("");
   const [cursor, setCursor] = React.useState<string>();
   const [fileId, setFileId] = React.useState("");
   const [selectedDocumentId, setSelectedDocumentId] = React.useState<string>();
   const [newSuppliedId, setNewSuppliedId] = React.useState("");
+  const [fileDisplay, setFileDisplay] = React.useState<FileDisplay>("name");
   const [error, setError] = React.useState<string>();
   const [creating, setCreating] = React.useState(false);
   const documentPath = `/api/documents?pageSize=25${
@@ -73,9 +100,19 @@ export function DocumentsPage(): JSX.Element {
           isCompleteFileStatus(file.attributes.status)
         )
       : [];
+  const fileNamesById = React.useMemo(
+    () =>
+      new Map(
+        files.data && !isErrorRes(files.data)
+          ? files.data.data.map((file) => [file.id, file.attributes.name])
+          : []
+      ),
+    [files.data]
+  );
 
-  function openFile(fileId: string): void {
-    void router.push({ pathname: "/files", query: { fileId } });
+  function fileLabel(fileId: string): string {
+    const fileName = fileNamesById.get(fileId);
+    return fileDisplay === "name" && fileName ? fileName : fileId;
   }
 
   async function create(): Promise<void> {
@@ -182,7 +219,23 @@ export function DocumentsPage(): JSX.Element {
           <Typography component="h2" variant="h6">
             Documents
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ alignItems: "center", display: "flex", gap: 1 }}>
+            <ToggleButtonGroup
+              aria-label="File display"
+              exclusive
+              onChange={(_, value: FileDisplay | null) => {
+                if (value != null) setFileDisplay(value);
+              }}
+              size="small"
+              value={fileDisplay}
+            >
+              <ToggleButton aria-label="Display filenames" value="name">
+                Filename
+              </ToggleButton>
+              <ToggleButton aria-label="Display File IDs" value="id">
+                File ID
+              </ToggleButton>
+            </ToggleButtonGroup>
             <TextField
               label="Supplied ID filter"
               onChange={(event) => setSuppliedId(event.target.value)}
@@ -236,16 +289,15 @@ export function DocumentsPage(): JSX.Element {
                   <TableCell>
                     <ResourceLink
                       href={fileViewHref(document.attributes.fileId)}
-                      onPrimaryAction={() =>
-                        openFile(document.attributes.fileId)
-                      }
                       primaryActionLabel={`Open file ${document.attributes.fileId}`}
                     >
-                      {document.attributes.fileId}
+                      {fileLabel(document.attributes.fileId)}
                     </ResourceLink>
                   </TableCell>
                   <TableCell>{document.attributes.suppliedId ?? "—"}</TableCell>
-                  <TableCell>{document.attributes.documentType}</TableCell>
+                  <TableCell>
+                    <DocumentTypeIcon type={document.attributes.documentType} />
+                  </TableCell>
                   <TableCell>{document.attributes.createdAt}</TableCell>
                 </TableRow>
               ))}
@@ -285,9 +337,6 @@ export function DocumentsPage(): JSX.Element {
                   href={fileViewHref(
                     selectedDocumentData?.attributes.fileId ?? ""
                   )}
-                  onPrimaryAction={() =>
-                    openFile(selectedDocumentData?.attributes.fileId ?? "")
-                  }
                   primaryActionLabel={`Open file ${selectedDocumentData?.attributes.fileId}`}
                 >
                   {selectedDocumentData?.attributes.fileId}

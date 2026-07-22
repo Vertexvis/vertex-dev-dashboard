@@ -2,7 +2,7 @@ import { expect, test } from "playwright/test";
 
 test.use({ storageState: "e2e/.auth/session.json" });
 
-test("inspects scene assembly and views without exposing stream keys", async ({
+test("inspects scene assembly and views without exposing stream keys in the URL", async ({
   page,
 }) => {
   const routeRequests: string[] = [];
@@ -56,12 +56,25 @@ test("inspects scene assembly and views without exposing stream keys", async ({
       }),
     });
   });
+  await page.route("**/api/stream-keys", async (route) => {
+    routeRequests.push(route.request().url());
+    await route.fulfill({
+      contentType: "application/json",
+      status: 403,
+      body: JSON.stringify({ message: "Forbidden", status: 403 }),
+    });
+  });
 
   await page.goto("/scene-workspace/scene-1");
   await expect(
     page.getByRole("heading", { name: "Scene Workspace" })
   ).toBeVisible();
   await expect(page.getByText("Fixture scene")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Viewer preview is unavailable for this account. Workspace details remain available."
+    )
+  ).toBeVisible();
 
   await page.getByRole("tab", { name: "Assembly" }).click();
   await expect(page.getByText("Assembly item")).toBeVisible();
@@ -75,7 +88,7 @@ test("inspects scene assembly and views without exposing stream keys", async ({
     )
   ).toBeVisible();
 
-  expect(routeRequests.join("\n")).not.toContain("stream-key");
+  expect(routeRequests.join("\n")).toContain("/api/stream-keys");
   expect(routeRequests.join("\n")).not.toContain("scene-view-states");
   expect(page.url()).not.toContain("streamKey");
 });

@@ -1,12 +1,11 @@
-import {
-  isFailure,
-  StreamKeysApiCreateSceneStreamKeyRequest,
-} from "@vertexvis/api-client-node";
+import { StreamKeysApiCreateSceneStreamKeyRequest } from "@vertexvis/api-client-node";
 
 import {
   BodyRequired,
   ErrorRes,
   InvalidBody,
+  isErrorFailure,
+  isErrorRes,
   Res,
   toErrorRes,
 } from "../../lib/api";
@@ -20,7 +19,8 @@ export interface CreateStreamKeyRes extends Res {
 
 type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, "id">;
 
-export default withSession(methodRouter({ POST: create }));
+export const handleStreamKeys = methodRouter({ POST: create });
+export default withSession(handleStreamKeys);
 
 async function create(
   req: NextIronRequest
@@ -39,7 +39,8 @@ async function create(
       },
     })
   );
-  return isFailure(r)
-    ? toErrorRes({ failure: r })
-    : { key: r.data.attributes.key ?? "", status: 200 };
+  if (isErrorFailure(r)) return toErrorRes({ failure: r });
+  const localError = r as unknown as { message?: string; status?: number };
+  if (isErrorRes(localError)) return localError;
+  return { key: r.data.attributes.key ?? "", status: 200 };
 }
