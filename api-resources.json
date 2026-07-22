@@ -53,6 +53,38 @@
         "defaultPageSize": 25,
         "filters": ["suppliedId"]
       }
+    },
+    {
+      "name": "property-entries",
+      "group": "properties-search",
+      "displayName": "Property Entries",
+      "route": "property-entries",
+      "resourceType": "property-entry",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["resourceId", "resourceType"]
+      }
+    },
+    {
+      "name": "property-key-policies",
+      "group": "properties-search",
+      "displayName": "Property Key Policies",
+      "route": "property-key-policies",
+      "resourceType": "property-key-policy",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["suppliedId"]
+      }
+    },
+    {
+      "name": "search-sessions",
+      "group": "properties-search",
+      "displayName": "Search Sessions",
+      "route": "search-sessions",
+      "resourceType": "search-session",
+      "operations": ["get"]
     }
   ]
 }

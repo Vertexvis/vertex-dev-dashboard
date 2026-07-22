@@ -3,5 +3,7 @@ import { createVertexRoute } from "../../lib/api/route";
 import { filesCollectionRouteSpec } from "../../lib/resources/core-import-library/files.hooks";
 import withSession from "../../lib/with-session";
 
-export const handleFiles = createVertexRoute(filesCollectionRouteSpec);
+export const handleFiles = createVertexRoute(
+  filesCollectionRouteSpec
+);
 export default withSession(handleFiles);

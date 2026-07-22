@@ -182,3 +182,30 @@ component coverage; a controlled browser smoke remains desirable.
 | `yarn test:e2e`                                                                                  | Passed: 7 tests, including Documents.                                  |
 | `yarn build`                                                                                     | Passed.                                                                |
 | `git diff --check`                                                                               | Passed.                                                                |
+
+### Documents type presentation follow-up
+
+- The Documents **Type** column now renders known PDF documents with the
+  familiar red Material UI `PictureAsPdf` icon, with both an accessible label
+  and a `PDF` tooltip. Unknown future type values intentionally remain neutral
+  uppercase labels rather than receiving a guessed icon or color.
+
+| Check                                                                             | Result                                |
+| --------------------------------------------------------------------------------- | ------------------------------------- |
+| `yarn test --runInBand src/__tests__/components/artifacts/DocumentsPage.test.tsx` | Passed: 4 focused Documents UI tests. |
+| `yarn lint`                                                                       | Passed with no warnings/errors.       |
+
+### Documents File label follow-up
+
+- The Documents **File** column now defaults to an available source filename
+  while retaining the File ID as the direct-link target and as the reliable
+  fallback when the loaded File page has no matching name.
+- An accessible header-level **File display** toggle lets developers switch
+  between `Filename` and `File ID` labels without changing the direct
+  `/files?fileId=<id>` SPA link.
+
+| Check                                                                                                              | Result                                                          |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `yarn test --runInBand src/__tests__/components/artifacts/DocumentsPage.test.tsx`                                  | Passed: 5 focused Documents UI tests.                           |
+| `yarn eslint src/components/artifacts/DocumentsPage.tsx src/__tests__/components/artifacts/DocumentsPage.test.tsx` | Passed.                                                         |
+| `yarn lint`                                                                                                        | Exit 0 with an unrelated `LeftDrawer.tsx` import-order warning. |

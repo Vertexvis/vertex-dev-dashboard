@@ -1,13 +1,12 @@
-import {
-  isFailure,
-  StreamKeysApiCreateSceneStreamKeyRequest,
-} from "@vertexvis/api-client-node";
+import { StreamKeysApiCreateSceneStreamKeyRequest } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import {
   BodyRequired,
   ErrorRes,
   InvalidBody,
+  isErrorFailure,
+  isErrorRes,
   MethodNotAllowed,
   Res,
   toErrorRes,
@@ -21,7 +20,7 @@ export interface CreateStreamKeyRes extends Res {
 
 type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, "id">;
 
-export default withSession(async function handle(
+export async function handleStreamKeys(
   req: NextIronRequest,
   res: NextApiResponse<CreateStreamKeyRes | ErrorRes>
 ): Promise<void> {
@@ -31,7 +30,9 @@ export default withSession(async function handle(
   }
 
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+}
+
+export default withSession(handleStreamKeys);
 
 async function create(
   req: NextIronRequest
@@ -50,7 +51,8 @@ async function create(
       },
     })
   );
-  return isFailure(r)
-    ? toErrorRes({ failure: r })
-    : { key: r.data.attributes.key ?? "", status: 200 };
+  if (isErrorFailure(r)) return toErrorRes({ failure: r });
+  const localError = r as unknown as { message?: string; status?: number };
+  if (isErrorRes(localError)) return localError;
+  return { key: r.data.attributes.key ?? "", status: 200 };
 }

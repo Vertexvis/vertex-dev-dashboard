@@ -3,9 +3,13 @@ import React from "react";
 
 import { SceneWorkspace } from "../../components/scene/SceneWorkspace";
 import { Layout } from "../../components/shared/Layout";
-import { defaultServerSideProps } from "../../lib/with-session";
+import { CommonProps, defaultServerSideProps } from "../../lib/with-session";
 
-export default function SceneWorkspacePage(): JSX.Element {
+export default function SceneWorkspacePage({
+  clientId,
+  networkConfig,
+  vertexEnv,
+}: CommonProps): JSX.Element {
   const router = useRouter();
   const sceneId = router.query.sceneId;
 
@@ -13,7 +17,12 @@ export default function SceneWorkspacePage(): JSX.Element {
     <Layout
       main={
         typeof sceneId === "string" ? (
-          <SceneWorkspace sceneId={sceneId} />
+          <SceneWorkspace
+            clientId={clientId}
+            networkConfig={networkConfig}
+            sceneId={sceneId}
+            vertexEnv={vertexEnv}
+          />
         ) : (
           <></>
         )
