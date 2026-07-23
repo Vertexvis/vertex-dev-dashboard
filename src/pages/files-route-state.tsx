@@ -16,9 +16,10 @@ import {
 import { SetRouteState, useRouteState } from "../lib/route-state";
 import { defaultServerSideProps } from "../lib/with-session";
 
-const FileTable = dynamic(() => import("../components/file/FileTable"), {
-  ssr: false,
-});
+const RouteStateFileTable = dynamic(
+  () => import("../components/file/RouteStateFileTable"),
+  { ssr: false }
+);
 
 type FileData = FileList["data"][number];
 
@@ -73,7 +74,7 @@ export default function FilesRouteState(): JSX.Element {
               <AppLink href="/files">View the original Files page.</AppLink>
             </Alert>
           </Box>
-          <FileTable
+          <RouteStateFileTable
             activeFileId={state.selectedFileId}
             onFileSelected={handleFileSelected}
             onRouteStateChange={setTableState}
