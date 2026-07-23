@@ -23,21 +23,20 @@ const RouteStateFileTable = dynamic(
 
 type FileData = FileList["data"][number];
 
+function toSelectedFile(data?: FileData | ErrorRes): File | undefined {
+  if (data == null || !("attributes" in data)) return undefined;
+  return toFile(data);
+}
+
 export default function FilesRouteState(): JSX.Element {
   const [state, setState] = useRouteState(filesRouteStateDefinition);
-  const [selectedFromTable, setSelectedFromTable] = React.useState<File>();
   const { data: selectedFromUrl } = useSWR<FileData | ErrorRes>(
     state.selectedFileId != null
       ? `/api/files/${encodeURIComponent(state.selectedFileId)}`
       : null
   );
 
-  const selectedFile =
-    selectedFromTable?.id === state.selectedFileId
-      ? selectedFromTable
-      : selectedFromUrl != null && "attributes" in selectedFromUrl
-      ? toFile(selectedFromUrl)
-      : undefined;
+  const selectedFile = toSelectedFile(selectedFromUrl);
   const drawerOpen = state.selectedFileId != null;
 
   const setTableState = React.useCallback<SetRouteState<FileTableRouteState>>(
@@ -51,14 +50,12 @@ export default function FilesRouteState(): JSX.Element {
   );
 
   function handleFileSelected(file: File) {
-    setSelectedFromTable(file);
     void setState((current) => ({ ...current, selectedFileId: file.id }), {
       history: "push",
     });
   }
 
   function handleClose() {
-    setSelectedFromTable(undefined);
     void setState((current) => ({ ...current, selectedFileId: undefined }), {
       history: "push",
     });
