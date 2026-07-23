@@ -9,6 +9,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { AppProps } from "next/app";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { NuqsAdapter } from "nuqs/adapters/next/pages";
 import React from "react";
 import { SWRConfig } from "swr";
 
@@ -114,7 +115,9 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
           <SWRConfig
             value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
           >
-            <Component {...pageProps} />
+            <NuqsAdapter>
+              <Component {...pageProps} />
+            </NuqsAdapter>
           </SWRConfig>
         </ThemeProvider>
       </CacheProvider>

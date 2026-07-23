@@ -20,7 +20,7 @@ const projectConfig = {
     ],
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!(@mswjs|@open-draft|msw|rettime|until-async|headers-polyfill|is-node-process|outvariant|strict-event-emitter|path-to-regexp)/)",
+    "/node_modules/(?!(@mswjs|@open-draft|msw|nuqs|rettime|until-async|headers-polyfill|is-node-process|outvariant|strict-event-emitter|path-to-regexp)/)",
   ],
 };
 
