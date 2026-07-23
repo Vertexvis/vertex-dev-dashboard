@@ -15,6 +15,15 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "paths": {
+      "nuqs": ["./node_modules/nuqs/dist/index.d.ts"],
+      "nuqs/adapters/next/pages": [
+        "./node_modules/nuqs/dist/adapters/next/pages.d.ts"
+      ],
+      "nuqs/adapters/testing": [
+        "./node_modules/nuqs/dist/adapters/testing.d.ts"
+      ]
+    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,

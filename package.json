@@ -18,6 +18,7 @@
     "next": "^15.5.18",
     "next-connect": "^0.13.0",
     "next-iron-session": "^4.2",
+    "nuqs": "^2.9.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.63.0",
@@ -57,7 +58,7 @@
     "testcontainers": "10.28.0",
     "ts-jest": "^29.4.11",
     "tslib": "^2.3",
-    "typescript": "^4"
+    "typescript": "^5"
   },
   "scripts": {
     "build": "next build",
