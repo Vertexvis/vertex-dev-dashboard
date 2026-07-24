@@ -15,7 +15,6 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import { Cursors } from "@vertexvis/api-client-node";
 import { debounce, Nullable, useQueryStates } from "nuqs";
 import React from "react";
 import useSWR from "swr";
@@ -38,6 +37,7 @@ import {
   FileTableState,
   fileTableUrlKeys,
 } from "../../lib/files-nuqs-state";
+import { useUrlCursorPaging } from "../../lib/nuqs-table-state";
 import { buildQuery, SwrProps } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
@@ -136,10 +136,6 @@ export default function NuqsFileTable({
   const [state, setState] = useQueryStates(fileTableParsers, {
     urlKeys: fileTableUrlKeys,
   });
-  const [cachedCursors, setCachedCursors] = React.useState<Cursors>();
-  const [previousCursors, setPreviousCursors] = React.useState<
-    Record<number, string | undefined>
-  >({});
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [showToast, setShowToast] = React.useState(false);
@@ -165,16 +161,26 @@ export default function NuqsFileTable({
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
   const visiblePage = page;
   const pageLength = visiblePage ? visiblePage.items.length : 0;
-  const paginationCursors = visiblePage?.cursors ?? cachedCursors;
+  const paging = useUrlCursorPaging({
+    cursor: state.cursor,
+    cursors: page?.cursors ?? undefined,
+    loaded: page != null,
+    page: state.page,
+    searchKey: JSON.stringify({
+      createdAtEnd: state.createdAtEnd,
+      createdAtStart: state.createdAtStart,
+      filterId: state.filterId,
+      name: state.name,
+      sort: state.sort,
+      suppliedId: state.suppliedId,
+    }),
+    setPaging: (patch) => void setState(patch, { history: "push" }),
+  });
+  const { paginationCursors, resetPagingCache } = paging;
   const emptyRows =
     paginationCursors?.next == null && paginationCursors?.self == null
       ? 0
       : pageSize - pageLength;
-
-  const resetPagingCache = React.useCallback(() => {
-    setCachedCursors(undefined);
-    setPreviousCursors({});
-  }, []);
 
   function handleTextFilterChange(
     field: "filterId" | "name" | "suppliedId",
@@ -190,29 +196,6 @@ export default function NuqsFileTable({
     void setState(patch, { limitUrlUpdates: debounce(FilterDebounceMs) });
   }
 
-  const searchKey = JSON.stringify({
-    createdAtEnd: state.createdAtEnd,
-    createdAtStart: state.createdAtStart,
-    filterId: state.filterId,
-    name: state.name,
-    sort: state.sort,
-    suppliedId: state.suppliedId,
-  });
-  const previousSearchKey = React.useRef(searchKey);
-
-  React.useEffect(() => {
-    if (previousSearchKey.current !== searchKey) {
-      previousSearchKey.current = searchKey;
-      resetPagingCache();
-    }
-  }, [searchKey, resetPagingCache]);
-
-  React.useEffect(() => {
-    if (page == null) return;
-
-    setCachedCursors(page.cursors ?? undefined);
-  }, [page]);
-
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (visiblePage == null) return;
 
@@ -227,24 +210,6 @@ export default function NuqsFileTable({
     else upd.add(id);
 
     setSelected(upd);
-  }
-
-  function handleChangePage(
-    _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
-  ) {
-    let nextCursor = state.cursor;
-    if (state.page < num) {
-      nextCursor = paginationCursors?.next ?? null;
-      setPreviousCursors((current) => ({
-        ...current,
-        [state.page]: paginationCursors?.self,
-      }));
-    } else if (state.page > num) {
-      nextCursor = previousCursors[num] ?? null;
-    }
-
-    void setState({ cursor: nextCursor, page: num }, { history: "push" });
   }
 
   function handleSortChange(field: string) {
@@ -501,14 +466,11 @@ export default function NuqsFileTable({
           }
           rowsPerPage={pageSize}
           page={state.page}
-          onPageChange={handleChangePage}
+          onPageChange={paging.handleChangePage}
           slotProps={{
             actions: {
-              nextButton: { disabled: paginationCursors?.next == null },
-              previousButton: {
-                disabled:
-                  state.page === 0 || previousCursors[state.page - 1] == null,
-              },
+              nextButton: { disabled: paging.nextDisabled },
+              previousButton: { disabled: paging.previousDisabled },
             },
           }}
         />

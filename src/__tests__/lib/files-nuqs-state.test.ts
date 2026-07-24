@@ -1,8 +1,4 @@
-import {
-  DefaultFileSort,
-  parseAsFileSort,
-  parseAsPageIndex,
-} from "../../lib/files-nuqs-state";
+import { DefaultFileSort, parseAsFileSort } from "../../lib/files-nuqs-state";
 
 describe("files-nuqs-state", () => {
   describe("parseAsFileSort", () => {
@@ -28,9 +24,9 @@ describe("files-nuqs-state", () => {
     });
 
     it("serializes back to the API sort parameter", () => {
-      expect(
-        parseAsFileSort.serialize({ field: "name", order: "desc" })
-      ).toBe("-name");
+      expect(parseAsFileSort.serialize({ field: "name", order: "desc" })).toBe(
+        "-name"
+      );
       expect(parseAsFileSort.serialize(DefaultFileSort)).toBe("-created");
     });
 
@@ -44,18 +40,6 @@ describe("files-nuqs-state", () => {
       expect(
         parseAsFileSort.eq(DefaultFileSort, { field: "name", order: "desc" })
       ).toBe(false);
-    });
-  });
-
-  describe("parseAsPageIndex", () => {
-    it("parses non-negative integers", () => {
-      expect(parseAsPageIndex.parse("0")).toBe(0);
-      expect(parseAsPageIndex.parse("12")).toBe(12);
-    });
-
-    it("returns null for malformed values so the default applies", () => {
-      expect(parseAsPageIndex.parse("-1")).toBeNull();
-      expect(parseAsPageIndex.parse("not-a-page")).toBeNull();
     });
   });
 });
