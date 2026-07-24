@@ -24,7 +24,6 @@ import useSWR from "swr";
 import { ErrorRes, GetRes, isErrorRes } from "../../lib/api";
 import { CommonProps } from "../../lib/with-session";
 import { SceneExports } from "../artifacts/SceneExports";
-import { SceneWorkspaceViewer } from "./SceneWorkspaceViewer";
 
 type WorkspaceTab =
   | "overview"
@@ -66,12 +65,7 @@ function ApiError({ message }: { readonly message: string }): JSX.Element {
   return <Alert severity="error">{message}</Alert>;
 }
 
-export function SceneWorkspace({
-  clientId,
-  networkConfig,
-  sceneId,
-  vertexEnv,
-}: Props): JSX.Element {
+export function SceneWorkspace({ sceneId }: Props): JSX.Element {
   const [tab, setTab] = React.useState<WorkspaceTab>("overview");
   const [selectedViewId, setSelectedViewId] = React.useState<string>();
   const scene = useSWR<SceneData, ErrorRes>(`/api/scenes/${sceneId}`);
@@ -121,18 +115,19 @@ export function SceneWorkspace({
 
       <Paper sx={{ mb: 2, p: 2 }}>
         <Typography component="h2" sx={{ mb: 1 }} variant="h6">
-          Interactive preview
+          Interactive viewer
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
-          A compact, session-authenticated preview. It does not change the
-          existing full Viewer route or shareable Viewer URL behavior.
+          Launch the full Viewer for this scene. This does not change the
+          existing Viewer route or shareable Viewer URL behavior.
         </Typography>
-        <SceneWorkspaceViewer
-          clientId={clientId}
-          networkConfig={networkConfig}
-          sceneId={sceneId}
-          vertexEnv={vertexEnv}
-        />
+        <Button
+          component={NextLink}
+          href={`/scene-viewer/${encodeURIComponent(sceneId)}`}
+          variant="contained"
+        >
+          Launch Viewer
+        </Button>
       </Paper>
 
       <Paper>

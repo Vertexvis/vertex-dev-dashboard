@@ -88,7 +88,7 @@ export function LeftDrawer(): JSX.Element {
           <ListItemIcon>
             <SearchOutlined />
           </ListItemIcon>
-          <ListItemText primary="Properties & Search" />
+          <ListItemText primary="Properties & Search (Preview)" />
         </ListItemButton>
         <ListItemButton
           component={AppLink}
@@ -99,7 +99,7 @@ export function LeftDrawer(): JSX.Element {
           <ListItemIcon>
             <AdminPanelSettingsOutlined />
           </ListItemIcon>
-          <ListItemText primary="Identity & Administration" />
+          <ListItemText primary="Identity & Administration (Preview)" />
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/file-collections")}
