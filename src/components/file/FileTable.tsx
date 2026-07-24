@@ -15,12 +15,16 @@ import {
   TableRow,
   TextField,
 } from '@mui/material';
-import debounce from 'lodash.debounce';
+import { debounce, Nullable, useQueryStates } from 'nuqs';
 import React from 'react';
-import useSWR, { SWRResponse } from 'swr';
+import useSWR from 'swr';
 
 import { isErrorRes } from '../../lib/api';
-import { toLocaleString } from '../../lib/dates';
+import {
+  toLocalDateInputValue,
+  toLocalDayBoundaryIso,
+  toLocaleString,
+} from '../../lib/dates';
 import {
   File,
   FileStatusComplete,
@@ -28,8 +32,13 @@ import {
   normalizeFileStatus,
   toFilePage,
 } from '../../lib/files';
-import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
-import { reportError } from '../../lib/report-error';
+import {
+  fileTableParsers,
+  FileTableState,
+  fileTableUrlKeys,
+} from '../../lib/files-nuqs-state';
+import { useUrlCursorPaging } from '../../lib/nuqs-table-state';
+import { buildQuery, SwrProps } from '../../lib/paging';
 import { SortState, toggleSort, toSortParam } from '../../lib/sorting';
 import {
   CreatedAtDateRange,
@@ -55,6 +64,8 @@ export const headCells: readonly HeadCell[] = [
   { id: 'actions', label: 'Actions' },
 ];
 
+const FilterDebounceMs = 300;
+
 interface UseFilesProps extends SwrProps {
   readonly createdAtEnd?: string;
   readonly createdAtStart?: string;
@@ -73,7 +84,7 @@ function useFiles({
   pageSize,
   sort,
   suppliedId,
-}: UseFilesProps): SWRResponse {
+}: UseFilesProps): ReturnType<typeof useSWR> {
   return useSWR(
     buildQuery('/api/files', {
       createdAtEnd,
@@ -115,70 +126,70 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
-type SetOptionalString = React.Dispatch<React.SetStateAction<string | undefined>>;
-function useDebouncedFilter(
-  setFilter: SetOptionalString,
-  resetPaging: () => void
-): (value: string) => void {
-  return React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setFilter(value === '' ? undefined : value);
-      }, 300),
-    [resetPaging, setFilter]
-  );
-}
-
 export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const [sort, setSort] = React.useState<SortState>({
-    field: 'created',
-    order: 'desc',
+  const [state, setState] = useQueryStates(fileTableParsers, {
+    urlKeys: fileTableUrlKeys,
   });
-  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
-    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
-  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
-  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
-  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<string | undefined>();
-  const [createdAtFilters, setCreatedAtFilters] = React.useState<CreatedAtDateRange>({});
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
   const { data, error, mutate } = useFiles({
-    createdAtEnd: createdAtFilters.createdAtEnd,
-    createdAtStart: createdAtFilters.createdAtStart,
-    cursor,
-    fileId: fileIdFilter,
-    name: nameFilter,
+    createdAtEnd:
+      state.createdAtEnd != null
+        ? toLocalDayBoundaryIso(state.createdAtEnd, 'end')
+        : undefined,
+    createdAtStart:
+      state.createdAtStart != null
+        ? toLocalDayBoundaryIso(state.createdAtStart, 'start')
+        : undefined,
+    cursor: state.cursor ?? undefined,
+    fileId: state.filterId?.trim() || undefined,
+    name: state.name?.trim() || undefined,
     pageSize,
-    sort,
-    suppliedId: suppliedIdFilter,
+    sort: state.sort,
+    suppliedId: state.suppliedId?.trim() || undefined,
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
   const visiblePage = page;
   const pageLength = visiblePage ? visiblePage.items.length : 0;
-  const paginationCursors = visiblePage?.cursors ?? cursors;
+  const paging = useUrlCursorPaging({
+    cursor: state.cursor,
+    cursors: page?.cursors ?? undefined,
+    loaded: page != null,
+    page: state.page,
+    searchKey: JSON.stringify({
+      createdAtEnd: state.createdAtEnd,
+      createdAtStart: state.createdAtStart,
+      filterId: state.filterId,
+      name: state.name,
+      sort: state.sort,
+      suppliedId: state.suppliedId,
+    }),
+    setPaging: (patch) => void setState(patch, { history: 'push' }),
+  });
+  const { paginationCursors, resetPagingCache } = paging;
   const emptyRows =
     paginationCursors?.next == null && paginationCursors?.self == null
       ? 0
       : pageSize - pageLength;
 
-  const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
-  const debouncedSetFileIdFilter = useDebouncedFilter(setFileIdFilter, resetPaging);
-  const debouncedSetSuppliedIdFilter = useDebouncedFilter(
-    setSuppliedIdFilter,
-    resetPaging
-  );
+  function handleTextFilterChange(
+    field: 'filterId' | 'name' | 'suppliedId',
+    value: string
+  ): void {
+    const patch: Partial<Nullable<FileTableState>> = {
+      cursor: null,
+      page: null,
+    };
+    patch[field] = value === '' ? null : value;
 
-  React.useEffect(() => {
-    if (page == null) return;
-
-    setCursors(page.cursors ?? undefined);
-  }, [page, setCursors]);
+    resetPagingCache();
+    void setState(patch, { limitUrlUpdates: debounce(FilterDebounceMs) });
+  }
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (visiblePage == null) return;
@@ -196,21 +207,23 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
     setSelected(upd);
   }
 
-  function handleChangePage(
-    _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
-  ): void {
-    handlePageChange(num);
-  }
-
   function handleSortChange(field: string): void {
-    setSort((current) => toggleSort(current, field));
-    resetPaging();
+    resetPagingCache();
+    void setState((current) => ({
+      cursor: null,
+      page: null,
+      sort: toggleSort(current.sort, field),
+    }));
   }
 
   function handleCreatedAtChange(filters: CreatedAtDateRange): void {
-    resetPaging();
-    setCreatedAtFilters(filters);
+    resetPagingCache();
+    void setState({
+      createdAtEnd: toLocalDateInputValue(filters.createdAtEnd) || null,
+      createdAtStart: toLocalDateInputValue(filters.createdAtStart) || null,
+      cursor: null,
+      page: null,
+    });
   }
 
   async function handleDelete(): Promise<void> {
@@ -241,23 +254,17 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
     }
   }
 
-  function renderTableRows(): React.ReactNode {
-    if (loadError) {
-      return <DataLoadError colSpan={headCells.length + 1} />;
-    }
-
-    if (!visiblePage) {
-      return (
-        <SkeletonBody
-          includeCheckbox={true}
-          numCellsPerRow={8}
-          numRows={pageSize - pageLength}
-          rowHeight={DefaultRowHeight}
-        />
-      );
-    }
-
-    return visiblePage.items.map((row) => {
+  const tableRows = loadError ? (
+    <DataLoadError colSpan={headCells.length + 1} />
+  ) : !visiblePage ? (
+    <SkeletonBody
+      includeCheckbox={true}
+      numCellsPerRow={8}
+      numRows={pageSize - pageLength}
+      rowHeight={DefaultRowHeight}
+    />
+  ) : (
+    visiblePage.items.map((row) => {
       const isSel = selected.has(row.id);
       const isActive = activeFileId === row.id;
       const isAvailable = isFileAvailable(row);
@@ -323,7 +330,7 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
                 {
                   disabled: !isAvailable,
                   label: 'Download file',
-                  onClick: () => handleDownload(row.id),
+                  onClick: () => void handleDownload(row.id),
                 },
               ]}
               ariaLabel={`Actions for ${row.name}`}
@@ -331,10 +338,8 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
           </TableCell>
         </TableRow>
       );
-    });
-  }
-
-  const tableRows = renderTableRows();
+    })
+  );
 
   return (
     <>
@@ -354,9 +359,7 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
             ) : undefined
           }
           numSelected={selected.size}
-          onDelete={() => {
-            handleDelete().catch(reportError('Failed to delete files'));
-          }}
+          onDelete={() => void handleDelete()}
           title="Files"
         />
         <Box
@@ -377,10 +380,9 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
               id="nameFilter"
               label="Name"
               type="text"
-              onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? '');
-              }}
+              onChange={(e) => handleTextFilterChange('name', e.target.value)}
               sx={{ mt: 0, width: '16rem' }}
+              value={state.name ?? ''}
             />
             <TextField
               variant="standard"
@@ -389,10 +391,9 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
               id="fileIdFilter"
               label="File ID"
               type="text"
-              onChange={(e) => {
-                debouncedSetFileIdFilter(e.target.value?.trim() ?? '');
-              }}
+              onChange={(e) => handleTextFilterChange('filterId', e.target.value)}
               sx={{ mt: 0, width: '16rem' }}
+              value={state.filterId ?? ''}
             />
             <TextField
               variant="standard"
@@ -401,14 +402,19 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
               id="suppliedIdFilter"
               label="Supplied ID"
               type="text"
-              onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? '');
-              }}
+              onChange={(e) => handleTextFilterChange('suppliedId', e.target.value)}
               sx={{ mt: 0, width: '16rem' }}
+              value={state.suppliedId ?? ''}
             />
           </Box>
         </Box>
-        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
+        <CreatedAtDateRangeFilter
+          onChange={handleCreatedAtChange}
+          value={{
+            createdAtEnd: state.createdAtEnd ?? undefined,
+            createdAtStart: state.createdAtStart ?? undefined,
+          }}
+        />
         <TableContainer>
           <Table>
             <TableHead
@@ -417,7 +423,7 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
               onSelectAllClick={handleSelectAll}
               onSortChange={handleSortChange}
               rowCount={pageLength}
-              sort={sort}
+              sort={state.sort}
             />
             <TableBody>
               {tableRows}
@@ -442,11 +448,12 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
             )
           }
           rowsPerPage={pageSize}
-          page={currentPage}
-          onPageChange={handleChangePage}
+          page={state.page}
+          onPageChange={paging.handleChangePage}
           slotProps={{
             actions: {
-              nextButton: { disabled: paginationCursors?.next == null },
+              nextButton: { disabled: paging.nextDisabled },
+              previousButton: { disabled: paging.previousDisabled },
             },
           }}
         />
@@ -457,7 +464,7 @@ export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.
         onFileCreated={() => {
           setShowDialog(false);
           setShowToast(true);
-          mutate().catch(reportError('Failed to refresh files'));
+          void mutate();
         }}
       />
       <Snackbar

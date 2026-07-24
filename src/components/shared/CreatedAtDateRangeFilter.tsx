@@ -10,15 +10,21 @@ export interface CreatedAtDateRange {
 
 interface Props {
   readonly onChange: (filters: CreatedAtDateRange) => void;
+  readonly value?: CreatedAtDateRange;
 }
 
 function isAfter(left: string, right: string): boolean {
   return left.localeCompare(right) > 0;
 }
 
-export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
-  const [createdAtStartDate, setCreatedAtStartDate] = React.useState('');
-  const [createdAtEndDate, setCreatedAtEndDate] = React.useState('');
+export function CreatedAtDateRangeFilter({
+  onChange,
+  value: selectedValue,
+}: Props): JSX.Element {
+  const [localCreatedAtStartDate, setLocalCreatedAtStartDate] = React.useState('');
+  const [localCreatedAtEndDate, setLocalCreatedAtEndDate] = React.useState('');
+  const createdAtStartDate = selectedValue?.createdAtStart ?? localCreatedAtStartDate;
+  const createdAtEndDate = selectedValue?.createdAtEnd ?? localCreatedAtEndDate;
 
   function handleCreatedAtStartChange(value: string): void {
     const nextEndDate =
@@ -26,8 +32,10 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         ? ''
         : createdAtEndDate;
 
-    setCreatedAtStartDate(value);
-    setCreatedAtEndDate(nextEndDate);
+    if (selectedValue == null) {
+      setLocalCreatedAtStartDate(value);
+      setLocalCreatedAtEndDate(nextEndDate);
+    }
     onChange({
       createdAtEnd: nextEndDate ? toLocalDayBoundaryIso(nextEndDate, 'end') : undefined,
       createdAtStart: value ? toLocalDayBoundaryIso(value, 'start') : undefined,
@@ -40,8 +48,10 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         ? ''
         : createdAtStartDate;
 
-    setCreatedAtStartDate(nextStartDate);
-    setCreatedAtEndDate(value);
+    if (selectedValue == null) {
+      setLocalCreatedAtStartDate(nextStartDate);
+      setLocalCreatedAtEndDate(value);
+    }
     onChange({
       createdAtEnd: value ? toLocalDayBoundaryIso(value, 'end') : undefined,
       createdAtStart: nextStartDate
