@@ -1,9 +1,11 @@
 import {
+  Cursors,
   FileIdList,
   FileList,
   FileMetadataData,
   getPage,
   logError,
+  VertexClient,
   VertexError,
 } from "@vertexvis/api-client-node";
 import type { AxiosResponse } from "axios";
@@ -21,11 +23,13 @@ import {
   toErrorRes,
 } from "../../../../lib/api";
 import {
+  type ListQuery,
   type ListQuerySpec,
   parseListQuery,
   toVertexListParams,
 } from "../../../../lib/api/query";
 import {
+  type FileCollectionFileFilters,
   filterFileCollectionFiles,
   getFileCollectionsApi,
 } from "../../../../lib/file-collections";
@@ -44,6 +48,18 @@ const collectionFilesListQuery: ListQuerySpec = {
     },
   ],
 };
+
+// Upstream silently ignores `filter[...]` params on this relationship
+// endpoint (verified by probe: the identical format works on /files, but here
+// it 200s with unfiltered data). Until support ships, filtered requests scan
+// the collection's files across pages server-side and filter locally.
+const FILTERED_SCAN_PAGE_SIZE = 100;
+// Safety cap on the scan: at most this many upstream page fetches
+// (10 x 100 = ~1,000 files). If the cap trips, we still return what was
+// gathered, so matches beyond the cap are silently missed — acceptable only
+// because upstream filter support will eventually replace this stand-in; the
+// console.warn below keeps the truncation diagnosable.
+const FILTERED_SCAN_MAX_PAGES = 10;
 
 export async function handleFileCollectionFiles(
   req: NextIronRequest,
@@ -132,38 +148,121 @@ async function get(
     const query = parseListQuery(req, collectionFilesListQuery);
     if ("message" in query) return query;
 
-    // The generated SDK request type does not accept filters on this
-    // relationship yet, so mirror the raw Files list call and forward the
-    // filter parameters upstream.
     const client = await getClientFromSession(req.session);
-    const params = toVertexListParams(query, collectionFilesListQuery);
-    const { cursors, page } = await getPage(
-      () =>
-        client.axiosInstance.get(
-          `${client.config.basePath}/file-collections/${encodeURIComponent(
-            id
-          )}/files?${params.toString()}`,
-          {
-            headers: {
-              Accept: "application/vnd.api+json",
-              Authorization: `Bearer ${client.token.access_token}`,
-            },
-          }
-        ) as Promise<AxiosResponse<FileList>>
-    );
-
-    // Temporary stand-in: also filter the returned page locally until the
-    // service is confirmed to honor filter parameters on this relationship.
-    const data = filterFileCollectionFiles(page.data, {
+    const filters: FileCollectionFileFilters = {
       fileId: query.filters.fileId?.contains,
       name: query.filters.name?.contains,
       suppliedId: query.filters.suppliedId?.contains,
-    });
+    };
 
-    return { cursors, data, status: 200 };
+    if (
+      filters.fileId == null &&
+      filters.name == null &&
+      filters.suppliedId == null
+    ) {
+      // Unfiltered: single upstream page with cursor passthrough.
+      const { cursors, page } = await fetchCollectionFilesPage(
+        client,
+        id,
+        toVertexListParams(query, collectionFilesListQuery)
+      );
+      return { cursors, data: page.data, status: 200 };
+    }
+
+    // Filtered: upstream ignores the filter params on this endpoint (see the
+    // scan constants above), so matches can live on any page. Scan the
+    // collection and apply the stand-in filter over the full gathered set.
+    const files = await scanCollectionFilesForFilter(client, id, query);
+    const matches = filterFileCollectionFiles(files, filters);
+
+    // Paging tradeoff while filtered: the result set is computed here, not
+    // upstream, so upstream cursors no longer identify a position in it.
+    // Return the first `pageSize` matches with no `next` cursor (raising the
+    // page size reaches later matches). Simplest behavior that is correct
+    // across the whole collection; revisit when upstream filtering ships.
+    return {
+      cursors: { next: undefined, self: undefined },
+      data: matches.slice(0, query.pageSize),
+      status: 200,
+    };
   } catch (error) {
     return toRouteError(error);
   }
+}
+
+// The generated SDK request type does not accept filters on this
+// relationship yet, so mirror the raw Files list call and forward the filter
+// parameters upstream — harmless while ignored, self-healing once the
+// service honors them.
+function fetchCollectionFilesPage(
+  client: VertexClient,
+  id: string,
+  params: URLSearchParams
+): Promise<{ cursors: Cursors; page: FileList }> {
+  return getPage(
+    () =>
+      client.axiosInstance.get(
+        `${client.config.basePath}/file-collections/${encodeURIComponent(
+          id
+        )}/files?${params.toString()}`,
+        {
+          headers: {
+            Accept: "application/vnd.api+json",
+            Authorization: `Bearer ${client.token.access_token}`,
+          },
+        }
+      ) as Promise<AxiosResponse<FileList>>
+  );
+}
+
+async function scanCollectionFilesForFilter(
+  client: VertexClient,
+  id: string,
+  query: ListQuery
+): Promise<FileMetadataData[]> {
+  const files: FileMetadataData[] = [];
+  const seenFileIds = new Set<string>();
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+
+  for (let fetches = 0; fetches < FILTERED_SCAN_MAX_PAGES; fetches++) {
+    // Scan from the start of the collection (the request's own cursor and
+    // page size describe the unfiltered listing, not this scan).
+    const params = toVertexListParams(
+      { ...query, cursor, pageSize: FILTERED_SCAN_PAGE_SIZE },
+      collectionFilesListQuery
+    );
+    // Each request depends on the cursor returned by the previous page.
+    // eslint-disable-next-line no-await-in-loop
+    const { cursors, page } = await fetchCollectionFilesPage(
+      client,
+      id,
+      params
+    );
+    for (const file of page.data) {
+      // Skip repeats so a misbehaving upstream that re-serves a page cannot
+      // duplicate rows in the response.
+      if (seenFileIds.has(file.id)) continue;
+      seenFileIds.add(file.id);
+      files.push(file);
+    }
+
+    const next = cursors.next;
+    if (next == null) return files;
+    // Termination guard: an upstream (or test fixture) that echoes the same
+    // cursor back, or cycles through earlier cursors, makes no progress —
+    // stop instead of spinning until the page cap.
+    if (next === cursor || seenCursors.has(next)) return files;
+    seenCursors.add(next);
+    cursor = next;
+  }
+
+  console.warn(
+    `Filtered scan of file collection ${id} stopped at the ` +
+      `${FILTERED_SCAN_MAX_PAGES}-page safety cap (${files.length} files ` +
+      `scanned); matches beyond the cap are not returned.`
+  );
+  return files;
 }
 
 function getFileCollectionId(req: NextIronRequest): string | undefined {
