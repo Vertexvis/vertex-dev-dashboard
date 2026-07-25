@@ -1,8 +1,9 @@
-import { Add } from "@mui/icons-material";
+import { Add, Close } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
+  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -14,6 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
@@ -59,6 +61,11 @@ interface Props {
   readonly onRevisionSelected: (revision: PartRevision) => void;
 }
 
+interface SuccessToast {
+  readonly message: string;
+  readonly viewTranslations?: boolean;
+}
+
 export default function PartTable({
   activeRevisionId,
   onRevisionSelected,
@@ -73,7 +80,7 @@ export default function PartTable({
     resetPaging,
     setCursors,
   } = useCursorPagingState();
-  const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [toast, setToast] = React.useState<SuccessToast | undefined>();
   const [deleteError, setDeleteError] = React.useState<string | undefined>();
   const [deleting, setDeleting] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -262,7 +269,10 @@ export default function PartTable({
         open={showCreatePartDialog}
         onClose={() => setShowCreatePartDialog(false)}
         onPartCreated={(id) => {
-          setToastMsg(`Translation initiated. Job ID: ${id}`);
+          setToast({
+            message: `Translation initiated. Job ID: ${id}`,
+            viewTranslations: true,
+          });
           setShowCreatePartDialog(false);
         }}
         targetFileId={maybeQueryParam(router.query.create)}
@@ -273,18 +283,43 @@ export default function PartTable({
         open={!!targetRevisionId}
         onClose={() => setTargetRevisionId(undefined)}
         onSceneQueued={(ids) => {
-          setToastMsg(`Scene created. Root item job ID: ${ids[0]}`);
+          setToast({ message: `Scene created. Root item job ID: ${ids[0]}` });
           setTargetRevisionId(undefined);
         }}
         targetRevisionId={targetRevisionId}
       />
       <Snackbar
-        open={!!toastMsg}
+        open={!!toast}
         autoHideDuration={6000}
-        onClose={() => setToastMsg(undefined)}
+        onClose={() => setToast(undefined)}
       >
-        <Alert onClose={() => setToastMsg(undefined)} severity="success">
-          {toastMsg}
+        <Alert
+          action={
+            toast?.viewTranslations ? (
+              <>
+                <Button
+                  color="inherit"
+                  component={NextLink}
+                  href="/translations"
+                  size="small"
+                >
+                  View translations
+                </Button>
+                <IconButton
+                  aria-label="Close"
+                  color="inherit"
+                  onClick={() => setToast(undefined)}
+                  size="small"
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </>
+            ) : undefined
+          }
+          onClose={() => setToast(undefined)}
+          severity="success"
+        >
+          {toast?.message}
         </Alert>
       </Snackbar>
       <Snackbar

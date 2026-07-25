@@ -12,6 +12,22 @@ jest.mock("next/router", () => ({
   useRouter: () => ({ query: {} }),
 }));
 
+jest.mock("../../../components/part/CreatePartDialog", () => ({
+  __esModule: true,
+  default: ({
+    onPartCreated,
+    open,
+  }: {
+    onPartCreated: (id: string) => void;
+    open: boolean;
+  }) =>
+    open ? (
+      <button onClick={() => onPartCreated("job-1")} type="button">
+        Simulate part created
+      </button>
+    ) : null,
+}));
+
 const page = {
   cursors: { self: "page-1" },
   data: [
@@ -71,5 +87,28 @@ describe("PartTable", () => {
 
     await waitFor(() => expect(deletedIds).toEqual([["part-1"]]));
     expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("links the part-creation toast to the translations page", async () => {
+    server.use(http.get("*/api/parts", () => HttpResponse.json(page)));
+
+    renderWithSWR(<PartTable onRevisionSelected={jest.fn()} />);
+
+    expect(await screen.findByText("alpha")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Simulate part created" })
+    );
+
+    expect(
+      screen.getByText("Translation initiated. Job ID: job-1")
+    ).toBeInTheDocument();
+    const viewTranslations = screen.getByRole("link", {
+      name: "View translations",
+    });
+    expect(viewTranslations).toHaveAttribute("href", "/translations");
+    expect(
+      screen.getByRole("button", { name: "Close" })
+    ).toBeInTheDocument();
   });
 });

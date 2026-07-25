@@ -23,6 +23,8 @@ interface QueuedTranslationsTableProps {
   readonly title: string;
   readonly fetchAll?: boolean;
   readonly filter?: (arg0: QueuedJob) => boolean;
+  readonly activeJobId?: string;
+  readonly onRowClick?: (job: QueuedJob) => void;
 }
 
 function useRunningTranslations(
@@ -44,6 +46,8 @@ export function QueuedTranslationsTable({
   status,
   fetchAll,
   filter,
+  activeJobId,
+  onRowClick,
 }: QueuedTranslationsTableProps): JSX.Element {
   const { data, isValidating } = useRunningTranslations(
     status,
@@ -85,8 +89,14 @@ export function QueuedTranslationsTable({
           ) : items && items.length > 0 ? (
             items.map((row) => (
               <TableRow
+                hover={onRowClick != null}
                 key={row.id}
-                sx={{ "&:last-child td": { borderBottom: 0 } }}
+                onClick={onRowClick == null ? undefined : () => onRowClick(row)}
+                selected={activeJobId === row.id}
+                sx={{
+                  cursor: onRowClick == null ? undefined : "pointer",
+                  "&:last-child td": { borderBottom: 0 },
+                }}
               >
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{toLocaleString(row.created)}</TableCell>
