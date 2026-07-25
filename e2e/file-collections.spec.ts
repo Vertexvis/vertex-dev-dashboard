@@ -14,10 +14,13 @@ test("manages collection membership through the SSR-safe local fixture", async (
 
   await page.getByRole("button", { name: "Add completed files" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page
-    .getByRole("checkbox", { name: "fixture-file.jt (complete)" })
-    .check();
-  await page.getByRole("button", { name: "Add files" }).click();
+  for (const column of ["Name", "Supplied ID", "Status", "ID"]) {
+    await expect(
+      page.getByRole("columnheader", { exact: true, name: column })
+    ).toBeVisible();
+  }
+  await page.getByRole("checkbox", { name: "Select fixture-file.jt" }).check();
+  await page.getByRole("button", { name: "Add 1 file" }).click();
 
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.getByText("Archive job is running.")).toHaveCount(0);

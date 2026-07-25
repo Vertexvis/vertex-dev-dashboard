@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
   Paper,
   Snackbar,
   Table,
@@ -19,16 +18,11 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import {
-  File,
-  FileStatusComplete,
-  isCompleteFileStatus,
-  normalizeFileStatus,
-  toFilePage,
-} from "../../lib/files";
+import { File, isCompleteFileStatus, toFilePage } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
+import { FileStatusChip } from "../shared/FileStatusChip";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { ResourceLink } from "../shared/ResourceLink";
 import { RowActionsMenu } from "../shared/RowActionsMenu";
@@ -73,26 +67,6 @@ function useCollectionFiles({
 
 function isFileAvailable(file: File): boolean {
   return isCompleteFileStatus(file.status);
-}
-
-function statusLabel(status?: string): string {
-  return status ?? "N/A";
-}
-
-function statusColor(
-  status?: string
-): "default" | "success" | "warning" | "error" {
-  switch (normalizeFileStatus(status)) {
-    case FileStatusComplete:
-      return "success";
-    case "pending":
-      return "warning";
-    case "error":
-    case "failed":
-      return "error";
-    default:
-      return "default";
-  }
 }
 
 export default function FileCollectionFilesTable({
@@ -272,13 +246,7 @@ export default function FileCollectionFilesTable({
           </TableCell>
           <TableCell>{row.suppliedId}</TableCell>
           <TableCell>
-            <Chip
-              color={statusColor(row.status)}
-              label={statusLabel(row.status)}
-              size="small"
-              sx={{ fontWeight: 600, textTransform: "uppercase" }}
-              variant="outlined"
-            />
+            <FileStatusChip status={row.status} />
           </TableCell>
           <TableCell>{row.id}</TableCell>
           <TableCell>{toLocaleString(row.created)}</TableCell>

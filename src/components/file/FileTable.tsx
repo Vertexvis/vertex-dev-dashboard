@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
   Paper,
   Snackbar,
   Table,
@@ -21,13 +20,7 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import {
-  File,
-  FileStatusComplete,
-  isCompleteFileStatus,
-  normalizeFileStatus,
-  toFilePage,
-} from "../../lib/files";
+import { File, isCompleteFileStatus, toFilePage } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { confirmResourceDeletion } from "../shared/confirm-delete";
@@ -37,6 +30,7 @@ import {
 } from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
+import { FileStatusChip } from "../shared/FileStatusChip";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { ResourceLink } from "../shared/ResourceLink";
 import { RowActionsMenu } from "../shared/RowActionsMenu";
@@ -90,26 +84,6 @@ function useFiles({
 
 function isFileAvailable(file: File): boolean {
   return isCompleteFileStatus(file.status);
-}
-
-function statusLabel(status?: string): string {
-  return status ?? "N/A";
-}
-
-function statusColor(
-  status?: string
-): "default" | "success" | "warning" | "error" {
-  switch (normalizeFileStatus(status)) {
-    case FileStatusComplete:
-      return "success";
-    case "pending":
-      return "warning";
-    case "error":
-    case "failed":
-      return "error";
-    default:
-      return "default";
-  }
 }
 
 interface Props {
@@ -326,13 +300,7 @@ export default function FileTable({
           </TableCell>
           <TableCell>{row.suppliedId}</TableCell>
           <TableCell>
-            <Chip
-              color={statusColor(row.status)}
-              label={statusLabel(row.status)}
-              size="small"
-              sx={{ fontWeight: 600, textTransform: "uppercase" }}
-              variant="outlined"
-            />
+            <FileStatusChip status={row.status} />
           </TableCell>
           <TableCell>{row.id}</TableCell>
           <TableCell>{toLocaleString(row.created)}</TableCell>

@@ -6,19 +6,25 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  List,
-  ListItem,
-  ListItemText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
+import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { File, isCompleteFileStatus, toFilePage } from "../../lib/files";
-import { buildQuery } from "../../lib/paging";
+import { buildQuery, Paged } from "../../lib/paging";
+import { FileStatusChip } from "../shared/FileStatusChip";
+import { DefaultRowHeight } from "../shared/Layout";
+import { SkeletonBody } from "../shared/SkeletonBody";
 
 interface Props {
   readonly collectionId: string;
@@ -27,33 +33,85 @@ interface Props {
   readonly open: boolean;
 }
 
+const UuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const headCells = [
+  { id: "name", label: "Name" },
+  { id: "supplied-id", label: "Supplied ID" },
+  { id: "status", label: "Status" },
+  { id: "id", label: "ID" },
+] as const;
+
+function mergeMatches(
+  byName?: Paged<File>,
+  bySuppliedId?: Paged<File>
+): File[] | undefined {
+  if (byName == null) return undefined;
+
+  const merged = new Map(byName.items.map((file) => [file.id, file]));
+  bySuppliedId?.items.forEach((file) => {
+    if (!merged.has(file.id)) merged.set(file.id, file);
+  });
+  return [...merged.values()];
+}
+
 export function AddFilesToCollectionDialog({
   collectionId,
   onClose,
   onMembersAdded,
   open,
 }: Props): JSX.Element {
-  const [name, setName] = React.useState("");
+  const [search, setSearch] = React.useState("");
+  const [query, setQuery] = React.useState("");
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [submitError, setSubmitError] = React.useState<string>();
   const [submitting, setSubmitting] = React.useState(false);
+  const debouncedSetQuery = React.useMemo(
+    () => debounce((value: string) => setQuery(value.trim()), 300),
+    []
+  );
+  const isIdSearch = UuidPattern.test(query);
   const { data, error } = useSWR(
     open
       ? buildQuery("/api/files", {
-          name: name === "" ? undefined : name,
+          fileId: isIdSearch ? query.toLowerCase() : undefined,
+          name: isIdSearch || query === "" ? undefined : query,
           pageSize: 10,
         })
       : null
   );
-  const page = data != null && !isErrorRes(data) ? toFilePage(data) : undefined;
+  const suppliedIdQueryKey =
+    open && !isIdSearch && query !== ""
+      ? buildQuery("/api/files", { pageSize: 10, suppliedId: query })
+      : null;
+  const { data: suppliedIdData, error: suppliedIdError } =
+    useSWR(suppliedIdQueryKey);
+  const loadError =
+    error ??
+    suppliedIdError ??
+    (isErrorRes(data) ? data : undefined) ??
+    (isErrorRes(suppliedIdData) ? suppliedIdData : undefined);
+  const files = mergeMatches(
+    data != null && !isErrorRes(data) ? toFilePage(data) : undefined,
+    suppliedIdData != null && !isErrorRes(suppliedIdData)
+      ? toFilePage(suppliedIdData)
+      : undefined
+  );
+  const suppliedIdPending =
+    suppliedIdQueryKey != null &&
+    suppliedIdData == null &&
+    suppliedIdError == null;
 
   React.useEffect(() => {
     if (!open) {
-      setName("");
+      debouncedSetQuery.cancel();
+      setSearch("");
+      setQuery("");
       setSelected(new Set());
       setSubmitError(undefined);
     }
-  }, [open]);
+  }, [debouncedSetQuery, open]);
 
   function toggle(file: File) {
     if (!isCompleteFileStatus(file.status)) return;
@@ -97,7 +155,7 @@ export function AddFilesToCollectionDialog({
   }
 
   return (
-    <Dialog fullWidth maxWidth="sm" onClose={onClose} open={open}>
+    <Dialog fullWidth maxWidth="md" onClose={onClose} open={open}>
       <DialogTitle>Add completed files</DialogTitle>
       <DialogContent>
         <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
@@ -107,47 +165,101 @@ export function AddFilesToCollectionDialog({
         <TextField
           autoFocus
           fullWidth
+          helperText="Matches names and supplied IDs. Paste a file ID (UUID) to look it up directly."
           label="Search files"
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Filter by file name"
-          value={name}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            debouncedSetQuery(event.target.value);
+          }}
+          placeholder="Name, supplied ID, or file ID"
+          value={search}
         />
         {submitError != null && (
           <Alert severity="error" sx={{ mt: 2 }}>
             {submitError}
           </Alert>
         )}
-        {error != null || isErrorRes(data) ? (
+        {loadError != null ? (
           <Alert severity="error" sx={{ mt: 2 }}>
             Could not load files.
           </Alert>
         ) : (
-          <List aria-label="Eligible files" dense>
-            {page?.items.map((file) => {
-              const eligible = isCompleteFileStatus(file.status);
-              return (
-                <ListItem disablePadding key={file.id}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={selected.has(file.id)}
-                        disabled={!eligible}
-                        onChange={() => toggle(file)}
-                      />
-                    }
-                    label={`${file.name ?? file.id} (${
-                      file.status ?? "unknown"
-                    })`}
+          <TableContainer sx={{ mt: 2 }}>
+            <Table aria-label="Eligible files" size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox" />
+                  {headCells.map((headCell) => (
+                    <TableCell key={headCell.id}>{headCell.label}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {files == null || (files.length === 0 && suppliedIdPending) ? (
+                  <SkeletonBody
+                    includeCheckbox={true}
+                    numCellsPerRow={headCells.length + 1}
+                    numRows={3}
+                    rowHeight={DefaultRowHeight}
                   />
-                </ListItem>
-              );
-            })}
-            {page != null && page.items.length === 0 && (
-              <ListItem>
-                <ListItemText primary="No matching files." />
-              </ListItem>
-            )}
-          </List>
+                ) : (
+                  <>
+                    {files.map((file) => {
+                      const eligible = isCompleteFileStatus(file.status);
+                      return (
+                        <TableRow
+                          hover
+                          key={file.id}
+                          onClick={() => toggle(file)}
+                          selected={selected.has(file.id)}
+                        >
+                          <TableCell
+                            padding="checkbox"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggle(file);
+                            }}
+                          >
+                            <Checkbox
+                              checked={selected.has(file.id)}
+                              disabled={!eligible}
+                              inputProps={{
+                                "aria-label": `Select ${file.name ?? file.id}`,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell component="th" scope="row">
+                            {file.name ?? file.id}
+                          </TableCell>
+                          <TableCell>{file.suppliedId}</TableCell>
+                          <TableCell>
+                            <FileStatusChip status={file.status} />
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                              letterSpacing: "-0.02em",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {file.id}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {files.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={headCells.length + 1}>
+                          No matching files.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </DialogContent>
       <DialogActions>
@@ -157,7 +269,11 @@ export function AddFilesToCollectionDialog({
           onClick={handleAdd}
           variant="contained"
         >
-          {submitting ? "Adding" : "Add files"}
+          {submitting
+            ? "Adding"
+            : selected.size > 0
+            ? `Add ${selected.size} ${selected.size === 1 ? "file" : "files"}`
+            : "Add files"}
         </Button>
       </DialogActions>
     </Dialog>
