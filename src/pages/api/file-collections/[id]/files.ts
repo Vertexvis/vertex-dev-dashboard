@@ -1,11 +1,12 @@
 import {
   FileIdList,
+  FileList,
   FileMetadataData,
   getPage,
-  head,
   logError,
   VertexError,
 } from "@vertexvis/api-client-node";
+import type { AxiosResponse } from "axios";
 import { NextApiResponse } from "next";
 
 import {
@@ -19,10 +20,30 @@ import {
   ServerError,
   toErrorRes,
 } from "../../../../lib/api";
-import { getFileCollectionsApi } from "../../../../lib/file-collections";
-import { parsePositiveQueryInt } from "../../../../lib/query-params";
+import {
+  type ListQuerySpec,
+  parseListQuery,
+  toVertexListParams,
+} from "../../../../lib/api/query";
+import {
+  filterFileCollectionFiles,
+  getFileCollectionsApi,
+} from "../../../../lib/file-collections";
 import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
+
+const collectionFilesListQuery: ListQuerySpec = {
+  defaultPageSize: 10,
+  filters: [
+    { operation: "contains", requestName: "name", vertexField: "name" },
+    { operation: "contains", requestName: "fileId", vertexField: "fileId" },
+    {
+      operation: "contains",
+      requestName: "suppliedId",
+      vertexField: "suppliedId",
+    },
+  ],
+};
 
 export async function handleFileCollectionFiles(
   req: NextIronRequest,
@@ -108,18 +129,38 @@ async function get(
     if (id == null)
       return { message: "File Collection ID required.", status: 400 };
 
-    const pageSize = head(req.query.pageSize);
-    const cursor = head(req.query.cursor);
-    const c = getFileCollectionsApi(await getClientFromSession(req.session));
-    const { cursors, page } = await getPage(() =>
-      c.listFileCollectionFiles({
-        id,
-        pageCursor: cursor,
-        pageSize: parsePositiveQueryInt(pageSize, 10),
-      })
+    const query = parseListQuery(req, collectionFilesListQuery);
+    if ("message" in query) return query;
+
+    // The generated SDK request type does not accept filters on this
+    // relationship yet, so mirror the raw Files list call and forward the
+    // filter parameters upstream.
+    const client = await getClientFromSession(req.session);
+    const params = toVertexListParams(query, collectionFilesListQuery);
+    const { cursors, page } = await getPage(
+      () =>
+        client.axiosInstance.get(
+          `${client.config.basePath}/file-collections/${encodeURIComponent(
+            id
+          )}/files?${params.toString()}`,
+          {
+            headers: {
+              Accept: "application/vnd.api+json",
+              Authorization: `Bearer ${client.token.access_token}`,
+            },
+          }
+        ) as Promise<AxiosResponse<FileList>>
     );
 
-    return { cursors, data: page.data, status: 200 };
+    // Temporary stand-in: also filter the returned page locally until the
+    // service is confirmed to honor filter parameters on this relationship.
+    const data = filterFileCollectionFiles(page.data, {
+      fileId: query.filters.fileId?.contains,
+      name: query.filters.name?.contains,
+      suppliedId: query.filters.suppliedId?.contains,
+    });
+
+    return { cursors, data, status: 200 };
   } catch (error) {
     return toRouteError(error);
   }

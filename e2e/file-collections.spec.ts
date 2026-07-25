@@ -12,6 +12,16 @@ test("manages collection membership through the SSR-safe local fixture", async (
   ).toBeVisible();
   await expect(page.getByText("fixture-file.jt")).toBeVisible();
 
+  // The fixture upstream ignores filter params, so this exercises the
+  // route's temporary stand-in page filtering.
+  const nameFilter = page.getByLabel("Name", { exact: true });
+  await nameFilter.fill("does-not-match");
+  await expect(page.getByText("fixture-file.jt")).toBeHidden();
+  await nameFilter.fill("FIXTURE");
+  await expect(page.getByText("fixture-file.jt")).toBeVisible();
+  await nameFilter.clear();
+  await expect(page.getByText("fixture-file.jt")).toBeVisible();
+
   await page.getByRole("button", { name: "Add completed files" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   for (const column of ["Name", "Supplied ID", "Status", "ID"]) {

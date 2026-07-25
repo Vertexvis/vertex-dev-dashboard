@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import React from "react";
@@ -65,7 +65,11 @@ describe("FileCollectionFilesTable", () => {
       textTransform: "uppercase",
     });
     expect(listCollectionFiles).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Name")).not.toHaveAttribute("role", "button");
+    expect(
+      within(screen.getByRole("columnheader", { name: "Name" })).queryByRole(
+        "button"
+      )
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText("Supplied ID Filter (exact)")
     ).not.toBeInTheDocument();
@@ -231,6 +235,158 @@ describe("FileCollectionFilesTable", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Error loading data."
     );
+  });
+
+  it("filters collection files by name before rendering the filtered results", async () => {
+    const searches: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections/collection-1/files", ({ request }) => {
+        const url = new URL(request.url);
+        searches.push(url.search);
+
+        return HttpResponse.json(
+          url.searchParams.get("name") === "Two"
+            ? filePage([
+                fileResource({
+                  id: "file-2",
+                  name: "File Two",
+                  status: "complete",
+                  suppliedId: "supplied-file-2",
+                }),
+              ])
+            : filePage([
+                fileResource({
+                  id: "file-1",
+                  name: "File One",
+                  status: "complete",
+                  suppliedId: "supplied-file-1",
+                }),
+              ])
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Name"), "Two");
+
+    expect(await screen.findByText("File Two")).toBeInTheDocument();
+    expect(screen.queryByText("File One")).not.toBeInTheDocument();
+    expect(
+      searches.some((search) => {
+        const params = new URLSearchParams(search);
+        return (
+          params.get("name") === "Two" &&
+          params.get("pageSize") === DefaultPageSize.toString()
+        );
+      })
+    ).toBe(true);
+  });
+
+  it("forwards the file ID and supplied ID filters to the collection files request", async () => {
+    const searches: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections/collection-1/files", ({ request }) => {
+        const url = new URL(request.url);
+        searches.push(url.search);
+
+        return HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "file-1",
+              name: "File One",
+              status: "complete",
+              suppliedId: "supplied-file-1",
+            }),
+          ])
+        );
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("File ID"), "file-2");
+    await userEvent.type(screen.getByLabelText("Supplied ID"), "supplied-2");
+
+    await waitFor(() => {
+      expect(
+        searches.some((search) => {
+          const params = new URLSearchParams(search);
+          return (
+            params.get("fileId") === "file-2" &&
+            params.get("suppliedId") === "supplied-2"
+          );
+        })
+      ).toBe(true);
+    });
+  });
+
+  it("resets pagination when a filter changes", async () => {
+    const searches: string[] = [];
+
+    server.use(
+      http.get("*/api/file-collections/collection-1/files", ({ request }) => {
+        const url = new URL(request.url);
+        searches.push(url.search);
+
+        if (url.searchParams.get("cursor") === "cursor-2") {
+          return HttpResponse.json({
+            cursors: { self: "cursor-2" },
+            data: [
+              fileResource({
+                id: "file-2",
+                name: "File Two",
+                status: "complete",
+                suppliedId: "supplied-file-2",
+              }),
+            ],
+            status: 200,
+          });
+        }
+
+        return HttpResponse.json({
+          cursors: { next: "cursor-2", self: "cursor-1" },
+          data: [
+            fileResource({
+              id: "file-1",
+              name: "File One",
+              status: "complete",
+              suppliedId: "supplied-file-1",
+            }),
+          ],
+          status: 200,
+        });
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+
+    expect(await screen.findByText("File Two")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Name"), "One");
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+    expect(
+      searches.some(
+        (search) => new URLSearchParams(search).get("cursor") === "cursor-2"
+      )
+    ).toBe(true);
+    expect(
+      searches.some((search) => {
+        const params = new URLSearchParams(search);
+        return params.get("name") === "One" && params.get("cursor") == null;
+      })
+    ).toBe(true);
   });
 
   it("does not remove source files when membership removal is cancelled", async () => {

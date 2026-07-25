@@ -12,7 +12,9 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
 } from "@mui/material";
+import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
@@ -40,6 +42,7 @@ interface Props {
 
 interface UseCollectionFilesProps extends SwrProps {
   readonly apiPath: string;
+  readonly fileId?: string;
 }
 
 const headCells = [
@@ -55,18 +58,41 @@ const headCells = [
 function useCollectionFiles({
   apiPath,
   cursor,
+  fileId,
+  name,
   pageSize,
+  suppliedId,
 }: UseCollectionFilesProps) {
   return useSWR(
     buildQuery(apiPath, {
       cursor,
+      fileId,
+      name,
       pageSize,
+      suppliedId,
     })
   );
 }
 
 function isFileAvailable(file: File): boolean {
   return isCompleteFileStatus(file.status);
+}
+
+type SetOptionalString = React.Dispatch<
+  React.SetStateAction<string | undefined>
+>;
+function useDebouncedFilter(
+  setFilter: SetOptionalString,
+  resetPaging: () => void
+): (value: string) => void {
+  return React.useMemo(
+    () =>
+      debounce((value: string) => {
+        resetPaging();
+        setFilter(value === "" ? undefined : value);
+      }, 300),
+    [resetPaging, setFilter]
+  );
 }
 
 export default function FileCollectionFilesTable({
@@ -78,17 +104,31 @@ export default function FileCollectionFilesTable({
   onMembersChanged,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const { currentPage, cursor, cursors, handlePageChange, setCursors } =
-    useCursorPagingState();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+  } = useCursorPagingState();
   const [downloadError, setDownloadError] = React.useState<string>();
   const [membershipError, setMembershipError] = React.useState<string>();
   const [removingMembers, setRemovingMembers] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
+  const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >();
 
   const { data, error, mutate } = useCollectionFiles({
     apiPath,
     cursor,
+    fileId: fileIdFilter,
+    name: nameFilter,
     pageSize,
+    suppliedId: suppliedIdFilter,
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
@@ -99,6 +139,16 @@ export default function FileCollectionFilesTable({
       ? 0
       : pageSize - pageLength;
   const manageMembers = collectionId != null;
+
+  const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
+  const debouncedSetFileIdFilter = useDebouncedFilter(
+    setFileIdFilter,
+    resetPaging
+  );
+  const debouncedSetSuppliedIdFilter = useDebouncedFilter(
+    setSuppliedIdFilter,
+    resetPaging
+  );
 
   React.useEffect(() => {
     if (page == null) return;
@@ -298,6 +348,55 @@ export default function FileCollectionFilesTable({
           numSelected={selected.size}
           title="Files"
         />
+        <Box
+          sx={{
+            px: { sm: 2 },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="nameFilter"
+              label="Name"
+              type="text"
+              onChange={(e) => {
+                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="fileIdFilter"
+              label="File ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+            <TextField
+              variant="standard"
+              size="small"
+              margin="normal"
+              id="suppliedIdFilter"
+              label="Supplied ID"
+              type="text"
+              onChange={(e) => {
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+              }}
+              sx={{ mt: 0, width: "16rem" }}
+            />
+          </Box>
+        </Box>
         <TableContainer>
           <Table>
             <TableHead>

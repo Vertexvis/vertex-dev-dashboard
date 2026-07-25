@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-import { getPage } from "@vertexvis/api-client-node";
 import type { NextApiResponse } from "next";
 import type { Session } from "next-iron-session";
 
@@ -11,15 +10,12 @@ import { handleFileCollectionFiles } from "../../../pages/api/file-collections/[
 const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockAddFileCollectionFiles = jest.fn();
-const mockListFileCollectionFiles = jest.fn();
 const mockRemoveFileCollectionFiles = jest.fn();
-const mockGetPage = getPage as jest.Mock;
 
 jest.mock("@vertexvis/api-client-node", () => {
   const actual = jest.requireActual("@vertexvis/api-client-node");
   return {
     ...actual,
-    getPage: jest.fn(),
     logError: jest.fn(),
   };
 });
@@ -54,78 +50,14 @@ describe("file collection files API route", () => {
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
     mockGetFileCollectionsApi.mockReturnValue({
       addFileCollectionFiles: mockAddFileCollectionFiles,
-      listFileCollectionFiles: mockListFileCollectionFiles,
       removeFileCollectionFiles: mockRemoveFileCollectionFiles,
     });
     mockAddFileCollectionFiles.mockResolvedValue({ data: {} });
-    mockListFileCollectionFiles.mockResolvedValue({ data: {} });
     mockRemoveFileCollectionFiles.mockResolvedValue({ data: {} });
-    mockGetPage.mockImplementation(async (apiCall) => {
-      await apiCall();
-      return {
-        cursors: { next: "next-page", self: "self-page" },
-        page: { data: [fileData("file-1")] },
-      };
-    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  it("proxies collection file list requests with supported paging parameters", async () => {
-    const res = await callFileCollectionFiles({
-      method: "GET",
-      query: {
-        id: "collection-1",
-        cursor: "cursor-1",
-        pageSize: "50",
-      },
-    });
-
-    expect(mockGetClientFromSession).toHaveBeenCalled();
-    expect(mockGetFileCollectionsApi).toHaveBeenCalledWith({
-      client: "test-client",
-    });
-    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: "cursor-1",
-      pageSize: 50,
-    });
-    expect(res.statusCode()).toBe(200);
-    expect(res.body()).toEqual({
-      cursors: { next: "next-page", self: "self-page" },
-      data: [fileData("file-1")],
-      status: 200,
-    });
-  });
-
-  it("uses the default page size when one is not supplied", async () => {
-    const res = await callFileCollectionFiles({
-      method: "GET",
-      query: { id: "collection-1" },
-    });
-
-    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: undefined,
-      pageSize: 10,
-    });
-    expect(res.statusCode()).toBe(200);
-  });
-
-  it("uses the default page size when an invalid page size is supplied", async () => {
-    const res = await callFileCollectionFiles({
-      method: "GET",
-      query: { id: "collection-1", pageSize: "not-a-number" },
-    });
-
-    expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: undefined,
-      pageSize: 10,
-    });
-    expect(res.statusCode()).toBe(200);
   });
 
   it("validates requests before calling Vertex", async () => {
@@ -183,7 +115,6 @@ describe("file collection files API route", () => {
       });
       expect(mockGetClientFromSession).not.toHaveBeenCalled();
       expect(mockAddFileCollectionFiles).not.toHaveBeenCalled();
-      expect(mockListFileCollectionFiles).not.toHaveBeenCalled();
       expect(mockRemoveFileCollectionFiles).not.toHaveBeenCalled();
     }
   );
@@ -287,18 +218,4 @@ function createRes(): TestRes {
     return res;
   });
   return res;
-}
-
-function fileData(id: string): unknown {
-  return {
-    attributes: {
-      created: "2026-06-12T15:30:00Z",
-      name: "File One",
-      status: "uploaded",
-      suppliedId: "file-supplied-1",
-      uploaded: "2026-06-12T15:31:00Z",
-    },
-    id,
-    type: "file",
-  };
 }

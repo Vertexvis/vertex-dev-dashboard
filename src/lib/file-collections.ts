@@ -80,6 +80,41 @@ function isFileCollectionSortField(
   return FileCollectionSortFields.includes(field as FileCollectionSortField);
 }
 
+export interface FileCollectionFileFilters {
+  readonly fileId?: string;
+  readonly name?: string;
+  readonly suppliedId?: string;
+}
+
+/**
+ * Temporary client-side stand-in for the File Collection files filter
+ * contract.
+ *
+ * The dashboard forwards `filter[name|fileId|suppliedId][contains]` upstream,
+ * but applies the filters to the returned page here until the service is
+ * confirmed to honor them on this relationship. Matching is a
+ * case-insensitive contains check, mirroring the Files page filters.
+ */
+export function filterFileCollectionFiles(
+  files: FileMetadataData[],
+  { fileId, name, suppliedId }: FileCollectionFileFilters
+): FileMetadataData[] {
+  if (fileId == null && name == null && suppliedId == null) return files;
+
+  return files.filter(
+    (file) =>
+      containsMatch(file.id, fileId) &&
+      containsMatch(file.attributes.name, name) &&
+      containsMatch(file.attributes.suppliedId, suppliedId)
+  );
+}
+
+function containsMatch(value: string | undefined, filter?: string): boolean {
+  if (filter == null || filter === "") return true;
+
+  return (value ?? "").toLowerCase().includes(filter.toLowerCase());
+}
+
 export function toFileCollection(
   data: FileCollectionMetadataData
 ): FileCollection {
