@@ -1,7 +1,6 @@
 import { Add } from "@mui/icons-material";
 import {
   Alert,
-  Box,
   Button,
   Checkbox,
   Paper,
@@ -12,15 +11,14 @@ import {
   TableContainer,
   TablePagination,
   TableRow,
-  TextField,
 } from "@mui/material";
-import debounce from "lodash.debounce";
 import React from "react";
 import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { File, isCompleteFileStatus, toFilePage } from "../../lib/files";
+import { useDebouncedFilter } from "../../lib/hooks/use-debounced-filter";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { confirmResourceDeletion } from "../shared/confirm-delete";
@@ -30,6 +28,7 @@ import {
 } from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
+import { FileFilterFields } from "../shared/FileFilterFields";
 import { FileStatusChip } from "../shared/FileStatusChip";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { ResourceLink } from "../shared/ResourceLink";
@@ -89,23 +88,6 @@ function isFileAvailable(file: File): boolean {
 interface Props {
   readonly activeFileId?: string;
   readonly onFileSelected: (file: File) => void;
-}
-
-type SetOptionalString = React.Dispatch<
-  React.SetStateAction<string | undefined>
->;
-function useDebouncedFilter(
-  setFilter: SetOptionalString,
-  resetPaging: () => void
-): (value: string) => void {
-  return React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setFilter(value === "" ? undefined : value);
-      }, 300),
-    [resetPaging, setFilter]
-  );
 }
 
 export default function FileTable({
@@ -347,55 +329,11 @@ export default function FileTable({
           onDelete={handleDelete}
           title="Files"
         />
-        <Box
-          sx={{
-            px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
-              id="nameFilter"
-              label="Name"
-              type="text"
-              onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
-              }}
-              sx={{ mt: 0, width: "16rem" }}
-            />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
-              id="fileIdFilter"
-              label="File ID"
-              type="text"
-              onChange={(e) => {
-                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
-              }}
-              sx={{ mt: 0, width: "16rem" }}
-            />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
-              id="suppliedIdFilter"
-              label="Supplied ID"
-              type="text"
-              onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
-              }}
-              sx={{ mt: 0, width: "16rem" }}
-            />
-          </Box>
-        </Box>
+        <FileFilterFields
+          onFileIdChange={debouncedSetFileIdFilter}
+          onNameChange={debouncedSetNameFilter}
+          onSuppliedIdChange={debouncedSetSuppliedIdFilter}
+        />
         <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
         <TableContainer>
           <Table>
