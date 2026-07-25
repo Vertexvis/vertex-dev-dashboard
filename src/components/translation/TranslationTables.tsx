@@ -28,6 +28,7 @@ export default function TranslationTables({
 
         <QueuedTranslationsTable
           title="Recently Successful Translations"
+          refreshInterval={10000}
           status="complete"
           fetchAll={false}
           filter={(row) => dateDiffInDays(new Date(row.created)) <= 2}

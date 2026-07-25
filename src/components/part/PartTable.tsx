@@ -288,9 +288,11 @@ export default function PartTable({
         }}
         targetRevisionId={targetRevisionId}
       />
+      {/* Longer dwell than the error toasts: this one carries the "View
+          translations" action, so give users time to reach it. */}
       <Snackbar
         open={!!toast}
-        autoHideDuration={6000}
+        autoHideDuration={12000}
         onClose={() => setToast(undefined)}
       >
         <Alert

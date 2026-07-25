@@ -39,6 +39,7 @@ interface RelationshipData {
 }
 
 interface IncludedResource {
+  readonly attributes?: unknown;
   readonly id?: string;
   readonly type?: string;
 }
@@ -142,6 +143,14 @@ export function TranslationDetailsDrawer({
               {included.length > 0 && (
                 <SectionRow
                   entries={included.map((resource, index) => ({
+                    // The resource's attributes render through the same
+                    // JSON-monospace treatment as attribute values above, so
+                    // the drawer shows the full included payload.
+                    details:
+                      resource.attributes == null
+                        ? undefined
+                        : toValueDisplay("attributes", resource.attributes)
+                            .value,
                     key: `${resource.type}-${resource.id}-${index}`,
                     label: toLabel(resource.type ?? "resource"),
                     value: resource.id ?? "N/A",
@@ -264,6 +273,7 @@ function SectionRow({
   label,
 }: {
   readonly entries: readonly {
+    readonly details?: string;
     readonly key: string;
     readonly label: string;
     readonly value: string;
@@ -293,6 +303,21 @@ function SectionRow({
             >
               {toDisplayValue(entry.value)}
             </Typography>
+            {entry.details != null && (
+              <Typography
+                component="pre"
+                sx={{
+                  fontFamily: "monospace",
+                  fontSize: "0.75rem",
+                  m: 0,
+                  overflowWrap: "anywhere",
+                  whiteSpace: "pre-wrap",
+                }}
+                variant="body2"
+              >
+                {entry.details}
+              </Typography>
+            )}
           </Box>
         ))}
       </TableCell>

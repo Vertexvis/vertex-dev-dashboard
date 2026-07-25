@@ -3,7 +3,6 @@ import { NextApiResponse } from "next";
 
 import {
   ErrorRes,
-  isErrorFailure,
   MethodNotAllowed,
   ServerError,
   toErrorRes,
@@ -12,7 +11,7 @@ import {
   QueuedTranslationJobRes,
   toQueuedTranslationJobRes,
 } from "../../../lib/queued-jobs";
-import { getClientFromSession, makeCall } from "../../../lib/vertex-api";
+import { getClientFromSession } from "../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../lib/with-session";
 
 export async function handleQueuedTranslationJob(
@@ -38,13 +37,15 @@ async function get(
       return { message: "Translation job ID required.", status: 400 };
     }
 
+    // Call the SDK directly and let the catch below map thrown VertexErrors,
+    // matching the sibling queued-translations list route. (makeCall never
+    // throws, which left that mapping dead when combined with it.)
     const client = await getClientFromSession(req.session);
-    const job = await makeCall(() =>
-      client.translationInspections.getQueuedTranslationJob({ id })
-    );
-    if (isErrorFailure(job)) return toErrorRes({ failure: job });
+    const job = await client.translationInspections.getQueuedTranslationJob({
+      id,
+    });
 
-    return toQueuedTranslationJobRes(job);
+    return toQueuedTranslationJobRes(job.data);
   } catch (error) {
     const e = error as VertexError;
     logError(e);

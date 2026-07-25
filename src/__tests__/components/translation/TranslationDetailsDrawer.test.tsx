@@ -71,6 +71,10 @@ describe("TranslationDetailsDrawer", () => {
       screen.getByText("https://vertex.test/queued-translation-jobs/job-1")
     ).toBeInTheDocument();
     expect(screen.getByText("rev-1")).toBeInTheDocument();
+    // Included resources render their attributes too, not just type and id.
+    expect(
+      screen.getByText(/"suppliedId": "rev-1-supplied"/)
+    ).toBeInTheDocument();
   });
 
   it("falls back to row data when the full job details cannot load", async () => {
