@@ -120,8 +120,10 @@ describe("file collection files list API route", () => {
       "supplied-1"
     );
     expect(response.statusCode()).toBe(200);
+    // The upstream cursor is not a synthetic offset, so the filtered page
+    // starts from the first match.
     expect(response.body()).toEqual({
-      cursors: { next: undefined, self: undefined },
+      cursors: { next: undefined, self: "0" },
       data: [fileData("file-1", "Alpha One.jt", "supplied-1")],
       status: 200,
     });
@@ -156,13 +158,13 @@ describe("file collection files list API route", () => {
     expect(requests[1].searchParams.get("page[cursor]")).toBe("scan-1");
     expect(response.statusCode()).toBe(200);
     expect(response.body()).toEqual({
-      cursors: { next: undefined, self: undefined },
+      cursors: { next: undefined, self: "0" },
       data: [fileData("file-150", "Gamma 150.jt", "supplied-150")],
       status: 200,
     });
   });
 
-  it("stops the filtered scan at the page cap, warns, and returns what was gathered", async () => {
+  it("stops the filtered scan at the page cap, warns, and flags the response as truncated", async () => {
     const warn = jest
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
@@ -190,8 +192,10 @@ describe("file collection files list API route", () => {
       const body = response.body() as {
         cursors: { next?: string };
         data: { id: string }[];
+        truncated?: boolean;
       };
       expect(body.cursors.next).toBeUndefined();
+      expect(body.truncated).toBe(true);
       expect(body.data.map((file) => file.id)).toEqual(
         Array.from({ length: 10 }, (_, index) => `file-${index}`)
       );
@@ -231,32 +235,112 @@ describe("file collection files list API route", () => {
     expect(body.data.map((file) => file.id)).toEqual(["file-1"]);
   });
 
-  it("caps filtered results at the requested page size without a next cursor", async () => {
+  it("terminates the filtered scan when upstream cycles back to an earlier cursor", async () => {
+    const requests: URL[] = [];
     nodeMswServer.use(
-      stubCollectionFilesPages({
-        "": {
-          data: [
-            fileData("file-1", "Match One.jt", "supplied-1"),
-            fileData("file-2", "Match Two.jt", "supplied-2"),
-            fileData("file-3", "Match Three.jt", "supplied-3"),
-          ],
+      stubCollectionFilesPages(
+        {
+          "": {
+            data: [fileData("file-1", "Match One.jt", "supplied-1")],
+            nextCursor: "cursor-a",
+          },
+          "cursor-a": {
+            data: [fileData("file-2", "Match Two.jt", "supplied-2")],
+            nextCursor: "cursor-b",
+          },
+          "cursor-b": {
+            data: [fileData("file-3", "Match Three.jt", "supplied-3")],
+            nextCursor: "cursor-a",
+          },
         },
-      })
+        requests
+      )
     );
 
     const response = await callCollectionFiles({
       method: "GET",
+      query: { id: "collection-1", name: "match" },
+    });
+
+    // A -> B -> A: the third page points back at an already-visited cursor,
+    // so the scan stops instead of spinning to the page cap.
+    expect(requests).toHaveLength(3);
+    expect(response.statusCode()).toBe(200);
+    const body = response.body() as { data: { id: string }[] };
+    expect(body.data.map((file) => file.id)).toEqual([
+      "file-1",
+      "file-2",
+      "file-3",
+    ]);
+  });
+
+  it("pages filtered matches with synthetic offset cursors", async () => {
+    const pages: Record<string, StubPage> = {
+      "": {
+        data: [
+          fileData("file-1", "Match One.jt", "supplied-1"),
+          fileData("file-2", "Match Two.jt", "supplied-2"),
+          fileData("file-3", "Match Three.jt", "supplied-3"),
+        ],
+      },
+    };
+    nodeMswServer.use(stubCollectionFilesPages(pages));
+
+    const firstPage = await callCollectionFiles({
+      method: "GET",
       query: { id: "collection-1", name: "match", pageSize: "2" },
     });
 
-    expect(response.statusCode()).toBe(200);
-    const body = response.body() as {
-      cursors: { next?: string };
-      data: { id: string }[];
-    };
-    expect(body.cursors.next).toBeUndefined();
-    expect(body.data.map((file) => file.id)).toEqual(["file-1", "file-2"]);
+    expect(firstPage.statusCode()).toBe(200);
+    expect(firstPage.body()).toEqual({
+      cursors: { next: "2", self: "0" },
+      data: [
+        fileData("file-1", "Match One.jt", "supplied-1"),
+        fileData("file-2", "Match Two.jt", "supplied-2"),
+      ],
+      status: 200,
+    });
+
+    const secondPage = await callCollectionFiles({
+      method: "GET",
+      query: { cursor: "2", id: "collection-1", name: "match", pageSize: "2" },
+    });
+
+    expect(secondPage.statusCode()).toBe(200);
+    expect(secondPage.body()).toEqual({
+      cursors: { next: undefined, self: "2" },
+      data: [fileData("file-3", "Match Three.jt", "supplied-3")],
+      status: 200,
+    });
   });
+
+  it.each([["-1"], ["1.5"], ["bogus"]])(
+    "treats the invalid filtered cursor %p as the first page",
+    async (cursor) => {
+      nodeMswServer.use(
+        stubCollectionFilesPages({
+          "": {
+            data: [
+              fileData("file-1", "Match One.jt", "supplied-1"),
+              fileData("file-2", "Match Two.jt", "supplied-2"),
+            ],
+          },
+        })
+      );
+
+      const response = await callCollectionFiles({
+        method: "GET",
+        query: { cursor, id: "collection-1", name: "match", pageSize: "1" },
+      });
+
+      expect(response.statusCode()).toBe(200);
+      expect(response.body()).toEqual({
+        cursors: { next: "1", self: "0" },
+        data: [fileData("file-1", "Match One.jt", "supplied-1")],
+        status: 200,
+      });
+    }
+  );
 
   // Stand-in behavior: upstream ignores these filters on this relationship,
   // so the route filters the scanned files itself.

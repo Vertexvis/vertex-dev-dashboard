@@ -56,14 +56,23 @@ const collectionFilesListQuery: ListQuerySpec = {
 const FILTERED_SCAN_PAGE_SIZE = 100;
 // Safety cap on the scan: at most this many upstream page fetches
 // (10 x 100 = ~1,000 files). If the cap trips, we still return what was
-// gathered, so matches beyond the cap are silently missed — acceptable only
-// because upstream filter support will eventually replace this stand-in; the
-// console.warn below keeps the truncation diagnosable.
+// gathered and mark the response `truncated` so the UI can tell users that
+// matches beyond the scanned files are missing; the console.warn below keeps
+// the truncation diagnosable server-side. Acceptable only because upstream
+// filter support will eventually replace this stand-in.
 const FILTERED_SCAN_MAX_PAGES = 10;
+
+export interface CollectionFilesGetRes extends GetRes<FileMetadataData> {
+  /**
+   * Present (and true) when the filtered scan stopped at its page cap, so
+   * matches beyond the scanned files may be missing from every page.
+   */
+  readonly truncated?: true;
+}
 
 export async function handleFileCollectionFiles(
   req: NextIronRequest,
-  res: NextApiResponse<GetRes<FileMetadataData> | Res | ErrorRes>
+  res: NextApiResponse<CollectionFilesGetRes | Res | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -139,7 +148,7 @@ export default withSession(handleFileCollectionFiles);
 
 async function get(
   req: NextIronRequest
-): Promise<ErrorRes | GetRes<FileMetadataData>> {
+): Promise<ErrorRes | CollectionFilesGetRes> {
   try {
     const id = getFileCollectionId(req);
     if (id == null)
@@ -172,18 +181,29 @@ async function get(
     // Filtered: upstream ignores the filter params on this endpoint (see the
     // scan constants above), so matches can live on any page. Scan the
     // collection and apply the stand-in filter over the full gathered set.
-    const files = await scanCollectionFilesForFilter(client, id, query);
+    const { files, truncated } = await scanCollectionFilesForFilter(
+      client,
+      id,
+      query
+    );
     const matches = filterFileCollectionFiles(files, filters);
 
-    // Paging tradeoff while filtered: the result set is computed here, not
-    // upstream, so upstream cursors no longer identify a position in it.
-    // Return the first `pageSize` matches with no `next` cursor (raising the
-    // page size reaches later matches). Simplest behavior that is correct
-    // across the whole collection; revisit when upstream filtering ships.
+    // Paging while filtered: the result set is computed here, not upstream,
+    // so upstream cursors no longer identify a position in it. Since the
+    // whole match set is already materialized, page it with synthetic offset
+    // cursors instead: `self` is this page's offset and `next` the following
+    // one, so the UI's cursor-driven next/prev paging works unchanged.
+    // Revisit when upstream filtering ships.
+    const offset = parseFilteredScanOffset(query.cursor);
+    const pageEnd = offset + query.pageSize;
     return {
-      cursors: { next: undefined, self: undefined },
-      data: matches.slice(0, query.pageSize),
+      cursors: {
+        next: pageEnd < matches.length ? String(pageEnd) : undefined,
+        self: String(offset),
+      },
+      data: matches.slice(offset, pageEnd),
       status: 200,
+      ...(truncated ? { truncated: true } : {}),
     };
   } catch (error) {
     return toRouteError(error);
@@ -215,11 +235,17 @@ function fetchCollectionFilesPage(
   );
 }
 
+interface FilteredScanResult {
+  readonly files: FileMetadataData[];
+  /** True when the scan stopped at the page cap with pages still unread. */
+  readonly truncated: boolean;
+}
+
 async function scanCollectionFilesForFilter(
   client: VertexClient,
   id: string,
   query: ListQuery
-): Promise<FileMetadataData[]> {
+): Promise<FilteredScanResult> {
   const files: FileMetadataData[] = [];
   const seenFileIds = new Set<string>();
   const seenCursors = new Set<string>();
@@ -227,7 +253,7 @@ async function scanCollectionFilesForFilter(
 
   for (let fetches = 0; fetches < FILTERED_SCAN_MAX_PAGES; fetches++) {
     // Scan from the start of the collection (the request's own cursor and
-    // page size describe the unfiltered listing, not this scan).
+    // page size describe the filtered listing, not this scan).
     const params = toVertexListParams(
       { ...query, cursor, pageSize: FILTERED_SCAN_PAGE_SIZE },
       collectionFilesListQuery
@@ -248,21 +274,34 @@ async function scanCollectionFilesForFilter(
     }
 
     const next = cursors.next;
-    if (next == null) return files;
+    if (next == null) return { files, truncated: false };
     // Termination guard: an upstream (or test fixture) that echoes the same
     // cursor back, or cycles through earlier cursors, makes no progress —
     // stop instead of spinning until the page cap.
-    if (next === cursor || seenCursors.has(next)) return files;
+    if (next === cursor || seenCursors.has(next))
+      return { files, truncated: false };
     seenCursors.add(next);
     cursor = next;
   }
 
+  // No repo-wide warn helper exists (`logError` only takes errors), so
+  // console.warn stays the server-side diagnostic here.
   console.warn(
     `Filtered scan of file collection ${id} stopped at the ` +
       `${FILTERED_SCAN_MAX_PAGES}-page safety cap (${files.length} files ` +
       `scanned); matches beyond the cap are not returned.`
   );
-  return files;
+  return { files, truncated: true };
+}
+
+// Filtered responses page with synthetic offset cursors (see get()). Parse
+// one back into an offset, treating anything else — including a stale
+// upstream cursor from an unfiltered page — as the first page.
+function parseFilteredScanOffset(cursor?: string): number {
+  if (cursor == null || !/^\d+$/.test(cursor)) return 0;
+
+  const offset = Number.parseInt(cursor, 10);
+  return Number.isSafeInteger(offset) ? offset : 0;
 }
 
 function getFileCollectionId(req: NextIronRequest): string | undefined {

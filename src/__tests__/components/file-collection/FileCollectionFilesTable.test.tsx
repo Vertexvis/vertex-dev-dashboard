@@ -237,6 +237,42 @@ describe("FileCollectionFilesTable", () => {
     );
   });
 
+  it("shows the scan-cap hint only when the response is truncated", async () => {
+    server.use(
+      http.get("*/api/file-collections/collection-1/files", ({ request }) => {
+        const url = new URL(request.url);
+        const filtered = url.searchParams.get("name") != null;
+
+        return HttpResponse.json({
+          cursors: { self: "0" },
+          data: [
+            fileResource({
+              id: "file-1",
+              name: "File One",
+              status: "complete",
+              suppliedId: "supplied-file-1",
+            }),
+          ],
+          status: 200,
+          ...(filtered ? { truncated: true } : {}),
+        });
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Showing matches from the first 1,000 files")
+    ).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Name"), "One");
+
+    expect(
+      await screen.findByText("Showing matches from the first 1,000 files")
+    ).toBeInTheDocument();
+  });
+
   it("filters collection files by name before rendering the filtered results", async () => {
     const searches: string[] = [];
 

@@ -13,6 +13,7 @@ import {
   TablePagination,
   TableRow,
   TextField,
+  Typography,
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import React from "react";
@@ -132,6 +133,12 @@ export default function FileCollectionFilesTable({
   });
   const loadError = error ?? (isErrorRes(data) ? data : undefined);
   const page = data && !isErrorRes(data) ? toFilePage(data) : undefined;
+  // Set by the route when its filtered scan stopped at the page cap, so
+  // matches beyond the scanned files may be missing.
+  const truncated =
+    data != null &&
+    !isErrorRes(data) &&
+    (data as { truncated?: boolean }).truncated === true;
   const pageLength = page ? page.items.length : 0;
   const paginationCursors = page?.cursors ?? cursors;
   const emptyRows =
@@ -397,6 +404,16 @@ export default function FileCollectionFilesTable({
             />
           </Box>
         </Box>
+        {truncated && (
+          <Typography
+            color="text.secondary"
+            component="p"
+            sx={{ px: { sm: 2 }, pb: 1 }}
+            variant="caption"
+          >
+            Showing matches from the first 1,000 files
+          </Typography>
+        )}
         <TableContainer>
           <Table>
             <TableHead>
