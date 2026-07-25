@@ -1,11 +1,18 @@
+import { Close } from "@mui/icons-material";
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
   Table,
   TableBody,
   TableCell,
@@ -43,6 +50,13 @@ const headCells = [
   { id: "id", label: "ID" },
 ] as const;
 
+const MonospaceIdSx = {
+  fontFamily: "monospace",
+  fontSize: "0.75rem",
+  letterSpacing: "-0.02em",
+  whiteSpace: "nowrap",
+} as const;
+
 function mergeMatches(
   byName?: Paged<File>,
   bySuppliedId?: Paged<File>
@@ -64,7 +78,7 @@ export function AddFilesToCollectionDialog({
 }: Props): JSX.Element {
   const [search, setSearch] = React.useState("");
   const [query, setQuery] = React.useState("");
-  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [selected, setSelected] = React.useState<Map<string, File>>(new Map());
   const [submitError, setSubmitError] = React.useState<string>();
   const [submitting, setSubmitting] = React.useState(false);
   const debouncedSetQuery = React.useMemo(
@@ -108,17 +122,25 @@ export function AddFilesToCollectionDialog({
       debouncedSetQuery.cancel();
       setSearch("");
       setQuery("");
-      setSelected(new Set());
+      setSelected(new Map());
       setSubmitError(undefined);
     }
   }, [debouncedSetQuery, open]);
 
   function toggle(file: File) {
-    if (!isCompleteFileStatus(file.status)) return;
     setSelected((current) => {
-      const next = new Set(current);
+      const next = new Map(current);
       if (next.has(file.id)) next.delete(file.id);
-      else next.add(file.id);
+      else if (isCompleteFileStatus(file.status)) next.set(file.id, file);
+      return next;
+    });
+  }
+
+  function removeSelection(fileId: string) {
+    setSelected((current) => {
+      if (!current.has(fileId)) return current;
+      const next = new Map(current);
+      next.delete(fileId);
       return next;
     });
   }
@@ -132,7 +154,7 @@ export function AddFilesToCollectionDialog({
       const res = await fetch(
         `/api/file-collections/${encodeURIComponent(collectionId)}/files`,
         {
-          body: JSON.stringify({ fileIds: [...selected] }),
+          body: JSON.stringify({ fileIds: [...selected.keys()] }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }
@@ -155,112 +177,200 @@ export function AddFilesToCollectionDialog({
   }
 
   return (
-    <Dialog fullWidth maxWidth="md" onClose={onClose} open={open}>
+    <Dialog fullWidth maxWidth="lg" onClose={onClose} open={open}>
       <DialogTitle>Add completed files</DialogTitle>
       <DialogContent>
         <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
           Only complete files can be added. Adding a file does not move or
           delete its source.
         </Typography>
-        <TextField
-          autoFocus
-          fullWidth
-          helperText="Matches names and supplied IDs. Paste a file ID (UUID) to look it up directly."
-          label="Search files"
-          onChange={(event) => {
-            setSearch(event.target.value);
-            debouncedSetQuery(event.target.value);
-          }}
-          placeholder="Name, supplied ID, or file ID"
-          value={search}
-        />
         {submitError != null && (
-          <Alert severity="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {submitError}
           </Alert>
         )}
-        {loadError != null ? (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            Could not load files.
-          </Alert>
-        ) : (
-          <TableContainer sx={{ mt: 2 }}>
-            <Table aria-label="Eligible files" size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox" />
-                  {headCells.map((headCell) => (
-                    <TableCell key={headCell.id}>{headCell.label}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {files == null || (files.length === 0 && suppliedIdPending) ? (
-                  <SkeletonBody
-                    includeCheckbox={true}
-                    numCellsPerRow={headCells.length + 1}
-                    numRows={3}
-                    rowHeight={DefaultRowHeight}
-                  />
-                ) : (
-                  <>
-                    {files.map((file) => {
-                      const eligible = isCompleteFileStatus(file.status);
-                      return (
-                        <TableRow
-                          hover
-                          key={file.id}
-                          onClick={() => toggle(file)}
-                          selected={selected.has(file.id)}
-                        >
-                          <TableCell
-                            padding="checkbox"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggle(file);
-                            }}
-                          >
-                            <Checkbox
-                              checked={selected.has(file.id)}
-                              disabled={!eligible}
-                              inputProps={{
-                                "aria-label": `Select ${file.name ?? file.id}`,
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell component="th" scope="row">
-                            {file.name ?? file.id}
-                          </TableCell>
-                          <TableCell>{file.suppliedId}</TableCell>
-                          <TableCell>
-                            <FileStatusChip status={file.status} />
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.75rem",
-                              letterSpacing: "-0.02em",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {file.id}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {files.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={headCells.length + 1}>
-                          No matching files.
+        <Grid container spacing={2}>
+          <Grid item md={8} xs={12}>
+            <TextField
+              autoFocus
+              fullWidth
+              helperText="Matches names and supplied IDs. Paste a file ID (UUID) to look it up directly."
+              label="Search files"
+              onChange={(event) => {
+                setSearch(event.target.value);
+                debouncedSetQuery(event.target.value);
+              }}
+              placeholder="Name, supplied ID, or file ID"
+              value={search}
+            />
+            {loadError != null ? (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                Could not load files.
+              </Alert>
+            ) : (
+              <TableContainer sx={{ mt: 2 }}>
+                <Table
+                  aria-label="Eligible files"
+                  size="small"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox" />
+                      {headCells.map((headCell) => (
+                        <TableCell key={headCell.id}>
+                          {headCell.label}
                         </TableCell>
-                      </TableRow>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {files == null ||
+                    (files.length === 0 && suppliedIdPending) ? (
+                      <SkeletonBody
+                        includeCheckbox={true}
+                        numCellsPerRow={headCells.length + 1}
+                        numRows={3}
+                        rowHeight={DefaultRowHeight}
+                      />
+                    ) : (
+                      <>
+                        {files.map((file) => {
+                          const eligible = isCompleteFileStatus(file.status);
+                          return (
+                            <TableRow
+                              hover
+                              key={file.id}
+                              onClick={() => toggle(file)}
+                              selected={selected.has(file.id)}
+                            >
+                              <TableCell
+                                padding="checkbox"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggle(file);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={selected.has(file.id)}
+                                  disabled={!eligible && !selected.has(file.id)}
+                                  inputProps={{
+                                    "aria-label": `Select ${
+                                      file.name ?? file.id
+                                    }`,
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell component="th" scope="row">
+                                {file.name ?? file.id}
+                              </TableCell>
+                              <TableCell>{file.suppliedId}</TableCell>
+                              <TableCell>
+                                <FileStatusChip status={file.status} />
+                              </TableCell>
+                              <TableCell sx={MonospaceIdSx}>
+                                {file.id}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {files.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={headCells.length + 1}>
+                              No matching files.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Grid>
+          <Grid item md={4} xs={12}>
+            <Box
+              sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Typography
+                sx={{ borderBottom: 1, borderColor: "divider", px: 2, py: 1 }}
+                variant="subtitle2"
+              >
+                Selected files ({selected.size})
+              </Typography>
+              {selected.size === 0 ? (
+                <Typography
+                  color="text.secondary"
+                  sx={{ p: 2 }}
+                  variant="body2"
+                >
+                  No files selected yet.
+                </Typography>
+              ) : (
+                <List
+                  aria-label="Selected files"
+                  dense
+                  sx={{ maxHeight: 420, overflow: "auto" }}
+                >
+                  {[...selected.values()].map((file) => (
+                    <ListItem
+                      key={file.id}
+                      secondaryAction={
+                        <IconButton
+                          aria-label={`Remove ${file.name ?? file.id}`}
+                          edge="end"
+                          onClick={() => removeSelection(file.id)}
+                          size="small"
+                        >
+                          <Close fontSize="small" />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText
+                        primary={file.name ?? file.id}
+                        primaryTypographyProps={{
+                          noWrap: true,
+                          title: file.name ?? file.id,
+                        }}
+                        secondary={
+                          <>
+                            {file.suppliedId != null && (
+                              <Typography
+                                component="span"
+                                display="block"
+                                noWrap
+                                title={file.suppliedId}
+                                variant="caption"
+                              >
+                                {file.suppliedId}
+                              </Typography>
+                            )}
+                            <Typography
+                              component="span"
+                              display="block"
+                              noWrap
+                              sx={MonospaceIdSx}
+                              title={file.id}
+                              variant="caption"
+                            >
+                              {file.id}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>

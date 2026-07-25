@@ -19,7 +19,14 @@ test("manages collection membership through the SSR-safe local fixture", async (
       page.getByRole("columnheader", { exact: true, name: column })
     ).toBeVisible();
   }
+  await expect(page.getByText("No files selected yet.")).toBeVisible();
   await page.getByRole("checkbox", { name: "Select fixture-file.jt" }).check();
+  await expect(page.getByText("Selected files (1)")).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Selected files" })
+      .getByText("fixture-file.jt")
+  ).toBeVisible();
   await page.getByRole("button", { name: "Add 1 file" }).click();
 
   await expect(page.getByRole("dialog")).toBeHidden();

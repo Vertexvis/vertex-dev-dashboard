@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import React from "react";
@@ -232,6 +232,230 @@ describe("AddFilesToCollectionDialog", () => {
     releaseSuppliedIdLookup();
 
     expect(await screen.findByText("Unrelated name")).toBeInTheDocument();
+  });
+
+  it("shows queued files in the selected panel and keeps them across searches", async () => {
+    const listFiles = jest.fn(({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get("name") === "Second") {
+        return HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "file-2",
+              name: "Second file",
+              status: "complete",
+              suppliedId: "PN-0002",
+            }),
+          ])
+        );
+      }
+      if (url.searchParams.get("suppliedId") != null) {
+        return HttpResponse.json(filePage([]));
+      }
+
+      return HttpResponse.json(
+        filePage([
+          fileResource({
+            id: "file-1",
+            name: "First file",
+            status: "complete",
+            suppliedId: "PN-0001",
+          }),
+        ])
+      );
+    });
+    server.use(http.get("*/api/files", (info) => listFiles(info)));
+
+    renderDialog();
+
+    expect(await screen.findByText("First file")).toBeInTheDocument();
+    expect(screen.getByText("Selected files (0)")).toBeInTheDocument();
+    expect(screen.getByText("No files selected yet.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("list", { name: "Selected files" })
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select First file" })
+    );
+
+    expect(screen.getByText("Selected files (1)")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No files selected yet.")
+    ).not.toBeInTheDocument();
+    const panel = screen.getByRole("list", { name: "Selected files" });
+    expect(within(panel).getByText("First file")).toBeInTheDocument();
+    expect(within(panel).getByText("PN-0001")).toBeInTheDocument();
+    expect(within(panel).getByText("file-1")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Search files"));
+    await userEvent.paste("Second");
+
+    expect(await screen.findByText("Second file")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Select First file" })
+    ).not.toBeInTheDocument();
+    const retainedPanel = screen.getByRole("list", { name: "Selected files" });
+    expect(within(retainedPanel).getByText("First file")).toBeInTheDocument();
+    expect(within(retainedPanel).getByText("PN-0001")).toBeInTheDocument();
+    expect(screen.getByText("Selected files (1)")).toBeInTheDocument();
+  });
+
+  it("removes queued files from the panel and posts only remaining selections", async () => {
+    const addFiles = jest.fn(async ({ request }) => {
+      expect(await request.json()).toEqual({ fileIds: ["file-2"] });
+      return HttpResponse.json({ status: 200 });
+    });
+    const onClose = jest.fn();
+    server.use(
+      http.get("*/api/files", () =>
+        HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "file-1",
+              name: "First file",
+              status: "complete",
+              suppliedId: "PN-0001",
+            }),
+            fileResource({
+              id: "file-2",
+              name: "Second file",
+              status: "complete",
+              suppliedId: "PN-0002",
+            }),
+          ])
+        )
+      ),
+      http.post("*/api/file-collections/collection-1/files", (info) =>
+        addFiles(info)
+      )
+    );
+
+    renderDialog({ onClose });
+
+    expect(await screen.findByText("First file")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select First file" })
+    );
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select Second file" })
+    );
+    expect(screen.getByText("Selected files (2)")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove First file" })
+    );
+
+    expect(screen.getByText("Selected files (1)")).toBeInTheDocument();
+    const panel = screen.getByRole("list", { name: "Selected files" });
+    expect(within(panel).queryByText("First file")).not.toBeInTheDocument();
+    expect(within(panel).getByText("Second file")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: "Select First file" })
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Select Second file" })
+    ).toBeChecked();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add 1 file" }));
+
+    await waitFor(() => expect(addFiles).toHaveBeenCalledTimes(1));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets a queued file be unchecked after its status regresses", async () => {
+    const listFiles = jest.fn(({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get("name") === "Regressed") {
+        return HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "file-1",
+              name: "Regressed file",
+              status: "pending",
+              suppliedId: "PN-0001",
+            }),
+          ])
+        );
+      }
+      if (url.searchParams.get("suppliedId") != null) {
+        return HttpResponse.json(filePage([]));
+      }
+
+      return HttpResponse.json(
+        filePage([
+          fileResource({
+            id: "file-1",
+            name: "Regressed file",
+            status: "complete",
+            suppliedId: "PN-0001",
+          }),
+        ])
+      );
+    });
+    server.use(http.get("*/api/files", (info) => listFiles(info)));
+
+    renderDialog();
+
+    expect(await screen.findByText("Regressed file")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select Regressed file" })
+    );
+    expect(screen.getByText("Selected files (1)")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Search files"));
+    await userEvent.paste("Regressed");
+
+    expect(await screen.findByText("pending")).toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Select Regressed file",
+    });
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeEnabled();
+
+    await userEvent.click(screen.getByRole("row", { name: /Regressed file/ }));
+
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toBeDisabled();
+    expect(screen.getByText("Selected files (0)")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("row", { name: /Regressed file/ }));
+
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByText("Selected files (0)")).toBeInTheDocument();
+  });
+
+  it("returns to the empty selected state when every file is removed", async () => {
+    server.use(
+      http.get("*/api/files", () =>
+        HttpResponse.json(
+          filePage([
+            fileResource({
+              id: "file-1",
+              name: "First file",
+              status: "complete",
+              suppliedId: "PN-0001",
+            }),
+          ])
+        )
+      )
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("First file")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select First file" })
+    );
+    expect(screen.getByText("Selected files (1)")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove First file" })
+    );
+
+    expect(screen.getByText("Selected files (0)")).toBeInTheDocument();
+    expect(screen.getByText("No files selected yet.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add files" })).toBeDisabled();
   });
 
   it("adds only completed files through the collection membership route", async () => {
