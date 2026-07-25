@@ -177,9 +177,18 @@ export function AddFilesToCollectionDialog({
   }
 
   return (
-    <Dialog fullWidth maxWidth="lg" onClose={onClose} open={open}>
+    <Dialog
+      fullWidth
+      maxWidth="lg"
+      onClose={onClose}
+      open={open}
+      // A stable height on wider screens keeps the dialog from jumping as
+      // selections accumulate; the table and the selected panel scroll
+      // independently inside it instead.
+      PaperProps={{ sx: { height: { md: 720 } } }}
+    >
       <DialogTitle>Add completed files</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ display: "flex", flexDirection: "column" }}>
         <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
           Only complete files can be added. Adding a file does not move or
           delete its source.
@@ -189,8 +198,18 @@ export function AddFilesToCollectionDialog({
             {submitError}
           </Alert>
         )}
-        <Grid container spacing={2}>
-          <Grid item md={8} xs={12}>
+        <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
+          <Grid
+            item
+            md={8}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: { md: "100%" },
+              minHeight: 0,
+            }}
+            xs={12}
+          >
             <TextField
               autoFocus
               fullWidth
@@ -208,10 +227,13 @@ export function AddFilesToCollectionDialog({
                 Could not load files.
               </Alert>
             ) : (
-              <TableContainer sx={{ mt: 2 }}>
+              <TableContainer
+                sx={{ flex: "1 1 auto", minHeight: 0, mt: 2, overflow: "auto" }}
+              >
                 <Table
                   aria-label="Eligible files"
                   size="small"
+                  stickyHeader
                   sx={{ whiteSpace: "nowrap" }}
                 >
                   <TableHead>
@@ -288,7 +310,17 @@ export function AddFilesToCollectionDialog({
               </TableContainer>
             )}
           </Grid>
-          <Grid item md={4} xs={12}>
+          <Grid
+            item
+            md={4}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: { md: "100%" },
+              minHeight: 0,
+            }}
+            xs={12}
+          >
             <Box
               sx={{
                 border: 1,
@@ -296,10 +328,17 @@ export function AddFilesToCollectionDialog({
                 borderRadius: 1,
                 display: "flex",
                 flexDirection: "column",
+                minHeight: 0,
               }}
             >
               <Typography
-                sx={{ borderBottom: 1, borderColor: "divider", px: 2, py: 1 }}
+                sx={{
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  flexShrink: 0,
+                  px: 2,
+                  py: 1,
+                }}
                 variant="subtitle2"
               >
                 Selected files ({selected.size})
@@ -316,7 +355,14 @@ export function AddFilesToCollectionDialog({
                 <List
                   aria-label="Selected files"
                   dense
-                  sx={{ maxHeight: 420, overflow: "auto" }}
+                  // Below md the columns stack, so cap the list to keep the
+                  // dialog actions within easy reach.
+                  sx={{
+                    flex: "1 1 auto",
+                    maxHeight: { md: "none", xs: "40vh" },
+                    minHeight: 0,
+                    overflowY: "auto",
+                  }}
                 >
                   {[...selected.values()].map((file) => (
                     <ListItem

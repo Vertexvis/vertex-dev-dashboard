@@ -287,6 +287,10 @@ describe("AddFilesToCollectionDialog", () => {
     expect(within(panel).getByText("First file")).toBeInTheDocument();
     expect(within(panel).getByText("PN-0001")).toBeInTheDocument();
     expect(within(panel).getByText("file-1")).toBeInTheDocument();
+    // The count header stays pinned outside the scrollable list so it
+    // remains visible while a long queue scrolls.
+    expect(panel).not.toContainElement(screen.getByText("Selected files (1)"));
+    expect(panel).toHaveStyle({ overflowY: "auto" });
 
     await userEvent.click(screen.getByLabelText("Search files"));
     await userEvent.paste("Second");
