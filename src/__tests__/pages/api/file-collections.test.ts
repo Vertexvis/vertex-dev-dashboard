@@ -9,14 +9,11 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleFileCollections } from "../../../pages/api/file-collections";
 import { handleFileCollection } from "../../../pages/api/file-collections/[id]";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("file collection API routes", () => {
   it("passes name and supplied ID filters to Vertex", async () => {

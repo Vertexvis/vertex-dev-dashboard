@@ -9,13 +9,10 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleFiles } from "../../../pages/api/files";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("files API route", () => {
   it("lists files with sort query parameters", async () => {

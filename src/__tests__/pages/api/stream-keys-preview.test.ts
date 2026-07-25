@@ -7,13 +7,10 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleStreamKeys } from "../../../pages/api/stream-keys";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("scene preview stream-key route", () => {
   it("uses the authenticated session to create an in-memory scene key", async () => {

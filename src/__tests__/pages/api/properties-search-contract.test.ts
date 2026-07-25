@@ -8,15 +8,12 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handlePropertyEntries } from "../../../pages/api/property-entries";
 import { handlePropertyKeyPolicies } from "../../../pages/api/property-key-policies";
 import { handleSearchSessionsDetail } from "../../../pages/api/search-sessions/[id]";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("Properties and Search API routes", () => {
   it("scopes property-entry requests with both required filters", async () => {

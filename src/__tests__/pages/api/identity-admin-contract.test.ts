@@ -8,15 +8,12 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleIdentityAdminUsers } from "../../../pages/api/identity-admin/users";
 import { handleIdentityAdminUserGroups } from "../../../pages/api/identity-admin/users/[id]/groups";
 import { handleIdentityAdminWebhooks } from "../../../pages/api/identity-admin/webhook-subscriptions";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("Identity and Administration API routes", () => {
   it("lists users with the documented IDP filter and page bounds", async () => {

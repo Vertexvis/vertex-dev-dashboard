@@ -9,14 +9,11 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleDocuments } from "../../../pages/api/documents";
 import { handleDocumentsDetail } from "../../../pages/api/documents/[id]";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("Documents API routes", () => {
   it("serializes the documented list cursor, size, and supplied-ID filter", async () => {
