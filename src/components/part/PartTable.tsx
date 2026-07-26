@@ -1,9 +1,8 @@
-import { Add, Close } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -15,7 +14,6 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
-import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
@@ -30,6 +28,7 @@ import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
+import { ViewTranslationsToast } from "../shared/ViewTranslationsToast";
 import CreatePartDialog from "./CreatePartDialog";
 import PartRow from "./PartRow";
 
@@ -288,39 +287,17 @@ export default function PartTable({
         }}
         targetRevisionId={targetRevisionId}
       />
-      {/* Longer dwell than the error toasts: this one carries the "View
-          translations" action, so give users time to reach it. */}
+      <ViewTranslationsToast
+        message={toast?.message}
+        onClose={() => setToast(undefined)}
+        open={!!toast && !!toast.viewTranslations}
+      />
       <Snackbar
-        open={!!toast}
+        open={!!toast && !toast.viewTranslations}
         autoHideDuration={12000}
         onClose={() => setToast(undefined)}
       >
-        <Alert
-          action={
-            toast?.viewTranslations ? (
-              <>
-                <Button
-                  color="inherit"
-                  component={NextLink}
-                  href="/translations"
-                  size="small"
-                >
-                  View translations
-                </Button>
-                <IconButton
-                  aria-label="Close"
-                  color="inherit"
-                  onClick={() => setToast(undefined)}
-                  size="small"
-                >
-                  <Close fontSize="small" />
-                </IconButton>
-              </>
-            ) : undefined
-          }
-          onClose={() => setToast(undefined)}
-          severity="success"
-        >
+        <Alert onClose={() => setToast(undefined)} severity="success">
           {toast?.message}
         </Alert>
       </Snackbar>

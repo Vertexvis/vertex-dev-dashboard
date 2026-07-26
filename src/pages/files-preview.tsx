@@ -1,12 +1,10 @@
-import { Close } from "@mui/icons-material";
-import { Alert, Button, IconButton, Snackbar } from "@mui/material";
 import dynamic from "next/dynamic";
-import NextLink from "next/link";
 import React from "react";
 
 import { FileDetailsDrawer } from "../components/file/FileDetailsDrawer";
 import CreatePartDialog from "../components/part/CreatePartDialog";
 import { Layout } from "../components/shared/Layout";
+import { ViewTranslationsToast } from "../components/shared/ViewTranslationsToast";
 import { File } from "../lib/files";
 import { defaultServerSideProps } from "../lib/with-session";
 
@@ -30,6 +28,7 @@ export default function FilesPreview(): JSX.Element {
             onFileSelected={setFile}
           />
           <CreatePartDialog
+            key={partTarget?.id}
             open={partTarget != null}
             onClose={() => setPartTarget(undefined)}
             onPartCreated={(queuedTranslationId) => {
@@ -39,42 +38,13 @@ export default function FilesPreview(): JSX.Element {
               setPartTarget(undefined);
             }}
             targetFileId={partTarget?.id}
-            targetFileName={partTarget?.name ?? undefined}
+            targetFileName={partTarget?.name}
           />
-          {/* Longer dwell than the error toasts: this one carries the "View
-              translations" action, so give users time to reach it. */}
-          <Snackbar
-            open={toastMessage != null}
-            autoHideDuration={12000}
+          <ViewTranslationsToast
+            message={toastMessage}
             onClose={() => setToastMessage(undefined)}
-          >
-            <Alert
-              action={
-                <>
-                  <Button
-                    color="inherit"
-                    component={NextLink}
-                    href="/translations"
-                    size="small"
-                  >
-                    View translations
-                  </Button>
-                  <IconButton
-                    aria-label="Close"
-                    color="inherit"
-                    onClick={() => setToastMessage(undefined)}
-                    size="small"
-                  >
-                    <Close fontSize="small" />
-                  </IconButton>
-                </>
-              }
-              onClose={() => setToastMessage(undefined)}
-              severity="success"
-            >
-              {toastMessage}
-            </Alert>
-          </Snackbar>
+            open={toastMessage != null}
+          />
         </>
       }
       rightDrawer={
