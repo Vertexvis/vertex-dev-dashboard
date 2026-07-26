@@ -6,14 +6,18 @@ import React from "react";
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
-import { DocumentsPage } from "../../../components/artifacts/DocumentsPage";
+import {
+  documentPreviewName,
+  DocumentsPage,
+  extensionForDocumentType,
+} from "../../../components/artifacts/DocumentsPage";
 
 const mockRender = jest.fn(() => ({ promise: Promise.resolve() }));
 const mockGetPage = jest.fn(async () => ({
   getViewport: () => ({ width: 100, height: 150 }),
   render: mockRender,
 }));
-const mockGetDocument = jest.fn(() => ({
+const mockGetDocument = jest.fn((..._args: unknown[]) => ({
   promise: Promise.resolve({ getPage: mockGetPage }),
   destroy: jest.fn(),
 }));
@@ -393,5 +397,39 @@ describe("DocumentsPage", () => {
       "/api/files/file-2/inline?name=extensionless-file.pdf"
     );
     await waitFor(() => expect(mockRender).toHaveBeenCalled());
+  });
+});
+
+describe("documentPreviewName", () => {
+  const pdf = extensionForDocumentType("PDF");
+
+  it("reuses the real name verbatim when it already ends in the expected extension", () => {
+    expect(documentPreviewName("doc-1", "PDF", "source-file.pdf")).toBe(
+      "source-file.pdf"
+    );
+  });
+
+  it("matches the extension case-insensitively", () => {
+    expect(documentPreviewName("doc-1", "PDF", "REPORT.PDF")).toBe(
+      "REPORT.PDF"
+    );
+  });
+
+  it("appends the expected extension when the name has no extension", () => {
+    expect(documentPreviewName("doc-1", "PDF", "extensionless-file")).toBe(
+      "extensionless-file.pdf"
+    );
+  });
+
+  it("appends the expected extension when the name has a different extension", () => {
+    expect(documentPreviewName("doc-1", "PDF", "report.txt")).toBe(
+      "report.txt.pdf"
+    );
+  });
+
+  it("falls back to the document id when the file name is missing", () => {
+    expect(documentPreviewName("doc-1", "PDF", undefined)).toBe(
+      `doc-1.${pdf}`
+    );
   });
 });

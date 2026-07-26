@@ -46,7 +46,7 @@ function fileViewHref(fileId: string): string {
  * the `/api/files/[id]/inline` route's server-side type/Content-Type/size
  * gating, so it must match the real content type of the underlying file.
  */
-function extensionForDocumentType(documentType?: string): string {
+export function extensionForDocumentType(documentType?: string): string {
   switch (documentType?.toLowerCase()) {
     case "pdf":
     default:
