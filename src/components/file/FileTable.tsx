@@ -17,7 +17,12 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import { File, isCompleteFileStatus, toFilePage } from "../../lib/files";
+import {
+  File,
+  isCompleteFileStatus,
+  isPartEligibleFile,
+  toFilePage,
+} from "../../lib/files";
 import { useDebouncedFilter } from "../../lib/hooks/use-debounced-filter";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
@@ -87,11 +92,13 @@ function isFileAvailable(file: File): boolean {
 
 interface Props {
   readonly activeFileId?: string;
+  readonly onCreatePart?: (file: File) => void;
   readonly onFileSelected: (file: File) => void;
 }
 
 export default function FileTable({
   activeFileId,
+  onCreatePart,
   onFileSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
@@ -299,6 +306,14 @@ export default function FileTable({
                   label: "Download file",
                   onClick: () => handleDownload(row.id),
                 },
+                ...(onCreatePart != null && isPartEligibleFile(row)
+                  ? [
+                      {
+                        label: "Create Part",
+                        onClick: () => onCreatePart(row),
+                      },
+                    ]
+                  : []),
               ]}
               ariaLabel={`Actions for ${row.name}`}
             />

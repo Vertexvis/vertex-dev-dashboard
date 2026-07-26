@@ -38,6 +38,24 @@ const pagedPage = {
   status: 200,
 };
 
+const pendingPage = {
+  cursors: { self: "page-1" },
+  data: [
+    {
+      type: "file",
+      id: "file-2",
+      attributes: {
+        created: "2026-06-10T15:30:00Z",
+        name: "pending.jt",
+        status: "pending",
+        suppliedId: "supplied-2",
+        uploaded: null,
+      },
+    },
+  ],
+  status: 200,
+};
+
 describe("FileTable", () => {
   installJsdomMockServer();
 
@@ -247,6 +265,54 @@ describe("FileTable", () => {
 
     await waitFor(() => expect(deletedIds).toEqual([["file-1"]]));
     expect(screen.getByLabelText("Select alpha.jt")).not.toBeChecked();
+  });
+
+  it("does not offer Create Part when onCreatePart is not provided", async () => {
+    server.use(http.get("*/api/files", () => HttpResponse.json(page)));
+
+    renderTable();
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for alpha.jt"));
+
+    expect(
+      screen.getByRole("menuitem", { name: "Download file" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Create Part" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers Create Part for an eligible file and invokes the callback with the row", async () => {
+    const onCreatePart = jest.fn();
+    server.use(http.get("*/api/files", () => HttpResponse.json(page)));
+
+    renderTable(jest.fn(), { onCreatePart });
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for alpha.jt"));
+
+    const createPart = screen.getByRole("menuitem", { name: "Create Part" });
+    await userEvent.click(createPart);
+
+    expect(onCreatePart).toHaveBeenCalledTimes(1);
+    expect(onCreatePart).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "file-1", name: "alpha.jt" })
+    );
+  });
+
+  it("hides Create Part for files that are not eligible", async () => {
+    const onCreatePart = jest.fn();
+    server.use(http.get("*/api/files", () => HttpResponse.json(pendingPage)));
+
+    renderTable(jest.fn(), { onCreatePart });
+
+    expect(await screen.findByText("pending.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for pending.jt"));
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Create Part" })
+    ).not.toBeInTheDocument();
   });
 });
 
