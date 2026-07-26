@@ -39,14 +39,17 @@ export async function handleE2eSession(
     return;
   }
 
+  // Mock upstream hosts loop back to this dev server; E2E_PORT must match
+  // the port the harness runs on (see scripts/run-playwright-e2e.mjs).
+  const base = `http://127.0.0.1:${process.env.E2E_PORT ?? "3100"}`;
   req.session.set(CredsKey, { id: "e2e-client", secret: "e2e-secret" });
   req.session.set(EnvKey, "custom");
   req.session.set(NetworkConfigKey, {
-    apiHost: "http://127.0.0.1:3100/api/e2e-upstream",
+    apiHost: `${base}/api/e2e-upstream`,
     name: "local-e2e",
-    renderingHost: "http://127.0.0.1:3100/e2e-rendering",
-    sceneTreeHost: "http://127.0.0.1:3100/e2e-scene-tree",
-    sceneViewHost: "http://127.0.0.1:3100/e2e-scene-view",
+    renderingHost: `${base}/e2e-rendering`,
+    sceneTreeHost: `${base}/e2e-scene-tree`,
+    sceneViewHost: `${base}/e2e-scene-view`,
   });
   req.session.set(TokenKey, {
     expiration: Date.now() + 60 * 60 * 1000,
