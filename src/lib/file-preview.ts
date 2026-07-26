@@ -3,7 +3,10 @@ import { toFileSizeDisplay } from "./formatting";
 
 export type PreviewType = "image" | "pdf" | "text" | "heic";
 
-const ImageExtensions = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg"]);
+// NOTE: `svg` is intentionally excluded. SVG can embed <script>, so serving it
+// inline as image/svg+xml on the app's own origin is a stored-XSS primitive.
+// SVGs are download-only; see src/pages/api/files/[id]/inline.ts.
+const ImageExtensions = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
 const PdfExtensions = new Set(["pdf"]);
 const TextExtensions = new Set(["txt", "json", "csv", "log", "xml"]);
 const HeicExtensions = new Set(["heic", "heif"]);
@@ -48,7 +51,6 @@ const MimeByExtension: Record<string, string> = {
   jpeg: "image/jpeg",
   gif: "image/gif",
   webp: "image/webp",
-  svg: "image/svg+xml",
   heic: "image/heic",
   heif: "image/heif",
   pdf: "application/pdf",

@@ -34,16 +34,16 @@ function makeFile(overrides: Partial<File> = {}): File {
 
 describe("getPreviewType", () => {
   it("classifies image extensions", () => {
-    for (const name of [
-      "a.png",
-      "a.jpg",
-      "a.JPEG",
-      "a.gif",
-      "a.webp",
-      "a.svg",
-    ]) {
+    for (const name of ["a.png", "a.jpg", "a.JPEG", "a.gif", "a.webp"]) {
       expect(getPreviewType(name)).toBe("image");
     }
+  });
+
+  it("does not classify svg as previewable (XSS hardening)", () => {
+    // SVG can embed <script>; it must never be served inline. See
+    // src/pages/api/files/[id]/inline.ts.
+    expect(getPreviewType("a.svg")).toBeNull();
+    expect(getPreviewType("logo.SVG")).toBeNull();
   });
 
   it("classifies pdf, text, and heic extensions", () => {
@@ -85,7 +85,6 @@ describe("inferContentType", () => {
     expect(inferContentType("a.png")).toBe("image/png");
     expect(inferContentType("a.jpg")).toBe("image/jpeg");
     expect(inferContentType("a.jpeg")).toBe("image/jpeg");
-    expect(inferContentType("a.svg")).toBe("image/svg+xml");
     expect(inferContentType("a.pdf")).toBe("application/pdf");
     expect(inferContentType("a.txt")).toBe("text/plain");
     expect(inferContentType("a.json")).toBe("application/json");
@@ -127,6 +126,15 @@ describe("canPreview", () => {
   it("blocks unknown file types", () => {
     const result = canPreview(makeFile({ name: "model.jt" }), ChromeUA);
     expect(result.ok).toBe(false);
+    expect(result.reason).toBe(
+      "This file type can't be previewed in the browser"
+    );
+  });
+
+  it("blocks svg (download-only) to avoid inline XSS", () => {
+    const result = canPreview(makeFile({ name: "logo.svg" }), ChromeUA);
+    expect(result.ok).toBe(false);
+    expect(result.type).toBeUndefined();
     expect(result.reason).toBe(
       "This file type can't be previewed in the browser"
     );
