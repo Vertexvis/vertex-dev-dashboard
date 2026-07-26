@@ -1,4 +1,4 @@
-const { mkdir } = require("node:fs/promises");
+const { chmod, mkdir } = require("node:fs/promises");
 const path = require("node:path");
 
 const { chromium } = require("playwright");
@@ -29,6 +29,14 @@ const storageStatePath = path.resolve(
 );
 const visible = parseBoolean(process.env.PLAYWRIGHT_VISIBLE, false);
 const environment = process.env.DEV_ENVIRONMENT ?? "platdev";
+const customApiHost = process.env.DEV_API_HOST;
+const customRenderingHost = process.env.DEV_RENDERING_HOST;
+
+if (environment === "custom" && (!customApiHost || !customRenderingHost)) {
+  throw new Error(
+    "DEV_ENVIRONMENT=custom requires DEV_API_HOST and DEV_RENDERING_HOST to be set."
+  );
+}
 
 function parseBoolean(value, defaultValue) {
   if (value == null) return defaultValue;
@@ -59,6 +67,11 @@ async function loginAndSaveState(browser) {
       await page
         .getByRole("option", { name: environment, exact: true })
         .click();
+
+      if (environment === "custom") {
+        await page.getByLabel("Api Host").fill(customApiHost);
+        await page.getByLabel("Rendering Host").fill(customRenderingHost);
+      }
     }
 
     await Promise.all([
@@ -68,6 +81,7 @@ async function loginAndSaveState(browser) {
 
     await mkdir(path.dirname(storageStatePath), { recursive: true });
     await context.storageState({ path: storageStatePath });
+    await chmod(storageStatePath, 0o600);
   } finally {
     await context.close();
   }
@@ -76,12 +90,21 @@ async function loginAndSaveState(browser) {
 async function openAuthenticatedDashboard(browser) {
   const context = await browser.newContext({ storageState: storageStatePath });
   const page = await context.newPage();
-  await page.goto(destination, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(destination, {
+    waitUntil: "domcontentloaded",
+  });
 
   if (new URL(page.url()).pathname.endsWith("/login")) {
     await context.close();
     throw new Error(
       "Saved authentication state was not accepted by the dashboard."
+    );
+  }
+
+  if (response != null && !response.ok()) {
+    await context.close();
+    throw new Error(
+      `Dashboard responded with HTTP ${response.status()} for ${destination}.`
     );
   }
 
@@ -100,7 +123,12 @@ async function main() {
 
     if (visible) {
       console.log("Close the browser window when you are finished.");
-      await new Promise((resolve) => browser.once("disconnected", resolve));
+      const [authenticatedPage] = authenticatedContext.pages();
+      await Promise.race([
+        new Promise((resolve) => browser.once("disconnected", resolve)),
+        authenticatedPage?.waitForEvent("close", { timeout: 0 }) ??
+          new Promise(() => {}),
+      ]);
       return;
     }
 
