@@ -22,7 +22,9 @@ import {
   toFileCollectionPage,
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { getFileCollectionHref } from "../../lib/resource-hrefs";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { ClickableTableRow } from "../shared/ClickableTableRow";
 import { confirmResourceDeletion } from "../shared/confirm-delete";
 import {
   CreatedAtDateRange,
@@ -222,13 +224,13 @@ export default function FileCollectionTable({
       const isActive = activeFileCollectionId === row.id;
 
       return (
-        <TableRow
+        <ClickableTableRow
           hover
           role="checkbox"
-          tabIndex={-1}
           key={row.id}
           selected={isSel || isActive}
-          onClick={() => onFileCollectionSelected?.(row)}
+          onActivate={() => onFileCollectionSelected?.(row)}
+          href={getFileCollectionHref(row.id)}
         >
           <TableCell
             padding="checkbox"
@@ -248,7 +250,7 @@ export default function FileCollectionTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
-              href={`/file-collections/${encodeURIComponent(row.id)}`}
+              href={getFileCollectionHref(row.id)}
               primaryActionLabel={`Open ${row.name}`}
             >
               {row.name}
@@ -257,7 +259,7 @@ export default function FileCollectionTable({
           <TableCell>{row.id}</TableCell>
           <TableCell>{row.suppliedId}</TableCell>
           <TableCell>{toLocaleString(row.created)}</TableCell>
-        </TableRow>
+        </ClickableTableRow>
       );
     });
   }

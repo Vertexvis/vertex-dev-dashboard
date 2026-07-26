@@ -18,7 +18,9 @@ import useSWR from "swr";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
+import { getSceneWorkspaceHref } from "../../lib/resource-hrefs";
 import { Scene, toScenePage } from "../../lib/scenes";
+import { ClickableTableRow } from "../shared/ClickableTableRow";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -168,18 +170,18 @@ export function ScenePreviewTable({ onClick, scene }: Props): JSX.Element {
               />
             ) : (
               page.items.map((row) => (
-                <TableRow
+                <ClickableTableRow
                   hover
                   key={row.id}
-                  onClick={() => onClick(row)}
+                  onActivate={() => onClick(row)}
+                  href={getSceneWorkspaceHref(row.id)}
                   selected={scene?.id === row.id}
                   sx={{ cursor: "pointer" }}
-                  tabIndex={-1}
                 >
                   <TableCell padding="checkbox" />
                   <TableCell component="th" padding="none" scope="row">
                     <ResourceLink
-                      href={`/scene-workspace/${encodeURIComponent(row.id)}`}
+                      href={getSceneWorkspaceHref(row.id)}
                       primaryActionLabel={`Open workspace for ${row.name}`}
                     >
                       {row.name}
@@ -197,7 +199,7 @@ export function ScenePreviewTable({ onClick, scene }: Props): JSX.Element {
                   </TableCell>
                   <TableCell>{row.id}</TableCell>
                   <TableCell>{toLocaleString(row.created)}</TableCell>
-                </TableRow>
+                </ClickableTableRow>
               ))
             )}
             {emptyRows > 0 && (

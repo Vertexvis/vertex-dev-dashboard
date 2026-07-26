@@ -24,7 +24,9 @@ import useSWR from "swr";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
+import { getSceneHref, getSceneWorkspaceHref } from "../../lib/resource-hrefs";
 import { Scene, toScenePage } from "../../lib/scenes";
+import { ClickableTableRow } from "../shared/ClickableTableRow";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -189,7 +191,7 @@ export default function SceneTable({
   }
 
   function handleViewClick(sceneId: string) {
-    router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
+    router.push(getSceneHref(sceneId));
   }
 
   async function handleGetStreamKey(sceneId: string) {
@@ -285,13 +287,13 @@ export default function SceneTable({
                   const isActive = activeSceneId === row.id;
 
                   return (
-                    <TableRow
+                    <ClickableTableRow
                       hover
                       role="checkbox"
-                      tabIndex={-1}
                       key={row.id}
                       selected={isSel || isActive}
-                      onClick={() => handleClick(row)}
+                      onActivate={() => handleClick(row)}
+                      href={getSceneHref(row.id)}
                     >
                       <TableCell
                         padding="checkbox"
@@ -304,7 +306,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
+                          href={getSceneHref(row.id)}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}
@@ -337,11 +339,7 @@ export default function SceneTable({
                             {
                               label: "Open workspace",
                               onClick: () =>
-                                router.push(
-                                  `/scene-workspace/${encodeURIComponent(
-                                    row.id
-                                  )}`
-                                ),
+                                router.push(getSceneWorkspaceHref(row.id)),
                             },
                             {
                               label: "Edit scene",
@@ -352,7 +350,7 @@ export default function SceneTable({
                           loading={keyLoadingSceneId === row.id}
                         />
                       </TableCell>
-                    </TableRow>
+                    </ClickableTableRow>
                   );
                 })
               )}
