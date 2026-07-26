@@ -13,6 +13,9 @@ const mockPush = jest.fn();
 
 jest.mock("next/router", () => ({
   useRouter: () => ({ push: mockPush }),
+  default: {
+    push: (...args: unknown[]) => mockPush(...args),
+  },
 }));
 
 const scene: Scene = {

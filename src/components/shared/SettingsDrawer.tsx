@@ -8,7 +8,6 @@ import {
   ListItem,
   ListSubheader,
   Switch,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import React from "react";
@@ -33,14 +32,15 @@ export function SettingsDrawer({ open, onClose }: Props): JSX.Element {
       anchor="right"
       open={open}
       onClose={onClose}
-      sx={{
-        flexShrink: 0,
-        width: RightDrawerWidth,
+      // The app's fixed AppBar is elevated to `zIndex.drawer + 1`, above the
+      // default temporary-drawer modal (`zIndex.drawer`). Lift this modal to
+      // the modal layer so its heading and close control render above the
+      // AppBar rather than clipped behind it.
+      sx={(theme) => ({
+        zIndex: theme.zIndex.modal,
         "& .MuiDrawer-paper": { width: RightDrawerWidth },
-      }}
+      })}
     >
-      {/* Clear the fixed AppBar so the heading and close control stay reachable. */}
-      <Toolbar variant="dense" />
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5" component="h2">
           Settings

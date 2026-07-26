@@ -25,12 +25,17 @@ export function ClickableTableRow({
   onActivate,
   href,
   children,
+  sx,
   ...rowProps
 }: ClickableTableRowProps): JSX.Element {
   const navigation = useRowDoubleClickNavigation({ onActivate, href });
 
   return (
-    <TableRow {...rowProps} {...navigation}>
+    <TableRow
+      {...rowProps}
+      {...navigation}
+      sx={[{ cursor: "pointer" }, ...(Array.isArray(sx) ? sx : [sx])]}
+    >
       {children}
     </TableRow>
   );

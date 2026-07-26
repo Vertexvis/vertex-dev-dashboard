@@ -289,7 +289,7 @@ export default function SceneTable({
                   return (
                     <ClickableTableRow
                       hover
-                      role="checkbox"
+                      aria-label={`Open details for ${row.name}`}
                       key={row.id}
                       selected={isSel || isActive}
                       onActivate={() => handleClick(row)}

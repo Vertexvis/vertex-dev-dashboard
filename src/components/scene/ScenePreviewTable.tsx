@@ -176,7 +176,6 @@ export function ScenePreviewTable({ onClick, scene }: Props): JSX.Element {
                   onActivate={() => onClick(row)}
                   href={getSceneWorkspaceHref(row.id)}
                   selected={scene?.id === row.id}
-                  sx={{ cursor: "pointer" }}
                 >
                   <TableCell padding="checkbox" />
                   <TableCell component="th" padding="none" scope="row">

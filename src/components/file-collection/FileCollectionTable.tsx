@@ -226,7 +226,7 @@ export default function FileCollectionTable({
       return (
         <ClickableTableRow
           hover
-          role="checkbox"
+          aria-label={`Open details for ${row.name ?? row.id}`}
           key={row.id}
           selected={isSel || isActive}
           onActivate={() => onFileCollectionSelected?.(row)}
