@@ -1,12 +1,16 @@
 /* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
-import { Box, Button } from "@mui/material";
+import { SettingsOutlined } from "@mui/icons-material";
+import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import React from "react";
 
 import { AppLink } from "./AppLink";
+import { SettingsDrawer } from "./SettingsDrawer";
 
 export function Header(): JSX.Element {
   const router = useRouter();
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   async function handleSignOut() {
     await fetch("/api/logout");
@@ -29,9 +33,21 @@ export function Header(): JSX.Element {
         </AppLink>
         <p>Vertex Developer Dashboard</p>
       </Box>
-      <Box sx={{ ml: "auto" }}>
+      <Box sx={{ ml: "auto", alignItems: "center", display: "flex" }}>
+        <Tooltip title="Settings">
+          <IconButton
+            aria-label="Open settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <SettingsOutlined />
+          </IconButton>
+        </Tooltip>
         <Button onClick={handleSignOut}>Sign Out</Button>
       </Box>
+      <SettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </Box>
   );
 }

@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import { SWRConfig } from "swr";
 
+import { UserPreferencesProvider } from "../contexts/UserPreferencesContext";
 import theme from "../lib/theme";
 
 const cache = createCache({ key: "css", prepend: true });
@@ -94,28 +95,30 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
         </Head>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Fade
-            in={showRouteProgress}
-            timeout={{
-              enter: RouteProgressFadeInMs,
-              exit: RouteProgressFadeOutMs,
-            }}
-          >
-            <LinearProgress
-              sx={{
-                left: 0,
-                position: "fixed",
-                right: 0,
-                top: 0,
-                zIndex: (theme) => theme.zIndex.tooltip,
+          <UserPreferencesProvider>
+            <Fade
+              in={showRouteProgress}
+              timeout={{
+                enter: RouteProgressFadeInMs,
+                exit: RouteProgressFadeOutMs,
               }}
-            />
-          </Fade>
-          <SWRConfig
-            value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
-          >
-            <Component {...pageProps} />
-          </SWRConfig>
+            >
+              <LinearProgress
+                sx={{
+                  left: 0,
+                  position: "fixed",
+                  right: 0,
+                  top: 0,
+                  zIndex: (theme) => theme.zIndex.tooltip,
+                }}
+              />
+            </Fade>
+            <SWRConfig
+              value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
+            >
+              <Component {...pageProps} />
+            </SWRConfig>
+          </UserPreferencesProvider>
         </ThemeProvider>
       </CacheProvider>
     </React.StrictMode>
