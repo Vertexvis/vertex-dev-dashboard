@@ -51,6 +51,15 @@ export default function CreatePartDialog({
   const { data } = useFiles();
   const files = data ? toFilePage(data) : undefined;
 
+  // Sync the selected file when the caller changes the target. The dialog can
+  // be mounted before a target is known (e.g. persistently rendered with a
+  // toggled `open`), so seeding `file` only from the initial prop would leave
+  // it stale — and the submit button permanently disabled — once a row action
+  // supplies a targetFileId later.
+  React.useEffect(() => {
+    if (targetFileId != null) setFile(targetFileId);
+  }, [targetFileId]);
+
   React.useEffect(() => {
     setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
   }, [file, suppliedId, suppliedRevisionId]);

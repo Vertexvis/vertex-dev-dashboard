@@ -37,11 +37,23 @@ test("loads the authenticated Files (Preview) table from a local fixture", async
   await expect(page.getByText("fixture-file.jt")).toBeVisible();
 });
 
-test("offers Create Part from an existing complete file", async ({ page }) => {
+test("creates a part from an existing complete file and links the toast to translations", async ({
+  page,
+}) => {
   await page.route("**/api/files**", async (route) => {
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify(filePage),
+    });
+  });
+  await page.route("**/api/parts", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ id: "job-preview-1", status: 200 }),
     });
   });
 
@@ -56,4 +68,23 @@ test("offers Create Part from an existing complete file", async ({ page }) => {
     dialog.getByRole("heading", { name: "Create Part" })
   ).toBeVisible();
   await expect(dialog.getByText("fixture-file.jt")).toBeVisible();
+
+  // Submit stays disabled until the required fields are filled; filling them
+  // must enable it even though the target file arrived via props on a row
+  // action (guards the persistent-mount enablement regression).
+  const createButton = dialog.getByRole("button", { name: "Create" });
+  await expect(createButton).toBeDisabled();
+  await dialog.getByLabel(/^Supplied ID/).fill("e2e-supplied-1");
+  await dialog.getByLabel(/^Supplied Revision ID/).fill("e2e-rev-1");
+  await expect(createButton).toBeEnabled();
+
+  await createButton.click();
+
+  await expect(
+    page.getByText("Translation initiated. Job ID: job-preview-1")
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "View translations" })).toHaveAttribute(
+    "href",
+    "/translations"
+  );
 });
