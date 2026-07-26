@@ -6,9 +6,51 @@ export type PreviewType = "image" | "pdf" | "text" | "heic";
 // NOTE: `svg` is intentionally excluded. SVG can embed <script>, so serving it
 // inline as image/svg+xml on the app's own origin is a stored-XSS primitive.
 // SVGs are download-only; see src/pages/api/files/[id]/inline.ts.
-const ImageExtensions = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
+//
+// Only browser-native raster formats are allowed here (rendered via <img>).
+// Formats browsers can't decode natively (tiff, psd, camera raw) are excluded.
+const ImageExtensions = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "bmp",
+  "ico",
+  "avif",
+]);
 const PdfExtensions = new Set(["pdf"]);
-const TextExtensions = new Set(["txt", "json", "csv", "log", "xml"]);
+// Text/code extensions are ALL rendered as plain text in a <pre> and served
+// with a non-executable content type (text/plain; charset=utf-8). This is
+// deliberate: html/htm/js/jsx/ts/tsx/css/etc. must NEVER be served with an
+// executable/renderable content type on the app's own origin (XSS vector).
+// See MimeByExtension below and src/pages/api/files/[id]/inline.ts.
+const TextExtensions = new Set([
+  "txt",
+  "json",
+  "csv",
+  "log",
+  "xml",
+  "md",
+  "markdown",
+  "yaml",
+  "yml",
+  "tsv",
+  "tab",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "css",
+  "html",
+  "htm",
+  "sh",
+  "py",
+  "sql",
+  "ini",
+  "toml",
+  "env",
+]);
 const HeicExtensions = new Set(["heic", "heif"]);
 
 const MB = 1024 * 1024;
@@ -45,20 +87,50 @@ export function getPreviewType(name?: string): PreviewType | null {
   return null;
 }
 
+// Non-executable text content type used for EVERY text/code extension. Serving
+// html/htm/js/jsx/ts/tsx/css/etc. as anything renderable/executable (e.g.
+// text/html or application/javascript) on the app's own origin would be an XSS
+// vector, so they are all pinned to text/plain and rendered as escaped text.
+const PlainText = "text/plain; charset=utf-8";
+
 const MimeByExtension: Record<string, string> = {
+  // Images: browser-native raster formats only, rendered via <img>.
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   gif: "image/gif",
   webp: "image/webp",
+  bmp: "image/bmp",
+  ico: "image/vnd.microsoft.icon",
+  avif: "image/avif",
   heic: "image/heic",
   heif: "image/heif",
   pdf: "application/pdf",
-  txt: "text/plain",
-  log: "text/plain",
-  csv: "text/csv",
-  json: "application/json",
-  xml: "application/xml",
+  // Text/code: all served as non-executable plain text (see PlainText note).
+  txt: PlainText,
+  log: PlainText,
+  csv: PlainText,
+  json: PlainText,
+  xml: PlainText,
+  md: PlainText,
+  markdown: PlainText,
+  yaml: PlainText,
+  yml: PlainText,
+  tsv: PlainText,
+  tab: PlainText,
+  js: PlainText,
+  jsx: PlainText,
+  ts: PlainText,
+  tsx: PlainText,
+  css: PlainText,
+  html: PlainText,
+  htm: PlainText,
+  sh: PlainText,
+  py: PlainText,
+  sql: PlainText,
+  ini: PlainText,
+  toml: PlainText,
+  env: PlainText,
 };
 
 /**

@@ -73,6 +73,81 @@ describe("file inline route", () => {
     );
   });
 
+  it("serves new browser-native image types with the right image/* type", async () => {
+    const cases: ReadonlyArray<readonly [string, string]> = [
+      ["icon.bmp", "image/bmp"],
+      ["next-gen.avif", "image/avif"],
+      ["favicon.ico", "image/vnd.microsoft.icon"],
+    ];
+    for (const [name, contentType] of cases) {
+      const bytes = Buffer.from([0x00, 0x01, 0x02, 0x03]);
+      global.fetch = jest.fn(async () =>
+        byteResponse(bytes, { "content-length": String(bytes.byteLength) })
+      ) as unknown as typeof fetch;
+
+      const res = createResponse();
+      await callInline(res, { id: "file-1", name });
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.headers["Content-Type"]).toBe(contentType);
+      expect(res.headers["Content-Disposition"]).toBe("inline");
+      // Anti-sniffing + sandbox CSP present on every image response.
+      expect(res.headers["X-Content-Type-Options"]).toBe("nosniff");
+      expect(res.headers["Content-Security-Policy"]).toBe(
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox;"
+      );
+    }
+  });
+
+  it("serves html/htm/js/css inline as NON-EXECUTABLE text/plain (XSS hardening)", async () => {
+    // Security-critical: these must never be served with a renderable/executable
+    // content type (text/html, application/javascript) on the app's own origin.
+    for (const name of ["page.html", "page.htm", "app.js", "styles.css"]) {
+      const bytes = Buffer.from("<script>alert(1)</script>");
+      global.fetch = jest.fn(async () =>
+        byteResponse(bytes, { "content-length": String(bytes.byteLength) })
+      ) as unknown as typeof fetch;
+
+      const res = createResponse();
+      await callInline(res, { id: "file-1", name });
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.headers["Content-Type"]).toBe("text/plain; charset=utf-8");
+      expect(res.headers["Content-Type"]).not.toBe("text/html");
+      expect(res.headers["Content-Type"]).not.toBe("application/javascript");
+      expect(res.headers["Content-Disposition"]).toBe("inline");
+      expect(res.headers["X-Content-Type-Options"]).toBe("nosniff");
+    }
+  });
+
+  it("explicitly serves an .html file non-executably (regression guard)", async () => {
+    const bytes = Buffer.from("<html><body>hi</body></html>");
+    global.fetch = jest.fn(async () =>
+      byteResponse(bytes, { "content-length": String(bytes.byteLength) })
+    ) as unknown as typeof fetch;
+
+    const res = createResponse();
+    await callInline(res, { id: "file-1", name: "index.html" });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.headers["Content-Type"]).toBe("text/plain; charset=utf-8");
+  });
+
+  it("serves markdown/yaml/code text extensions as text/plain", async () => {
+    for (const name of ["notes.md", "config.yaml", "app.tsx", "query.sql"]) {
+      const bytes = Buffer.from("hello");
+      global.fetch = jest.fn(async () =>
+        byteResponse(bytes, { "content-length": String(bytes.byteLength) })
+      ) as unknown as typeof fetch;
+
+      const res = createResponse();
+      await callInline(res, { id: "file-1", name });
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.headers["Content-Type"]).toBe("text/plain; charset=utf-8");
+    }
+  });
+
   it("rejects non-previewable types (.jt) with 415", async () => {
     global.fetch = jest.fn(async () =>
       byteResponse(Buffer.from("hello"), {})

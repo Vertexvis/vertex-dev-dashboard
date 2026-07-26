@@ -34,7 +34,18 @@ function makeFile(overrides: Partial<File> = {}): File {
 
 describe("getPreviewType", () => {
   it("classifies image extensions", () => {
-    for (const name of ["a.png", "a.jpg", "a.JPEG", "a.gif", "a.webp"]) {
+    for (const name of [
+      "a.png",
+      "a.jpg",
+      "a.JPEG",
+      "a.gif",
+      "a.webp",
+      "a.bmp",
+      "a.ico",
+      "a.avif",
+      "a.BMP",
+      "a.AVIF",
+    ]) {
       expect(getPreviewType(name)).toBe("image");
     }
   });
@@ -53,6 +64,43 @@ describe("getPreviewType", () => {
     }
     expect(getPreviewType("a.heic")).toBe("heic");
     expect(getPreviewType("a.HEIF")).toBe("heic");
+  });
+
+  it("classifies markdown, data, and code extensions as text", () => {
+    for (const name of [
+      "a.md",
+      "a.markdown",
+      "a.yaml",
+      "a.yml",
+      "a.tsv",
+      "a.tab",
+      "a.js",
+      "a.jsx",
+      "a.ts",
+      "a.tsx",
+      "a.css",
+      "a.html",
+      "a.htm",
+      "a.sh",
+      "a.py",
+      "a.sql",
+      "a.ini",
+      "a.toml",
+      "a.env",
+      "README.MD",
+      "index.HTML",
+      "script.JS",
+    ]) {
+      expect(getPreviewType(name)).toBe("text");
+    }
+  });
+
+  it("classifies html/js/css as text (never an executable type)", () => {
+    // These are code/markup extensions. They must resolve to the non-executable
+    // "text" preview type so they are rendered as escaped text, never run.
+    for (const name of ["page.html", "page.htm", "app.js", "styles.css"]) {
+      expect(getPreviewType(name)).toBe("text");
+    }
   });
 
   it("returns null for unknown or missing extensions", () => {
@@ -81,14 +129,63 @@ describe("size ceilings", () => {
 });
 
 describe("inferContentType", () => {
-  it("infers MIME from the extension", () => {
+  const PlainText = "text/plain; charset=utf-8";
+
+  it("infers image MIME from the extension (browser-native only)", () => {
     expect(inferContentType("a.png")).toBe("image/png");
     expect(inferContentType("a.jpg")).toBe("image/jpeg");
     expect(inferContentType("a.jpeg")).toBe("image/jpeg");
+    expect(inferContentType("a.gif")).toBe("image/gif");
+    expect(inferContentType("a.webp")).toBe("image/webp");
+    expect(inferContentType("a.bmp")).toBe("image/bmp");
+    expect(inferContentType("a.ico")).toBe("image/vnd.microsoft.icon");
+    expect(inferContentType("a.avif")).toBe("image/avif");
     expect(inferContentType("a.pdf")).toBe("application/pdf");
-    expect(inferContentType("a.txt")).toBe("text/plain");
-    expect(inferContentType("a.json")).toBe("application/json");
     expect(inferContentType("a.heic")).toBe("image/heic");
+  });
+
+  it("serves ALL text/code extensions as non-executable text/plain", () => {
+    // Security-critical: code and markup extensions must be served with a
+    // non-executable content type so they never run in the app's own origin.
+    for (const name of [
+      "a.txt",
+      "a.log",
+      "a.csv",
+      "a.json",
+      "a.xml",
+      "a.md",
+      "a.markdown",
+      "a.yaml",
+      "a.yml",
+      "a.tsv",
+      "a.tab",
+      "a.js",
+      "a.jsx",
+      "a.ts",
+      "a.tsx",
+      "a.css",
+      "a.html",
+      "a.htm",
+      "a.sh",
+      "a.py",
+      "a.sql",
+      "a.ini",
+      "a.toml",
+      "a.env",
+    ]) {
+      expect(inferContentType(name)).toBe(PlainText);
+    }
+  });
+
+  it("never serves html/htm/js/css as an executable/renderable type", () => {
+    // Explicit guard: text/html and application/javascript would execute in the
+    // origin. These must be plain text.
+    expect(inferContentType("page.html")).toBe(PlainText);
+    expect(inferContentType("page.htm")).toBe(PlainText);
+    expect(inferContentType("app.js")).toBe(PlainText);
+    expect(inferContentType("styles.css")).toBe(PlainText);
+    expect(inferContentType("page.html")).not.toBe("text/html");
+    expect(inferContentType("app.js")).not.toBe("application/javascript");
   });
 
   it("falls back to octet-stream for unknown or missing extensions", () => {
@@ -115,6 +212,17 @@ describe("canPreview", () => {
   it("allows a complete, in-bounds image", () => {
     const result = canPreview(makeFile({ size: 1024 }), ChromeUA);
     expect(result).toEqual({ ok: true, type: "image" });
+  });
+
+  it("allows newly-added image and text formats", () => {
+    for (const name of ["icon.bmp", "next-gen.avif", "favicon.ico"]) {
+      const result = canPreview(makeFile({ name, size: 1024 }), ChromeUA);
+      expect(result).toEqual({ ok: true, type: "image" });
+    }
+    for (const name of ["notes.md", "config.yaml", "app.tsx", "page.html"]) {
+      const result = canPreview(makeFile({ name, size: 1024 }), ChromeUA);
+      expect(result).toEqual({ ok: true, type: "text" });
+    }
   });
 
   it("blocks files that are not complete", () => {
