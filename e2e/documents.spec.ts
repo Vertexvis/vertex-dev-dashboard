@@ -1,6 +1,11 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { expect, test } from "playwright/test";
 
 test.use({ storageState: "e2e/.auth/session.json" });
+
+const tinyPdf = readFileSync(join(__dirname, "fixtures", "tiny.pdf"));
 
 function documentData(id: string, suppliedId?: string) {
   return {
@@ -140,4 +145,71 @@ test("keeps Documents registration read-only when Preview is forbidden", async (
   await expect(
     page.getByRole("button", { name: "Register document" })
   ).toBeDisabled();
+});
+
+test("previews a document's PDF inline from the details drawer", async ({
+  page,
+}) => {
+  await page.route("**/api/files**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        cursors: {},
+        data: [
+          {
+            attributes: { name: "fixture-file.pdf", status: "complete" },
+            id: "fixture-file-1",
+            type: "file",
+          },
+        ],
+        status: 200,
+      }),
+    });
+  });
+  // Register the list route first, then the detail route: Playwright matches
+  // routes most-recently-registered first, so the specific detail handler must
+  // win over the broader `**/api/documents**` glob for `/api/documents/<id>`.
+  await page.route("**/api/documents**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        cursors: {},
+        data: [documentData("doc-preview", "preview-id")],
+        status: 200,
+      }),
+    });
+  });
+  await page.route("**/api/documents/doc-preview", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(documentData("doc-preview", "preview-id")),
+    });
+  });
+  await page.route("**/api/files/*/inline**", async (route) => {
+    await route.fulfill({
+      contentType: "application/pdf",
+      body: tinyPdf,
+    });
+  });
+
+  await page.goto("/documents");
+  await page.getByRole("button", { name: "doc-preview" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Document details" })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Preview" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(
+    dialog.getByLabel("PDF preview of fixture-file.pdf")
+  ).toBeVisible();
+  await expect(dialog.getByRole("link", { name: /download/i })).toHaveAttribute(
+    "href",
+    "/api/files/fixture-file-1/download"
+  );
 });

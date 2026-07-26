@@ -24,7 +24,9 @@ import useSWR from "swr";
 
 import { ErrorRes, GetRes, isErrorRes } from "../../lib/api";
 import { requestJson } from "../../lib/api/client";
-import { isCompleteFileStatus } from "../../lib/files";
+import { extensionOf, getPreviewType } from "../../lib/file-preview";
+import { File, isCompleteFileStatus } from "../../lib/files";
+import { FilePreviewDialog } from "../file/FilePreviewDialog";
 import { ResourceLink } from "../shared/ResourceLink";
 
 function message(value: unknown): string | undefined {
@@ -35,6 +37,41 @@ function message(value: unknown): string | undefined {
 
 function fileViewHref(fileId: string): string {
   return `/files?fileId=${encodeURIComponent(fileId)}`;
+}
+
+/**
+ * Maps a document's `documentType` to the file extension its bytes carry. The
+ * Preview API currently only produces PDFs, so unknown/absent types default to
+ * `pdf`. This extension is what drives BOTH the client `canPreview` gate and
+ * the `/api/files/[id]/inline` route's server-side type/Content-Type/size
+ * gating, so it must match the real content type of the underlying file.
+ */
+function extensionForDocumentType(documentType?: string): string {
+  switch (documentType?.toLowerCase()) {
+    case "pdf":
+    default:
+      return "pdf";
+  }
+}
+
+/**
+ * Derives the `name` for the synthetic {@link File} used to preview a document.
+ *
+ * Preview inference (client and the inline route) is driven entirely by the
+ * name's extension, so the returned name MUST end in the document's expected
+ * extension. When the underlying file's real name already ends in that
+ * extension, it is used verbatim (nicer dialog title). Otherwise the expected
+ * extension is appended to the real name (or the document id, when the file
+ * name is unknown) so pdf inference still holds on both client and server.
+ */
+export function documentPreviewName(
+  documentId: string,
+  documentType: string | undefined,
+  fileName: string | undefined
+): string {
+  const ext = extensionForDocumentType(documentType);
+  if (fileName != null && extensionOf(fileName) === ext) return fileName;
+  return `${fileName ?? documentId}.${ext}`;
 }
 
 function DocumentTypeIcon({ type }: { readonly type: string }): JSX.Element {
@@ -67,6 +104,7 @@ export function DocumentsPage(): JSX.Element {
   const [cursor, setCursor] = React.useState<string>();
   const [fileId, setFileId] = React.useState("");
   const [selectedDocumentId, setSelectedDocumentId] = React.useState<string>();
+  const [previewOpen, setPreviewOpen] = React.useState(false);
   const [newSuppliedId, setNewSuppliedId] = React.useState("");
   const [fileDisplay, setFileDisplay] = React.useState<FileDisplay>("name");
   const [error, setError] = React.useState<string>();
@@ -100,20 +138,47 @@ export function DocumentsPage(): JSX.Element {
           isCompleteFileStatus(file.attributes.status)
         )
       : [];
-  const fileNamesById = React.useMemo(
+  const filesById = React.useMemo(
     () =>
       new Map(
         files.data && !isErrorRes(files.data)
-          ? files.data.data.map((file) => [file.id, file.attributes.name])
+          ? files.data.data.map((file) => [
+              file.id,
+              { name: file.attributes.name, size: file.attributes.size },
+            ])
           : []
       ),
     [files.data]
   );
 
   function fileLabel(fileId: string): string {
-    const fileName = fileNamesById.get(fileId);
+    const fileName = filesById.get(fileId)?.name;
     return fileDisplay === "name" && fileName ? fileName : fileId;
   }
+
+  // Synthetic File for the reused FilePreviewDialog. Documents are only created
+  // from complete files (POST /api/documents enforces this), so status is
+  // known-complete. The name carries the document type's extension so both the
+  // client gate and the inline route infer the correct preview type; size is
+  // included when the Files list provides it so client-side size-gating works.
+  const previewFile = React.useMemo<File | undefined>(() => {
+    const attributes = selectedDocumentData?.attributes;
+    const fileId = attributes?.fileId;
+    if (attributes == null || fileId == null || fileId === "") return undefined;
+    const info = filesById.get(fileId);
+    const name = documentPreviewName(
+      selectedDocumentData?.id ?? fileId,
+      attributes.documentType,
+      info?.name
+    );
+    if (getPreviewType(name) == null) return undefined;
+    return {
+      id: fileId,
+      name,
+      status: "complete",
+      ...(info?.size != null ? { size: info.size } : {}),
+    } as File;
+  }, [filesById, selectedDocumentData]);
 
   async function create(): Promise<void> {
     if (!fileId) {
@@ -315,7 +380,10 @@ export function DocumentsPage(): JSX.Element {
       </Paper>
       <Drawer
         anchor="right"
-        onClose={() => setSelectedDocumentId(undefined)}
+        onClose={() => {
+          setSelectedDocumentId(undefined);
+          setPreviewOpen(false);
+        }}
         open={selectedDocumentId != null}
       >
         <Box sx={{ p: 3, width: 360 }}>
@@ -350,14 +418,31 @@ export function DocumentsPage(): JSX.Element {
               </Typography>
             </Box>
           )}
-          <Button
-            onClick={() => setSelectedDocumentId(undefined)}
-            sx={{ mt: 2 }}
-          >
-            Close
-          </Button>
+          <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+            {previewFile != null && (
+              <Button
+                onClick={() => setPreviewOpen(true)}
+                variant="contained"
+              >
+                Preview
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setSelectedDocumentId(undefined);
+                setPreviewOpen(false);
+              }}
+            >
+              Close
+            </Button>
+          </Box>
         </Box>
       </Drawer>
+      <FilePreviewDialog
+        file={previewFile}
+        onClose={() => setPreviewOpen(false)}
+        open={previewOpen && previewFile != null}
+      />
     </Box>
   );
 }
