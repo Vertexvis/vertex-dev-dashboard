@@ -45,4 +45,6 @@ A few options for deployment,
 - [Netlify](https://www.netlify.com/blog/2020/11/30/how-to-deploy-next.js-sites-to-netlify/)
 - [AWS CDK](https://github.com/serverless-nextjs/serverless-next.js#readme)
 
-### Quality Checks
+### Quality checks
+
+This project uses Lefthook for pre-commit quality checks. To enable it locally, run `yarn lefthook:install`.
