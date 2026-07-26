@@ -73,8 +73,10 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Files" />
         </ListItemButton>
         <ListItemButton
-          onClick={() => router.push("/files-preview")}
+          component={AppLink}
+          href="/files-preview"
           selected={router.route === "/files-preview"}
+          underline="none"
         >
           <ListItemIcon>
             <DescriptionOutlined />
