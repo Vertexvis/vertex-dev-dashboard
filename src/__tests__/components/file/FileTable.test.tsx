@@ -56,6 +56,25 @@ const pendingPage = {
   status: 200,
 };
 
+const imagePage = {
+  cursors: { self: "page-1" },
+  data: [
+    {
+      type: "file",
+      id: "file-3",
+      attributes: {
+        created: "2026-06-10T15:30:00Z",
+        name: "diagram.png",
+        size: 2048,
+        status: "complete",
+        suppliedId: "supplied-3",
+        uploaded: "2026-06-10T15:45:00Z",
+      },
+    },
+  ],
+  status: 200,
+};
+
 describe("FileTable", () => {
   installJsdomMockServer();
 
@@ -312,6 +331,51 @@ describe("FileTable", () => {
 
     expect(
       screen.queryByRole("menuitem", { name: "Create Part" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer Preview when onPreview is not provided", async () => {
+    server.use(http.get("*/api/files", () => HttpResponse.json(imagePage)));
+
+    renderTable();
+
+    expect(await screen.findByText("diagram.png")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for diagram.png"));
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Preview" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers Preview for a previewable file and invokes the callback with the row", async () => {
+    const onPreview = jest.fn();
+    server.use(http.get("*/api/files", () => HttpResponse.json(imagePage)));
+
+    renderTable(jest.fn(), { onPreview });
+
+    expect(await screen.findByText("diagram.png")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for diagram.png"));
+
+    const preview = screen.getByRole("menuitem", { name: "Preview" });
+    await userEvent.click(preview);
+
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "file-3", name: "diagram.png" })
+    );
+  });
+
+  it("does not offer Preview for a non-previewable file type", async () => {
+    const onPreview = jest.fn();
+    server.use(http.get("*/api/files", () => HttpResponse.json(page)));
+
+    renderTable(jest.fn(), { onPreview });
+
+    expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Actions for alpha.jt"));
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Preview" })
     ).not.toBeInTheDocument();
   });
 });

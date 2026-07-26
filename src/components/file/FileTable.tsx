@@ -17,6 +17,7 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
+import { canPreview, getPreviewType } from "../../lib/file-preview";
 import {
   File,
   isCompleteFileStatus,
@@ -94,12 +95,14 @@ interface Props {
   readonly activeFileId?: string;
   readonly onCreatePart?: (file: File) => void;
   readonly onFileSelected: (file: File) => void;
+  readonly onPreview?: (file: File) => void;
 }
 
 export default function FileTable({
   activeFileId,
   onCreatePart,
   onFileSelected,
+  onPreview,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const [sort, setSort] = React.useState<SortState>({
@@ -248,6 +251,9 @@ export default function FileTable({
       const isSel = selected.has(row.id);
       const isActive = activeFileId === row.id;
       const isAvailable = isFileAvailable(row);
+      const previewByType = getPreviewType(row.name) != null;
+      const previewResult =
+        onPreview != null && previewByType ? canPreview(row) : undefined;
 
       return (
         <TableRow
@@ -306,6 +312,18 @@ export default function FileTable({
                   label: "Download file",
                   onClick: () => handleDownload(row.id),
                 },
+                ...(onPreview != null && previewByType
+                  ? [
+                      {
+                        disabled: previewResult != null && !previewResult.ok,
+                        label:
+                          previewResult != null && !previewResult.ok
+                            ? `Preview (${previewResult.reason})`
+                            : "Preview",
+                        onClick: () => onPreview(row),
+                      },
+                    ]
+                  : []),
                 ...(onCreatePart != null && isPartEligibleFile(row)
                   ? [
                       {

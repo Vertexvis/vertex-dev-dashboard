@@ -20,3 +20,6 @@ tsconfig.tsbuildinfo
 .yarn
 /playwright/
 .playwright-mcp
+
+# Copied from pdfjs-dist by scripts/copy-pdf-worker.mjs (prebuild/predev)
+/public/pdf/

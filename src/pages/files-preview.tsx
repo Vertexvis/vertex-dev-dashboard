@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import React from "react";
 
 import { FileDetailsDrawer } from "../components/file/FileDetailsDrawer";
+import { FilePreviewDialog } from "../components/file/FilePreviewDialog";
 import CreatePartDialog from "../components/part/CreatePartDialog";
 import { Layout } from "../components/shared/Layout";
 import { ViewTranslationsToast } from "../components/shared/ViewTranslationsToast";
@@ -15,6 +16,7 @@ const FileTable = dynamic(() => import("../components/file/FileTable"), {
 export default function FilesPreview(): JSX.Element {
   const [file, setFile] = React.useState<File | undefined>();
   const [partTarget, setPartTarget] = React.useState<File | undefined>();
+  const [previewTarget, setPreviewTarget] = React.useState<File | undefined>();
   const [toastMessage, setToastMessage] = React.useState<string | undefined>();
   const drawerOpen = Boolean(file);
 
@@ -26,6 +28,12 @@ export default function FilesPreview(): JSX.Element {
             activeFileId={file?.id}
             onCreatePart={setPartTarget}
             onFileSelected={setFile}
+            onPreview={setPreviewTarget}
+          />
+          <FilePreviewDialog
+            file={previewTarget}
+            onClose={() => setPreviewTarget(undefined)}
+            open={previewTarget != null}
           />
           <CreatePartDialog
             key={partTarget?.id}
