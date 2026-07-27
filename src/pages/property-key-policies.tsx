@@ -24,6 +24,10 @@ export default function PropertyKeyPolicies(): JSX.Element {
       main={
         <PropertyKeyPolicyTable
           activePropertyKeyPolicyId={propertyKeyPolicy?.id}
+          onPoliciesDeleted={(ids) => {
+            if (propertyKeyPolicy != null && ids.includes(propertyKeyPolicy.id))
+              setPropertyKeyPolicy(undefined);
+          }}
           onPropertyKeyPolicySelected={setPropertyKeyPolicy}
         />
       }

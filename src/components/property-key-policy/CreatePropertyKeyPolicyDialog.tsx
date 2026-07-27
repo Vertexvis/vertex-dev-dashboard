@@ -167,7 +167,7 @@ export default function CreatePropertyKeyPolicyDialog({
         )}
         {entriesWarning != null && (
           <Alert severity="warning" sx={{ mb: 1, mt: 1 }}>
-            {`The policy was created, but its property keys could not be added: ${entriesWarning} Close this dialog to avoid creating a duplicate; you can add property keys later.`}
+            {`The policy was created, but its property keys could not be added: ${entriesWarning} The keys were not saved. Close this dialog to avoid creating a duplicate policy.`}
           </Alert>
         )}
         {validationError != null && (
