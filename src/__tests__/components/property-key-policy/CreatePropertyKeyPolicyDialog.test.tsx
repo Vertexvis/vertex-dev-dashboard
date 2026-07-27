@@ -38,7 +38,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     expect(screen.getByLabelText("Property key 1")).toHaveValue("Alpha");
   });
 
-  it("pressing Enter with a duplicate value shows a hint and does not add a field", async () => {
+  it("marks duplicate property keys with a per-field error and does not add a field", async () => {
     renderDialog();
 
     await userEvent.type(
@@ -50,10 +50,47 @@ describe("CreatePropertyKeyPolicyDialog", () => {
       "Alpha{Enter}"
     );
 
+    // Both fields are flagged as duplicates via the per-field error.
+    expect(screen.getAllByText("Duplicate property key.")).toHaveLength(2);
+    // Pressing Enter on the duplicate must not append a third field.
     expect(screen.queryByLabelText("Property key 3")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+  });
+
+  it("marks a whitespace-only property key as invalid and disables Create", async () => {
+    renderDialog();
+
+    await userEvent.type(screen.getByLabelText(/Name/), "My Policy");
+    await userEvent.type(screen.getByLabelText("Property key 1"), "   ");
+
     expect(
-      screen.getByText('"Alpha" is already in the list.')
+      screen.getByText("Property key cannot be blank.")
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+  });
+
+  it("clears the field error once the duplicate/blank is fixed", async () => {
+    renderDialog();
+
+    await userEvent.type(screen.getByLabelText(/Name/), "My Policy");
+    await userEvent.type(
+      screen.getByLabelText("Property key 1"),
+      "Alpha{Enter}"
+    );
+    await userEvent.type(screen.getByLabelText("Property key 2"), "Alpha");
+
+    // Duplicate state: both fields flagged and Create disabled.
+    expect(screen.getAllByText("Duplicate property key.")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    // Fix the offending field with a unique, non-blank value.
+    await userEvent.clear(screen.getByLabelText("Property key 2"));
+    await userEvent.type(screen.getByLabelText("Property key 2"), "Beta");
+
+    expect(
+      screen.queryByText("Duplicate property key.")
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
   });
 
   it("pressing Enter in an empty field does nothing", async () => {
