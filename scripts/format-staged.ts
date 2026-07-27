@@ -128,19 +128,19 @@ function updateIndex(file: string, formatted: Buffer): boolean {
   return update.status === 0;
 }
 
-function updateWorktreeIfSafe(
-  file: string,
-  original: Buffer,
-  formatted: Buffer
-): void {
+function updateWorktreeIfSafe(file: string, formatted: Buffer): void {
   if (!fs.existsSync(file)) {
     return;
   }
 
-  const worktree = fs.readFileSync(file);
-  if (Buffer.compare(worktree, original) === 0) {
-    fs.writeFileSync(file, formatted);
+  // `git diff --quiet` is filter/eol-aware: exit 0 means the worktree matches
+  // the index, so it's safe to overwrite. A non-zero status means real
+  // unstaged edits (or an error) — leave the file alone.
+  if (git(["diff", "--quiet", "--", file]).status !== 0) {
+    return;
   }
+
+  fs.writeFileSync(file, formatted);
 }
 
 const files = stagedFiles();
@@ -176,7 +176,7 @@ for (const file of files) {
 
   process.stdout.write(`Formatting staged content for ${file}\n`);
 
-  updateWorktreeIfSafe(file, blob.stdout, formatted.stdout);
+  updateWorktreeIfSafe(file, formatted.stdout);
   if (!updateIndex(file, formatted.stdout)) {
     failed = true;
   }
