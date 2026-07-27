@@ -1,3 +1,4 @@
+import { MetadataStringType, SceneItemData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { DomainPropertyEntry, DomainPropertyValue } from "@vertexvis/viewer";
 
@@ -10,11 +11,21 @@ interface Properties {
   [key: string]: string | undefined;
 }
 
-const ItemIdKey = "VERTEX_SCENE_ITEM_ID";
-const ItemSuppliedIdKey = "VERTEX_SCENE_ITEM_SUPPLIED_ID";
-const PartIdKey = "VERTEX_PART_ID";
-const PartRevIdKey = "VERTEX_PART_REVISION_ID";
-const PartRevSuppliedId = "VERTEX_PART_REVISION_SUPPLIED_ID";
+export const ItemIdKey = "VERTEX_SCENE_ITEM_ID";
+export const ItemSuppliedIdKey = "VERTEX_SCENE_ITEM_SUPPLIED_ID";
+export const PartIdKey = "VERTEX_PART_ID";
+export const PartRevIdKey = "VERTEX_PART_REVISION_ID";
+export const PartRevSuppliedId = "VERTEX_PART_REVISION_SUPPLIED_ID";
+
+// Structural synthetic identifier keys. They are not policy-governed, so the
+// comparison view must never flag them as removed/changed by a policy.
+export const IdentifierKeys: ReadonlySet<string> = new Set([
+  ItemIdKey,
+  ItemSuppliedIdKey,
+  PartIdKey,
+  PartRevIdKey,
+  PartRevSuppliedId,
+]);
 
 export function toMetadata({
   hit,
@@ -44,6 +55,34 @@ export function toMetadata({
   }
 
   return { partName: ps.Name, properties: alphabetize(ps) };
+}
+
+// Server-side REST path (`GET /api/scene-items/{id}` → SceneItemData) that
+// IGNORES the property key policy. Used to populate the "Unrestricted" column of
+// the metadata comparison so the policy-stripped keys are visible for validation.
+export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
+  const ps: Properties = {};
+  const id = item.id;
+  const suppliedId = item.attributes.suppliedId;
+  const partRevisionId = item.relationships.source?.data.id;
+
+  ps[ItemIdKey] = id;
+  if (suppliedId) ps[ItemSuppliedIdKey] = suppliedId;
+  if (partRevisionId) ps[PartRevIdKey] = partRevisionId;
+  const md = item.attributes.metadata;
+
+  if (md) {
+    const itemMD = Object.entries(md).reduce((n, current) => {
+      return {
+        ...n,
+        [current[0]]: (current[1] as MetadataStringType).value || "",
+      };
+    }, ps);
+
+    return { partName: "", properties: alphabetize(itemMD) };
+  }
+
+  return { partName: "", properties: alphabetize(ps) };
 }
 
 export interface DomainMetadataIdentifiers {
