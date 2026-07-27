@@ -9,11 +9,17 @@ import { NextIronRequest } from "./with-session";
  * try/catch block that was previously copied into every route handler.
  */
 export function handleVertexError(error: unknown): ErrorRes {
-  const e = error as VertexError;
-  logError(e);
-  return e.vertexError?.res
-    ? toErrorRes({ failure: e.vertexError.res })
-    : ServerError;
+  const obj = error as Record<string, unknown> | null;
+  const isVertexError = typeof obj === "object" && obj != null && "vertexError" in obj;
+
+  if (isVertexError) {
+    const e = error as VertexError;
+    logError(e);
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError.res }) : ServerError;
+  }
+
+  console.error(error);
+  return ServerError;
 }
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
