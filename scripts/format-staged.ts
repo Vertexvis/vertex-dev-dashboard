@@ -65,7 +65,8 @@ function stagedFiles(): string[] {
   return result.stdout
     .split("\0")
     .filter(Boolean)
-    .filter((file) => supportedExtensions.has(extension(file)));
+    .filter((file) => supportedExtensions.has(extension(file)))
+    .filter(isRegularFile);
 }
 
 function extension(file: string): string {
@@ -87,6 +88,14 @@ function indexMode(file: string): string | null {
   }
 
   return result.stdout.split(" ", 1)[0];
+}
+
+// Only format regular files (mode 100644/100755). Symlinks (120000) and
+// gitlinks (160000) store a path, not source we want to run through prettier:
+// formatting a symlink's blob would rewrite it to point at a mangled target.
+function isRegularFile(file: string): boolean {
+  const mode = indexMode(file);
+  return mode === "100644" || mode === "100755";
 }
 
 function formatBlob(
