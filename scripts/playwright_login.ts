@@ -1,20 +1,50 @@
-const { chmod, mkdir } = require("node:fs/promises");
-const path = require("node:path");
+import { chmod, mkdir } from "node:fs/promises";
+import * as path from "node:path";
+import type { Browser, BrowserContext } from "playwright";
+import { chromium } from "playwright";
 
-const { chromium } = require("playwright");
+function readRequiredEnv(names: string[]): string[] {
+  const missing = names.filter((name) => !process.env[name]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variable(s): ${missing.join(", ")}`
+    );
+  }
 
-const requiredEnvironmentVariables = ["DEV_USERNAME", "DEV_CREDENTIAL"];
-const missingEnvironmentVariables = requiredEnvironmentVariables.filter(
-  (name) => !process.env[name]
-);
+  return names.map((name) => process.env[name] as string);
+}
 
-if (missingEnvironmentVariables.length > 0) {
+function readCustomNetworkHosts(): { apiHost: string; renderingHost: string } {
+  const apiHost = process.env.DEV_API_HOST;
+  const renderingHost = process.env.DEV_RENDERING_HOST;
+
+  if (!apiHost || !renderingHost) {
+    throw new Error(
+      "DEV_ENVIRONMENT=custom requires DEV_API_HOST and DEV_RENDERING_HOST to be set."
+    );
+  }
+
+  return { apiHost, renderingHost };
+}
+
+function parseBoolean(
+  value: string | undefined,
+  defaultValue: boolean
+): boolean {
+  if (value == null) return defaultValue;
+
+  if (["1", "true", "yes"].includes(value.toLowerCase())) return true;
+  if (["0", "false", "no"].includes(value.toLowerCase())) return false;
+
   throw new Error(
-    `Missing required environment variable(s): ${missingEnvironmentVariables.join(
-      ", "
-    )}`
+    `Expected PLAYWRIGHT_VISIBLE to be true or false; received ${value}`
   );
 }
+
+const [username, credential] = readRequiredEnv([
+  "DEV_USERNAME",
+  "DEV_CREDENTIAL",
+]);
 
 const baseUrl = new URL(
   process.env.DEV_DASHBOARD_URL ?? "http://localhost:3000"
@@ -29,35 +59,18 @@ const storageStatePath = path.resolve(
 );
 const visible = parseBoolean(process.env.PLAYWRIGHT_VISIBLE, false);
 const environment = process.env.DEV_ENVIRONMENT ?? "platdev";
-const customApiHost = process.env.DEV_API_HOST;
-const customRenderingHost = process.env.DEV_RENDERING_HOST;
+const customNetworkHosts =
+  environment === "custom" ? readCustomNetworkHosts() : null;
 
-if (environment === "custom" && (!customApiHost || !customRenderingHost)) {
-  throw new Error(
-    "DEV_ENVIRONMENT=custom requires DEV_API_HOST and DEV_RENDERING_HOST to be set."
-  );
-}
-
-function parseBoolean(value, defaultValue) {
-  if (value == null) return defaultValue;
-
-  if (["1", "true", "yes"].includes(value.toLowerCase())) return true;
-  if (["0", "false", "no"].includes(value.toLowerCase())) return false;
-
-  throw new Error(
-    `Expected PLAYWRIGHT_VISIBLE to be true or false; received ${value}`
-  );
-}
-
-async function loginAndSaveState(browser) {
+async function loginAndSaveState(browser: Browser): Promise<void> {
   const context = await browser.newContext();
 
   try {
     const page = await context.newPage();
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
 
-    await page.getByLabel("Client ID").fill(process.env.DEV_USERNAME);
-    await page.getByLabel("Client Secret").fill(process.env.DEV_CREDENTIAL);
+    await page.getByLabel("Client ID").fill(username);
+    await page.getByLabel("Client Secret").fill(credential);
 
     const environmentSelect = page.getByRole("combobox", {
       name: "Environment",
@@ -68,9 +81,11 @@ async function loginAndSaveState(browser) {
         .getByRole("option", { name: environment, exact: true })
         .click();
 
-      if (environment === "custom") {
-        await page.getByLabel("Api Host").fill(customApiHost);
-        await page.getByLabel("Rendering Host").fill(customRenderingHost);
+      if (customNetworkHosts != null) {
+        await page.getByLabel("Api Host").fill(customNetworkHosts.apiHost);
+        await page
+          .getByLabel("Rendering Host")
+          .fill(customNetworkHosts.renderingHost);
       }
     }
 
@@ -87,7 +102,9 @@ async function loginAndSaveState(browser) {
   }
 }
 
-async function openAuthenticatedDashboard(browser) {
+async function openAuthenticatedDashboard(
+  browser: Browser
+): Promise<BrowserContext> {
   const context = await browser.newContext({ storageState: storageStatePath });
   const page = await context.newPage();
   const response = await page.goto(destination, {
@@ -111,7 +128,7 @@ async function openAuthenticatedDashboard(browser) {
   return context;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const browser = await chromium.launch({ headless: !visible });
 
   try {
@@ -124,11 +141,17 @@ async function main() {
     if (visible) {
       console.log("Close the browser window when you are finished.");
       const [authenticatedPage] = authenticatedContext.pages();
-      await Promise.race([
-        new Promise((resolve) => browser.once("disconnected", resolve)),
-        authenticatedPage?.waitForEvent("close", { timeout: 0 }) ??
-          new Promise(() => {}),
-      ]);
+
+      const finished: Promise<unknown>[] = [
+        new Promise<void>((resolve) => {
+          browser.once("disconnected", () => resolve());
+        }),
+      ];
+      if (authenticatedPage != null) {
+        finished.push(authenticatedPage.waitForEvent("close", { timeout: 0 }));
+      }
+
+      await Promise.race(finished);
       return;
     }
 
@@ -138,7 +161,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.message);
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
 });

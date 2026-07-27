@@ -76,7 +76,7 @@
     "test": "jest",
     "test:ci": "CI=true jest --coverage",
     "typecheck": "tsc --project tsconfig.typecheck.json --noEmit",
-    "playwright:login": "node scripts/playwright_login.js"
+    "playwright:login": "tsx scripts/playwright_login.ts"
   },
   "resolutions": {
     "@babel/runtime": "7.29.2",
