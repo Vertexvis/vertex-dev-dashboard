@@ -44,3 +44,15 @@ A few options for deployment,
 - [Vercel](https://nextjs.org/docs/deployment)
 - [Netlify](https://www.netlify.com/blog/2020/11/30/how-to-deploy-next.js-sites-to-netlify/)
 - [AWS CDK](https://github.com/serverless-nextjs/serverless-next.js#readme)
+
+### Quality checks
+
+This project uses Lefthook for pre-commit quality checks. To enable it locally, run `yarn lefthook:install`.
+
+#### Working with git worktrees
+
+Git stores hooks in the shared common git directory, so a few things are worth knowing if you use worktrees:
+
+- **Enabling/disabling is repo-wide.** Running `yarn lefthook:install` (or `lefthook uninstall`) from any worktree turns the pre-commit hook on (or off) for _every_ worktree, including `main`. There is no per-worktree opt-in. Run the install from your primary checkout so the hook doesn't reference a throwaway worktree path.
+- **Each worktree needs its own dependencies.** Worktrees don't share `node_modules`, and the hook runs `format:staged:check`, `lint`, `typecheck`, and `test`. Run `yarn install` in every worktree you commit from, or those commands will fail at commit time.
+- **Skip the hook when needed.** Prefix a commit with `LEFTHOOK=0` (e.g. `LEFTHOOK=0 git commit ...`) to bypass the checks for a single commit.
