@@ -16,14 +16,13 @@ import { handlePropertyKeyPolicy } from "../../../pages/api/property-key-policie
 const vertexApiOrigin = "https://vertex-api.test";
 
 describe("property key policies API routes", () => {
-  it("passes name, supplied ID, and paging filters to Vertex", async () => {
+  it("passes supplied ID and paging filters to Vertex", async () => {
     nodeMswServer.use(
       stubListPolicies(
         policyList([policyData("policy-1")]),
         ({ searchParams }) => {
           expect(searchParams.get("page[cursor]")).toBe("cursor-1");
           expect(searchParams.get("page[size]")).toBe("50");
-          expect(searchParams.get("filter[name][contains]")).toBe("POLICY");
           expect(searchParams.get("filter[suppliedId][contains]")).toBe(
             "LIED-1"
           );
@@ -35,7 +34,6 @@ describe("property key policies API routes", () => {
       method: "GET",
       query: {
         cursor: "cursor-1",
-        name: "POLICY",
         pageSize: "50",
         suppliedId: "LIED-1",
       },
@@ -49,22 +47,16 @@ describe("property key policies API routes", () => {
     });
   });
 
-  it("passes creation dates upstream and returns the service page", async () => {
-    const data = [
-      policyData("policy-1", "2026-06-10T15:30:00Z"),
-      policyData("policy-2", "2026-06-11T15:30:00Z"),
-    ];
-
+  it("does not forward name or created-at filters upstream", async () => {
     nodeMswServer.use(
-      stubListPolicies(policyList(data), ({ searchParams }) => {
-        expect(searchParams.get("filter[createdAt][gte]")).toBe(
-          "2026-06-11T00:00:00.000Z"
-        );
-        expect(searchParams.get("filter[createdAt][lte]")).toBe(
-          "2026-06-11T23:59:59.999Z"
-        );
-        expect(searchParams.get("page[size]")).toBe("10");
-      })
+      stubListPolicies(
+        policyList([policyData("policy-1")]),
+        ({ searchParams }) => {
+          expect(searchParams.get("filter[name][contains]")).toBeNull();
+          expect(searchParams.get("filter[createdAt][gte]")).toBeNull();
+          expect(searchParams.get("filter[createdAt][lte]")).toBeNull();
+        }
+      )
     );
 
     const response = await callPolicies({
@@ -72,13 +64,14 @@ describe("property key policies API routes", () => {
       query: {
         createdAtEnd: "2026-06-11T23:59:59.999Z",
         createdAtStart: "2026-06-11T00:00:00.000Z",
+        name: "POLICY",
       },
     });
 
     expect(response.statusCode()).toBe(200);
     expect(response.body()).toEqual({
       cursors: { next: "next-page", self: "self-page" },
-      data,
+      data: [policyData("policy-1")],
       status: 200,
     });
   });

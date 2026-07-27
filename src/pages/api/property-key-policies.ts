@@ -66,20 +66,12 @@ async function get(
     const client = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
-    const name = head(req.query.name);
     const suppliedId = head(req.query.suppliedId);
-    const createdAtStart = head(req.query.createdAtStart);
-    const createdAtEnd = head(req.query.createdAtEnd);
     const sort = head(req.query.sort);
 
     const query = new URLSearchParams();
     if (pc != null) query.set("page[cursor]", pc);
     query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
-    setFilterExpression(
-      query,
-      "name",
-      name != null ? ({ contains: name } satisfies FilterExpression) : undefined
-    );
     setFilterExpression(
       query,
       "suppliedId",
@@ -88,16 +80,6 @@ async function get(
         : undefined
     );
     if (sort != null) query.set("sort", sort);
-    setFilterExpression(
-      query,
-      "createdAt",
-      createdAtStart != null || createdAtEnd != null
-        ? ({
-            ...(createdAtStart != null ? { gte: createdAtStart } : {}),
-            ...(createdAtEnd != null ? { lte: createdAtEnd } : {}),
-          } satisfies FilterExpression)
-        : undefined
-    );
 
     const { cursors, page } = await getPage(
       (): Promise<AxiosResponse<PropertyKeyPolicyList>> =>
