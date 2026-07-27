@@ -398,6 +398,141 @@ describe("MetadataCompare Stream column", () => {
   });
 });
 
+describe("MetadataCompare column help icons and info dialog", () => {
+  it("renders help icon buttons for each visible column header (default: Unrestricted + Restricted)", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "About the Unrestricted column" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "About the Restricted column" })
+    ).toBeInTheDocument();
+    // Stream is not visible by default.
+    expect(
+      screen.queryByRole("button", { name: "About the Stream column" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Stream help icon only when the Stream column is toggled on", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: { partName: "", properties: { Material: "StreamSteel" } },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "About the Stream column" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(toggleButton("Stream"));
+
+    expect(
+      screen.getByRole("button", { name: "About the Stream column" })
+    ).toBeInTheDocument();
+  });
+
+  it("clicking the Unrestricted help icon opens a dialog with the correct title and body", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "About the Unrestricted column" })
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Unrestricted metadata" })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\/api\/scene-items/)).toBeInTheDocument();
+  });
+
+  it("clicking the Restricted help icon opens a dialog mentioning listSceneItemMetadata", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "About the Restricted column" })
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Restricted metadata" })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/listSceneItemMetadata/)).toBeInTheDocument();
+  });
+
+  it("clicking the Stream help icon opens a dialog mentioning hit.metadataProperties", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: { partName: "", properties: { Material: "StreamSteel" } },
+    });
+
+    fireEvent.click(toggleButton("Stream"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "About the Stream column" })
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Stream metadata" })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/hit\.metadataProperties/)).toBeInTheDocument();
+  });
+
+  it("closes the dialog when the Close button is clicked", async () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "About the Unrestricted column" })
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    // After closing the dialog title should no longer be visible.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Unrestricted metadata" })
+      ).not.toBeInTheDocument()
+    );
+  });
+});
+
 describe("MetadataCompare states", () => {
   it("shows a loading state while metadata is being fetched", () => {
     renderCompare({ metadataStatus: "loading" });
