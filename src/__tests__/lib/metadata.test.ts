@@ -1,6 +1,7 @@
+import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { DomainPropertyEntry } from "@vertexvis/viewer";
 
-import { toMetadataFromDomainEntries } from "../../lib/metadata";
+import { toMetadata, toMetadataFromDomainEntries } from "../../lib/metadata";
 
 function stringEntry(
   id: string,
@@ -140,5 +141,60 @@ describe("toMetadataFromDomainEntries", () => {
     const md = toMetadataFromDomainEntries(entries);
 
     expect(Object.keys(md.properties)).toEqual(["Alpha", "Mu", "Zeta"]);
+  });
+});
+
+describe("toMetadata (stream hit)", () => {
+  it("returns undefined when the hit is missing", () => {
+    expect(toMetadata({ hit: undefined })).toBeUndefined();
+    expect(toMetadata({ hit: null })).toBeUndefined();
+  });
+
+  it("maps stream metadataProperties (case-sensitive) and identifier keys", () => {
+    const hit = {
+      itemId: { hex: "item-uuid" },
+      itemSuppliedId: { value: "supplied-1" },
+      partId: { hex: "part-1" },
+      partRevisionId: { hex: "rev-1" },
+      suppliedPartRevisionId: { value: "rev-supplied-1" },
+      metadataProperties: [
+        { key: "Material", asString: "Steel" },
+        { key: "material", asString: "aluminum" },
+        { key: "Count", asLong: 42 },
+      ],
+    } as unknown as vertexvis.protobuf.stream.IHit;
+
+    const md = toMetadata({ hit });
+
+    // Stream metadata properties are mapped verbatim, case-sensitively.
+    expect(md?.properties.Material).toBe("Steel");
+    expect(md?.properties.material).toBe("aluminum");
+    expect(md?.properties.Count).toBe("42");
+
+    // Synthetic identifier keys are surfaced for parity.
+    expect(md?.properties.VERTEX_SCENE_ITEM_ID).toBe("item-uuid");
+    expect(md?.properties.VERTEX_SCENE_ITEM_SUPPLIED_ID).toBe("supplied-1");
+    expect(md?.properties.VERTEX_PART_ID).toBe("part-1");
+    expect(md?.properties.VERTEX_PART_REVISION_ID).toBe("rev-1");
+    expect(md?.properties.VERTEX_PART_REVISION_SUPPLIED_ID).toBe(
+      "rev-supplied-1"
+    );
+  });
+
+  it("reflects exactly the stream properties returned (no injected keys)", () => {
+    const hit = {
+      itemId: { hex: "item-uuid" },
+      metadataProperties: [
+        { key: "Material", asString: "Steel" },
+        { key: "Weight", asString: "12kg" },
+      ],
+    } as unknown as vertexvis.protobuf.stream.IHit;
+
+    const md = toMetadata({ hit });
+
+    expect(md?.properties).toHaveProperty("Material");
+    expect(md?.properties).toHaveProperty("Weight");
+    // The stream did not include "Cost"; the mapper adds nothing.
+    expect(md?.properties).not.toHaveProperty("Cost");
   });
 });

@@ -16,14 +16,18 @@ import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { LeftSidebar } from "../../components/viewer/LeftSidebar";
-import { MetadataStatus } from "../../components/viewer/MetadataProperties";
+import { MetadataStatus } from "../../components/viewer/MetadataStates";
 import { PolicySelect } from "../../components/viewer/PolicySelect";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
-import { Metadata, toMetadataFromDomainEntries } from "../../lib/metadata";
+import {
+  Metadata,
+  toMetadata,
+  toMetadataFromDomainEntries,
+} from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
@@ -63,6 +67,13 @@ export default function SceneViewer({
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
+  // Stream metadata delivered through the viewer render stream on tap. Compared
+  // side-by-side against the query endpoint's metadata to confirm both channels
+  // honor the property key policy. Undefined when the current selection has no
+  // stream sample (tree selection, or after a policy switch before re-tapping).
+  const [streamMetadata, setStreamMetadata] = React.useState<
+    Metadata | undefined
+  >();
   const [metadataStatus, setMetadataStatus] =
     React.useState<MetadataStatus>("ready");
   const [metadataError, setMetadataError] = React.useState<string>();
@@ -128,6 +139,9 @@ export default function SceneViewer({
       // synthetic identifier keys (part id/revision, supplied ids) reappear
       // alongside the policy-aware metadata, matching the prior server view.
       setSelectedIdentifiers(hit ? toHitIdentifiers(hit) : undefined);
+      // Capture the metadata the stream delivers on tap so it can be compared
+      // side-by-side with the query endpoint's metadata for the same item.
+      setStreamMetadata(hit ? toMetadata({ hit }) : undefined);
       await selectByHit({ hit, viewer: viewerState.ref.current });
     }
   }
@@ -135,6 +149,8 @@ export default function SceneViewer({
   function handleTreeItemSelected(itemId: string) {
     setSelectedItemId(itemId);
     setSelectedIdentifiers(undefined);
+    // Tree selection carries no stream hit, so there is no stream sample.
+    setStreamMetadata(undefined);
   }
 
   function handleViewStateSelected(id: string) {
@@ -158,6 +174,9 @@ export default function SceneViewer({
     // Show loading (not stale/empty) in the metadata panel until the new scene
     // view is ready and the retained item's metadata is refetched.
     setViewId(undefined);
+    // The captured stream sample is from the pre-switch stream, so it must not
+    // be shown against the new policy. It reappears when the item is re-tapped.
+    setStreamMetadata(undefined);
     if (selectedItemId != null) setMetadataStatus("loading");
 
     try {
@@ -194,6 +213,7 @@ export default function SceneViewer({
         return;
       }
       setMetadata(undefined);
+      setStreamMetadata(undefined);
       setMetadataStatus("ready");
       setMetadataError(undefined);
       setMetadataDiagnostic(undefined);
@@ -307,6 +327,7 @@ export default function SceneViewer({
         <RightDrawer
           active={openedRightPanel}
           metadata={metadata}
+          streamMetadata={streamMetadata}
           metadataStatus={metadataStatus}
           metadataError={metadataError}
           metadataDiagnostic={metadataDiagnostic}
