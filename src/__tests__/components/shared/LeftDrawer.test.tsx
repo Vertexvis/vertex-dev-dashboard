@@ -21,6 +21,21 @@ describe("LeftDrawer", () => {
     return screen.getByRole("button", { name });
   }
 
+  it("highlights Property Key Policies on the detail route", () => {
+    mockRoute = "/property-key-policies/[propertyKeyPolicyId]";
+    render(<LeftDrawer />);
+
+    expect(selectedButton("Property Key Policies")).toHaveClass("Mui-selected");
+    expect(selectedButton("Files")).not.toHaveClass("Mui-selected");
+  });
+
+  it("highlights Property Key Policies on the list route", () => {
+    mockRoute = "/property-key-policies";
+    render(<LeftDrawer />);
+
+    expect(selectedButton("Property Key Policies")).toHaveClass("Mui-selected");
+  });
+
   it("highlights File Collections on the detail route", () => {
     mockRoute = "/file-collections/[fileCollectionId]";
     render(<LeftDrawer />);
@@ -41,5 +56,8 @@ describe("LeftDrawer", () => {
 
     expect(selectedButton("Scenes")).toHaveClass("Mui-selected");
     expect(selectedButton("Files")).not.toHaveClass("Mui-selected");
+    expect(selectedButton("Property Key Policies")).not.toHaveClass(
+      "Mui-selected"
+    );
   });
 });
