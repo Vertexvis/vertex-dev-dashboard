@@ -27,10 +27,6 @@ import {
 } from "../../lib/property-key-policies";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
-import {
-  CreatedAtDateRange,
-  CreatedAtDateRangeFilter,
-} from "../shared/CreatedAtDateRangeFilter";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -50,28 +46,20 @@ export const headCells: readonly HeadCell[] = [
 ];
 
 interface UsePropertyKeyPoliciesProps extends SwrProps {
-  readonly createdAtEnd?: string;
-  readonly createdAtStart?: string;
   readonly sort?: SortState<PropertyKeyPolicySortField>;
 }
 
 type PropertyKeyPolicySortField = "created" | "name";
 
 function usePropertyKeyPolicies({
-  createdAtEnd,
-  createdAtStart,
   cursor,
-  name,
   pageSize,
   sort,
   suppliedId,
 }: UsePropertyKeyPoliciesProps) {
   return useSWR(
     buildQuery("/api/property-key-policies", {
-      createdAtEnd,
-      createdAtStart,
       cursor,
-      name,
       pageSize,
       sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
@@ -100,23 +88,17 @@ export default function PropertyKeyPolicyTable({
     setCursors,
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [name, setName] = React.useState<string | undefined>();
   const [sort, setSort] = React.useState<
     SortState<PropertyKeyPolicySortField> | undefined
   >();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
-  const [createdAtFilters, setCreatedAtFilters] =
-    React.useState<CreatedAtDateRange>({});
   const [deleteError, setDeleteError] = React.useState<string>();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
 
   const { data, error, mutate } = usePropertyKeyPolicies({
-    createdAtEnd: createdAtFilters.createdAtEnd,
-    createdAtStart: createdAtFilters.createdAtStart,
     cursor,
-    name,
     pageSize,
     sort,
     suppliedId,
@@ -125,15 +107,6 @@ export default function PropertyKeyPolicyTable({
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
-
-  const debouncedSetNameFilter = React.useMemo(
-    () =>
-      debounce((value: string) => {
-        resetPaging();
-        setName(value === "" ? undefined : value);
-      }, 300),
-    [resetPaging]
-  );
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
@@ -149,11 +122,6 @@ export default function PropertyKeyPolicyTable({
 
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
-
-  function handleCreatedAtChange(filters: CreatedAtDateRange) {
-    resetPaging();
-    setCreatedAtFilters(filters);
-  }
 
   function handleSortChange(field: string) {
     if (field !== "created" && field !== "name") return;
@@ -321,18 +289,6 @@ export default function PropertyKeyPolicyTable({
               variant="standard"
               size="small"
               margin="normal"
-              id="nameFilter"
-              label="Name"
-              type="text"
-              onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
-              }}
-              sx={{ mt: 0, width: "16rem" }}
-            />
-            <TextField
-              variant="standard"
-              size="small"
-              margin="normal"
               id="suppliedIdFilter"
               label="Supplied ID"
               type="text"
@@ -343,7 +299,6 @@ export default function PropertyKeyPolicyTable({
             />
           </Box>
         </Box>
-        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
         <TableContainer>
           <Table>
             <TableHead
