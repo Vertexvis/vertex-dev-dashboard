@@ -17,7 +17,7 @@ import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { MetadataStatus } from "../../components/viewer/MetadataProperties";
-import { PolicyChip } from "../../components/viewer/PolicyChip";
+import { PolicySelect } from "../../components/viewer/PolicySelect";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
@@ -30,6 +30,7 @@ import { useViewer } from "../../lib/viewer";
 import {
   CommonProps,
   CookieAttributes,
+  EnvironmentWithCustom,
   NextIronRequest,
   serverSidePropsHandler as commonServerSidePropsHandler,
 } from "../../lib/with-session";
@@ -68,6 +69,7 @@ export default function SceneViewer({
   const [metadataDiagnostic, setMetadataDiagnostic] = React.useState<string>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const [policyId, setPolicyId] = React.useState<string | undefined>();
+  const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
   const modelViews = useModelViews({
     itemId: selectedItemId,
@@ -139,10 +141,58 @@ export default function SceneViewer({
     applySceneViewState({ id, viewer: viewerState.ref.current });
   }
 
+  // Switch the applied property key policy while viewing the scene. This
+  // recreates the stream key with the new policy, reconnects the viewer, and
+  // lets the metadata effect reload the currently-selected item under the new
+  // policy once the new scene view is ready.
+  async function handlePolicyChange(newPolicyId?: string) {
+    if (newPolicyId === policyId) return;
+
+    const sceneId = head(router.query.sceneId);
+    const cId = credentials?.clientId ?? clientId;
+    const ve = credentials?.vertexEnv ?? vertexEnv;
+    if (!sceneId || !cId || !ve) return;
+
+    setSwitchingPolicy(true);
+    setStreamKeyError(undefined);
+    // Show loading (not stale/empty) in the metadata panel until the new scene
+    // view is ready and the retained item's metadata is refetched.
+    setViewId(undefined);
+    if (selectedItemId != null) setMetadataStatus("loading");
+
+    try {
+      const { credentials: nextCredentials, url } = await createPolicySwitch({
+        sceneId,
+        clientId: cId,
+        vertexEnv: ve,
+        policyId: newPolicyId,
+      });
+      // Prevent the mount effect from recreating a key for this scene.
+      requestedStreamKeyForScene.current = sceneId;
+      setPolicyId(newPolicyId);
+      setCredentials(nextCredentials);
+      // Retain selectedItemId + selectedIdentifiers so the same item's metadata
+      // auto-refetches under the new policy after the viewer reconnects.
+      await router.replace(url, undefined, { shallow: true });
+    } catch {
+      setStreamKeyError("Unable to create a stream key for this scene.");
+    } finally {
+      setSwitchingPolicy(false);
+    }
+  }
+
   // Load metadata through the policy-aware Web SDK endpoint. With no policy the
   // endpoint returns the complete unfiltered set, so bare viewing is preserved.
   React.useEffect(() => {
     if (selectedItemId == null || viewId == null) {
+      // With an item still selected but no scene view yet (e.g. mid policy
+      // switch, before the new scene view is ready), keep the panel in a loading
+      // state rather than clearing to stale/empty data — the retained item
+      // refetches once the new viewId is set.
+      if (selectedItemId != null) {
+        setMetadataStatus("loading");
+        return;
+      }
       setMetadata(undefined);
       setMetadataStatus("ready");
       setMetadataError(undefined);
@@ -195,7 +245,17 @@ export default function SceneViewer({
 
   return router.isReady && credentials ? (
     <Layout
-      header={<Header actions={<PolicyChip policyId={policyId} />} />}
+      header={
+        <Header
+          actions={
+            <PolicySelect
+              policyId={policyId}
+              onChange={handlePolicyChange}
+              disabled={switchingPolicy}
+            />
+          }
+        />
+      }
       leftSidebar={
         <LeftSidebar
           active={openedLeftPanel}
@@ -217,6 +277,7 @@ export default function SceneViewer({
       main={
         viewerState.isReady && (
           <Viewer
+            key={credentials.streamKey}
             credentials={credentials}
             onSelect={handleSelect}
             viewerState={viewerState}
@@ -342,6 +403,33 @@ export async function createStreamKey(
   return key;
 }
 
+// Core of the in-viewer policy switch: recreate the stream key under the new
+// policy and derive the credentials + shareable URL the viewer reconnects with.
+// Exported so the switch behavior is directly testable without driving the full
+// page (which mounts the VertexViewer web component).
+export async function createPolicySwitch({
+  sceneId,
+  clientId,
+  vertexEnv,
+  policyId,
+}: {
+  sceneId: string;
+  clientId: string;
+  vertexEnv: EnvironmentWithCustom;
+  policyId?: string;
+}): Promise<{
+  streamKey: string;
+  credentials: StreamCredentials;
+  url: string;
+}> {
+  const streamKey = await createStreamKey(sceneId, policyId);
+  return {
+    streamKey,
+    credentials: { clientId, streamKey, vertexEnv },
+    url: encodeCreds({ clientId, sceneId, streamKey, vertexEnv, policyId }),
+  };
+}
+
 // Bonus (non-blocking): a subtle diagnostic when the returned metadata looks
 // suspicious for the active policy. This never blocks or breaks the normal flow.
 // TODO(PLAT-8995): compare returned keys against the policy's declared entries
@@ -371,7 +459,7 @@ export function encodeCreds({
 }: {
   clientId: string;
   streamKey: string;
-  vertexEnv: Environment;
+  vertexEnv: EnvironmentWithCustom;
   sceneId?: string;
   policyId?: string;
 }): string {

@@ -10,6 +10,7 @@ import {
   TokenKey,
 } from "../../../lib/with-session";
 import {
+  createPolicySwitch,
   createStreamKey,
   diagnosePolicy,
   encodeCreds,
@@ -93,6 +94,65 @@ describe("createStreamKey", () => {
     expect(key).toBe("stream-key-1");
     expect(captured.current).toEqual({ id: "scene-1" });
     expect(captured.current).not.toHaveProperty("propertyKeyPolicyId");
+  });
+});
+
+describe("createPolicySwitch", () => {
+  installJsdomMockServer();
+
+  function captureBody(): { current?: Record<string, unknown> } {
+    const captured: { current?: Record<string, unknown> } = {};
+    server.use(
+      http.post("*/api/stream-keys", async ({ request }) => {
+        captured.current = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ key: "switched-key", status: 200 });
+      })
+    );
+    return captured;
+  }
+
+  it("recreates the stream key under the new policy and derives creds + url", async () => {
+    // Drives the in-viewer switch: this is the core of handlePolicyChange,
+    // which retains the selected item (state left untouched) while the stream
+    // key, credentials, and URL are rebuilt under the new policy.
+    const captured = captureBody();
+
+    const { streamKey, credentials, url } = await createPolicySwitch({
+      sceneId: "scene-1",
+      clientId: "client-id",
+      vertexEnv: "platdev",
+      policyId: "policy-2",
+    });
+
+    // A NEW stream key POST carries the new propertyKeyPolicyId.
+    expect(captured.current).toEqual({
+      id: "scene-1",
+      propertyKeyPolicyId: "policy-2",
+    });
+    expect(streamKey).toBe("switched-key");
+    // Credentials reconnect the viewer with the new key.
+    expect(credentials).toEqual({
+      clientId: "client-id",
+      streamKey: "switched-key",
+      vertexEnv: "platdev",
+    });
+    // URL round-trips the new key + policy for shareability.
+    expect(url).toContain("streamKey=switched-key");
+    expect(url).toContain("policyId=policy-2");
+  });
+
+  it("switches to the unrestricted policy (no propertyKeyPolicyId, no policyId in url)", async () => {
+    const captured = captureBody();
+
+    const { url } = await createPolicySwitch({
+      sceneId: "scene-1",
+      clientId: "client-id",
+      vertexEnv: "platdev",
+    });
+
+    expect(captured.current).toEqual({ id: "scene-1" });
+    expect(captured.current).not.toHaveProperty("propertyKeyPolicyId");
+    expect(url).not.toContain("policyId");
   });
 });
 
