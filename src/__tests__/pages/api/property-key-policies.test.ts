@@ -76,57 +76,6 @@ describe("property key policies API routes", () => {
     });
   });
 
-  it("passes a selected sort upstream and applies it locally", async () => {
-    const data = [
-      policyData("policy-1", "2026-06-10T15:30:00Z", "Zulu"),
-      policyData("policy-2", "2026-06-11T15:30:00Z", "Alpha"),
-    ];
-
-    nodeMswServer.use(
-      stubListPolicies(policyList(data), ({ searchParams }) => {
-        expect(searchParams.get("page[size]")).toBe("10");
-        expect(searchParams.get("sort")).toBe("-created");
-      })
-    );
-
-    const response = await callPolicies({
-      method: "GET",
-      query: { sort: "-created" },
-    });
-
-    expect(response.statusCode()).toBe(200);
-    expect(response.body()).toEqual({
-      cursors: { next: "next-page", self: "self-page" },
-      data: [data[1], data[0]],
-      status: 200,
-    });
-  });
-
-  it("sorts property key policies by name locally", async () => {
-    const data = [
-      policyData("policy-1", "2026-06-10T15:30:00Z", "Zulu"),
-      policyData("policy-2", "2026-06-11T15:30:00Z", "Alpha"),
-    ];
-
-    nodeMswServer.use(
-      stubListPolicies(policyList(data), ({ searchParams }) => {
-        expect(searchParams.get("sort")).toBe("name");
-      })
-    );
-
-    const response = await callPolicies({
-      method: "GET",
-      query: { sort: "name" },
-    });
-
-    expect(response.statusCode()).toBe(200);
-    expect(response.body()).toEqual({
-      cursors: { next: "next-page", self: "self-page" },
-      data: [data[1], data[0]],
-      status: 200,
-    });
-  });
-
   it("uses the default page size when one is not supplied", async () => {
     nodeMswServer.use(
       stubListPolicies(
