@@ -1,4 +1,11 @@
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -34,6 +41,57 @@ const Sources: readonly SourceConfig[] = [
   { id: "restricted", label: "Restricted" },
   { id: "stream", label: "Stream" },
 ];
+
+interface ColumnInfo {
+  readonly title: string;
+  readonly body: React.ReactNode;
+}
+
+// Descriptive content shown in the per-column help dialog.
+const ColumnInfoMap: Record<SourceId, ColumnInfo> = {
+  unrestricted: {
+    title: "Unrestricted metadata",
+    body: (
+      <>
+        The complete, policy-agnostic metadata for the item. Fetched server-side
+        from the Vertex REST API via{" "}
+        <code>GET /api/scene-items/&#123;id&#125;</code> (
+        <code>sceneItems.getSceneItem</code>) using the dashboard session&apos;s
+        OAuth credentials. This path does not apply any property key policy, so
+        it shows every property the item has — use it as the baseline to see
+        what a policy removes.
+      </>
+    ),
+  },
+  restricted: {
+    title: "Restricted metadata",
+    body: (
+      <>
+        The policy-aware view — what the restricted stream actually exposes.
+        Queried through the Web SDK,{" "}
+        <code>viewer.sceneItems.listSceneItemMetadata(itemId)</code>, against
+        the scene view created from the current stream key (which has the
+        selected property key policy applied). This is the source the metadata
+        panel uses; keys the policy denies do not appear here.
+      </>
+    ),
+  },
+  stream: {
+    title: "Stream metadata",
+    body: (
+      <>
+        Metadata delivered inline with the render stream. When you click
+        (raycast) an item in the viewer, the hit response carries{" "}
+        <code>hit.metadataProperties</code>, mapped via{" "}
+        <code>toMetadata(&#123; hit &#125;)</code>. It is scoped to the same
+        policy-applied stream key, but arrives as part of the pick/hit over the
+        streaming connection rather than a separate query — and is only
+        available for items selected by clicking in the viewer (not the scene
+        tree).
+      </>
+    ),
+  },
+};
 
 // Default column selection: the current two policy-comparison columns.
 const DefaultColumns: readonly SourceId[] = ["unrestricted", "restricted"];
@@ -201,6 +259,7 @@ export function MetadataCompare({
   // SSR-safe: first render uses the default so server/client markup match, then
   // the persisted selection is restored after mount.
   const [columns, setColumns] = React.useState<SourceId[]>([...DefaultColumns]);
+  const [infoColumn, setInfoColumn] = React.useState<SourceId | null>(null);
 
   React.useEffect(() => {
     setColumns(readStoredColumns());
@@ -310,7 +369,21 @@ export function MetadataCompare({
               </TableCell>
               {visibleSources.map((s) => (
                 <TableCell key={s.id}>
-                  <Typography variant="subtitle2">{s.label}</Typography>
+                  <Typography
+                    variant="subtitle2"
+                    component="span"
+                    sx={{ verticalAlign: "middle" }}
+                  >
+                    {s.label}
+                  </Typography>
+                  <IconButton
+                    aria-label={`About the ${s.label} column`}
+                    onClick={() => setInfoColumn(s.id)}
+                    size="small"
+                    sx={{ ml: 0.5, verticalAlign: "middle" }}
+                  >
+                    <HelpOutlineIcon fontSize="inherit" />
+                  </IconButton>
                 </TableCell>
               ))}
             </TableRow>
@@ -322,7 +395,33 @@ export function MetadataCompare({
           </TableBody>
         </Table>
       </TableContainer>
+      <ColumnInfoDialog
+        column={infoColumn}
+        onClose={() => setInfoColumn(null)}
+      />
     </>
+  );
+}
+
+// Dialog explaining where a column's data is derived from.
+function ColumnInfoDialog({
+  column,
+  onClose,
+}: {
+  readonly column: SourceId | null;
+  readonly onClose: () => void;
+}): JSX.Element {
+  const info = column != null ? ColumnInfoMap[column] : null;
+  return (
+    <Dialog open={column != null} onClose={onClose}>
+      <DialogTitle>{info?.title ?? ""}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2">{info?.body}</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
