@@ -295,6 +295,7 @@ export default function SceneTable({
           <FormControl
             variant="standard"
             size="small"
+            margin="normal"
             sx={{ mt: 0, width: "20rem" }}
             disabled={policiesLoading || !!policiesError}
           >
