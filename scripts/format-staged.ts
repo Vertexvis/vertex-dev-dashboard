@@ -1,10 +1,21 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const { spawnSync } = require("child_process");
+import { spawnSync } from "child_process";
+import type {
+  SpawnSyncOptions,
+  SpawnSyncOptionsWithStringEncoding,
+  SpawnSyncReturns,
+} from "child_process";
+import * as fs from "fs";
+import { createRequire } from "module";
 
-const mode = process.argv.includes("--write") ? "write" : "check";
-const supportedExtensions = new Set([
+const require = createRequire(import.meta.url);
+const prettier: string = require.resolve("prettier/bin-prettier.js");
+
+type Mode = "write" | "check";
+
+const mode: Mode = process.argv.includes("--write") ? "write" : "check";
+const supportedExtensions = new Set<string>([
   ".css",
   ".html",
   ".js",
@@ -18,7 +29,18 @@ const supportedExtensions = new Set([
   ".yml",
 ]);
 
-function git(args, options = {}) {
+function git(
+  args: string[],
+  options: SpawnSyncOptionsWithStringEncoding
+): SpawnSyncReturns<string>;
+function git(
+  args: string[],
+  options?: SpawnSyncOptions
+): SpawnSyncReturns<Buffer>;
+function git(
+  args: string[],
+  options: SpawnSyncOptions = {}
+): SpawnSyncReturns<string | Buffer> {
   const result = spawnSync("git", args, options);
 
   if (result.status !== 0) {
@@ -30,7 +52,7 @@ function git(args, options = {}) {
   return result;
 }
 
-function stagedFiles() {
+function stagedFiles(): string[] {
   const result = git(
     ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
     { encoding: "utf8" }
@@ -46,16 +68,16 @@ function stagedFiles() {
     .filter((file) => supportedExtensions.has(extension(file)));
 }
 
-function extension(file) {
+function extension(file: string): string {
   const match = file.toLowerCase().match(/(\.[^.]+)$/);
   return match == null ? "" : match[1];
 }
 
-function stagedBlob(file) {
+function stagedBlob(file: string): SpawnSyncReturns<Buffer> {
   return git(["show", `:${file}`]);
 }
 
-function indexMode(file) {
+function indexMode(file: string): string | null {
   const result = git(["ls-files", "-s", "-z", "--", file], {
     encoding: "utf8",
   });
@@ -67,13 +89,16 @@ function indexMode(file) {
   return result.stdout.split(" ", 1)[0];
 }
 
-function formatBlob(file, input) {
+function formatBlob(
+  file: string,
+  input: string | Buffer
+): SpawnSyncReturns<Buffer> {
   return spawnSync(process.execPath, [prettier, "--stdin-filepath", file], {
     input,
   });
 }
 
-function updateIndex(file, formatted) {
+function updateIndex(file: string, formatted: Buffer): boolean {
   const hash = git(["hash-object", "-w", "--stdin"], {
     input: formatted,
     encoding: "utf8",
@@ -94,7 +119,11 @@ function updateIndex(file, formatted) {
   return update.status === 0;
 }
 
-function updateWorktreeIfSafe(file, original, formatted) {
+function updateWorktreeIfSafe(
+  file: string,
+  original: Buffer,
+  formatted: Buffer
+): void {
   if (!fs.existsSync(file)) {
     return;
   }
@@ -105,7 +134,6 @@ function updateWorktreeIfSafe(file, original, formatted) {
   }
 }
 
-const prettier = require.resolve("prettier/bin-prettier.js");
 const files = stagedFiles();
 let failed = false;
 
