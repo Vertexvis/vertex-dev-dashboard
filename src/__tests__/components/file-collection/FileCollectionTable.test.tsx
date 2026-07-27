@@ -318,6 +318,38 @@ describe("FileCollectionTable", () => {
     expect(deletedIds).toEqual([["collection-1"]]);
   });
 
+  it("closes the confirm dialog and surfaces an error when the delete request rejects", async () => {
+    server.use(
+      http.get("*/api/file-collections", () => {
+        return HttpResponse.json(firstPage);
+      }),
+      http.delete("*/api/file-collections", () => {
+        return HttpResponse.error();
+      })
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Collection One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Select Collection One"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    const confirmDialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(confirmDialog).getByRole("button", { name: "Delete" })
+    );
+
+    expect(
+      await screen.findByText("Could not delete the selected file collections.")
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Collection One")).toBeChecked();
+  });
+
   it("filters file collections by a partial supplied ID", async () => {
     const requests: string[] = [];
 

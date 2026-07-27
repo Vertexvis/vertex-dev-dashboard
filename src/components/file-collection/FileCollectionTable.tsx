@@ -183,25 +183,28 @@ export default function FileCollectionTable({
     setDeleting(true);
     const ids = [...selected];
 
-    const res = await fetch("/api/file-collections", {
-      body: JSON.stringify({ ids }),
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch("/api/file-collections", {
+        body: JSON.stringify({ ids }),
+        method: "DELETE",
+      });
 
-    if (!res.ok) {
-      const body = await res.json();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setDeleteError(
+          body.message ?? "Could not delete the selected file collections."
+        );
+        return;
+      }
+
+      setSelected(new Set());
+      mutate();
+    } catch {
+      setDeleteError("Could not delete the selected file collections.");
+    } finally {
       setDeleting(false);
       setConfirmOpen(false);
-      setDeleteError(
-        body.message ?? "Could not delete the selected file collections."
-      );
-      return;
     }
-
-    setSelected(new Set());
-    mutate();
-    setDeleting(false);
-    setConfirmOpen(false);
   }
 
   let tableRows: React.ReactNode;
