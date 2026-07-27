@@ -1,11 +1,16 @@
-import { MergeTypeOutlined } from '@mui/icons-material';
+import { MergeTypeOutlined } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
   Table,
   TableBody,
@@ -14,27 +19,35 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from '@mui/material';
-import { Cursors, SceneData } from '@vertexvis/api-client-node';
-import debounce from 'lodash.debounce';
-import { useRouter } from 'next/router';
-import React, { useEffect } from 'react';
-import useSWR, { SWRResponse } from 'swr';
+  Typography,
+} from "@mui/material";
+import {
+  Cursors,
+  PropertyKeyPolicyData,
+  SceneData,
+} from "@vertexvis/api-client-node";
+import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import useSWR from "swr";
 
-import { ErrorRes, GetRes } from '../../lib/api';
-import { toLocaleString } from '../../lib/dates';
-import { SwrProps } from '../../lib/paging';
-import { reportError } from '../../lib/report-error';
-import { Scene, toScenePage } from '../../lib/scenes';
-import CreateSceneDialog from '../shared/CreateSceneDialog';
-import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
-import { DataLoadError } from '../shared/DataLoadError';
-import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
-import { ResourceLink } from '../shared/ResourceLink';
-import { RowActionsMenu } from '../shared/RowActionsMenu';
-import { SkeletonBody } from '../shared/SkeletonBody';
-import { HeadCell, TableHead } from '../shared/TableHead';
-import { TableToolbar } from '../shared/TableToolbar';
+import { ErrorRes, GetRes } from "../../lib/api";
+import { toLocaleString } from "../../lib/dates";
+import { SwrProps } from "../../lib/paging";
+import {
+  PropertyKeyPolicy,
+  toPolicyPage,
+} from "../../lib/property-key-policies";
+import { Scene, toScenePage } from "../../lib/scenes";
+import CreateSceneDialog from "../shared/CreateSceneDialog";
+import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
+import { DataLoadError } from "../shared/DataLoadError";
+import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
+import { ResourceLink } from "../shared/ResourceLink";
+import { RowActionsMenu } from "../shared/RowActionsMenu";
+import { SkeletonBody } from "../shared/SkeletonBody";
+import { HeadCell, TableHead } from "../shared/TableHead";
+import { TableToolbar } from "../shared/TableToolbar";
 
 interface Props {
   readonly onClick: (s: Scene) => void;
@@ -44,40 +57,37 @@ interface Props {
 }
 
 const headCells: readonly HeadCell[] = [
-  { id: 'name', disablePadding: true, label: 'Name' },
-  { id: 'supplied-id', label: 'Supplied ID' },
-  { id: 'state', label: 'State' },
-  { id: 'id', label: 'ID' },
-  { id: 'created', label: 'Created' },
-  { id: 'actions', label: 'Actions' },
+  { id: "name", disablePadding: true, label: "Name" },
+  { id: "supplied-id", label: "Supplied ID" },
+  { id: "state", label: "State" },
+  { id: "id", label: "ID" },
+  { id: "created", label: "Created" },
+  { id: "actions", label: "Actions" },
 ];
 
-function useScenes({
-  cursor,
-  pageSize,
-  suppliedId,
-  name,
-}: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
+function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ''}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ''
-    }${name ? `&name=${encodeURIComponent(name)}` : ''}`
+    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
+    }${name ? `&name=${encodeURIComponent(name)}` : ""}`
   );
 }
 
-function stateColor(state?: string): 'default' | 'success' | 'warning' | 'error' {
+function stateColor(
+  state?: string
+): "default" | "success" | "warning" | "error" {
   switch (state) {
-    case 'commit':
-    case 'committed':
-    case 'ready':
-      return 'success';
-    case 'draft':
-      return 'warning';
-    case 'error':
-    case 'failed':
-      return 'error';
+    case "commit":
+    case "committed":
+    case "ready":
+      return "success";
+    case "draft":
+      return "warning";
+    case "error":
+    case "failed":
+      return "error";
     default:
-      return 'default';
+      return "default";
   }
 }
 
@@ -92,15 +102,32 @@ export default function SceneTable({
   const [showMergeScene, setShowMergeScene] = React.useState(false);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<string | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>({});
+  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
+    string | undefined
+  >();
+  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
+    {}
+  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<
+    string | undefined
+  >();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [selectedPolicyId, setSelectedPolicyId] = React.useState<
+    string | undefined
+  >();
+
+  const { data: policiesData, error: policiesError } = useSWR<
+    GetRes<PropertyKeyPolicyData>
+  >("/api/property-key-policies");
+  const policiesLoading = !policiesData && !policiesError;
+  const policies: PropertyKeyPolicy[] = policiesData
+    ? toPolicyPage(policiesData).items
+    : [];
 
   const { data, error, mutate } = useScenes({
     cursor,
@@ -110,7 +137,7 @@ export default function SceneTable({
   });
 
   useEffect(() => {
-    mutate().catch(reportError('Failed to refresh scenes'));
+    mutate();
   }, [invalidationCount, mutate]);
 
   const router = useRouter();
@@ -124,7 +151,10 @@ export default function SceneTable({
     []
   );
 
-  const debouncedSetNameFilter = React.useMemo(() => debounce(setNameFilter, 300), []);
+  const debouncedSetNameFilter = React.useMemo(
+    () => debounce(setNameFilter, 300),
+    []
+  );
 
   React.useEffect(() => {
     if (page == null) return;
@@ -136,7 +166,7 @@ export default function SceneTable({
     if (scene != null) setActiveSceneId(scene.id);
   }, [scene]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -144,7 +174,7 @@ export default function SceneTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string): void {
+  function handleCheck(id: string) {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -152,7 +182,7 @@ export default function SceneTable({
     setSelected(upd);
   }
 
-  function handleClick(s: Scene): void {
+  function handleClick(s: Scene) {
     setActiveSceneId(s.id);
     onClick(s);
   }
@@ -160,7 +190,7 @@ export default function SceneTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ): void {
+  ) {
     if (curPage < num) {
       setPrev({ ...prev, [num - 1]: cursors?.self });
       setCursor(cursors?.next);
@@ -169,38 +199,43 @@ export default function SceneTable({
     setCurPage(num);
   }
 
-  async function handleDelete(): Promise<void> {
+  async function handleDelete() {
     setSelected(new Set());
-    await fetch('/api/scenes', {
+    await fetch("/api/scenes", {
       body: JSON.stringify({ ids: [...selected] }),
-      method: 'DELETE',
+      method: "DELETE",
     });
-    await mutate();
+    mutate();
   }
 
-  function handleEditClick(s: Scene): void {
+  function handleEditClick(s: Scene) {
     setActiveSceneId(s.id);
     onEditClick(s);
   }
 
-  function handleViewClick(sceneId: string): void {
-    router
-      .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
-      .catch(reportError('Failed to navigate to the scene viewer'));
+  function sceneViewerHref(sceneId: string): string {
+    const base = `/scene-viewer/${encodeURIComponent(sceneId)}`;
+    return selectedPolicyId
+      ? `${base}?policyId=${encodeURIComponent(selectedPolicyId)}`
+      : base;
   }
 
-  async function handleGetStreamKey(sceneId: string): Promise<void> {
+  function handleViewClick(sceneId: string) {
+    router.push(sceneViewerHref(sceneId));
+  }
+
+  async function handleGetStreamKey(sceneId: string) {
     setKeyLoadingSceneId(sceneId);
-    const b = await fetch('/api/stream-keys', {
+    const b = await fetch("/api/stream-keys", {
       body: JSON.stringify({ id: sceneId }),
-      method: 'POST',
+      method: "POST",
     });
     const { key } = await b.json();
     try {
       await navigator.clipboard.writeText(key);
       setToastMsg(`Stream key "${key}" copied to clipboard.`);
     } catch (e) {
-      console.error('Error copying stream key to clipboard', e);
+      console.error("Error copying stream key to clipboard", e);
     } finally {
       setKeyLoadingSceneId(undefined);
     }
@@ -211,9 +246,7 @@ export default function SceneTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={() => {
-            handleDelete().catch(reportError('Failed to delete scenes'));
-          }}
+          onDelete={handleDelete}
           title="Scenes"
           customActions={[
             <React.Fragment key="merge">
@@ -229,10 +262,10 @@ export default function SceneTable({
         <Box
           sx={{
             px: { sm: 2 },
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
+            display: "flex",
+            gap: "1rem",
+            justifyContent: "flex-start",
+            alignItems: "center",
           }}
         >
           <TextField
@@ -245,7 +278,7 @@ export default function SceneTable({
             onChange={(e) => {
               debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0, width: '20rem' }}
+            sx={{ mt: 0, width: "20rem" }}
           />
           <TextField
             variant="standard"
@@ -257,8 +290,49 @@ export default function SceneTable({
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0, width: '20rem' }}
+            sx={{ mt: 0, width: "20rem" }}
           />
+          <FormControl
+            variant="standard"
+            size="small"
+            sx={{ mt: 0, width: "20rem" }}
+            disabled={policiesLoading || !!policiesError}
+          >
+            <InputLabel id="policyFilter-label">Property Key Policy</InputLabel>
+            <Select
+              labelId="policyFilter-label"
+              id="policyFilter"
+              value={selectedPolicyId ?? ""}
+              onChange={(e) => setSelectedPolicyId(e.target.value || undefined)}
+              endAdornment={
+                policiesLoading ? (
+                  <CircularProgress size={16} sx={{ mr: 2 }} />
+                ) : undefined
+              }
+            >
+              <MenuItem value="">
+                <em>None (unrestricted)</em>
+              </MenuItem>
+              {policies.map((policy) => (
+                <MenuItem key={policy.id} value={policy.id}>
+                  {policy.name ?? policy.suppliedId ?? policy.id}{" "}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 0.5 }}
+                  >
+                    ({policy.mode})
+                  </Typography>
+                </MenuItem>
+              ))}
+            </Select>
+            {policiesError && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                Could not load policies
+              </Typography>
+            )}
+          </FormControl>
         </Box>
         <TableContainer>
           <Table>
@@ -303,7 +377,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
+                          href={sceneViewerHref(row.id)}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}
@@ -313,9 +387,9 @@ export default function SceneTable({
                       <TableCell>
                         <Chip
                           color={stateColor(row.state)}
-                          label={row.state ?? 'N/A'}
+                          label={row.state ?? "N/A"}
                           size="small"
-                          sx={{ fontWeight: 600, textTransform: 'uppercase' }}
+                          sx={{ fontWeight: 600, textTransform: "uppercase" }}
                           variant="outlined"
                         />
                       </TableCell>
@@ -326,15 +400,15 @@ export default function SceneTable({
                           actions={[
                             {
                               disabled: keyLoadingSceneId === row.id,
-                              label: 'Generate stream key',
+                              label: "Generate stream key",
                               onClick: () => handleGetStreamKey(row.id),
                             },
                             {
-                              label: 'View scene',
+                              label: "View scene",
                               onClick: () => handleViewClick(row.id),
                             },
                             {
-                              label: 'Edit scene',
+                              label: "Edit scene",
                               onClick: () => handleEditClick(row),
                             },
                           ]}
@@ -389,7 +463,7 @@ export default function SceneTable({
         open={showMergeScene}
         onClose={() => setShowMergeScene(false)}
         onSceneQueued={() => {
-          setToastMsg('Building merged scene. Check back shortly.');
+          setToastMsg("Building merged scene. Check back shortly.");
           setShowMergeScene(false);
         }}
         scenesToMerge={Array.from(selected)}
