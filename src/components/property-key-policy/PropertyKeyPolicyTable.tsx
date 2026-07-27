@@ -25,7 +25,6 @@ import {
   PropertyKeyPolicy,
   toPropertyKeyPolicyPage,
 } from "../../lib/property-key-policies";
-import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -85,7 +84,6 @@ export default function PropertyKeyPolicyTable({
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
 
@@ -141,7 +139,9 @@ export default function PropertyKeyPolicyTable({
     handlePageChange(num);
   }
 
-  async function handleConfirmDelete() {
+  async function handleDelete() {
+    if (deleting) return;
+
     setDeleteError(undefined);
     setDeleting(true);
     const ids = [...selected];
@@ -167,7 +167,6 @@ export default function PropertyKeyPolicyTable({
         message = undefined;
       }
       setDeleting(false);
-      setConfirmOpen(false);
       setSelected(new Set());
       setDeleteError(
         message ?? "Could not delete the selected property key policies."
@@ -177,7 +176,6 @@ export default function PropertyKeyPolicyTable({
     }
 
     setDeleting(false);
-    setConfirmOpen(false);
     setSelected(new Set());
     mutate();
     onPoliciesDeleted?.(ids);
@@ -263,10 +261,7 @@ export default function PropertyKeyPolicyTable({
             ) : undefined
           }
           numSelected={selected.size}
-          onDelete={() => {
-            setDeleteError(undefined);
-            setConfirmOpen(true);
-          }}
+          onDelete={handleDelete}
           title="Property Key Policies"
         />
         <Box
@@ -341,20 +336,6 @@ export default function PropertyKeyPolicyTable({
           }}
         />
       </Paper>
-      <ConfirmDialog
-        confirmLabel="Delete"
-        confirming={deleting}
-        message={`Delete ${selected.size} selected property key ${
-          selected.size === 1 ? "policy" : "policies"
-        }? This cannot be undone.`}
-        onClose={() => {
-          if (deleting) return;
-          setConfirmOpen(false);
-        }}
-        onConfirm={handleConfirmDelete}
-        open={confirmOpen}
-        title="Delete Property Key Policies"
-      />
       <CreatePropertyKeyPolicyDialog
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
