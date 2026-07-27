@@ -24,6 +24,12 @@ export type Content = "settings" | "instructions" | "parts";
 export function LeftDrawer(): JSX.Element {
   const router = useRouter();
 
+  const isSectionActive = React.useCallback(
+    (base: string) =>
+      router.route === base || router.route.startsWith(`${base}/`),
+    [router.route]
+  );
+
   return (
     <Drawer
       anchor="left"
@@ -42,7 +48,7 @@ export function LeftDrawer(): JSX.Element {
       >
         <ListItemButton
           onClick={() => router.push("/")}
-          selected={router.route === "/"}
+          selected={router.route === "/" || isSectionActive("/scene-viewer")}
         >
           <ListItemIcon>
             <LocalLibraryOutlined />
@@ -51,7 +57,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/files")}
-          selected={router.route === "/files"}
+          selected={isSectionActive("/files")}
         >
           <ListItemIcon>
             <DescriptionOutlined />
@@ -60,7 +66,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/file-collections")}
-          selected={router.route === "/file-collections"}
+          selected={isSectionActive("/file-collections")}
         >
           <ListItemIcon>
             <CollectionsBookmarkOutlined />
@@ -69,7 +75,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/parts")}
-          selected={router.route === "/parts"}
+          selected={isSectionActive("/parts")}
         >
           <ListItemIcon>
             <DatasetOutlined />
@@ -78,7 +84,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/translations")}
-          selected={router.route === "/translations"}
+          selected={isSectionActive("/translations")}
         >
           <ListItemIcon>
             <PendingOutlined />
