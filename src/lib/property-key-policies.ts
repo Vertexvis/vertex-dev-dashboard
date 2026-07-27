@@ -71,68 +71,6 @@ export type CreatePropertyKeyPolicyRes = Res & {
   readonly entriesError?: string;
 };
 
-const PropertyKeyPolicySortFields = ["created", "name"] as const;
-type PropertyKeyPolicySortField = (typeof PropertyKeyPolicySortFields)[number];
-
-interface PropertyKeyPolicySort {
-  readonly field: PropertyKeyPolicySortField;
-  readonly order: "asc" | "desc";
-}
-
-/**
- * Temporary client-side stand-in for the Property Key Policies API sort
- * contract.
- *
- * The dashboard forwards the selected sort upstream, but applies supported
- * sorts here until the service honors the new query parameter.
- */
-export function sortPropertyKeyPolicies(
-  propertyKeyPolicies: PropertyKeyPolicyList["data"],
-  sort?: string
-): PropertyKeyPolicyList["data"] {
-  const parsedSort = parsePropertyKeyPolicySort(sort);
-  if (parsedSort == null) return propertyKeyPolicies;
-
-  return [...propertyKeyPolicies].sort((left, right) => {
-    const comparison = getSortValue(left, parsedSort.field).localeCompare(
-      getSortValue(right, parsedSort.field)
-    );
-
-    return parsedSort.order === "asc" ? comparison : -comparison;
-  });
-}
-
-function getSortValue(
-  policy: PropertyKeyPolicyResource,
-  field: PropertyKeyPolicySortField
-): string {
-  return (
-    (field === "created"
-      ? policy.attributes.createdAt
-      : policy.attributes.name) ?? ""
-  );
-}
-
-function parsePropertyKeyPolicySort(
-  sort?: string
-): PropertyKeyPolicySort | undefined {
-  if (sort == null) return undefined;
-
-  const order = sort.startsWith("-") ? "desc" : "asc";
-  const field = order === "desc" ? sort.slice(1) : sort;
-  if (!isPropertyKeyPolicySortField(field)) return undefined;
-
-  return { field, order };
-}
-
-function isPropertyKeyPolicySortField(
-  field: string
-): field is PropertyKeyPolicySortField {
-  return PropertyKeyPolicySortFields.includes(
-    field as PropertyKeyPolicySortField
-  );
-}
-
 export function toPropertyKeyPolicy(
   data: PropertyKeyPolicyResource
 ): PropertyKeyPolicy {

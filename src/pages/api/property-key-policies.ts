@@ -26,7 +26,6 @@ import {
   getPropertyKeyPoliciesApi,
   PropertyKeyPolicyMode,
   PropertyKeyPolicyPageRes,
-  sortPropertyKeyPolicies,
 } from "../../lib/property-key-policies";
 import { setFilterExpression } from "../../lib/query-filters";
 import { parsePositiveQueryInt } from "../../lib/query-params";
@@ -67,7 +66,6 @@ async function get(
     const ps = head(req.query.pageSize);
     const pc = head(req.query.cursor);
     const suppliedId = head(req.query.suppliedId);
-    const sort = head(req.query.sort);
 
     const query = new URLSearchParams();
     if (pc != null) query.set("page[cursor]", pc);
@@ -79,7 +77,6 @@ async function get(
         ? ({ contains: suppliedId } satisfies FilterExpression)
         : undefined
     );
-    if (sort != null) query.set("sort", sort);
 
     const { cursors, page } = await getPage(
       (): Promise<AxiosResponse<PropertyKeyPolicyList>> =>
@@ -95,7 +92,7 @@ async function get(
     );
     return {
       cursors,
-      data: sortPropertyKeyPolicies(page.data, sort),
+      data: page.data,
       status: 200,
     };
   } catch (error) {

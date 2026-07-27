@@ -25,7 +25,6 @@ import {
   PropertyKeyPolicy,
   toPropertyKeyPolicyPage,
 } from "../../lib/property-key-policies";
-import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -38,30 +37,24 @@ import CreatePropertyKeyPolicyDialog from "./CreatePropertyKeyPolicyDialog";
 import { toModeLabel } from "./mode";
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name", sortable: true },
+  { id: "name", disablePadding: true, label: "Name" },
   { id: "id", label: "ID" },
   { id: "supplied-id", label: "Supplied ID" },
   { id: "mode", label: "Mode" },
-  { id: "created", label: "Created At", sortable: true },
+  { id: "created", label: "Created At" },
 ];
 
-interface UsePropertyKeyPoliciesProps extends SwrProps {
-  readonly sort?: SortState<PropertyKeyPolicySortField>;
-}
-
-type PropertyKeyPolicySortField = "created" | "name";
+type UsePropertyKeyPoliciesProps = SwrProps;
 
 function usePropertyKeyPolicies({
   cursor,
   pageSize,
-  sort,
   suppliedId,
 }: UsePropertyKeyPoliciesProps) {
   return useSWR(
     buildQuery("/api/property-key-policies", {
       cursor,
       pageSize,
-      sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
     })
   );
@@ -88,9 +81,6 @@ export default function PropertyKeyPolicyTable({
     setCursors,
   } = useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [sort, setSort] = React.useState<
-    SortState<PropertyKeyPolicySortField> | undefined
-  >();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -100,7 +90,6 @@ export default function PropertyKeyPolicyTable({
   const { data, error, mutate } = usePropertyKeyPolicies({
     cursor,
     pageSize,
-    sort,
     suppliedId,
   });
   const page = data ? toPropertyKeyPolicyPage(data) : undefined;
@@ -122,15 +111,6 @@ export default function PropertyKeyPolicyTable({
 
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
-
-  function handleSortChange(field: string) {
-    if (field !== "created" && field !== "name") return;
-
-    setSort((current) =>
-      current == null ? { field, order: "asc" } : toggleSort(current, field)
-    );
-    resetPaging();
-  }
 
   function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
     if (page == null) return;
@@ -305,9 +285,7 @@ export default function PropertyKeyPolicyTable({
               headCells={headCells}
               numSelected={selected.size}
               onSelectAllClick={handleSelectAll}
-              onSortChange={handleSortChange}
               rowCount={pageLength}
-              sort={sort}
             />
             <TableBody>
               {tableRows}
