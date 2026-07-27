@@ -1,0 +1,138 @@
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import React from "react";
+
+import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
+import { server } from "../../../../test/msw/server";
+import { renderWithSWR } from "../../../../test/render/renderWithSWR";
+import { PropertyKeyPolicyEntriesList } from "../../../components/property-key-policy/PropertyKeyPolicyEntriesList";
+import { PropertyKeyPolicyEntry } from "../../../lib/property-key-policies";
+
+const entries: readonly PropertyKeyPolicyEntry[] = [
+  { id: "entry-1", name: "Alpha" },
+  { id: "entry-2", name: "Beta" },
+];
+
+describe("PropertyKeyPolicyEntriesList", () => {
+  installJsdomMockServer();
+
+  it("renders read-only with no editing controls when editing props are absent", () => {
+    renderWithSWR(<PropertyKeyPolicyEntriesList entries={entries} />);
+
+    expect(screen.getByText("Alpha")).toBeInTheDocument();
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    // Protects the drawer: no delete, no checkbox, no add controls.
+    expect(screen.queryByLabelText("Delete Alpha")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Select Alpha")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Add property key(s)" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders delete buttons, checkboxes, and an add button in editable mode", () => {
+    renderWithSWR(
+      <PropertyKeyPolicyEntriesList
+        entries={entries}
+        onMutate={jest.fn()}
+        policyId="policy-1"
+      />
+    );
+
+    expect(screen.getByLabelText("Delete Alpha")).toBeInTheDocument();
+    expect(screen.getByLabelText("Delete Beta")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Alpha")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Beta")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add property key(s)" })
+    ).toBeInTheDocument();
+  });
+
+  it("deletes a single entry by id and triggers mutate", async () => {
+    const deletedIds: string[][] = [];
+    const onMutate = jest.fn();
+
+    server.use(
+      http.delete(
+        "*/api/property-key-policies/:id/entries",
+        async ({ request }) => {
+          const body = (await request.json()) as { ids?: string[] };
+          deletedIds.push(body.ids ?? []);
+          return HttpResponse.json({ status: 200 });
+        }
+      )
+    );
+
+    renderWithSWR(
+      <PropertyKeyPolicyEntriesList
+        entries={entries}
+        onMutate={onMutate}
+        policyId="policy-1"
+      />
+    );
+
+    await userEvent.click(screen.getByLabelText("Delete Alpha"));
+
+    await waitFor(() => expect(deletedIds).toEqual([["entry-1"]]));
+    await waitFor(() => expect(onMutate).toHaveBeenCalled());
+  });
+
+  it("bulk deletes the selected entry ids", async () => {
+    const deletedIds: string[][] = [];
+    const onMutate = jest.fn();
+
+    server.use(
+      http.delete(
+        "*/api/property-key-policies/:id/entries",
+        async ({ request }) => {
+          const body = (await request.json()) as { ids?: string[] };
+          deletedIds.push(body.ids ?? []);
+          return HttpResponse.json({ status: 200 });
+        }
+      )
+    );
+
+    renderWithSWR(
+      <PropertyKeyPolicyEntriesList
+        entries={entries}
+        onMutate={onMutate}
+        policyId="policy-1"
+      />
+    );
+
+    await userEvent.click(screen.getByLabelText("Select Alpha"));
+    await userEvent.click(screen.getByLabelText("Select Beta"));
+    await userEvent.click(screen.getByRole("button", { name: /Delete \(2\)/ }));
+
+    await waitFor(() => expect(deletedIds).toEqual([["entry-1", "entry-2"]]));
+    await waitFor(() => expect(onMutate).toHaveBeenCalled());
+  });
+
+  it("surfaces a snackbar error when a delete fails", async () => {
+    const onMutate = jest.fn();
+
+    server.use(
+      http.delete("*/api/property-key-policies/:id/entries", () =>
+        HttpResponse.json(
+          { message: "Could not delete entry-1.", status: 500 },
+          { status: 500 }
+        )
+      )
+    );
+
+    renderWithSWR(
+      <PropertyKeyPolicyEntriesList
+        entries={entries}
+        onMutate={onMutate}
+        policyId="policy-1"
+      />
+    );
+
+    await userEvent.click(screen.getByLabelText("Delete Alpha"));
+
+    expect(
+      await screen.findByText("Could not delete entry-1.")
+    ).toBeInTheDocument();
+    expect(onMutate).not.toHaveBeenCalled();
+  });
+});
