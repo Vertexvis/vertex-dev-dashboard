@@ -62,6 +62,7 @@ function usePropertyKeyPolicies({
 
 interface Props {
   readonly activePropertyKeyPolicyId?: string;
+  readonly onPoliciesDeleted?: (ids: string[]) => void;
   readonly onPropertyKeyPolicySelected?: (
     propertyKeyPolicy: PropertyKeyPolicy
   ) => void;
@@ -69,6 +70,7 @@ interface Props {
 
 export default function PropertyKeyPolicyTable({
   activePropertyKeyPolicyId,
+  onPoliciesDeleted,
   onPropertyKeyPolicySelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
@@ -92,7 +94,11 @@ export default function PropertyKeyPolicyTable({
     pageSize,
     suppliedId,
   });
-  const page = data ? toPropertyKeyPolicyPage(data) : undefined;
+  const loadFailed = error != null || isErrorRes(data);
+  const page =
+    data != null && !isErrorRes(data)
+      ? toPropertyKeyPolicyPage(data)
+      : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
@@ -153,12 +159,20 @@ export default function PropertyKeyPolicyTable({
     }
 
     if (!res.ok) {
-      const body = await res.json();
+      let message: string | undefined;
+      try {
+        const body = await res.json();
+        message = isErrorRes(body) ? body.message : undefined;
+      } catch {
+        message = undefined;
+      }
       setDeleting(false);
+      setConfirmOpen(false);
+      setSelected(new Set());
       setDeleteError(
-        (isErrorRes(body) ? body.message : undefined) ??
-          "Could not delete the selected property key policies."
+        message ?? "Could not delete the selected property key policies."
       );
+      mutate();
       return;
     }
 
@@ -166,6 +180,7 @@ export default function PropertyKeyPolicyTable({
     setConfirmOpen(false);
     setSelected(new Set());
     mutate();
+    onPoliciesDeleted?.(ids);
   }
 
   function handleCreated() {
@@ -174,7 +189,7 @@ export default function PropertyKeyPolicyTable({
   }
 
   let tableRows: React.ReactNode;
-  if (error) {
+  if (loadFailed) {
     tableRows = <DataLoadError colSpan={headCells.length + 1} />;
   } else if (!page) {
     tableRows = (

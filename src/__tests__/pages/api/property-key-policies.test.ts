@@ -274,6 +274,41 @@ describe("property key policies API routes", () => {
     });
   });
 
+  it("rejects delete bodies whose ids are not an array of strings", async () => {
+    const nonArrayIds = await callPolicies({
+      body: JSON.stringify({ ids: "policy-1" }),
+      method: "DELETE",
+    });
+    const emptyIds = await callPolicies({
+      body: JSON.stringify({ ids: [] }),
+      method: "DELETE",
+    });
+    const nonStringIds = await callPolicies({
+      body: JSON.stringify({ ids: ["policy-1", 2] }),
+      method: "DELETE",
+    });
+
+    for (const invalid of [nonArrayIds, emptyIds, nonStringIds]) {
+      expect(invalid.statusCode()).toBe(400);
+      expect(invalid.body()).toEqual({ message: "Invalid body.", status: 400 });
+    }
+  });
+
+  it("deletes when the request body is already a parsed object", async () => {
+    const deletedIds: string[] = [];
+
+    nodeMswServer.use(stubDeletePolicy("policy-1", undefined, deletedIds));
+
+    const response = await callPolicies({
+      body: { ids: ["policy-1"] },
+      method: "DELETE",
+    });
+
+    expect(response.statusCode()).toBe(200);
+    expect(response.body()).toEqual({ status: 200 });
+    expect(deletedIds).toEqual(["policy-1"]);
+  });
+
   it("deletes each supplied policy ID", async () => {
     const deletedIds: string[] = [];
 

@@ -15,7 +15,7 @@ type NextJsApiRouteHandler = (
 ) => Promise<void>;
 
 export interface ApiRouteRequest {
-  readonly body?: string;
+  readonly body?: unknown;
   readonly method: string;
   readonly query?: Record<string, string | string[]>;
 }

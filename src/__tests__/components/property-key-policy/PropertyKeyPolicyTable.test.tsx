@@ -158,13 +158,15 @@ describe("PropertyKeyPolicyTable", () => {
     expect(screen.getByLabelText("Select Policy One")).not.toBeChecked();
   });
 
-  it("shows an error when deleting fails after confirmation", async () => {
+  it("shows an error, clears the selection, and refreshes the list when deleting fails", async () => {
     const deletedIds: string[][] = [];
+    let getCount = 0;
 
     server.use(
-      http.get("*/api/property-key-policies", () =>
-        HttpResponse.json(firstPage)
-      ),
+      http.get("*/api/property-key-policies", () => {
+        getCount += 1;
+        return HttpResponse.json(firstPage);
+      }),
       http.delete("*/api/property-key-policies", async ({ request }) => {
         const body = (await request.json()) as { ids?: string[] };
         deletedIds.push(body.ids ?? []);
@@ -178,6 +180,7 @@ describe("PropertyKeyPolicyTable", () => {
     renderTable();
 
     expect(await screen.findByText("Policy One")).toBeInTheDocument();
+    const getsBeforeDelete = getCount;
 
     await userEvent.click(screen.getByLabelText("Select Policy One"));
     await userEvent.click(screen.getByLabelText("Delete"));
@@ -189,9 +192,96 @@ describe("PropertyKeyPolicyTable", () => {
     expect(
       await screen.findByText("Could not delete policy-1.")
     ).toBeInTheDocument();
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
-    expect(screen.getByLabelText("Select Policy One")).toBeChecked();
+    // On failure the selection now clears, the confirm dialog closes, and the
+    // list is reconciled with the server via a re-fetch.
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Select Policy One")).not.toBeChecked();
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+    await waitFor(() => expect(getCount).toBeGreaterThan(getsBeforeDelete));
     expect(deletedIds).toEqual([["policy-1"]]);
+  });
+
+  it("recovers from a non-JSON delete error without getting stuck", async () => {
+    let getCount = 0;
+
+    server.use(
+      http.get("*/api/property-key-policies", () => {
+        getCount += 1;
+        return HttpResponse.json(firstPage);
+      }),
+      http.delete(
+        "*/api/property-key-policies",
+        () => new HttpResponse(null, { status: 500 })
+      )
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Policy One")).toBeInTheDocument();
+    const getsBeforeDelete = getCount;
+
+    await userEvent.click(screen.getByLabelText("Select Policy One"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Delete" })
+    );
+
+    // A generic error surfaces (body could not be parsed as JSON) and the
+    // component is not stuck: the confirm dialog closes and the list refreshes.
+    expect(
+      await screen.findByText(
+        "Could not delete the selected property key policies."
+      )
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+    await waitFor(() => expect(getCount).toBeGreaterThan(getsBeforeDelete));
+  });
+
+  it("notifies the parent with the deleted ids on success", async () => {
+    const onPoliciesDeleted = jest.fn();
+
+    server.use(
+      http.get("*/api/property-key-policies", () =>
+        HttpResponse.json(firstPage)
+      ),
+      http.delete("*/api/property-key-policies", () =>
+        HttpResponse.json({ status: 200 })
+      )
+    );
+
+    renderWithSWR(
+      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />
+    );
+
+    expect(await screen.findByText("Policy One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Select Policy One"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Delete" })
+    );
+
+    await waitFor(() =>
+      expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"])
+    );
+  });
+
+  it("renders the load error state when the list request fails", async () => {
+    server.use(
+      http.get("*/api/property-key-policies", () =>
+        HttpResponse.json({ message: "boom", status: 500 }, { status: 500 })
+      )
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Error loading data.")).toBeInTheDocument();
   });
 });
 

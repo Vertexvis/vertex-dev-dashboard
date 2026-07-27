@@ -163,15 +163,28 @@ async function create(
 async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
   if (!req.body) return BodyRequired;
 
-  const b: DeleteReq = JSON.parse(req.body);
-  if (!b.ids) return InvalidBody;
+  let ids: unknown;
+  try {
+    const parsed = (
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body
+    ) as Partial<DeleteReq>;
+    ids = parsed?.ids;
+  } catch {
+    return InvalidBody;
+  }
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    !ids.every((id) => typeof id === "string")
+  )
+    return InvalidBody;
 
   try {
     const c = getPropertyKeyPoliciesApi(
       await getClientFromSession(req.session)
     );
     const results = await Promise.all(
-      b.ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id })))
+      ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id })))
     );
     const failure = results.find(isErrorFailure);
     if (failure != null) return toErrorRes({ failure });
