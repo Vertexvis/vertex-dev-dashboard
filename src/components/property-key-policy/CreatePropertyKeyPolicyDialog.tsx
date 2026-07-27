@@ -32,9 +32,6 @@ interface Props {
   readonly open: boolean;
 }
 
-const CaseSensitivityHelperText =
-  "Metadata property keys are case-sensitive and are saved exactly as typed.";
-
 export default function CreatePropertyKeyPolicyDialog({
   onClose,
   onCreated,
@@ -50,6 +47,21 @@ export default function CreatePropertyKeyPolicyDialog({
   const [validationError, setValidationError] = React.useState<string>();
   const [apiError, setApiError] = React.useState<string>();
   const [entriesWarning, setEntriesWarning] = React.useState<string>();
+  const [keyError, setKeyError] = React.useState<string>();
+
+  // Refs to the underlying key inputs so we can move keyboard focus to a
+  // newly added field. MUI forwards `inputRef` to the underlying <input>.
+  const keyInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const [focusIndex, setFocusIndex] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (focusIndex == null) return;
+    const el = keyInputRefs.current[focusIndex];
+    if (el != null) {
+      el.focus();
+      setFocusIndex(null);
+    }
+  }, [focusIndex, keys]);
 
   function reset() {
     setName("");
@@ -60,6 +72,7 @@ export default function CreatePropertyKeyPolicyDialog({
     setValidationError(undefined);
     setApiError(undefined);
     setEntriesWarning(undefined);
+    setKeyError(undefined);
   }
 
   // Once the policy has been created (even if its entries failed), re-submitting
@@ -74,11 +87,40 @@ export default function CreatePropertyKeyPolicyDialog({
   }
 
   function handleKeyChange(index: number, value: string) {
+    setKeyError(undefined);
     setKeys((current) => current.map((k, i) => (i === index ? value : k)));
   }
 
-  function handleAddKey() {
+  // Append a new empty key field and move keyboard focus to it. The new index
+  // is the current length, since we append to the end.
+  function addKeyAndFocus() {
+    setKeyError(undefined);
+    setFocusIndex(keys.length);
     setKeys((current) => [...current, ""]);
+  }
+
+  function handleAddKey() {
+    addKeyAndFocus();
+  }
+
+  function handleKeyDown(
+    e: React.KeyboardEvent<HTMLDivElement>,
+    index: number,
+    value: string
+  ) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    // Ignore Enter on whitespace-only fields; don't add a new field.
+    if (value.trim() === "") return;
+
+    // Case-sensitive exact match against the other key values.
+    if (keys.some((k, i) => i !== index && k === value)) {
+      setKeyError(`"${value}" is already in the list.`);
+      return;
+    }
+
+    addKeyAndFocus();
   }
 
   function handleRemoveKey(index: number) {
@@ -219,8 +261,21 @@ export default function CreatePropertyKeyPolicyDialog({
         <Box sx={{ mt: 1 }}>
           <Typography variant="subtitle2">Property Keys</Typography>
           <Typography color="text.secondary" variant="body2">
-            {CaseSensitivityHelperText}
+            Metadata property keys are{" "}
+            <Box component="span" fontWeight="fontWeightBold">
+              case-sensitive
+            </Box>{" "}
+            and are{" "}
+            <Box component="span" fontWeight="fontWeightBold">
+              saved exactly as typed
+            </Box>
+            .
           </Typography>
+          {keyError != null && (
+            <Alert severity="warning" sx={{ mb: 1, mt: 1 }}>
+              {keyError}
+            </Alert>
+          )}
           <Stack spacing={1} sx={{ mt: 1 }}>
             {keys.map((key, index) => (
               <Box
@@ -230,8 +285,12 @@ export default function CreatePropertyKeyPolicyDialog({
                 <TextField
                   fullWidth
                   inputProps={{ "aria-label": `Property key ${index + 1}` }}
+                  inputRef={(el) => {
+                    keyInputRefs.current[index] = el;
+                  }}
                   label={`Property key ${index + 1}`}
                   onChange={(e) => handleKeyChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, index, key)}
                   size="small"
                   type="text"
                   value={key}

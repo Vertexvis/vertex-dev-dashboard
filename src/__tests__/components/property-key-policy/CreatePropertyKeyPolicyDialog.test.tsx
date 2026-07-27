@@ -18,11 +18,50 @@ describe("CreatePropertyKeyPolicyDialog", () => {
   it("shows the case-sensitivity helper text", () => {
     renderDialog();
 
+    // The sentence is split across elements to emphasize key phrases, so assert
+    // the emphasized fragments render rather than the full sentence.
+    expect(screen.getByText("case-sensitive")).toBeInTheDocument();
+    expect(screen.getByText("saved exactly as typed")).toBeInTheDocument();
+  });
+
+  it("pressing Enter in a property key field adds and focuses a new field", async () => {
+    renderDialog();
+
+    await userEvent.type(
+      screen.getByLabelText("Property key 1"),
+      "Alpha{Enter}"
+    );
+
+    const secondField = screen.getByLabelText("Property key 2");
+    expect(secondField).toBeInTheDocument();
+    expect(secondField).toHaveFocus();
+    expect(screen.getByLabelText("Property key 1")).toHaveValue("Alpha");
+  });
+
+  it("pressing Enter with a duplicate value shows a hint and does not add a field", async () => {
+    renderDialog();
+
+    await userEvent.type(
+      screen.getByLabelText("Property key 1"),
+      "Alpha{Enter}"
+    );
+    await userEvent.type(
+      screen.getByLabelText("Property key 2"),
+      "Alpha{Enter}"
+    );
+
+    expect(screen.queryByLabelText("Property key 3")).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Metadata property keys are case-sensitive and are saved exactly as typed."
-      )
+      screen.getByText('"Alpha" is already in the list.')
     ).toBeInTheDocument();
+  });
+
+  it("pressing Enter in an empty field does nothing", async () => {
+    renderDialog();
+
+    await userEvent.type(screen.getByLabelText("Property key 1"), "{Enter}");
+
+    expect(screen.queryByLabelText("Property key 2")).not.toBeInTheDocument();
   });
 
   it("submits the key verbatim and maps the Deny mode to denylist", async () => {
