@@ -23,6 +23,7 @@ import {
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { ConfirmDialog } from "../shared/ConfirmDialog";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
@@ -99,6 +100,8 @@ export default function FileCollectionTable({
   const [createdAtFilters, setCreatedAtFilters] =
     React.useState<CreatedAtDateRange>({});
   const [deleteError, setDeleteError] = React.useState<string>();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
 
   const { data, error, mutate } = useFileCollections({
     createdAtEnd: createdAtFilters.createdAtEnd,
@@ -175,10 +178,10 @@ export default function FileCollectionTable({
     handlePageChange(num);
   }
 
-  async function handleDelete() {
+  async function handleConfirmDelete() {
     setDeleteError(undefined);
+    setDeleting(true);
     const ids = [...selected];
-    setSelected(new Set());
 
     const res = await fetch("/api/file-collections", {
       body: JSON.stringify({ ids }),
@@ -187,14 +190,18 @@ export default function FileCollectionTable({
 
     if (!res.ok) {
       const body = await res.json();
+      setDeleting(false);
+      setConfirmOpen(false);
       setDeleteError(
         body.message ?? "Could not delete the selected file collections."
       );
-      setSelected(new Set(ids));
       return;
     }
 
+    setSelected(new Set());
     mutate();
+    setDeleting(false);
+    setConfirmOpen(false);
   }
 
   let tableRows: React.ReactNode;
@@ -260,7 +267,10 @@ export default function FileCollectionTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            setDeleteError(undefined);
+            setConfirmOpen(true);
+          }}
           title="File Collections"
         />
         <Box
@@ -350,6 +360,20 @@ export default function FileCollectionTable({
           }}
         />
       </Paper>
+      <ConfirmDialog
+        confirmLabel="Delete"
+        confirming={deleting}
+        message={`Delete ${selected.size} selected file ${
+          selected.size === 1 ? "collection" : "collections"
+        }? This cannot be undone.`}
+        onClose={() => {
+          if (deleting) return;
+          setConfirmOpen(false);
+        }}
+        onConfirm={handleConfirmDelete}
+        open={confirmOpen}
+        title="Delete File Collections"
+      />
       <Snackbar
         open={deleteError != null}
         autoHideDuration={6000}

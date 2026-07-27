@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import React from "react";
@@ -203,6 +203,11 @@ describe("FileCollectionTable", () => {
     await userEvent.click(screen.getByLabelText("Select Collection One"));
     await userEvent.click(screen.getByLabelText("Delete"));
 
+    const confirmDialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(confirmDialog).getByRole("button", { name: "Delete" })
+    );
+
     await waitFor(() => {
       expect(deletedIds).toEqual([["collection-1"]]);
     });
@@ -299,6 +304,11 @@ describe("FileCollectionTable", () => {
 
     await userEvent.click(screen.getByLabelText("Select Collection One"));
     await userEvent.click(screen.getByLabelText("Delete"));
+
+    const confirmDialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(confirmDialog).getByRole("button", { name: "Delete" })
+    );
 
     expect(
       await screen.findByText("Could not delete collection-1.")
