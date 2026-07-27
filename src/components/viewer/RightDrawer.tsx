@@ -6,13 +6,15 @@ import React from "react";
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
 import { RightDrawerWidth } from "./Layout";
-import { MetadataProperties, MetadataStatus } from "./MetadataProperties";
+import { MetadataCompare } from "./MetadataCompare";
+import { MetadataStatus } from "./MetadataStates";
 import { ModelViews } from "./ModelViews";
 import { SceneViewStateList } from "./SceneViewStateList";
 
 interface Props {
   readonly active?: string;
   readonly metadata?: Metadata;
+  readonly streamMetadata?: Metadata;
   readonly metadataStatus?: MetadataStatus;
   readonly metadataError?: string;
   readonly metadataDiagnostic?: string;
@@ -47,6 +49,7 @@ function readStoredWidth(): number {
 export function RightDrawer({
   active,
   metadata,
+  streamMetadata,
   metadataStatus,
   metadataError,
   metadataDiagnostic,
@@ -165,8 +168,9 @@ export function RightDrawer({
     switch (active) {
       case "properties":
         return (
-          <MetadataProperties
+          <MetadataCompare
             metadata={metadata}
+            streamMetadata={streamMetadata}
             status={metadataStatus}
             error={metadataError}
             diagnostic={metadataDiagnostic}
