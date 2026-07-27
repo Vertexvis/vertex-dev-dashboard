@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyKeyPolicyMode } from "@vertexvis/api-client-node";
 import { http, HttpResponse } from "msw";
@@ -117,7 +117,7 @@ describe("PropertyKeyPolicyTable", () => {
     ).toBe(true);
   });
 
-  it("requires confirmation before deleting and clears the selection on success", async () => {
+  it("deletes the selected policies and clears the selection on success", async () => {
     const deletedIds: string[][] = [];
 
     server.use(
@@ -138,19 +138,7 @@ describe("PropertyKeyPolicyTable", () => {
     await userEvent.click(screen.getByLabelText("Select Policy One"));
     await userEvent.click(screen.getByLabelText("Delete"));
 
-    // The confirmation dialog is open but no DELETE has fired yet.
-    const dialog = await screen.findByRole("dialog");
-    expect(
-      within(dialog).getByRole("heading", {
-        name: "Delete Property Key Policies",
-      })
-    ).toBeInTheDocument();
-    expect(deletedIds).toEqual([]);
-
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Delete" })
-    );
-
+    // The DELETE fires immediately on the single click; no confirmation.
     await waitFor(() => {
       expect(deletedIds).toEqual([["policy-1"]]);
     });
@@ -184,21 +172,14 @@ describe("PropertyKeyPolicyTable", () => {
 
     await userEvent.click(screen.getByLabelText("Select Policy One"));
     await userEvent.click(screen.getByLabelText("Delete"));
-    const dialog = await screen.findByRole("dialog");
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Delete" })
-    );
 
     expect(
       await screen.findByText("Could not delete policy-1.")
     ).toBeInTheDocument();
-    // On failure the selection now clears, the confirm dialog closes, and the
-    // list is reconciled with the server via a re-fetch.
+    // On failure the selection clears and the list is reconciled with the
+    // server via a re-fetch.
     expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Select Policy One")).not.toBeChecked();
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-    );
     await waitFor(() => expect(getCount).toBeGreaterThan(getsBeforeDelete));
     expect(deletedIds).toEqual([["policy-1"]]);
   });
@@ -224,21 +205,14 @@ describe("PropertyKeyPolicyTable", () => {
 
     await userEvent.click(screen.getByLabelText("Select Policy One"));
     await userEvent.click(screen.getByLabelText("Delete"));
-    const dialog = await screen.findByRole("dialog");
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Delete" })
-    );
 
     // A generic error surfaces (body could not be parsed as JSON) and the
-    // component is not stuck: the confirm dialog closes and the list refreshes.
+    // component is not stuck: the list refreshes.
     expect(
       await screen.findByText(
         "Could not delete the selected property key policies."
       )
     ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-    );
     await waitFor(() => expect(getCount).toBeGreaterThan(getsBeforeDelete));
   });
 
@@ -262,10 +236,6 @@ describe("PropertyKeyPolicyTable", () => {
 
     await userEvent.click(screen.getByLabelText("Select Policy One"));
     await userEvent.click(screen.getByLabelText("Delete"));
-    const dialog = await screen.findByRole("dialog");
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Delete" })
-    );
 
     await waitFor(() =>
       expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"])
