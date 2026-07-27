@@ -2,22 +2,12 @@ import {
   CreateSceneViewStateRequestDataAttributes,
   getPage,
   head,
-  logError,
   SceneViewRelationshipDataTypeEnum,
   SceneViewStateData,
-  VertexError,
 } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
 
-import {
-  BodyRequired,
-  ErrorRes,
-  GetRes,
-  MethodNotAllowed,
-  Res,
-  ServerError,
-  toErrorRes,
-} from "../../lib/api";
+import { BodyRequired, ErrorRes, GetRes, Res } from "../../lib/api";
+import { methodRouter } from "../../lib/api-handler";
 import { getClientFromSession } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -30,50 +20,27 @@ export type CreateViewStateReq = Pick<
 
 export type CreateViewStateRes = Pick<SceneViewStateData, "id"> & Res;
 
-export default withSession(async function handle(
-  req: NextIronRequest,
-  res: NextApiResponse<GetRes<SceneViewStateData> | Res | ErrorRes>
-): Promise<void> {
-  if (req.method === "GET") {
-    const r = await get(req);
-    return res.status(r.status).json(r);
-  }
-
-  if (req.method === "POST") {
-    const r = await create(req);
-    return res.status(r.status).json(r);
-  }
-
-  return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+export default withSession(methodRouter({ GET: get, POST: create }));
 
 async function get(
   req: NextIronRequest
 ): Promise<ErrorRes | GetRes<SceneViewStateData>> {
-  try {
-    const c = await getClientFromSession(req.session);
-    const vId = head(req.query.view);
-    if (vId == null) {
-      throw new Error("ID not set and is required");
-    }
-
-    const view = await c.sceneViews.getSceneView({ id: vId });
-    const sceneId = view.data.data.relationships.scene.data.id;
-
-    const { cursors, page } = await getPage(() =>
-      c.sceneViewStates.getSceneViewStates({
-        id: sceneId,
-        pageSize: 50,
-      })
-    );
-    return { cursors, data: page.data, status: 200 };
-  } catch (error) {
-    const e = error as VertexError;
-    logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
+  const c = await getClientFromSession(req.session);
+  const vId = head(req.query.view);
+  if (vId == null) {
+    throw new Error("ID not set and is required");
   }
+
+  const view = await c.sceneViews.getSceneView({ id: vId });
+  const sceneId = view.data.data.relationships.scene.data.id;
+
+  const { cursors, page } = await getPage(() =>
+    c.sceneViewStates.getSceneViewStates({
+      id: sceneId,
+      pageSize: 50,
+    })
+  );
+  return { cursors, data: page.data, status: 200 };
 }
 
 async function create(
