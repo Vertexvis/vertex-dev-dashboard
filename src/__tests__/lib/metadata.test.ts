@@ -1,7 +1,12 @@
+import { SceneItemData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import { DomainPropertyEntry } from "@vertexvis/viewer";
 
-import { toMetadata, toMetadataFromDomainEntries } from "../../lib/metadata";
+import {
+  toMetadata,
+  toMetadataFromDomainEntries,
+  toMetadataFromItem,
+} from "../../lib/metadata";
 
 function stringEntry(
   id: string,
@@ -141,6 +146,81 @@ describe("toMetadataFromDomainEntries", () => {
     const md = toMetadataFromDomainEntries(entries);
 
     expect(Object.keys(md.properties)).toEqual(["Alpha", "Mu", "Zeta"]);
+  });
+});
+
+describe("toMetadataFromItem (unrestricted, server REST path)", () => {
+  function sceneItem({
+    id = "item-uuid",
+    suppliedId,
+    partRevisionId,
+    metadata,
+  }: {
+    id?: string;
+    suppliedId?: string;
+    partRevisionId?: string;
+    metadata?: Record<string, { value?: string }>;
+  }): SceneItemData {
+    return {
+      id,
+      attributes: { suppliedId, metadata },
+      relationships: partRevisionId
+        ? { source: { data: { id: partRevisionId } } }
+        : {},
+    } as unknown as SceneItemData;
+  }
+
+  it("surfaces the synthetic identifier keys", () => {
+    const md = toMetadataFromItem(
+      sceneItem({
+        id: "item-uuid",
+        suppliedId: "supplied-1",
+        partRevisionId: "rev-1",
+      })
+    );
+
+    expect(md?.properties.VERTEX_SCENE_ITEM_ID).toBe("item-uuid");
+    expect(md?.properties.VERTEX_SCENE_ITEM_SUPPLIED_ID).toBe("supplied-1");
+    expect(md?.properties.VERTEX_PART_REVISION_ID).toBe("rev-1");
+  });
+
+  it("maps the full metadata dictionary (unfiltered by policy)", () => {
+    const md = toMetadataFromItem(
+      sceneItem({
+        id: "item-uuid",
+        metadata: {
+          Material: { value: "Steel" },
+          Cost: { value: "100" },
+          material: { value: "aluminum" },
+        },
+      })
+    );
+
+    expect(md?.properties.Material).toBe("Steel");
+    expect(md?.properties.Cost).toBe("100");
+    // Case-sensitive keys are preserved as distinct properties.
+    expect(md?.properties.material).toBe("aluminum");
+  });
+
+  it("alphabetizes the resulting keys", () => {
+    const md = toMetadataFromItem(
+      sceneItem({
+        id: "item-uuid",
+        metadata: {
+          Zeta: { value: "z" },
+          Alpha: { value: "a" },
+          Mu: { value: "m" },
+        },
+      })
+    );
+
+    // Identifier key sorts by name alongside the metadata keys.
+    expect(Object.keys(md?.properties ?? {})).toEqual([
+      "Alpha",
+      "Mu",
+      "VERTEX_SCENE_ITEM_ID",
+      "Zeta",
+    ]);
   });
 });
 

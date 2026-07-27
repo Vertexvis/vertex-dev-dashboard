@@ -1,4 +1,4 @@
-import { SceneViewStateData } from "@vertexvis/api-client-node";
+import { SceneItemData, SceneViewStateData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import {
   DomainPropertyEntry,
@@ -27,6 +27,7 @@ import {
   Metadata,
   toMetadata,
   toMetadataFromDomainEntries,
+  toMetadataFromItem,
 } from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
@@ -44,6 +45,16 @@ const ViewerId = "vertex-viewer-id";
 function useSceneViewStates({ viewId }: { viewId?: string }) {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
     viewId ? `/api/scene-view-states?view=${viewId}` : null
+  );
+}
+
+// UNRESTRICTED metadata: the server-side REST path that IGNORES the property key
+// policy. Used solely to populate the "Unrestricted" comparison column so the
+// keys stripped by the policy are visible. The policy-aware Web SDK endpoint
+// remains the sole source for the RESTRICTED (displayed) metadata.
+function useSceneItem({ itemId }: { itemId?: string }) {
+  return useSWR<SceneItemData, ErrorRes>(
+    itemId ? `/api/scene-items/${itemId}` : null
   );
 }
 
@@ -67,10 +78,9 @@ export default function SceneViewer({
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
-  // Stream metadata delivered through the viewer render stream on tap. Compared
-  // side-by-side against the query endpoint's metadata to confirm both channels
-  // honor the property key policy. Undefined when the current selection has no
-  // stream sample (tree selection, or after a policy switch before re-tapping).
+  // Raw render-frame metadata from the raycaster hit (Stream comparison column).
+  // Captured on left-click; cleared on tree-select, policy switch, and when the
+  // selection is cleared, since it is only meaningful for a viewer-clicked item.
   const [streamMetadata, setStreamMetadata] = React.useState<
     Metadata | undefined
   >();
@@ -82,6 +92,14 @@ export default function SceneViewer({
   const [policyId, setPolicyId] = React.useState<string | undefined>();
   const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
+  // Unrestricted metadata for the selected item, fetched through the policy-
+  // ignoring REST path purely to feed the comparison's "Unrestricted" column.
+  const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const unrestrictedMetadata = React.useMemo(
+    () =>
+      selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined,
+    [selectedItem.data]
+  );
   const modelViews = useModelViews({
     itemId: selectedItemId,
     viewerState,
@@ -139,8 +157,8 @@ export default function SceneViewer({
       // synthetic identifier keys (part id/revision, supplied ids) reappear
       // alongside the policy-aware metadata, matching the prior server view.
       setSelectedIdentifiers(hit ? toHitIdentifiers(hit) : undefined);
-      // Capture the metadata the stream delivers on tap so it can be compared
-      // side-by-side with the query endpoint's metadata for the same item.
+      // Capture the raw stream metadata delivered inline with the hit so the
+      // Stream comparison column reflects what the render frame carried.
       setStreamMetadata(hit ? toMetadata({ hit }) : undefined);
       await selectByHit({ hit, viewer: viewerState.ref.current });
     }
@@ -149,7 +167,7 @@ export default function SceneViewer({
   function handleTreeItemSelected(itemId: string) {
     setSelectedItemId(itemId);
     setSelectedIdentifiers(undefined);
-    // Tree selection carries no stream hit, so there is no stream sample.
+    // Tree selection has no render-frame hit, so there is no stream sample.
     setStreamMetadata(undefined);
   }
 
@@ -174,8 +192,8 @@ export default function SceneViewer({
     // Show loading (not stale/empty) in the metadata panel until the new scene
     // view is ready and the retained item's metadata is refetched.
     setViewId(undefined);
-    // The captured stream sample is from the pre-switch stream, so it must not
-    // be shown against the new policy. It reappears when the item is re-tapped.
+    // The captured stream sample is from the pre-switch stream, so drop it; a
+    // fresh sample only arrives when the user re-clicks after reconnecting.
     setStreamMetadata(undefined);
     if (selectedItemId != null) setMetadataStatus("loading");
 
@@ -213,7 +231,6 @@ export default function SceneViewer({
         return;
       }
       setMetadata(undefined);
-      setStreamMetadata(undefined);
       setMetadataStatus("ready");
       setMetadataError(undefined);
       setMetadataDiagnostic(undefined);
@@ -312,6 +329,7 @@ export default function SceneViewer({
             }}
             onViewReset={() => {
               setSelectedItemId(undefined);
+              setStreamMetadata(undefined);
               modelViews.actions.unloadModelView();
             }}
           />
@@ -327,6 +345,7 @@ export default function SceneViewer({
         <RightDrawer
           active={openedRightPanel}
           metadata={metadata}
+          unrestrictedMetadata={unrestrictedMetadata}
           streamMetadata={streamMetadata}
           metadataStatus={metadataStatus}
           metadataError={metadataError}

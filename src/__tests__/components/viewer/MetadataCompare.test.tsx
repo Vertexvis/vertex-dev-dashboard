@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 
 import { MetadataStatus } from "../../../components/viewer/MetadataStates";
@@ -22,6 +28,7 @@ const emptyModelViews: ModelViewsState = {
 
 function renderCompare(props: {
   metadata?: Metadata;
+  unrestrictedMetadata?: Metadata;
   streamMetadata?: Metadata;
   metadataStatus?: MetadataStatus;
   metadataError?: string;
@@ -44,113 +51,284 @@ function rowForKey(key: string): HTMLElement {
   return cell as HTMLElement;
 }
 
-describe("MetadataCompare (via RightDrawer)", () => {
-  const query: Metadata = {
-    partName: "Bracket",
-    properties: { Material: "Steel", Cost: "100" },
-  };
+// The visible column header labels (excluding the always-present Key column).
+function sourceColumnHeaders(): string[] {
+  const headerRow = screen.getAllByRole("row")[0];
+  return within(headerRow)
+    .getAllByRole("columnheader")
+    .map((c) => c.textContent ?? "")
+    .filter((label) => label !== "Key");
+}
 
-  it("shows matching keys with equal values as non-diff and does not flag them", () => {
+// The source toggle button for a given label.
+function toggleButton(label: string): HTMLElement {
+  return screen.getByRole("button", { name: label });
+}
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
+describe("MetadataCompare column toggle + defaults", () => {
+  it("defaults to Unrestricted + Restricted columns (no Stream), with a Key column", () => {
     renderCompare({
       metadataStatus: "ready",
-      metadata: { partName: "Bracket", properties: { Material: "Steel" } },
-      streamMetadata: {
+      unrestrictedMetadata: {
         partName: "Bracket",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "Bracket", properties: { Material: "Steel" } },
+    });
+
+    expect(sourceColumnHeaders()).toEqual(["Unrestricted", "Restricted"]);
+    // Key column always present.
+    const headerRow = screen.getAllByRole("row")[0];
+    expect(
+      within(headerRow).getByRole("columnheader", { name: "Key" })
+    ).toBeInTheDocument();
+  });
+
+  it("toggling Stream on renders the third column and its values", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: { partName: "", properties: { Material: "StreamSteel" } },
+    });
+
+    expect(sourceColumnHeaders()).toEqual(["Unrestricted", "Restricted"]);
+
+    fireEvent.click(toggleButton("Stream"));
+
+    expect(sourceColumnHeaders()).toEqual([
+      "Unrestricted",
+      "Restricted",
+      "Stream",
+    ]);
+    // The stream value renders in its column.
+    expect(
+      within(rowForKey("Material")).getByText("StreamSteel")
+    ).toBeInTheDocument();
+  });
+
+  it("toggling a source off removes its column", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    fireEvent.click(toggleButton("Unrestricted"));
+
+    expect(sourceColumnHeaders()).toEqual(["Restricted"]);
+  });
+
+  it("cannot deselect the last remaining source column", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    // Turn off Unrestricted, leaving only Restricted.
+    fireEvent.click(toggleButton("Unrestricted"));
+    expect(sourceColumnHeaders()).toEqual(["Restricted"]);
+
+    // Attempting to turn off the last one is blocked.
+    fireEvent.click(toggleButton("Restricted"));
+    expect(sourceColumnHeaders()).toEqual(["Restricted"]);
+  });
+});
+
+describe("MetadataCompare persistence", () => {
+  it("writes the selection to localStorage when toggled", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    fireEvent.click(toggleButton("Stream"));
+
+    expect(
+      JSON.parse(window.localStorage.getItem("viewer.metadataColumns") ?? "[]")
+    ).toEqual(["unrestricted", "restricted", "stream"]);
+  });
+
+  it("reads the persisted selection from localStorage on mount", async () => {
+    window.localStorage.setItem(
+      "viewer.metadataColumns",
+      JSON.stringify(["restricted", "stream"])
+    );
+
+    renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    // The persisted selection is applied after mount, in fixed source order.
+    await waitFor(() =>
+      expect(sourceColumnHeaders()).toEqual(["Restricted", "Stream"])
+    );
+  });
+});
+
+describe("MetadataCompare diff highlighting", () => {
+  it("classifies an equal key as same and does not flag it", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "Bracket",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "Bracket", properties: { Material: "Steel" } },
+    });
+
+    const row = rowForKey("Material");
+    expect(row).toHaveAttribute("data-state", "same");
+    expect(within(row).queryByText("Differs")).not.toBeInTheDocument();
+    expect(
+      within(row).queryByText("Removed by policy")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No differences")).toBeInTheDocument();
+  });
+
+  it("flags a key stripped by the policy as removed (both columns visible)", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel", Cost: "100" },
+      },
+      // Policy stripped "Cost".
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    const row = rowForKey("Cost");
+    expect(row).toHaveAttribute("data-state", "removed");
+    expect(within(row).getByText("Removed by policy")).toBeInTheDocument();
+    // Unrestricted shows the value; restricted shows the em-dash placeholder.
+    expect(within(row).getByText("100")).toBeInTheDocument();
+    expect(within(row).getByText("—")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 property removed by policy")
+    ).toBeInTheDocument();
+  });
+
+  it("treats an empty restricted value as removed by policy", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: { partName: "", properties: { Cost: "100" } },
+      metadata: { partName: "", properties: { Cost: "" } },
+    });
+
+    expect(rowForKey("Cost")).toHaveAttribute("data-state", "removed");
+    expect(
+      screen.getByText("1 property removed by policy")
+    ).toBeInTheDocument();
+  });
+
+  it("flags differing values across visible columns as differs", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Aluminum" } },
+    });
+
+    const row = rowForKey("Material");
+    expect(row).toHaveAttribute("data-state", "differs");
+    expect(within(row).getByText("Differs")).toBeInTheDocument();
+    // Differing values are not policy-removed, so the policy summary is zero.
+    expect(screen.getByText("No differences")).toBeInTheDocument();
+  });
+
+  it("counts and pluralizes multiple removed keys", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel", Cost: "100", Weight: "12kg" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    expect(rowForKey("Cost")).toHaveAttribute("data-state", "removed");
+    expect(rowForKey("Weight")).toHaveAttribute("data-state", "removed");
+    expect(rowForKey("Material")).toHaveAttribute("data-state", "same");
+    expect(
+      screen.getByText("2 properties removed by policy")
+    ).toBeInTheDocument();
+  });
+
+  it("never flags synthetic identifier keys, even when absent on one side", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      // Identifier present unrestricted but absent restricted (e.g. tree
+      // selection) — must NOT be reported as removed by policy.
+      unrestrictedMetadata: {
+        partName: "",
+        properties: {
+          VERTEX_SCENE_ITEM_ID: "item-1",
+          VERTEX_PART_ID: "part-1",
+          Material: "Steel",
+        },
+      },
+      metadata: {
+        partName: "",
         properties: { Material: "Steel" },
       },
     });
 
-    const row = rowForKey("Material");
-    expect(row).toHaveAttribute("data-state", "match");
-    expect(within(row).queryByText("Differs")).not.toBeInTheDocument();
-    expect(screen.getByText("0 differences")).toBeInTheDocument();
-  });
+    const idRow = rowForKey("VERTEX_SCENE_ITEM_ID");
+    expect(idRow).toHaveAttribute("data-state", "same");
+    expect(idRow).toHaveAttribute("data-identifier", "true");
+    expect(
+      within(idRow).queryByText("Removed by policy")
+    ).not.toBeInTheDocument();
 
-  it("flags a key present only in query as query-only", () => {
-    renderCompare({
-      metadataStatus: "ready",
-      metadata: { partName: "", properties: { Material: "Steel" } },
-      streamMetadata: { partName: "", properties: {} },
-    });
+    const partRow = rowForKey("VERTEX_PART_ID");
+    expect(partRow).toHaveAttribute("data-state", "same");
 
-    const row = rowForKey("Material");
-    expect(row).toHaveAttribute("data-state", "query-only");
-    expect(within(row).getByText("Query only")).toBeInTheDocument();
-    // Stream value shown as the em-dash placeholder.
-    expect(within(row).getByText("Steel")).toBeInTheDocument();
-    expect(screen.getByText("1 difference")).toBeInTheDocument();
-  });
-
-  it("flags a key present only in stream as stream-only", () => {
-    renderCompare({
-      metadataStatus: "ready",
-      metadata: { partName: "", properties: {} },
-      streamMetadata: { partName: "", properties: { Secret: "hidden" } },
-    });
-
-    const row = rowForKey("Secret");
-    expect(row).toHaveAttribute("data-state", "stream-only");
-    expect(within(row).getByText("Stream only")).toBeInTheDocument();
-    expect(within(row).getByText("hidden")).toBeInTheDocument();
-    expect(screen.getByText("1 difference")).toBeInTheDocument();
-  });
-
-  it("flags differing values as diff and counts every highlighted row", () => {
-    renderCompare({
-      metadataStatus: "ready",
-      metadata: {
-        partName: "",
-        properties: { Material: "Steel", Weight: "12kg", OnlyQuery: "q" },
-      },
-      streamMetadata: {
-        partName: "",
-        properties: { Material: "Aluminum", Weight: "12kg", OnlyStream: "s" },
-      },
-    });
-
-    // Material differs.
-    const material = rowForKey("Material");
-    expect(material).toHaveAttribute("data-state", "diff");
-    expect(within(material).getByText("Differs")).toBeInTheDocument();
-
-    // Weight is identical -> match.
-    expect(rowForKey("Weight")).toHaveAttribute("data-state", "match");
-
-    // Query-only and stream-only rows.
-    expect(rowForKey("OnlyQuery")).toHaveAttribute("data-state", "query-only");
-    expect(rowForKey("OnlyStream")).toHaveAttribute(
-      "data-state",
-      "stream-only"
-    );
-
-    // diff + query-only + stream-only = 3 highlighted rows.
-    expect(screen.getByText("3 differences")).toBeInTheDocument();
+    // No false "removed" noise from identifier keys.
+    expect(screen.getByText("No differences")).toBeInTheDocument();
   });
 
   it("keeps case-sensitive keys as distinct rows", () => {
     renderCompare({
       metadataStatus: "ready",
-      metadata: {
+      unrestrictedMetadata: {
         partName: "",
         properties: { Material: "Steel", material: "aluminum" },
       },
-      streamMetadata: {
+      metadata: {
         partName: "",
         properties: { Material: "Steel", material: "aluminum" },
       },
     });
 
-    expect(rowForKey("Material")).toHaveAttribute("data-state", "match");
-    expect(rowForKey("material")).toHaveAttribute("data-state", "match");
+    expect(rowForKey("Material")).toHaveAttribute("data-state", "same");
+    expect(rowForKey("material")).toHaveAttribute("data-state", "same");
     // Distinct rows: neither folds into the other.
     expect(rowForKey("Material")).not.toBe(rowForKey("material"));
   });
 
-  it("preserves alphabetical key order across both sources", () => {
+  it("preserves alphabetical key order across the visible sources", () => {
     renderCompare({
       metadataStatus: "ready",
-      metadata: { partName: "", properties: { Zeta: "z", Alpha: "a" } },
-      streamMetadata: { partName: "", properties: { Mu: "m" } },
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Zeta: "z", Alpha: "a" },
+      },
+      metadata: { partName: "", properties: { Mu: "m" } },
     });
 
     const keys = screen
@@ -168,34 +346,59 @@ describe("MetadataCompare (via RightDrawer)", () => {
 
     expect(keys).toEqual(["Alpha", "Mu", "Zeta"]);
   });
+});
 
-  describe("stream metadata unavailable", () => {
-    it("renders query rows, shows the click-an-item caption, and flags nothing", () => {
-      renderCompare({
-        metadataStatus: "ready",
-        metadata: query,
-        streamMetadata: undefined,
-      });
+describe("MetadataCompare Stream column", () => {
+  it("adds a Stream diff across three columns and a generic difference summary when policy pair is hidden", () => {
+    window.localStorage.setItem(
+      "viewer.metadataColumns",
+      JSON.stringify(["restricted", "stream"])
+    );
 
-      // Query rows render.
-      expect(screen.getByText("Material")).toBeInTheDocument();
-      expect(screen.getByText("Cost")).toBeInTheDocument();
-
-      // Nothing is falsely flagged as query-only.
-      expect(rowForKey("Material")).toHaveAttribute("data-state", "match");
-      expect(rowForKey("Cost")).toHaveAttribute("data-state", "match");
-      expect(screen.queryByText("Query only")).not.toBeInTheDocument();
-
-      // Stream column shows the guidance caption, not a difference count.
-      expect(
-        screen.getByText(
-          "Stream metadata appears when you click an item in the viewer."
-        )
-      ).toBeInTheDocument();
-      expect(screen.queryByText(/differences?$/)).not.toBeInTheDocument();
+    renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      streamMetadata: {
+        partName: "",
+        properties: { Material: "StreamSteel" },
+      },
     });
+
+    const row = rowForKey("Material");
+    expect(row).toHaveAttribute("data-state", "differs");
+    expect(within(row).getByText("Differs")).toBeInTheDocument();
+    // With the Unrestricted/Restricted pair not both visible, the summary is
+    // the generic difference count.
+    expect(screen.getByText("1 difference")).toBeInTheDocument();
   });
 
+  it("shows the click-an-item note and em-dash cells when Stream is visible without data", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
+      metadata: { partName: "", properties: { Material: "Steel" } },
+      // No streamMetadata: tree selection has no render-frame hit.
+    });
+
+    fireEvent.click(toggleButton("Stream"));
+
+    expect(
+      screen.getByText(
+        "Stream metadata appears only when clicking an item in the viewer."
+      )
+    ).toBeInTheDocument();
+
+    // The Stream column cell for the key shows the em-dash placeholder.
+    const row = rowForKey("Material");
+    const streamCell = within(row).getAllByRole("cell")[3];
+    expect(within(streamCell).getByText("—")).toBeInTheDocument();
+  });
+});
+
+describe("MetadataCompare states", () => {
   it("shows a loading state while metadata is being fetched", () => {
     renderCompare({ metadataStatus: "loading" });
 
@@ -212,19 +415,18 @@ describe("MetadataCompare (via RightDrawer)", () => {
     expect(alert).toHaveTextContent("Unable to load metadata for this item.");
   });
 
-  it("shows the No data state when both sources are empty and ready", () => {
+  it("shows the No data state when the visible sources are empty and ready", () => {
     renderCompare({
       metadataStatus: "ready",
+      unrestrictedMetadata: { partName: "", properties: {} },
       metadata: { partName: "", properties: {} },
-      streamMetadata: { partName: "", properties: {} },
     });
 
     expect(screen.getByText("No data")).toBeInTheDocument();
   });
 
-  it("renders exactly the query keys the backend-filtered stream contains", () => {
-    // Enforcement is backend; the panel never injects excluded keys.
-    const { rerender } = renderCompare({
+  it("renders the restricted keys even without an unrestricted source", () => {
+    renderCompare({
       metadataStatus: "ready",
       metadata: {
         partName: "Bracket",
@@ -232,28 +434,21 @@ describe("MetadataCompare (via RightDrawer)", () => {
       },
     });
 
-    expect(screen.getByText("Material")).toBeInTheDocument();
-    expect(screen.getByText("Cost")).toBeInTheDocument();
-
-    rerender(
-      <RightDrawer
-        active="properties"
-        modelViews={emptyModelViews}
-        onViewStateSelected={jest.fn()}
-        metadataStatus="ready"
-        metadata={{ partName: "Bracket", properties: { Material: "Steel" } }}
-      />
-    );
-
-    expect(screen.getByText("Material")).toBeInTheDocument();
-    expect(screen.queryByText("Cost")).not.toBeInTheDocument();
+    // With no unrestricted data, restricted-only keys differ across the visible
+    // columns but are never falsely flagged as removed by policy.
+    expect(rowForKey("Material")).toHaveAttribute("data-state", "differs");
+    expect(rowForKey("Cost")).toHaveAttribute("data-state", "differs");
+    expect(screen.queryByText(/removed by policy/)).not.toBeInTheDocument();
   });
 
   it("surfaces a subtle diagnostic without blocking the comparison", () => {
     renderCompare({
       metadataStatus: "ready",
+      unrestrictedMetadata: {
+        partName: "",
+        properties: { Material: "Steel" },
+      },
       metadata: { partName: "", properties: { Material: "Steel" } },
-      streamMetadata: { partName: "", properties: { Material: "Steel" } },
       metadataDiagnostic: "Policy applied, but no metadata was returned.",
     });
 
@@ -261,7 +456,50 @@ describe("MetadataCompare (via RightDrawer)", () => {
       screen.getByText("Policy applied, but no metadata was returned.")
     ).toBeInTheDocument();
     // Comparison still renders alongside the diagnostic.
-    expect(rowForKey("Material")).toHaveAttribute("data-state", "match");
+    expect(rowForKey("Material")).toHaveAttribute("data-state", "same");
+  });
+});
+
+describe("RightDrawer resize handle", () => {
+  it("renders a vertical separator handle", () => {
+    renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    const handle = screen.getByRole("separator");
+    expect(handle).toHaveAttribute("aria-orientation", "vertical");
+  });
+
+  it("updates the drawer width on drag", () => {
+    const { container } = renderCompare({
+      metadataStatus: "ready",
+      metadata: { partName: "", properties: { Material: "Steel" } },
+    });
+
+    // Wide viewport so the clamp does not swallow the change.
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 1600,
+    });
+
+    // The chosen width is applied inline to the drawer paper.
+    const paper = container.querySelector(".MuiDrawer-paper") as HTMLElement;
+    const before = paper?.style.width;
+    expect(before).toBe("320px");
+
+    const handle = screen.getByRole("separator");
+    fireEvent.mouseDown(handle);
+    // Drawer is anchored right: width = innerWidth - clientX.
+    fireEvent.mouseMove(document, { clientX: 1100 });
+    fireEvent.mouseUp(document);
+
+    const after = (container.querySelector(".MuiDrawer-paper") as HTMLElement)
+      ?.style.width;
+
+    // width should now be ~500px (1600 - 1100), and differ from the default.
+    expect(after).not.toBe(before);
+    expect(after).toBe("500px");
   });
 });
 

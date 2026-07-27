@@ -13,7 +13,15 @@ import { SceneViewStateList } from "./SceneViewStateList";
 
 interface Props {
   readonly active?: string;
+  // Policy-aware metadata (Web SDK `listSceneItemMetadata`) — what the policy
+  // exposes. This is the RESTRICTED column of the comparison.
   readonly metadata?: Metadata;
+  // Full metadata from the server-side REST path that ignores the policy — the
+  // UNRESTRICTED column of the comparison.
+  readonly unrestrictedMetadata?: Metadata;
+  // Raw render-frame metadata delivered inline with the raycaster hit
+  // (`toMetadata({ hit })`) — the STREAM column of the comparison. Only present
+  // after clicking an item in the viewer.
   readonly streamMetadata?: Metadata;
   readonly metadataStatus?: MetadataStatus;
   readonly metadataError?: string;
@@ -49,6 +57,7 @@ function readStoredWidth(): number {
 export function RightDrawer({
   active,
   metadata,
+  unrestrictedMetadata,
   streamMetadata,
   metadataStatus,
   metadataError,
@@ -169,8 +178,9 @@ export function RightDrawer({
       case "properties":
         return (
           <MetadataCompare
-            metadata={metadata}
-            streamMetadata={streamMetadata}
+            unrestricted={unrestrictedMetadata}
+            restricted={metadata}
+            stream={streamMetadata}
             status={metadataStatus}
             error={metadataError}
             diagnostic={metadataDiagnostic}
