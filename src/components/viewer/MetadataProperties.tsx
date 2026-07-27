@@ -13,11 +13,27 @@ import React from "react";
 import { Metadata } from "../../lib/metadata";
 import { Title } from "../shared/Title";
 
+export type MetadataStatus = "loading" | "error" | "ready";
+
 interface Props {
   readonly metadata?: Metadata;
+  readonly status?: MetadataStatus;
+  readonly error?: string;
+  readonly diagnostic?: string;
 }
 
-export function MetadataProperties({ metadata }: Props): JSX.Element {
+export function MetadataProperties({
+  metadata,
+  status = "ready",
+  error,
+  diagnostic,
+}: Props): JSX.Element {
+  if (status === "loading")
+    return <StateMessage message="Loading metadata..." />;
+  if (status === "error") {
+    return <StateMessage message={error ?? "Failed to load metadata."} error />;
+  }
+
   if (metadata == null) return <NoData />;
 
   const propKeys = Object.keys(metadata.properties);
@@ -26,6 +42,15 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
   return (
     <>
       <DrawerTitle />
+      {diagnostic ? (
+        <Typography
+          role="status"
+          sx={{ color: "warning.main", mx: 2, my: 1 }}
+          variant="caption"
+        >
+          {diagnostic}
+        </Typography>
+      ) : null}
       <TableContainer sx={{ flexGrow: 1 }}>
         <Table sx={{ whiteSpace: "nowrap", tableLayout: "fixed" }} size="small">
           <TableBody>
@@ -60,6 +85,16 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
 }
 
 function NoData(): JSX.Element {
+  return <StateMessage message="No data" />;
+}
+
+function StateMessage({
+  message,
+  error = false,
+}: {
+  readonly message: string;
+  readonly error?: boolean;
+}): JSX.Element {
   return (
     <>
       <DrawerTitle />
@@ -71,8 +106,12 @@ function NoData(): JSX.Element {
           flexGrow: 1,
         }}
       >
-        <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
-          No data
+        <Typography
+          role={error ? "alert" : undefined}
+          sx={{ color: error ? "error.main" : undefined, mx: 2, mb: 2 }}
+          variant="body2"
+        >
+          {message}
         </Typography>
       </Box>
     </>

@@ -1,5 +1,5 @@
-import { MetadataStringType, SceneItemData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
+import { DomainPropertyEntry, DomainPropertyValue } from "@vertexvis/viewer";
 
 export interface Metadata {
   readonly partName?: string;
@@ -38,8 +38,6 @@ export function toMetadata({
   if (partRevisionId?.hex) ps[PartRevIdKey] = partRevisionId.hex;
   if (partRevSuppliedId?.value) ps[PartRevSuppliedId] = partRevSuppliedId.value;
 
-  console.log(typeof hit?.metadataProperties);
-
   const md = hit?.metadataProperties;
   if (md) {
     md.filter((p) => p.key).forEach((p) => (ps[p.key as string] = toValue(p)));
@@ -48,29 +46,60 @@ export function toMetadata({
   return { partName: ps.Name, properties: alphabetize(ps) };
 }
 
-export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
+export interface DomainMetadataIdentifiers {
+  readonly id?: string;
+  readonly suppliedId?: string;
+  readonly name?: string;
+  readonly partId?: string;
+  readonly partRevisionId?: string;
+  readonly partRevisionSuppliedId?: string;
+}
+
+export function toMetadataFromDomainEntries(
+  entries: DomainPropertyEntry[],
+  identifiers?: DomainMetadataIdentifiers
+): Metadata {
   const ps: Properties = {};
-  const id = item.id;
-  const suppliedId = item.attributes.suppliedId;
-  const partRevisionId = item.relationships.source?.data.id;
 
-  ps[ItemIdKey] = id;
-  if (suppliedId) ps[ItemSuppliedIdKey] = suppliedId;
-  if (partRevisionId) ps[PartRevIdKey] = partRevisionId;
-  const md = item.attributes.metadata;
+  // Identifier keys are structural (not policy-restricted metadata), so we keep
+  // surfacing them even under a policy to preserve parity with the prior view.
+  if (identifiers?.id) ps[ItemIdKey] = identifiers.id;
+  if (identifiers?.suppliedId) ps[ItemSuppliedIdKey] = identifiers.suppliedId;
+  if (identifiers?.partId) ps[PartIdKey] = identifiers.partId;
+  if (identifiers?.partRevisionId)
+    ps[PartRevIdKey] = identifiers.partRevisionId;
+  if (identifiers?.partRevisionSuppliedId)
+    ps[PartRevSuppliedId] = identifiers.partRevisionSuppliedId;
 
-  if (md) {
-    const itemMD = Object.entries(md).reduce((n, current) => {
-      return {
-        ...n,
-        [current[0]]: (current[1] as MetadataStringType).value || "",
-      };
-    }, ps);
+  entries.forEach((entry) => {
+    const key = entry.key?.name;
+    // Preserve property keys verbatim (case-sensitive) — do not normalize.
+    if (key) ps[key] = toDomainValue(entry.value);
+  });
 
-    return { partName: "", properties: alphabetize(itemMD) };
+  return {
+    partName: identifiers?.name ?? ps.Name,
+    properties: alphabetize(ps),
+  };
+}
+
+function toDomainValue(value?: DomainPropertyValue | null): string | undefined {
+  if (value == null) return undefined;
+
+  switch (value.type) {
+    case "string":
+      return value.value;
+    case "long":
+    case "double":
+      return value.value.toString();
+    case "timestamp": {
+      const seconds = value.value?.seconds ?? 0;
+      const nanos = value.value?.nanos ?? 0;
+      return new Date(seconds * 1000 + Math.floor(nanos / 1e6)).toISOString();
+    }
+    default:
+      return undefined;
   }
-
-  return { partName: "", properties: alphabetize(ps) };
 }
 
 function alphabetize<T extends Record<string, unknown>>(obj: T): T {

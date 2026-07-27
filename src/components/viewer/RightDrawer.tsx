@@ -6,13 +6,16 @@ import React from "react";
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
 import { RightDrawerWidth } from "./Layout";
-import { MetadataProperties } from "./MetadataProperties";
+import { MetadataProperties, MetadataStatus } from "./MetadataProperties";
 import { ModelViews } from "./ModelViews";
 import { SceneViewStateList } from "./SceneViewStateList";
 
 interface Props {
   readonly active?: string;
   readonly metadata?: Metadata;
+  readonly metadataStatus?: MetadataStatus;
+  readonly metadataError?: string;
+  readonly metadataDiagnostic?: string;
   readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
@@ -44,6 +47,9 @@ function readStoredWidth(): number {
 export function RightDrawer({
   active,
   metadata,
+  metadataStatus,
+  metadataError,
+  metadataDiagnostic,
   modelViews,
   sceneViewStates,
   onViewStateSelected,
@@ -158,7 +164,14 @@ export function RightDrawer({
   const getDisplayedContent = () => {
     switch (active) {
       case "properties":
-        return <MetadataProperties metadata={metadata} />;
+        return (
+          <MetadataProperties
+            metadata={metadata}
+            status={metadataStatus}
+            error={metadataError}
+            diagnostic={metadataDiagnostic}
+          />
+        );
       case "scene-view-states":
         return (
           <SceneViewStateList
