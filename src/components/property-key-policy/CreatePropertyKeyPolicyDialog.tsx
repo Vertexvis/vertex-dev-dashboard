@@ -47,7 +47,6 @@ export default function CreatePropertyKeyPolicyDialog({
   const [validationError, setValidationError] = React.useState<string>();
   const [apiError, setApiError] = React.useState<string>();
   const [entriesWarning, setEntriesWarning] = React.useState<string>();
-  const [keyError, setKeyError] = React.useState<string>();
 
   // Refs to the underlying key inputs so we can move keyboard focus to a
   // newly added field. MUI forwards `inputRef` to the underlying <input>.
@@ -72,7 +71,6 @@ export default function CreatePropertyKeyPolicyDialog({
     setValidationError(undefined);
     setApiError(undefined);
     setEntriesWarning(undefined);
-    setKeyError(undefined);
   }
 
   // Once the policy has been created (even if its entries failed), re-submitting
@@ -87,14 +85,12 @@ export default function CreatePropertyKeyPolicyDialog({
   }
 
   function handleKeyChange(index: number, value: string) {
-    setKeyError(undefined);
     setKeys((current) => current.map((k, i) => (i === index ? value : k)));
   }
 
   // Append a new empty key field and move keyboard focus to it. The new index
   // is the current length, since we append to the end.
   function addKeyAndFocus() {
-    setKeyError(undefined);
     setFocusIndex(keys.length);
     setKeys((current) => [...current, ""]);
   }
@@ -114,11 +110,9 @@ export default function CreatePropertyKeyPolicyDialog({
     // Ignore Enter on whitespace-only fields; don't add a new field.
     if (value.trim() === "") return;
 
-    // Case-sensitive exact match against the other key values.
-    if (keys.some((k, i) => i !== index && k === value)) {
-      setKeyError(`"${value}" is already in the list.`);
-      return;
-    }
+    // Case-sensitive exact match against the other key values. The field already
+    // surfaces the per-field "Duplicate property key." error, so just bail.
+    if (keys.some((k, i) => i !== index && k === value)) return;
 
     addKeyAndFocus();
   }
@@ -129,11 +123,32 @@ export default function CreatePropertyKeyPolicyDialog({
     );
   }
 
+  // Compute a single field's validation error reactively (not just on submit).
+  // A completely empty row is neutral (ignored on submit); only whitespace-only
+  // or verbatim (case-sensitive) duplicate values are invalid.
+  function keyFieldError(index: number): string | undefined {
+    const value = keys[index];
+    if (value === "") return undefined; // empty rows are neutral/ignored
+    if (value.trim() === "") return "Property key cannot be blank."; // whitespace-only = invalid
+    // Case-sensitive exact duplicate of another field (verbatim, matching how
+    // keys are saved).
+    if (keys.some((k, i) => i !== index && k === value)) {
+      return "Duplicate property key.";
+    }
+    return undefined;
+  }
+
+  const keyErrors = keys.map((_, i) => keyFieldError(i));
+  const hasKeyErrors = keyErrors.some((e) => e != null);
+
   // Keys are NOT trimmed here to preserve case exactly. We only skip entries
   // that are empty or whitespace-only when deciding what to submit.
   const nonEmptyKeys = keys.filter((k) => k.trim() !== "");
   const submitDisabled =
-    submitting || name.trim() === "" || nonEmptyKeys.length === 0;
+    submitting ||
+    name.trim() === "" ||
+    nonEmptyKeys.length === 0 ||
+    hasKeyErrors;
 
   async function handleSubmit() {
     setValidationError(undefined);
@@ -271,11 +286,6 @@ export default function CreatePropertyKeyPolicyDialog({
             </Box>
             .
           </Typography>
-          {keyError != null && (
-            <Alert severity="warning" sx={{ mb: 1, mt: 1 }}>
-              {keyError}
-            </Alert>
-          )}
           <Stack spacing={1} sx={{ mt: 1 }}>
             {keys.map((key, index) => (
               <Box
@@ -283,7 +293,9 @@ export default function CreatePropertyKeyPolicyDialog({
                 sx={{ alignItems: "center", display: "flex", gap: 1 }}
               >
                 <TextField
+                  error={keyErrors[index] != null}
                   fullWidth
+                  helperText={keyErrors[index]}
                   inputProps={{ "aria-label": `Property key ${index + 1}` }}
                   inputRef={(el) => {
                     keyInputRefs.current[index] = el;
