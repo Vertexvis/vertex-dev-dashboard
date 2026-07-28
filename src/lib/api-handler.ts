@@ -1,7 +1,13 @@
 import { logError, VertexError } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
-import { ErrorRes, MethodNotAllowed, ServerError, toErrorRes } from "./api";
+import {
+  ErrorRes,
+  MethodNotAllowed,
+  Res,
+  ServerError,
+  toErrorRes,
+} from "./api";
 import { NextIronRequest } from "./with-session";
 
 /**
@@ -10,12 +16,15 @@ import { NextIronRequest } from "./with-session";
  */
 export function handleVertexError(error: unknown): ErrorRes {
   const obj = error as Record<string, unknown> | null;
-  const isVertexError = typeof obj === "object" && obj != null && "vertexError" in obj;
+  const isVertexError =
+    typeof obj === "object" && obj != null && "vertexError" in obj;
 
   if (isVertexError) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError.res }) : ServerError;
+    return e.vertexError?.res
+      ? toErrorRes({ failure: e.vertexError.res })
+      : ServerError;
   }
 
   console.error(error);
@@ -24,8 +33,8 @@ export function handleVertexError(error: unknown): ErrorRes {
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-/** A per-method handler: run the logic, return a JSON-serializable payload. */
-export type MethodHandler = (req: NextIronRequest) => Promise<unknown>;
+/** A per-method handler: run the logic and return an API response payload. */
+export type MethodHandler = (req: NextIronRequest) => Promise<Res>;
 
 /**
  * Builds an inner API handler that:
