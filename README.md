@@ -11,20 +11,20 @@ include a custom deployment of this dashboard accessible at a URL generated as p
 URL generated will be discoverable from Route 53 in AWS, and will contain the `dev-dashboard` prefix. This dashboard will be pre-configured to work against
 your private deployment.
 
-## Run locally in Docker
-
-1. Copy `.env.local.template` to `.env.local` and optionally edit values
-1. Run `docker-compose --file ./docker-compose.yml up` to start the app locally
-1. Browse to http://localhost:3000
-
-If you pull down changes, you'll need to run `docker-compose --file ./docker-compose.yml build` to build them and then `docker-compose --file ./docker-compose.yml up` again.
-
 ## Local development
 
-1. Copy `.env.local.template` to `.env.local` and optionally edit values
-1. Install dependencies, `yarn install`
-1. Run `yarn dev` to start the local development server
-1. Browse to http://localhost:3000
+Prepare the project from the repository root using either option:
+
+- Run `yarn setup` to create `.env.local`, generate its `COOKIE_SECRET`, and install dependencies.
+- Or manually copy `.env.local.template` to `.env.local`, set `COOKIE_SECRET` to a random value of at least 32 characters, then run `yarn install`.
+
+Start the app with `yarn dev`, then browse to http://localhost:3000.
+
+## Run locally in Docker
+
+Prepare `.env.local` using either option above, then run `docker-compose --file ./docker-compose.yml up` and browse to http://localhost:3000.
+
+After pulling changes, run `docker-compose --file ./docker-compose.yml build` before starting the container again.
 
 ### Project organization
 

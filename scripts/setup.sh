@@ -3,23 +3,12 @@
 # Sets up a worktree
 set -euo pipefail
 
-# Setup .env.local 
-env_file=".env.local"
+# Correctly resolve the script directory and repository root, even if the script is sourced or symlinked
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd -- "$script_dir/.." && pwd)"
 
-if [[ ! -f "$env_file" ]]; then
-  cp .env.local.template "$env_file"
-fi
-
-if ! grep -Eq '^COOKIE_SECRET=.{32,}$' "$env_file"; then
-  cookie_secret="$(openssl rand -hex 32)"
-
-  if grep -q '^COOKIE_SECRET=' "$env_file"; then
-    sed -i.bak "s|^COOKIE_SECRET=.*|COOKIE_SECRET=$cookie_secret|" "$env_file"
-    rm "$env_file.bak"
-  else
-    printf '\nCOOKIE_SECRET=%s\n' "$cookie_secret" >> "$env_file"
-  fi
-fi
+cd "$repo_root"
+"$script_dir/setup-env-local.sh"
 
 yarn install --frozen-lockfile
 yarn playwright install chromium webkit
