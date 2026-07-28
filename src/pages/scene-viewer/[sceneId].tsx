@@ -14,6 +14,7 @@ import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
+import { ViewerContext } from "../../lib/ai/viewer-command";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadataFromItem } from "../../lib/metadata";
@@ -58,6 +59,8 @@ export default function SceneViewer({
   >();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
+  const [loadedTree, setLoadedTree] =
+    React.useState<ViewerContext["loadedTree"]>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
@@ -120,6 +123,11 @@ export default function SceneViewer({
     setSelectedItemId(itemId);
   }
 
+  const handleLoadedTreeChanged = React.useCallback(
+    (tree: NonNullable<ViewerContext["loadedTree"]>) => setLoadedTree(tree),
+    []
+  );
+
   function handleViewStateSelected(id: string) {
     applySceneViewState({ id, viewer: viewerState.ref.current });
   }
@@ -147,6 +155,7 @@ export default function SceneViewer({
           selectedItemId={selectedItemId}
           viewerState={viewerState}
           onItemSelected={handleTreeItemSelected}
+          onLoadedTreeChanged={handleLoadedTreeChanged}
         />
       }
       leftDrawerOpen={true}
@@ -191,6 +200,7 @@ export default function SceneViewer({
               selectedItemId={selectedItemId}
               metadata={metadata}
               viewer={viewerState.ref}
+              loadedTree={loadedTree}
             />
           }
         />

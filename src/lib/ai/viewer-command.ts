@@ -88,6 +88,18 @@ export type ViewerContext = {
   readonly metadataKeys?: string[];
   readonly metadataCandidates?: string[];
   readonly searchHints?: string[];
+  /** A bounded snapshot of rows the browser has already loaded in the tree. */
+  readonly loadedTree?: {
+    readonly totalRows?: number;
+    readonly totalFilteredRows?: number;
+    readonly filterTerm?: string;
+    readonly rows: Array<{
+      readonly name?: string;
+      readonly itemId?: string;
+      readonly suppliedId?: string;
+      readonly metadata: Record<string, string>;
+    }>;
+  };
   readonly selection: {
     readonly itemId?: string;
     readonly metadata: Record<string, string>;

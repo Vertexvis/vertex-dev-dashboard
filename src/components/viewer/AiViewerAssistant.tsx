@@ -28,6 +28,7 @@ interface Props {
   readonly selectedItemId?: string;
   readonly metadata?: Metadata;
   readonly viewer: React.MutableRefObject<HTMLVertexViewerElement | null>;
+  readonly loadedTree?: ViewerContext["loadedTree"];
 }
 
 type AgentResponse = {
@@ -44,6 +45,7 @@ export function AiViewerAssistant({
   selectedItemId,
   metadata,
   viewer,
+  loadedTree,
 }: Props): JSX.Element {
   const [message, setMessage] = React.useState("");
   const [messages, setMessages] = React.useState<
@@ -54,6 +56,7 @@ export function AiViewerAssistant({
   const recognitionRef = React.useRef<SpeechRecognition | undefined>();
   const undoStackRef = React.useRef<ViewerCommand[]>([]);
   const latestMessageRef = React.useRef<HTMLDivElement>(null);
+  const starterSuggestion = treeSuggestion(loadedTree, selectedItemId != null);
 
   React.useEffect(() => {
     return () => recognitionRef.current?.stop();
@@ -129,6 +132,7 @@ export function AiViewerAssistant({
         metadataKeys,
         metadataCandidates: filterMetadataKeys(metadataKeys ?? [], userMessage),
         searchHints: toSearchHints(userMessage),
+        loadedTree,
         selection: {
           itemId: selectedItemId,
           metadata: Object.entries(metadata?.properties ?? {}).reduce<
@@ -290,7 +294,7 @@ export function AiViewerAssistant({
           <Box sx={{ color: "text.secondary", mt: 2, textAlign: "center" }}>
             <SmartToyOutlined color="primary" />
             <Typography variant="body2">
-              Try “show only the engine” or “ghost selected items.”
+              {starterSuggestion}
             </Typography>
           </Box>
         )}
@@ -361,7 +365,7 @@ export function AiViewerAssistant({
               void ask();
             }
           }}
-          placeholder="Ghost all parts where Material contains steel"
+          placeholder={inputPlaceholder(loadedTree)}
         />
         <IconButton
           aria-label={
@@ -424,6 +428,36 @@ function toSearchHints(request: string): string[] {
       )
     )
   ).slice(0, 10);
+}
+
+function treeSuggestion(
+  loadedTree: ViewerContext["loadedTree"],
+  hasSelection: boolean
+): string {
+  const itemName = loadedTree?.rows
+    .map((row) => row.name?.trim())
+    .find(
+      (name): name is string =>
+        name != null && name.length > 0 && name.length <= 60 && /[a-z]/i.test(name)
+    );
+  if (itemName != null) {
+    return `Try “show only ${itemName}” or “ghost selected items.”`;
+  }
+  return hasSelection
+    ? "Try “ghost selected items” or “show everything.”"
+    : "Ask me to show, hide, ghost, or color parts in this model.";
+}
+
+function inputPlaceholder(loadedTree: ViewerContext["loadedTree"]): string {
+  const itemName = loadedTree?.rows
+    .map((row) => row.name?.trim())
+    .find(
+      (name): name is string =>
+        name != null && name.length > 0 && name.length <= 60 && /[a-z]/i.test(name)
+    );
+  return itemName == null
+    ? "Describe what you want to see"
+    : `Show only ${itemName}`;
 }
 
 function filterMetadataKeys(

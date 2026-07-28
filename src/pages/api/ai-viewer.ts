@@ -263,6 +263,8 @@ export default withSession(async function handler(
       body.context.selection
     )}\nSELECTED_METADATA_KEYS: ${JSON.stringify(
       selectedMetadataKeys
+    )}\nLOADED_SCENE_TREE: ${JSON.stringify(
+      loadedTreeHint(body.context.loadedTree)
     )}\nSEARCH_HINTS: ${JSON.stringify(
       body.context.searchHints ?? []
     )}\n\nUSER_REQUEST: ${body.message}`;
@@ -407,6 +409,27 @@ function validContext(
     typeof context.selection === "object" &&
     typeof context.selection.metadata === "object"
   );
+}
+
+function loadedTreeHint(
+  tree: ViewerContext["loadedTree"]
+): ViewerContext["loadedTree"] | undefined {
+  if (tree == null) return undefined;
+  return {
+    totalRows: tree.totalRows,
+    totalFilteredRows: tree.totalFilteredRows,
+    filterTerm: tree.filterTerm?.slice(0, 120),
+    rows: tree.rows.slice(0, 100).map((row) => ({
+      name: row.name?.slice(0, 160),
+      itemId: row.itemId?.slice(0, 100),
+      suppliedId: row.suppliedId?.slice(0, 160),
+      metadata: Object.fromEntries(
+        Object.entries(row.metadata)
+          .slice(0, 20)
+          .map(([key, value]) => [key.slice(0, 120), value.slice(0, 240)])
+      ),
+    })),
+  };
 }
 
 function commandFromTool(

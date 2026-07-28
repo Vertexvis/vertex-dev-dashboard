@@ -1,6 +1,7 @@
 import { Box, Divider, IconButton, Tooltip } from "@mui/material";
 import React from "react";
 
+import { ViewerContext } from "../../lib/ai/viewer-command";
 import { ViewerState } from "../../lib/viewer";
 import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { Icon } from "../shared/Icon";
@@ -14,6 +15,9 @@ interface Props {
   readonly viewerState: ViewerState;
 
   readonly onItemSelected: (itemId: string) => void;
+  readonly onLoadedTreeChanged?: (
+    tree: NonNullable<ViewerContext["loadedTree"]>
+  ) => void;
 }
 
 export const SceneTreePanel = ({
@@ -23,6 +27,7 @@ export const SceneTreePanel = ({
   selectedItemId,
   viewerState,
   onItemSelected,
+  onLoadedTreeChanged,
 }: Props): JSX.Element => {
   const [expandAll, setExpandAll] = React.useState<boolean | undefined>();
   const [collapseAll, setCollapseAll] = React.useState<boolean | undefined>();
@@ -71,6 +76,7 @@ export const SceneTreePanel = ({
         networkConfig={networkConfig}
         collapseAll={collapseAll}
         viewerState={viewerState}
+        onLoadedTreeChanged={onLoadedTreeChanged}
         onRowClick={(itemId) => {
           onItemSelected(itemId);
           setExpandAll(undefined);

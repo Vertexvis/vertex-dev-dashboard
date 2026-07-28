@@ -2,6 +2,7 @@ import { Drawer } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
 import React from "react";
 
+import { ViewerContext } from "../../lib/ai/viewer-command";
 import { ViewerState } from "../../lib/viewer";
 import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { Title } from "../shared/Title";
@@ -16,6 +17,9 @@ interface Props {
   readonly viewerState: ViewerState;
 
   readonly onItemSelected: (itemId: string) => void;
+  readonly onLoadedTreeChanged?: (
+    tree: NonNullable<ViewerContext["loadedTree"]>
+  ) => void;
 }
 
 export function LeftDrawer({
@@ -25,6 +29,7 @@ export function LeftDrawer({
   networkConfig,
   viewerState,
   onItemSelected,
+  onLoadedTreeChanged,
 }: Props): JSX.Element {
   return (
     <Drawer
@@ -56,6 +61,7 @@ export function LeftDrawer({
         selectedItemId={selectedItemId}
         viewerState={viewerState}
         onItemSelected={onItemSelected}
+        onLoadedTreeChanged={onLoadedTreeChanged}
       />
     </Drawer>
   );
