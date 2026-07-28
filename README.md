@@ -20,6 +20,37 @@ Prepare the project from the repository root using either option:
 
 Start the app with `yarn dev`, then browse to http://localhost:3000.
 
+### Playwright authenticated-session seed
+
+`yarn playwright:login` runs `scripts/playwright_login.ts` through `tsx` to
+create an authenticated Playwright storage-state file for the Developer
+Dashboard. It is a reusable starting point for authenticated browser work,
+rather than an end-to-end test suite by itself. The script logs in with the
+supplied credentials, saves the session state with owner-only file permissions,
+and opens a dashboard page with that state to verify that the session was
+accepted.
+
+This seed supports human and agent-assisted development workflows such as:
+
+- exploring the current authenticated dashboard state;
+- validating acceptance criteria with labelled screenshots; and
+- performing judgement-based quality checks.
+
+It can also support end-to-end testing, though those tests should normally use
+fixture data instead of live service endpoints. `yarn setup` installs the
+Chromium and WebKit browsers used for this browser automation work.
+
+Before running the script, set `DEV_USERNAME` and `DEV_CREDENTIAL`. Optional
+configuration includes `DEV_DASHBOARD_URL` (default `http://localhost:3000`),
+`DEV_DASHBOARD_PATH` (default `/`), `DEV_ENVIRONMENT` (default `platdev`), and
+`PLAYWRIGHT_VISIBLE=true` to keep the authenticated browser open. When
+`DEV_ENVIRONMENT=custom`, also set `DEV_API_HOST` and `DEV_RENDERING_HOST`.
+
+The storage state defaults to `playwright/.auth/dev-dashboard.json`; it
+contains authenticated session material. It is ignored by Git and must not be
+shared or committed. Set `PLAYWRIGHT_STORAGE_STATE` to choose a different
+location.
+
 ## Run locally in Docker
 
 Prepare `.env.local` using either option above, then run `docker-compose --file ./docker-compose.yml up` and browse to http://localhost:3000.

@@ -33,3 +33,10 @@ When starting a dev server, create a `.env.local` file from
 `.env.local.template`. Populate the following variables:
 
 - `COOKIE_SECRET`: A long random string.
+
+## Playwright login script
+
+Before changing or using `scripts/playwright_login.ts`, read the
+[`README.md` Playwright authenticated-session seed section](./README.md#playwright-authenticated-session-seed).
+It defines the script's purpose, supported workflow, configuration, and
+handling requirements for its sensitive storage-state output.
