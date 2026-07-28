@@ -242,6 +242,41 @@ describe("PropertyKeyPolicyTable", () => {
     );
   });
 
+  it("clears the selection when the user navigates to the next page", async () => {
+    const firstPageWithNext = propertyKeyPoliciesPage({
+      cursors: { self: "page-1", next: "page-2" },
+      data: [
+        propertyKeyPolicy({
+          id: "policy-1",
+          mode: PropertyKeyPolicyMode.Allowlist,
+          name: "Policy One",
+          suppliedId: "supplied-1",
+        }),
+      ],
+    });
+
+    server.use(
+      http.get("*/api/property-key-policies", () =>
+        HttpResponse.json(firstPageWithNext)
+      )
+    );
+
+    renderTable();
+
+    expect(await screen.findByText("Policy One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Select Policy One"));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+
+    await waitFor(() => {
+      expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
+    });
+    expect(await screen.findByText("Policy One")).toBeInTheDocument();
+    expect(screen.getByLabelText("Select Policy One")).not.toBeChecked();
+  });
+
   it("renders the load error state when the list request fails", async () => {
     server.use(
       http.get("*/api/property-key-policies", () =>

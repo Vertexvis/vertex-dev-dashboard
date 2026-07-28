@@ -209,6 +209,7 @@ function parseCreatePropertyKeyPolicyReq(
 
     const name = parsed.name;
     if (typeof name !== "string" || name.trim() === "") return undefined;
+    const trimmedName = name.trim();
 
     const mode = parsed.mode;
     if (!isPropertyKeyPolicyMode(mode)) return undefined;
@@ -226,8 +227,8 @@ function parseCreatePropertyKeyPolicyReq(
         : undefined;
 
     return suppliedId == null
-      ? { keys, mode, name }
-      : { keys, mode, name, suppliedId };
+      ? { keys, mode, name: trimmedName }
+      : { keys, mode, name: trimmedName, suppliedId };
   } catch {
     return undefined;
   }

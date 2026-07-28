@@ -190,6 +190,86 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     expect(onCreated).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  describe("when fetch rejects (network error)", () => {
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+      global.fetch = jest
+        .fn()
+        .mockRejectedValue(new Error("Network failure")) as typeof global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it("shows the generic API error and keeps Create enabled", async () => {
+      const onCreated = jest.fn();
+      const onClose = jest.fn();
+      renderDialog({ onClose, onCreated });
+
+      await userEvent.type(screen.getByLabelText(/Name/), "My Policy");
+      await userEvent.type(screen.getByLabelText("Property key 1"), "Key");
+      await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+      expect(
+        await screen.findByText("Could not create the property key policy.")
+      ).toBeInTheDocument();
+      // onCreated must not be called — nothing was processed server-side.
+      expect(onCreated).not.toHaveBeenCalled();
+      // Dialog must stay in the normal state: Cancel + Create (not Close-only).
+      expect(
+        screen.getByRole("button", { name: "Create" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Close" })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("when fetch resolves but res.json() rejects", () => {
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.reject(new Error("bad json")),
+      }) as typeof global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it("calls onCreated, shows uncertain-outcome warning, and switches to Close-only", async () => {
+      const onCreated = jest.fn();
+      const onClose = jest.fn();
+      renderDialog({ onClose, onCreated });
+
+      await userEvent.type(screen.getByLabelText(/Name/), "My Policy");
+      await userEvent.type(screen.getByLabelText("Property key 1"), "Key");
+      await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+      // onCreated is called so the list refreshes in case the policy was created.
+      await waitFor(() => expect(onCreated).toHaveBeenCalled());
+      // The uncertain-outcome warning must be visible.
+      expect(
+        await screen.findByText(
+          /The request completed but the response could not be read/
+        )
+      ).toBeInTheDocument();
+      // Dialog must show only Close — no Create button (duplicate protection).
+      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Create" })
+      ).not.toBeInTheDocument();
+      // onClose must NOT have been called automatically.
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  });
 });
 
 function renderDialog(

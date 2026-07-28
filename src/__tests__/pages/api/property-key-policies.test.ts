@@ -145,6 +145,34 @@ describe("property key policies API routes", () => {
     });
   });
 
+  it("trims whitespace from name before sending it upstream", async () => {
+    let createBody: unknown;
+
+    nodeMswServer.use(
+      stubCreatePolicy("policy-1", async (request) => {
+        createBody = await request.json();
+      }),
+      stubUpsertEntries("policy-1")
+    );
+
+    const response = await callPolicies({
+      body: JSON.stringify({
+        keys: ["key-1"],
+        mode: "allowlist",
+        name: "  My Policy  ",
+      }),
+      method: "POST",
+    });
+
+    expect(response.statusCode()).toBe(201);
+    expect(createBody).toEqual({
+      data: {
+        attributes: { mode: "allowlist", name: "My Policy" },
+        type: "property-key-policy",
+      },
+    });
+  });
+
   it("omits suppliedId from the create body when not provided", async () => {
     let createBody: unknown;
 
