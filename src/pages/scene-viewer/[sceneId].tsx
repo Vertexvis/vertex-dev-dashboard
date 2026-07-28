@@ -8,9 +8,9 @@ import React from "react";
 import useSWR from "swr";
 
 import { Header } from "../../components/shared/Header";
+import { AiViewerAssistant } from "../../components/viewer/AiViewerAssistant";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
-import { LeftSidebar } from "../../components/viewer/LeftSidebar";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
@@ -56,7 +56,6 @@ export default function SceneViewer({
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
-  const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
@@ -140,15 +139,8 @@ export default function SceneViewer({
   return router.isReady && credentials ? (
     <Layout
       header={<Header />}
-      leftSidebar={
-        <LeftSidebar
-          active={openedLeftPanel}
-          onSelectSidebar={setOpenedLeftPanel}
-        />
-      }
       leftDrawer={
         <LeftDrawer
-          active={openedLeftPanel}
           configEnv={credentials.vertexEnv}
           networkConfig={networkConfig}
           viewerId={ViewerId}
@@ -157,7 +149,7 @@ export default function SceneViewer({
           onItemSelected={handleTreeItemSelected}
         />
       }
-      leftDrawerOpen={openedLeftPanel != null}
+      leftDrawerOpen={true}
       main={
         viewerState.isReady && (
           <Viewer
@@ -193,6 +185,14 @@ export default function SceneViewer({
           modelViews={modelViews}
           sceneViewStates={data?.data}
           onViewStateSelected={handleViewStateSelected}
+          aiAssistant={
+            <AiViewerAssistant
+              sceneId={head(router.query.sceneId) ?? ""}
+              selectedItemId={selectedItemId}
+              metadata={metadata}
+              viewer={viewerState.ref}
+            />
+          }
         />
       }
       rightDrawerOpen={openedRightPanel != null}

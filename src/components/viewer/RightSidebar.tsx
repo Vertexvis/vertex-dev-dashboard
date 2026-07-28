@@ -1,6 +1,7 @@
 import {
   CameraAltOutlined as CameraAltOutlinedIcon,
   InfoOutlined as InfoOutlinedIcon,
+  SmartToyOutlined as SmartToyOutlinedIcon,
   ViewInAr as ViewInArIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
@@ -28,6 +29,14 @@ export const RightSidebar = ({
         borderLeft: "1px solid #ccc",
       }}
     >
+      <SidebarIcon
+        active={active}
+        name="ai-assistant"
+        tooltip="Gary — Your Vertex Assistant"
+        onSelectSidebar={onSelectSidebar}
+      >
+        <SmartToyOutlinedIcon />
+      </SidebarIcon>
       <SidebarIcon
         active={active}
         name="properties"

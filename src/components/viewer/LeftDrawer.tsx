@@ -9,7 +9,6 @@ import { LeftDrawerWidth } from "./Layout";
 import { SceneTreePanel } from "./SceneTreePanel";
 
 interface Props {
-  readonly active?: string;
   readonly configEnv: EnvironmentWithCustom;
   readonly viewerId: string;
   readonly networkConfig?: NetworkConfig;
@@ -20,7 +19,6 @@ interface Props {
 }
 
 export function LeftDrawer({
-  active,
   configEnv,
   viewerId,
   selectedItemId,
@@ -28,33 +26,6 @@ export function LeftDrawer({
   viewerState,
   onItemSelected,
 }: Props): JSX.Element {
-  const getDisplayedHeader = () => {
-    switch (active) {
-      case "scene-tree":
-        return "Assembly";
-      default:
-        return "";
-    }
-  };
-
-  const getActiveContent = () => {
-    switch (active) {
-      case "scene-tree":
-        return (
-          <SceneTreePanel
-            configEnv={configEnv}
-            viewerId={viewerId}
-            networkConfig={networkConfig}
-            selectedItemId={selectedItemId}
-            viewerState={viewerState}
-            onItemSelected={onItemSelected}
-          />
-        );
-      default:
-        return <></>;
-    }
-  };
-
   return (
     <Drawer
       anchor="left"
@@ -76,9 +47,16 @@ export function LeftDrawer({
           borderBottom: "1px solid #ccc",
         }}
       >
-        {getDisplayedHeader()}
+        Assembly
       </Title>
-      {getActiveContent()}
+      <SceneTreePanel
+        configEnv={configEnv}
+        viewerId={viewerId}
+        networkConfig={networkConfig}
+        selectedItemId={selectedItemId}
+        viewerState={viewerState}
+        onItemSelected={onItemSelected}
+      />
     </Drawer>
   );
 }

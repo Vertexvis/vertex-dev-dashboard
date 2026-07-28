@@ -16,6 +16,7 @@ interface Props {
   readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
+  readonly aiAssistant?: React.ReactNode;
 }
 
 export function RightDrawer({
@@ -24,6 +25,7 @@ export function RightDrawer({
   modelViews,
   sceneViewStates,
   onViewStateSelected,
+  aiAssistant,
 }: Props): JSX.Element {
   const getDisplayedContent = () => {
     switch (active) {
@@ -38,6 +40,8 @@ export function RightDrawer({
         );
       case "model-views":
         return <ModelViews modelViews={modelViews} metadata={metadata} />;
+      case "ai-assistant":
+        return <>{aiAssistant}</>;
       default:
         return <></>;
     }
