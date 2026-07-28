@@ -17,6 +17,7 @@ import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
 const EntriesPageSize = 200;
+const MaxPages = 50;
 
 export async function handlePropertyKeyPolicyEntries(
   req: NextIronRequest,
@@ -46,6 +47,7 @@ async function get(
 
     const data: PropertyKeyPolicyEntryResource[] = [];
     let cursor: string | undefined;
+    let pageCount = 0;
     do {
       // eslint-disable-next-line no-await-in-loop
       const page = await makeCall(() =>
@@ -58,8 +60,14 @@ async function get(
       if (isErrorFailure(page)) return toErrorRes({ failure: page });
 
       data.push(...page.data);
-      cursor = nextCursor(page.links.next?.href);
-    } while (cursor != null);
+      pageCount += 1;
+
+      const next = nextCursor(page.links.next?.href);
+      // Guard against a repeated cursor (infinite loop) and enforce a page cap
+      // (MaxPages pages × EntriesPageSize entries = up to 10,000 entries).
+      if (next != null && next === cursor) break;
+      cursor = next;
+    } while (cursor != null && pageCount < MaxPages);
 
     return { data, status: 200 };
   } catch (error) {

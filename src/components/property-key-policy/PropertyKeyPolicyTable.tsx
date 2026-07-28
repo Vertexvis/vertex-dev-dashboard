@@ -106,6 +106,7 @@ export default function PropertyKeyPolicyTable({
       debounce((value: string) => {
         resetPaging();
         setSuppliedId(value === "" ? undefined : value);
+        setSelected(new Set());
       }, 300),
     [resetPaging]
   );
@@ -137,6 +138,7 @@ export default function PropertyKeyPolicyTable({
     num: number
   ) {
     handlePageChange(num);
+    setSelected(new Set());
   }
 
   async function handleDelete() {

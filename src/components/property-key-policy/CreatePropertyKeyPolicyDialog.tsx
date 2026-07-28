@@ -44,9 +44,9 @@ export default function CreatePropertyKeyPolicyDialog({
   );
   const [keys, setKeys] = React.useState<string[]>([""]);
   const [submitting, setSubmitting] = React.useState(false);
-  const [validationError, setValidationError] = React.useState<string>();
   const [apiError, setApiError] = React.useState<string>();
   const [entriesWarning, setEntriesWarning] = React.useState<string>();
+  const [uncertainOutcome, setUncertainOutcome] = React.useState(false);
 
   // Refs to the underlying key inputs so we can move keyboard focus to a
   // newly added field. MUI forwards `inputRef` to the underlying <input>.
@@ -68,15 +68,16 @@ export default function CreatePropertyKeyPolicyDialog({
     setMode(PropertyKeyPolicyMode.Allowlist);
     setKeys([""]);
     setSubmitting(false);
-    setValidationError(undefined);
     setApiError(undefined);
     setEntriesWarning(undefined);
+    setUncertainOutcome(false);
   }
 
-  // Once the policy has been created (even if its entries failed), re-submitting
-  // would create a DUPLICATE policy. Track that state so the partial-failure
-  // path replaces "Create" with "Close" and forces the user to dismiss.
-  const policyCreated = entriesWarning != null;
+  // Once the policy has been created (even if its entries failed, or the response
+  // could not be parsed), re-submitting would create a DUPLICATE policy. Track
+  // that state so those paths replace "Create" with "Close" and force the user
+  // to dismiss.
+  const policyCreated = entriesWarning != null || uncertainOutcome;
 
   function handleClose() {
     if (submitting) return;
@@ -151,18 +152,9 @@ export default function CreatePropertyKeyPolicyDialog({
     hasKeyErrors;
 
   async function handleSubmit() {
-    setValidationError(undefined);
     setApiError(undefined);
     setEntriesWarning(undefined);
-
-    if (name.trim() === "") {
-      setValidationError("Name is required.");
-      return;
-    }
-    if (nonEmptyKeys.length === 0) {
-      setValidationError("Add at least one property key.");
-      return;
-    }
+    setUncertainOutcome(false);
 
     const trimmedSuppliedId = suppliedId.trim();
     const body: CreatePropertyKeyPolicyReq = {
@@ -175,17 +167,31 @@ export default function CreatePropertyKeyPolicyDialog({
     setSubmitting(true);
 
     let res: Response;
-    let resBody: CreatePropertyKeyPolicyRes | { message?: string };
     try {
       res = await fetch("/api/property-key-policies", {
         body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      resBody = await res.json();
     } catch {
+      // True network error — no response was received, so nothing was processed
+      // server-side. Safe to retry.
       setSubmitting(false);
       setApiError("Could not create the property key policy.");
+      return;
+    }
+
+    let resBody: CreatePropertyKeyPolicyRes | { message?: string };
+    try {
+      resBody = await res.json();
+    } catch {
+      // Response received but body could not be parsed. The server may have
+      // already created the policy, so we must not let the user resubmit (duplicate
+      // risk). Refresh the list in case the policy was created, and switch to the
+      // Close-only state.
+      onCreated();
+      setSubmitting(false);
+      setUncertainOutcome(true);
       return;
     }
 
@@ -227,13 +233,13 @@ export default function CreatePropertyKeyPolicyDialog({
             {`The policy was created, but its property keys could not be added: ${entriesWarning} The keys were not saved. Close this dialog to avoid creating a duplicate policy.`}
           </Alert>
         )}
-        {validationError != null && (
-          <Alert severity="error" sx={{ mb: 1, mt: 1 }}>
-            {validationError}
+        {uncertainOutcome && (
+          <Alert severity="warning" sx={{ mb: 1, mt: 1 }}>
+            The request completed but the response could not be read. The policy
+            may have been created — check the list before retrying.
           </Alert>
         )}
         <TextField
-          error={validationError != null && name.trim() === ""}
           fullWidth
           label="Name"
           margin="normal"
