@@ -33,7 +33,7 @@ import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
 import CreatePropertyKeyPolicyDialog from "./CreatePropertyKeyPolicyDialog";
-import { toModeLabel } from "./mode";
+import { PropertyKeyPolicyModeChip } from "./PropertyKeyPolicyModeChip";
 
 export const headCells: readonly HeadCell[] = [
   { id: "name", disablePadding: true, label: "Name" },
@@ -240,7 +240,9 @@ export default function PropertyKeyPolicyTable({
           </TableCell>
           <TableCell>{row.id}</TableCell>
           <TableCell>{row.suppliedId}</TableCell>
-          <TableCell>{toModeLabel(row.mode)}</TableCell>
+          <TableCell>
+            <PropertyKeyPolicyModeChip mode={row.mode} />
+          </TableCell>
           <TableCell>{toLocaleString(row.createdAt)}</TableCell>
         </TableRow>
       );
