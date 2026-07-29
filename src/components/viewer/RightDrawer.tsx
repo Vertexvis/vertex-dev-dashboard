@@ -33,7 +33,7 @@ function clampWidth(width: number): number {
 function readStoredWidth(): number {
   if (typeof window === "undefined") return RightDrawerWidth;
   const raw = window.localStorage.getItem(StorageKey);
-  const parsed = raw != null ? Number.parseInt(raw, 10) : NaN;
+  const parsed = raw != null ? Number.parseInt(raw, 10) : Number.NaN;
   return Number.isFinite(parsed) ? clampWidth(parsed) : RightDrawerWidth;
 }
 
