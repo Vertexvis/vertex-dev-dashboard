@@ -96,10 +96,15 @@ export function LeftDrawer({
           top: 0,
           right: 0,
           bottom: 0,
-          width: "6px",
+          width: "8px",
+          backgroundColor: "divider",
           cursor: "col-resize",
+          opacity: 0.35,
           zIndex: 1,
-          "&:hover": { backgroundColor: "action.hover" },
+          "&:hover, &:focus-visible": {
+            backgroundColor: "primary.main",
+            opacity: 0.7,
+          },
         }}
       />
       <Title
