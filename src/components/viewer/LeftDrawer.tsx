@@ -1,4 +1,4 @@
-import { Box, Drawer } from "@mui/material";
+import { Drawer } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
 import React from "react";
 
@@ -7,7 +7,6 @@ import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { Title } from "../shared/Title";
 import { LeftDrawerWidth } from "./Layout";
 import { SceneTreePanel } from "./SceneTreePanel";
-import { MinDrawerWidth, useDrawerWidth } from "./useDrawerWidth";
 
 interface Props {
   readonly active?: string;
@@ -29,13 +28,6 @@ export function LeftDrawer({
   viewerState,
   onItemSelected,
 }: Props): JSX.Element {
-  const { handleDoubleClick, handleKeyDown, handleMouseDown, maxWidth, width } =
-    useDrawerWidth({
-      anchor: "left",
-      defaultWidth: LeftDrawerWidth,
-      storageKey: "viewer.leftDrawerWidth",
-    });
-
   const getDisplayedHeader = () => {
     switch (active) {
       case "scene-tree":
@@ -69,44 +61,16 @@ export function LeftDrawer({
       sx={{
         display: { sm: "block", xs: "none" },
         position: "relative",
-        width,
-        [`& .${drawerClasses.paper}`]: { width },
+        width: LeftDrawerWidth,
+        [`& .${drawerClasses.paper}`]: { width: LeftDrawerWidth },
       }}
       PaperProps={{
-        style: { width },
         sx: {
           position: "relative",
         },
       }}
       variant="permanent"
     >
-      <Box
-        aria-label="Resize left drawer"
-        aria-orientation="vertical"
-        aria-valuemax={maxWidth}
-        aria-valuemin={MinDrawerWidth}
-        aria-valuenow={width}
-        onDoubleClick={handleDoubleClick}
-        onKeyDown={handleKeyDown}
-        onMouseDown={handleMouseDown}
-        role="separator"
-        tabIndex={0}
-        sx={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "8px",
-          backgroundColor: "divider",
-          cursor: "col-resize",
-          opacity: 0.35,
-          zIndex: 1,
-          "&:hover, &:focus-visible": {
-            backgroundColor: "primary.main",
-            opacity: 0.7,
-          },
-        }}
-      />
       <Title
         sx={{
           borderBottom: "1px solid #ccc",
