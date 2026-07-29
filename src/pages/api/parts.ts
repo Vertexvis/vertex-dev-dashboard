@@ -63,8 +63,9 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 }
 
 async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
+  if (!req.body) return BodyRequired;
+
   const b: CreatePartReq = JSON.parse(req.body);
-  if (!req.body) return InvalidBody;
 
   const c = await getClientFromSession(req.session);
   const res = await c.parts.createPart({

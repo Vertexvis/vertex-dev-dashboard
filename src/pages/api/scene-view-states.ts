@@ -46,8 +46,9 @@ async function get(
 async function create(
   req: NextIronRequest
 ): Promise<ErrorRes | CreateViewStateRes> {
-  const b: CreateViewStateReq = JSON.parse(req.body);
   if (!req.body) return BodyRequired;
+
+  const b: CreateViewStateReq = JSON.parse(req.body);
 
   const c = await getClientFromSession(req.session);
   const view = await c.sceneViews.getSceneView({ id: b.viewId });
