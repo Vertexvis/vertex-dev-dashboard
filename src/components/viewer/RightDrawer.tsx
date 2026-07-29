@@ -9,6 +9,7 @@ import { RightDrawerWidth } from "./Layout";
 import { MetadataProperties } from "./MetadataProperties";
 import { ModelViews } from "./ModelViews";
 import { SceneViewStateList } from "./SceneViewStateList";
+import { MinDrawerWidth, useDrawerWidth } from "./useDrawerWidth";
 
 interface Props {
   readonly active?: string;
@@ -18,25 +19,6 @@ interface Props {
   readonly onViewStateSelected: (arg0: string) => void;
 }
 
-const MinWidth = 280;
-const StorageKey = "viewer.rightDrawerWidth";
-
-function maxWidth(): number {
-  if (typeof window === "undefined") return 800;
-  return Math.min(800, Math.round(window.innerWidth * 0.7));
-}
-
-function clampWidth(width: number): number {
-  return Math.max(MinWidth, Math.min(width, maxWidth()));
-}
-
-function readStoredWidth(): number {
-  if (typeof window === "undefined") return RightDrawerWidth;
-  const raw = window.localStorage.getItem(StorageKey);
-  const parsed = raw != null ? Number.parseInt(raw, 10) : NaN;
-  return Number.isFinite(parsed) ? clampWidth(parsed) : RightDrawerWidth;
-}
-
 export function RightDrawer({
   active,
   metadata,
@@ -44,48 +26,12 @@ export function RightDrawer({
   sceneViewStates,
   onViewStateSelected,
 }: Props): JSX.Element {
-  const [width, setWidth] = React.useState(RightDrawerWidth);
-  const draggingRef = React.useRef(false);
-
-  React.useEffect(() => {
-    setWidth(readStoredWidth());
-  }, []);
-
-  React.useEffect(() => {
-    function onMouseMove(e: MouseEvent) {
-      if (!draggingRef.current) return;
-      setWidth(clampWidth(window.innerWidth - e.clientX));
-    }
-
-    function onMouseUp() {
-      if (!draggingRef.current) return;
-      draggingRef.current = false;
-      document.body.style.userSelect = "";
-      setWidth((current) => {
-        window.localStorage.setItem(StorageKey, String(current));
-        return current;
-      });
-    }
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-      document.body.style.userSelect = "";
-    };
-  }, []);
-
-  function handleMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    draggingRef.current = true;
-    document.body.style.userSelect = "none";
-  }
-
-  function handleDoubleClick() {
-    setWidth(RightDrawerWidth);
-    window.localStorage.setItem(StorageKey, String(RightDrawerWidth));
-  }
+  const { handleDoubleClick, handleKeyDown, handleMouseDown, maxWidth, width } =
+    useDrawerWidth({
+      anchor: "right",
+      defaultWidth: RightDrawerWidth,
+      storageKey: "viewer.rightDrawerWidth",
+    });
 
   const getDisplayedContent = () => {
     switch (active) {
@@ -125,9 +71,14 @@ export function RightDrawer({
       <Box
         aria-label="Resize right drawer"
         aria-orientation="vertical"
+        aria-valuemax={maxWidth}
+        aria-valuemin={MinDrawerWidth}
+        aria-valuenow={width}
         onDoubleClick={handleDoubleClick}
+        onKeyDown={handleKeyDown}
         onMouseDown={handleMouseDown}
         role="separator"
+        tabIndex={0}
         sx={{
           position: "absolute",
           top: 0,

@@ -7,6 +7,7 @@ import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { Title } from "../shared/Title";
 import { LeftDrawerWidth } from "./Layout";
 import { SceneTreePanel } from "./SceneTreePanel";
+import { MinDrawerWidth, useDrawerWidth } from "./useDrawerWidth";
 
 interface Props {
   readonly active?: string;
@@ -19,25 +20,6 @@ interface Props {
   readonly onItemSelected: (itemId: string) => void;
 }
 
-const MinWidth = 280;
-const StorageKey = "viewer.leftDrawerWidth";
-
-function maxWidth(): number {
-  if (typeof window === "undefined") return 800;
-  return Math.min(800, Math.round(window.innerWidth * 0.7));
-}
-
-function clampWidth(width: number): number {
-  return Math.max(MinWidth, Math.min(width, maxWidth()));
-}
-
-function readStoredWidth(): number {
-  if (typeof window === "undefined") return LeftDrawerWidth;
-  const raw = window.localStorage.getItem(StorageKey);
-  const parsed = raw != null ? Number.parseInt(raw, 10) : NaN;
-  return Number.isFinite(parsed) ? clampWidth(parsed) : LeftDrawerWidth;
-}
-
 export function LeftDrawer({
   active,
   configEnv,
@@ -47,48 +29,12 @@ export function LeftDrawer({
   viewerState,
   onItemSelected,
 }: Props): JSX.Element {
-  const [width, setWidth] = React.useState(LeftDrawerWidth);
-  const draggingRef = React.useRef(false);
-
-  React.useEffect(() => {
-    setWidth(readStoredWidth());
-  }, []);
-
-  React.useEffect(() => {
-    function onMouseMove(e: MouseEvent) {
-      if (!draggingRef.current) return;
-      setWidth(clampWidth(e.clientX));
-    }
-
-    function onMouseUp() {
-      if (!draggingRef.current) return;
-      draggingRef.current = false;
-      document.body.style.userSelect = "";
-      setWidth((current) => {
-        window.localStorage.setItem(StorageKey, String(current));
-        return current;
-      });
-    }
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-      document.body.style.userSelect = "";
-    };
-  }, []);
-
-  function handleMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    draggingRef.current = true;
-    document.body.style.userSelect = "none";
-  }
-
-  function handleDoubleClick() {
-    setWidth(LeftDrawerWidth);
-    window.localStorage.setItem(StorageKey, String(LeftDrawerWidth));
-  }
+  const { handleDoubleClick, handleKeyDown, handleMouseDown, maxWidth, width } =
+    useDrawerWidth({
+      anchor: "left",
+      defaultWidth: LeftDrawerWidth,
+      storageKey: "viewer.leftDrawerWidth",
+    });
 
   const getDisplayedHeader = () => {
     switch (active) {
@@ -137,9 +83,14 @@ export function LeftDrawer({
       <Box
         aria-label="Resize left drawer"
         aria-orientation="vertical"
+        aria-valuemax={maxWidth}
+        aria-valuemin={MinDrawerWidth}
+        aria-valuenow={width}
         onDoubleClick={handleDoubleClick}
+        onKeyDown={handleKeyDown}
         onMouseDown={handleMouseDown}
         role="separator"
+        tabIndex={0}
         sx={{
           position: "absolute",
           top: 0,
