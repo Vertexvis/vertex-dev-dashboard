@@ -1,4 +1,4 @@
-import { Drawer } from "@mui/material";
+import { Box, Drawer } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
@@ -18,6 +18,25 @@ interface Props {
   readonly onViewStateSelected: (arg0: string) => void;
 }
 
+const MinWidth = 280;
+const StorageKey = "viewer.rightDrawerWidth";
+
+function maxWidth(): number {
+  if (typeof window === "undefined") return 800;
+  return Math.min(800, Math.round(window.innerWidth * 0.7));
+}
+
+function clampWidth(width: number): number {
+  return Math.max(MinWidth, Math.min(width, maxWidth()));
+}
+
+function readStoredWidth(): number {
+  if (typeof window === "undefined") return RightDrawerWidth;
+  const raw = window.localStorage.getItem(StorageKey);
+  const parsed = raw != null ? Number.parseInt(raw, 10) : NaN;
+  return Number.isFinite(parsed) ? clampWidth(parsed) : RightDrawerWidth;
+}
+
 export function RightDrawer({
   active,
   metadata,
@@ -25,6 +44,49 @@ export function RightDrawer({
   sceneViewStates,
   onViewStateSelected,
 }: Props): JSX.Element {
+  const [width, setWidth] = React.useState(RightDrawerWidth);
+  const draggingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    setWidth(readStoredWidth());
+  }, []);
+
+  React.useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!draggingRef.current) return;
+      setWidth(clampWidth(window.innerWidth - e.clientX));
+    }
+
+    function onMouseUp() {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      document.body.style.userSelect = "";
+      setWidth((current) => {
+        window.localStorage.setItem(StorageKey, String(current));
+        return current;
+      });
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.style.userSelect = "";
+    };
+  }, []);
+
+  function handleMouseDown(e: React.MouseEvent) {
+    e.preventDefault();
+    draggingRef.current = true;
+    document.body.style.userSelect = "none";
+  }
+
+  function handleDoubleClick() {
+    setWidth(RightDrawerWidth);
+    window.localStorage.setItem(StorageKey, String(RightDrawerWidth));
+  }
+
   const getDisplayedContent = () => {
     switch (active) {
       case "properties":
@@ -49,16 +111,34 @@ export function RightDrawer({
       sx={{
         display: { sm: "block", xs: "none" },
         position: "relative",
-        width: RightDrawerWidth,
-        [`& .${drawerClasses.paper}`]: { width: RightDrawerWidth },
+        width,
+        [`& .${drawerClasses.paper}`]: { width },
       }}
       PaperProps={{
+        style: { width },
         sx: {
           position: "relative",
         },
       }}
       variant="permanent"
     >
+      <Box
+        aria-label="Resize right drawer"
+        aria-orientation="vertical"
+        onDoubleClick={handleDoubleClick}
+        onMouseDown={handleMouseDown}
+        role="separator"
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "6px",
+          cursor: "col-resize",
+          zIndex: 1,
+          "&:hover": { backgroundColor: "action.hover" },
+        }}
+      />
       {getDisplayedContent()}
     </Drawer>
   );
