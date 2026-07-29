@@ -42,7 +42,8 @@ jest.mock("../../../lib/file-collections", () => {
 
 type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
 
-interface TestRes extends Pick<NextApiResponse, "json" | "status"> {
+interface TestRes
+  extends Pick<NextApiResponse, "json" | "setHeader" | "status"> {
   readonly body: () => unknown;
   readonly statusCode: () => number | undefined;
 }
@@ -187,6 +188,7 @@ function createRes(): TestRes {
     responseBody = body;
     return res;
   });
+  res.setHeader = jest.fn(() => res);
   return res;
 }
 

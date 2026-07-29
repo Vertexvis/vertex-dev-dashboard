@@ -27,9 +27,7 @@ async function create(
     },
   });
 
-  const url =
-    downloadRes.data.data.attributes.uri ??
-    downloadRes.data.data.attributes.downloadUrl;
+  const { uri: url } = downloadRes.data.data.attributes;
   if (url == null) return ServerError;
 
   return { status: 200, url };

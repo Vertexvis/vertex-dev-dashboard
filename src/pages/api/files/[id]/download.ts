@@ -37,9 +37,7 @@ export async function handleFileDownload(
         },
       },
     });
-    const url =
-      downloadRes.data.data.attributes.uri ??
-      downloadRes.data.data.attributes.downloadUrl;
+    const { uri: url } = downloadRes.data.data.attributes;
     if (url == null) return res.status(ServerError.status).json(ServerError);
 
     res.redirect(302, url);

@@ -55,6 +55,7 @@ export function methodRouter(handlers: Partial<Record<Method, MethodHandler>>) {
   ): Promise<void> {
     const handler = handlers[req.method as Method];
     if (handler == null) {
+      res.setHeader("Allow", Object.keys(handlers).join(", "));
       return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
     }
 
