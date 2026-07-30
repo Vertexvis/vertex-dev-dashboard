@@ -131,11 +131,11 @@ export function RightDrawer({
     switch (event.key) {
       case "ArrowLeft":
         event.preventDefault();
-        setAndPersistWidth(width - KeyboardStep);
+        setAndPersistWidth(width + KeyboardStep);
         break;
       case "ArrowRight":
         event.preventDefault();
-        setAndPersistWidth(width + KeyboardStep);
+        setAndPersistWidth(width - KeyboardStep);
         break;
       case "Home":
         event.preventDefault();
