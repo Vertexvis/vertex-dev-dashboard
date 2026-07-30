@@ -1,4 +1,4 @@
-import { head, logError, VertexError } from "@vertexvis/api-client-node";
+import { head } from "@vertexvis/api-client-node";
 import { NextApiResponse } from "next";
 
 import {
@@ -6,8 +6,8 @@ import {
   InvalidBody,
   MethodNotAllowed,
   ServerError,
-  toErrorRes,
 } from "../../../../lib/api";
+import { handleVertexError } from "../../../../lib/api-handler";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
@@ -37,19 +37,13 @@ export async function handleFileDownload(
         },
       },
     });
-    const url =
-      downloadRes.data.data.attributes.uri ??
-      downloadRes.data.data.attributes.downloadUrl;
+    const { uri: url } = downloadRes.data.data.attributes;
     if (url == null) return res.status(ServerError.status).json(ServerError);
 
     res.redirect(302, url);
     return;
   } catch (error) {
-    const e = error as VertexError;
-    logError(e);
-    const response = e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError.res })
-      : ServerError;
+    const response = handleVertexError(error);
     return res.status(response.status).json(response);
   }
 }

@@ -1,15 +1,11 @@
-import { logError, VertexError } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
-
 import {
   BodyRequired,
   ErrorRes,
   InvalidBody,
   isErrorFailure,
-  MethodNotAllowed,
-  ServerError,
   toErrorRes,
 } from "../../lib/api";
+import { methodRouter } from "../../lib/api-handler";
 import {
   fetchAllFileCollectionFiles,
   getFileCollectionExportAvailability,
@@ -36,80 +32,60 @@ interface RawCreateFileJobReq {
   readonly fileCollectionId?: string;
 }
 
-export async function handleFileJobs(
-  req: NextIronRequest,
-  res: NextApiResponse<FileJobRes | ErrorRes>
-): Promise<void> {
-  if (req.method === "POST") {
-    const r = await create(req);
-    return res.status(r.status).json(r);
-  }
-
-  return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-}
+export const handleFileJobs = methodRouter({ POST: create });
 
 export default withSession(handleFileJobs);
 
 async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
-  try {
-    if (!req.body) return BodyRequired;
+  if (!req.body) return BodyRequired;
 
-    const body = parseCreateFileJobReq(req.body);
-    if (body == null) return InvalidBody;
+  const body = parseCreateFileJobReq(req.body);
+  if (body == null) return InvalidBody;
 
-    const client = await getClientFromSession(req.session);
-    const { fileCollectionId } = body;
-    const files = await fetchAllFileCollectionFiles(
-      getFileCollectionsApi(client),
-      fileCollectionId
-    );
+  const client = await getClientFromSession(req.session);
+  const { fileCollectionId } = body;
+  const files = await fetchAllFileCollectionFiles(
+    getFileCollectionsApi(client),
+    fileCollectionId
+  );
 
-    const exportAvailability = getFileCollectionExportAvailability(files);
-    if (!exportAvailability.enabled) {
-      return {
-        message:
-          exportAvailability.disabledReason ??
-          "File collection is not exportable.",
-        status: 400,
-      };
-    }
+  const exportAvailability = getFileCollectionExportAvailability(files);
+  if (!exportAvailability.enabled) {
+    return {
+      message:
+        exportAvailability.disabledReason ??
+        "File collection is not exportable.",
+      status: 400,
+    };
+  }
 
-    const archiveFile = await makeCall(() =>
-      client.files.createFile({
-        createFileRequest: {
-          data: {
-            type: "file",
-            attributes: {
-              expiry: DefaultArchiveFileExpirySeconds,
-              metadata: { fileCollectionId },
-              name:
-                body.archiveName ?? buildDefaultArchiveName(fileCollectionId),
-            },
+  const archiveFile = await makeCall(() =>
+    client.files.createFile({
+      createFileRequest: {
+        data: {
+          type: "file",
+          attributes: {
+            expiry: DefaultArchiveFileExpirySeconds,
+            metadata: { fileCollectionId },
+            name: body.archiveName ?? buildDefaultArchiveName(fileCollectionId),
           },
         },
-      })
-    );
-    if (isErrorFailure(archiveFile))
-      return toErrorRes({ failure: archiveFile });
+      },
+    })
+  );
+  if (isErrorFailure(archiveFile)) return toErrorRes({ failure: archiveFile });
 
-    const job = await makeCall(() =>
-      getFileJobsApi(client).createFileJob({
-        createFileJobRequest: buildFileArchiveJobRequest(
-          files,
-          archiveFile.data.id
-        ),
-      })
-    );
-    if (isErrorFailure(job)) return toErrorRes({ failure: job });
+  const job = await makeCall(() =>
+    getFileJobsApi(client).createFileJob({
+      createFileJobRequest: buildFileArchiveJobRequest(
+        files,
+        archiveFile.data.id
+      ),
+    })
+  );
+  if (isErrorFailure(job)) return toErrorRes({ failure: job });
 
-    return toFileJobRes(job, 201, archiveFile.data.id);
-  } catch (error) {
-    const e = error as VertexError;
-    logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
-  }
+  return toFileJobRes(job, 201, archiveFile.data.id);
 }
 
 function parseCreateFileJobReq(body: unknown): CreateFileJobReq | undefined {

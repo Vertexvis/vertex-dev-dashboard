@@ -22,6 +22,7 @@ export interface ApiRouteRequest {
 
 export interface ApiRouteResponse {
   readonly body: () => unknown;
+  readonly header: (name: string) => unknown;
   readonly statusCode: () => number | undefined;
 }
 
@@ -83,10 +84,16 @@ function createRequest({
 function createResponse(): ApiRouteResponse {
   let responseBody: unknown;
   let responseStatus: number | undefined;
+  const responseHeaders = new Map<string, unknown>();
   const response = {
     body: () => responseBody,
+    header: (name: string) => responseHeaders.get(name.toLowerCase()),
     json: (body: unknown) => {
       responseBody = body;
+      return response;
+    },
+    setHeader: (name: string, value: unknown) => {
+      responseHeaders.set(name.toLowerCase(), value);
       return response;
     },
     status: (statusCode: number) => {

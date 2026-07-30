@@ -345,6 +345,7 @@ describe("file collection API routes", () => {
     const response = await callFileCollections({ method: "POST" });
 
     expect(response.statusCode()).toBe(405);
+    expect(response.header("Allow")).toBe("GET, DELETE");
     expect(response.body()).toEqual({
       message: "Method not allowed.",
       status: 405,

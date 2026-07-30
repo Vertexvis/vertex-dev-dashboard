@@ -2,16 +2,15 @@ import {
   isFailure,
   StreamKeysApiCreateSceneStreamKeyRequest,
 } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
 
 import {
   BodyRequired,
   ErrorRes,
   InvalidBody,
-  MethodNotAllowed,
   Res,
   toErrorRes,
 } from "../../lib/api";
+import { methodRouter } from "../../lib/api-handler";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
@@ -21,17 +20,7 @@ export interface CreateStreamKeyRes extends Res {
 
 type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, "id">;
 
-export default withSession(async function handle(
-  req: NextIronRequest,
-  res: NextApiResponse<CreateStreamKeyRes | ErrorRes>
-): Promise<void> {
-  if (req.method === "POST") {
-    const r = await create(req);
-    return res.status(r.status).json(r);
-  }
-
-  return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
-});
+export default withSession(methodRouter({ POST: create }));
 
 async function create(
   req: NextIronRequest
