@@ -13,6 +13,7 @@ jest.mock("next/router", () => ({
 describe("LeftDrawer", () => {
   afterEach(() => {
     cleanup();
+    mockPush.mockClear();
     mockRoute = "/";
   });
 
