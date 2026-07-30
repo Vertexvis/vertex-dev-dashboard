@@ -25,12 +25,6 @@ export type Content = "settings" | "instructions" | "parts";
 export function LeftDrawer(): JSX.Element {
   const router = useRouter();
 
-  const isSectionActive = React.useCallback(
-    (base: string) =>
-      router.route === base || router.route.startsWith(`${base}/`),
-    [router.route]
-  );
-
   return (
     <Drawer
       anchor="left"
@@ -49,7 +43,7 @@ export function LeftDrawer(): JSX.Element {
       >
         <ListItemButton
           onClick={() => router.push("/")}
-          selected={router.route === "/" || isSectionActive("/scene-viewer")}
+          selected={router.route === "/"}
         >
           <ListItemIcon>
             <LocalLibraryOutlined />
@@ -58,7 +52,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/files")}
-          selected={isSectionActive("/files")}
+          selected={router.route === "/files"}
         >
           <ListItemIcon>
             <DescriptionOutlined />
@@ -67,7 +61,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/file-collections")}
-          selected={isSectionActive("/file-collections")}
+          selected={router.route === "/file-collections"}
         >
           <ListItemIcon>
             <CollectionsBookmarkOutlined />
@@ -76,7 +70,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/property-key-policies")}
-          selected={isSectionActive("/property-key-policies")}
+          selected={router.route === "/property-key-policies"}
         >
           <ListItemIcon>
             <VpnKeyOutlined />
@@ -85,7 +79,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/parts")}
-          selected={isSectionActive("/parts")}
+          selected={router.route === "/parts"}
         >
           <ListItemIcon>
             <DatasetOutlined />
@@ -94,7 +88,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/translations")}
-          selected={isSectionActive("/translations")}
+          selected={router.route === "/translations"}
         >
           <ListItemIcon>
             <PendingOutlined />
