@@ -10,34 +10,31 @@ import {
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
 import { nodeMswServer } from "../../../../test/msw/server";
-import { handlePropertyKeyPolicyEntries } from "../../../pages/api/property-key-policies/[id]/entries";
+import { handlePropertyKeyPolicyKeys } from "../../../pages/api/property-key-policies/[id]/keys";
 
 const vertexApiOrigin = "https://vertex-api.test";
 
-describe("property key policy entries API route", () => {
-  it("lists entries filtered to the policy across pages", async () => {
+describe("property key policy keys API route", () => {
+  it("lists keys for the policy across pages", async () => {
     nodeMswServer.use(
-      stubListEntries("policy-1", {
-        "": [entryData("entry-1", "MixedCaseKey")],
-        "cursor-2": [entryData("entry-2", "another_key")],
+      stubListKeys("policy-1", {
+        "": [keyData("key-1", "MixedCaseKey")],
+        "cursor-2": [keyData("key-2", "another_key")],
       })
     );
 
-    const response = await callEntries("policy-1", { method: "GET" });
+    const response = await callKeys("policy-1", { method: "GET" });
 
     expect(response.statusCode()).toBe(200);
     expect(response.body()).toEqual({
-      data: [
-        entryData("entry-1", "MixedCaseKey"),
-        entryData("entry-2", "another_key"),
-      ],
+      data: [keyData("key-1", "MixedCaseKey"), keyData("key-2", "another_key")],
       status: 200,
     });
   });
 
   it("returns Vertex API failures from list requests", async () => {
     nodeMswServer.use(
-      http.get(`${vertexApiOrigin}/property-key-policy-entries`, () =>
+      http.get(`${vertexApiOrigin}/property-key-policies/policy-1/keys`, () =>
         HttpResponse.json(
           { errors: [{ status: "500", title: "Vertex is upset." }] },
           {
@@ -48,7 +45,7 @@ describe("property key policy entries API route", () => {
       )
     );
 
-    const response = await callEntries("policy-1", { method: "GET" });
+    const response = await callKeys("policy-1", { method: "GET" });
 
     expect(response.statusCode()).toBe(500);
     expect(response.body()).toEqual({
@@ -59,7 +56,7 @@ describe("property key policy entries API route", () => {
 
   it("requires a policy ID", async () => {
     const response = await invokeNextJsApiRouteHandler(
-      handlePropertyKeyPolicyEntries,
+      handlePropertyKeyPolicyKeys,
       {
         method: "GET",
         query: {},
@@ -79,15 +76,15 @@ describe("property key policy entries API route", () => {
     let callCount = 0;
 
     nodeMswServer.use(
-      http.get(`${vertexApiOrigin}/property-key-policy-entries`, () => {
+      http.get(`${vertexApiOrigin}/property-key-policies/policy-1/keys`, () => {
         callCount += 1;
 
         return HttpResponse.json(
           {
-            data: [entryData(`entry-${callCount}`, `key-${callCount}`)],
+            data: [keyData(`key-${callCount}`, `key-${callCount}`)],
             links: {
               next: {
-                href: `${vertexApiOrigin}/property-key-policy-entries?page[cursor]=stuck-cursor`,
+                href: `${vertexApiOrigin}/property-key-policies/policy-1/keys?page[cursor]=stuck-cursor`,
               },
             },
           },
@@ -96,7 +93,7 @@ describe("property key policy entries API route", () => {
       })
     );
 
-    const response = await callEntries("policy-1", { method: "GET" });
+    const response = await callKeys("policy-1", { method: "GET" });
 
     expect(response.statusCode()).toBe(500);
     expect(callCount).toBe(2);
@@ -107,7 +104,7 @@ describe("property key policy entries API route", () => {
   });
 
   it("rejects unsupported methods", async () => {
-    const response = await callEntries("policy-1", { method: "DELETE" });
+    const response = await callKeys("policy-1", { method: "DELETE" });
 
     expect(response.statusCode()).toBe(405);
     expect(response.body()).toEqual({
@@ -117,36 +114,28 @@ describe("property key policy entries API route", () => {
   });
 });
 
-function callEntries(
-  id: string,
-  req: ApiRouteRequest
-): Promise<ApiRouteResponse> {
-  return invokeNextJsApiRouteHandler(handlePropertyKeyPolicyEntries, {
+function callKeys(id: string, req: ApiRouteRequest): Promise<ApiRouteResponse> {
+  return invokeNextJsApiRouteHandler(handlePropertyKeyPolicyKeys, {
     ...req,
     query: { ...req.query, id },
     session: createAuthenticatedVertexApiTestSession(vertexApiOrigin),
   });
 }
 
-function entryData(id: string, name: string) {
+function keyData(id: string, name: string) {
   return {
-    attributes: { key: { name } },
+    attributes: { name },
     id,
-    relationships: {
-      propertyKeyPolicy: {
-        data: { id: "policy-1", type: "property-key-policy" },
-      },
-    },
-    type: "property-key-policy-entry",
+    type: "property-key",
   };
 }
 
-function stubListEntries(
+function stubListKeys(
   policyId: string,
-  pages: Record<string, ReturnType<typeof entryData>[]>
+  pages: Record<string, ReturnType<typeof keyData>[]>
 ) {
   return http.get(
-    `${vertexApiOrigin}/property-key-policy-entries`,
+    `${vertexApiOrigin}/property-key-policies/${policyId}/keys`,
     ({ request }) => {
       const url = new URL(request.url);
       const cursor = url.searchParams.get("page[cursor]") ?? "";
@@ -154,9 +143,6 @@ function stubListEntries(
       const cursors = Object.keys(pages);
       const currentPageIndex = cursors.indexOf(cursor);
 
-      expect(url.searchParams.get("filter[propertyKeyPolicy.id]")).toBe(
-        policyId
-      );
       expect(url.searchParams.get("page[size]")).toBe("200");
       expect(data).toBeDefined();
       expect(currentPageIndex).toBeGreaterThanOrEqual(0);
@@ -171,7 +157,7 @@ function stubListEntries(
               ? {}
               : {
                   next: {
-                    href: `${vertexApiOrigin}/property-key-policy-entries?page[cursor]=${nextCursor}`,
+                    href: `${vertexApiOrigin}/property-key-policies/${policyId}/keys?page[cursor]=${nextCursor}`,
                   },
                 },
         },

@@ -205,13 +205,13 @@ export default function CreatePropertyKeyPolicyDialog({
       return;
     }
 
-    const entriesError = (resBody as CreatePropertyKeyPolicyRes).entriesError;
+    const keysError = (resBody as CreatePropertyKeyPolicyRes).keysError;
     // Always refresh the list so the newly created policy is visible.
     onCreated();
 
-    if (entriesError != null) {
+    if (keysError != null) {
       // Policy was created but its keys failed. Keep the dialog open and warn.
-      setEntriesWarning(entriesError);
+      setEntriesWarning(keysError);
       return;
     }
 

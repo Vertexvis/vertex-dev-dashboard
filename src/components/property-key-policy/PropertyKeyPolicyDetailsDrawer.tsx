@@ -5,13 +5,13 @@ import useSWR from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import {
-  GetPropertyKeyPolicyEntriesRes,
+  GetPropertyKeyPolicyKeysRes,
   PropertyKeyPolicy,
-  toPropertyKeyPolicyEntry,
+  toPropertyKeyPolicyKey,
 } from "../../lib/property-key-policies";
 import { AppLink } from "../shared/AppLink";
 import { RightDrawerWidth } from "../shared/Layout";
-import { PropertyKeyPolicyEntriesList } from "./PropertyKeyPolicyEntriesList";
+import { PropertyKeyPolicyKeysList } from "./PropertyKeyPolicyKeysList";
 import { PropertyKeyPolicyMetadataTable } from "./PropertyKeyPolicyMetadataTable";
 
 interface Props {
@@ -27,24 +27,24 @@ export function PropertyKeyPolicyDetailsDrawer({
 }: Props): JSX.Element {
   const id = propertyKeyPolicy?.id;
   // The row prop already carries every attribute the metadata table renders, so
-  // we only need to fetch the policy's entries. Avoid a redundant single-policy
+  // we only need to fetch the policy's keys. Avoid a redundant single-policy
   // GET (and its misleading error state) by rendering attributes from the prop.
-  const { data: entriesData, error: entriesError } = useSWR<
-    GetPropertyKeyPolicyEntriesRes | undefined
+  const { data: keysData, error: keysError } = useSWR<
+    GetPropertyKeyPolicyKeysRes | undefined
   >(
     id == null
       ? null
-      : `/api/property-key-policies/${encodeURIComponent(id)}/entries`
+      : `/api/property-key-policies/${encodeURIComponent(id)}/keys`
   );
 
   const details = propertyKeyPolicy;
 
-  const entriesFailed = entriesError != null || isErrorRes(entriesData);
-  const entries =
-    entriesData != null && !isErrorRes(entriesData)
-      ? entriesData.data.map(toPropertyKeyPolicyEntry)
+  const keysFailed = keysError != null || isErrorRes(keysData);
+  const keys =
+    keysData != null && !isErrorRes(keysData)
+      ? keysData.data.map(toPropertyKeyPolicyKey)
       : undefined;
-  const entriesLoading = id != null && entries == null && !entriesFailed;
+  const keysLoading = id != null && keys == null && !keysFailed;
 
   return (
     <Drawer
@@ -68,10 +68,10 @@ export function PropertyKeyPolicyDetailsDrawer({
       {details ? (
         <Box sx={{ px: 2, pb: 2 }}>
           <PropertyKeyPolicyMetadataTable propertyKeyPolicy={details} />
-          <PropertyKeyPolicyEntriesList
-            entries={entries}
-            error={entriesFailed}
-            loading={entriesLoading}
+          <PropertyKeyPolicyKeysList
+            keys={keys}
+            error={keysFailed}
+            loading={keysLoading}
           />
           {id != null && (
             <Box sx={{ mt: 2 }}>

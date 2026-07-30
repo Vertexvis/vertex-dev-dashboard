@@ -1,6 +1,5 @@
 import {
   PropertyKeyPoliciesApi,
-  PropertyKeyPolicyEntryList,
   PropertyKeyPolicyList,
   PropertyKeyPolicyMode,
   VertexClient,
@@ -20,17 +19,22 @@ export type PropertyKeyPolicyPageRes = GetRes<PropertyKeyPolicyResource>;
 export type PropertyKeyPolicy = PropertyKeyPolicyResource["attributes"] &
   Pick<PropertyKeyPolicyResource, "id">;
 
-export type PropertyKeyPolicyEntryResource =
-  PropertyKeyPolicyEntryList["data"][number];
+/** A property key returned directly by the policy `/keys` API. */
+export interface PropertyKeyPolicyKeyResource {
+  readonly attributes: {
+    readonly name: string;
+  };
+  readonly id: string;
+  readonly type: "property-key";
+}
 
 /**
- * Flattened dashboard model for a single property-key-policy entry.
+ * Flattened dashboard model for a single property key in a policy.
  *
- * The upstream entry carries its own `id` plus the case-sensitive metadata key
- * name (`attributes.key.name`). We surface both so the UI can list entries and,
- * in a future iteration, target a specific entry for deletion.
+ * The upstream API returns property keys directly. We surface their public IDs
+ * and case-sensitive names so the UI can list and later target individual keys.
  */
-export interface PropertyKeyPolicyEntry {
+export interface PropertyKeyPolicyKey {
   readonly id: string;
   readonly name: string;
 }
@@ -39,8 +43,8 @@ export type GetPropertyKeyPolicyRes = Res & {
   readonly data: PropertyKeyPolicyResource;
 };
 
-export type GetPropertyKeyPolicyEntriesRes = Res & {
-  readonly data: PropertyKeyPolicyEntryResource[];
+export type GetPropertyKeyPolicyKeysRes = Res & {
+  readonly data: PropertyKeyPolicyKeyResource[];
 };
 
 /**
@@ -59,14 +63,14 @@ export interface CreatePropertyKeyPolicyReq {
 /**
  * Response for a successful policy creation (HTTP 201).
  *
- * The policy is always created first, then entries are upserted. Per product
- * decision, if the entries upsert fails the created policy is KEPT (not rolled
- * back) and `entriesError` carries a human-readable message so the UI can warn
+ * The policy is always created first, then keys are upserted. Per product
+ * decision, if the keys upsert fails the created policy is KEPT (not rolled
+ * back) and `keysError` carries a human-readable message so the UI can warn
  * the user that the policy exists but its keys were not added.
  */
 export type CreatePropertyKeyPolicyRes = Res & {
   readonly data: PropertyKeyPolicyResource;
-  readonly entriesError?: string;
+  readonly keysError?: string;
 };
 
 export type DeletePropertyKeyPoliciesRes = Res & {
@@ -94,10 +98,10 @@ export function toPropertyKeyPolicyPage(
   >(res);
 }
 
-export function toPropertyKeyPolicyEntry(
-  data: PropertyKeyPolicyEntryResource
-): PropertyKeyPolicyEntry {
-  return { id: data.id, name: data.attributes.key.name };
+export function toPropertyKeyPolicyKey(
+  data: PropertyKeyPolicyKeyResource
+): PropertyKeyPolicyKey {
+  return { id: data.id, name: data.attributes.name };
 }
 
 export function getPropertyKeyPoliciesApi(

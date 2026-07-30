@@ -2,7 +2,6 @@ import {
   Failure,
   head,
   logError,
-  PropertyKeyPolicyEntryList,
   VertexError,
 } from "@vertexvis/api-client-node";
 import { AxiosError } from "axios";
@@ -16,18 +15,25 @@ import {
 } from "../../../../lib/api";
 import { fetchAllPages } from "../../../../lib/paging";
 import {
-  getPropertyKeyPoliciesApi,
-  GetPropertyKeyPolicyEntriesRes,
-  PropertyKeyPolicyEntryResource,
+  GetPropertyKeyPolicyKeysRes,
+  PropertyKeyPolicyKeyResource,
 } from "../../../../lib/property-key-policies";
 import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
-const EntriesPageSize = 200;
+const KeysPageSize = 200;
 
-export async function handlePropertyKeyPolicyEntries(
+interface PropertyKeyPolicyKeyList {
+  readonly data: PropertyKeyPolicyKeyResource[];
+  readonly links: {
+    readonly next?: { readonly href: string };
+    readonly self?: { readonly href: string };
+  };
+}
+
+export async function handlePropertyKeyPolicyKeys(
   req: NextIronRequest,
-  res: NextApiResponse<GetPropertyKeyPolicyEntriesRes | ErrorRes>
+  res: NextApiResponse<GetPropertyKeyPolicyKeysRes | ErrorRes>
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -37,28 +43,33 @@ export async function handlePropertyKeyPolicyEntries(
   return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
 }
 
-export default withSession(handlePropertyKeyPolicyEntries);
+export default withSession(handlePropertyKeyPolicyKeys);
 
 async function get(
   req: NextIronRequest
-): Promise<ErrorRes | GetPropertyKeyPolicyEntriesRes> {
+): Promise<ErrorRes | GetPropertyKeyPolicyKeysRes> {
   try {
     const id = head(req.query.id);
     if (id == null)
       return { message: "Property Key Policy ID required.", status: 400 };
 
-    const c = getPropertyKeyPoliciesApi(
-      await getClientFromSession(req.session)
-    );
-
+    const client = await getClientFromSession(req.session);
+    const path = `${
+      client.config.basePath
+    }/property-key-policies/${encodeURIComponent(id)}/keys`;
     const data = await fetchAllPages<
-      PropertyKeyPolicyEntryResource,
-      PropertyKeyPolicyEntryList
+      PropertyKeyPolicyKeyResource,
+      PropertyKeyPolicyKeyList
     >((pageCursor) =>
-      c.listPropertyKeyPolicyEntries({
-        filterPropertyKeyPolicyId: id,
-        pageCursor,
-        pageSize: EntriesPageSize,
+      client.axiosInstance.get<PropertyKeyPolicyKeyList>(path, {
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: `Bearer ${client.token.access_token}`,
+        },
+        params: {
+          ...(pageCursor != null ? { "page[cursor]": pageCursor } : {}),
+          "page[size]": KeysPageSize,
+        },
       })
     );
 
@@ -68,7 +79,7 @@ async function get(
     const ae = error as AxiosError<Failure>;
     logError(e);
     return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
+      ? toErrorRes({ failure: e.vertexError.res })
       : ae.response?.data != null
       ? toErrorRes({ failure: ae.response.data })
       : ServerError;

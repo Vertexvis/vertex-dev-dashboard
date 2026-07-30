@@ -1,9 +1,9 @@
 import { PropertyKeyPolicyMode } from "@vertexvis/api-client-node";
 
 import type {
-  GetPropertyKeyPolicyEntriesRes,
+  GetPropertyKeyPolicyKeysRes,
   GetPropertyKeyPolicyRes,
-  PropertyKeyPolicyEntryResource,
+  PropertyKeyPolicyKeyResource,
   PropertyKeyPolicyPageRes,
   PropertyKeyPolicyResource,
 } from "../../../src/lib/property-key-policies";
@@ -50,30 +50,21 @@ export function propertyKeyPolicyRes(
   return { data: policy, status: 200 };
 }
 
-export function propertyKeyPolicyEntry(overrides: {
+export function propertyKeyPolicyKey(overrides: {
   readonly id: string;
   readonly name: string;
-  readonly policyId?: string;
-}): PropertyKeyPolicyEntryResource {
+}): PropertyKeyPolicyKeyResource {
   return {
-    attributes: { key: { name: overrides.name } },
+    attributes: { name: overrides.name },
     id: overrides.id,
-    relationships: {
-      propertyKeyPolicy: {
-        data: {
-          id: overrides.policyId ?? "policy-1",
-          type: "property-key-policy",
-        },
-      },
-    },
-    type: "property-key-policy-entry",
+    type: "property-key",
   };
 }
 
-export function propertyKeyPolicyEntriesRes({
+export function propertyKeyPolicyKeysRes({
   data,
 }: {
-  readonly data: readonly PropertyKeyPolicyEntryResource[];
-}): GetPropertyKeyPolicyEntriesRes {
+  readonly data: readonly PropertyKeyPolicyKeyResource[];
+}): GetPropertyKeyPolicyKeysRes {
   return { data: [...data], status: 200 };
 }

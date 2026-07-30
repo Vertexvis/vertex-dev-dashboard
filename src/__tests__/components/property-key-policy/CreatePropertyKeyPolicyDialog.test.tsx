@@ -166,7 +166,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
         HttpResponse.json(
           {
             data: propertyKeyPolicy({ id: "policy-1" }),
-            entriesError: "Entries upsert failed.",
+            keysError: "Keys upsert failed.",
             status: 201,
           },
           { status: 201 }
@@ -182,9 +182,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     await userEvent.type(screen.getByLabelText("Property key 1"), "Key");
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(
-      await screen.findByText(/Entries upsert failed\./)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Keys upsert failed\./)).toBeInTheDocument();
     // Refresh is still triggered so the created policy is visible, but the
     // dialog stays open to surface the warning.
     expect(onCreated).toHaveBeenCalled();
