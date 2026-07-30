@@ -1,10 +1,15 @@
-import { FileList } from "@vertexvis/api-client-node";
+import { FileList, FileMetadata } from "@vertexvis/api-client-node";
 
 import { GetRes, Res } from "./api";
 import { Paged, toPage } from "./paging";
 
-export type File = FileList["data"][number]["attributes"] &
-  Pick<FileList["data"][number], "id">;
+type FileData = FileList["data"][number] | FileMetadata["data"];
+
+export type File = FileData["attributes"] & Pick<FileData, "id">;
+
+export function toFile(data: FileData): File {
+  return { ...data.attributes, id: data.id };
+}
 
 export interface FileDownloadUrlRes extends Res {
   readonly url: string;

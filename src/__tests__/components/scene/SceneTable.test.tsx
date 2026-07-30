@@ -10,9 +10,17 @@ import SceneTable from "../../../components/scene/SceneTable";
 import { Scene } from "../../../lib/scenes";
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRouter = {
+  isReady: true,
+  pathname: "/",
+  push: mockPush,
+  query: {} as Record<string, string | string[] | undefined>,
+  replace: mockReplace,
+};
 
 jest.mock("next/router", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => mockRouter,
 }));
 
 const scene: Scene = {
@@ -64,6 +72,8 @@ describe("SceneTable", () => {
   afterEach(() => {
     jest.restoreAllMocks();
     mockPush.mockClear();
+    mockReplace.mockClear();
+    mockRouter.query = {};
   });
 
   it("preserves the active scene highlight after the drawer scene clears", async () => {
@@ -78,9 +88,7 @@ describe("SceneTable", () => {
     await waitFor(() => {
       expect(getSceneRow()).toHaveClass("Mui-selected");
     });
-
     rerender(renderTableElement(undefined));
-
     await waitFor(() => {
       expect(getSceneRow()).toHaveClass("Mui-selected");
     });
@@ -92,15 +100,12 @@ describe("SceneTable", () => {
         return HttpResponse.json(page);
       })
     );
-
     renderTable(scene);
 
     await waitFor(() => {
       expect(getSceneRow("Scene One")).toHaveClass("Mui-selected");
     });
-
     await userEvent.click(getSceneRow("Scene Two"));
-
     await waitFor(() => {
       expect(getSceneRow("Scene Two")).toHaveClass("Mui-selected");
     });

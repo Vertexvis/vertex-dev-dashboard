@@ -21,6 +21,7 @@ import useSWR from "swr";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartPage } from "../../lib/parts";
+import { queryParamValue } from "../../lib/url-state";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -50,16 +51,14 @@ function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
   );
 }
 
-const maybeQueryParam = (
-  target: string | string[] | undefined
-): string | undefined => (Array.isArray(target) ? target[0] : target);
-
 interface Props {
+  readonly activePartId?: string;
   readonly activeRevisionId?: string;
-  readonly onRevisionSelected: (revision: PartRevision) => void;
+  readonly onRevisionSelected: (revision: PartRevision, partId: string) => void;
 }
 
 export default function PartTable({
+  activePartId,
   activeRevisionId,
   onRevisionSelected,
 }: Props): JSX.Element {
@@ -197,6 +196,7 @@ export default function PartTable({
                 page.items.map((row) => {
                   return (
                     <PartRow
+                      activePartId={activePartId}
                       activeRevisionId={activeRevisionId}
                       key={row.id}
                       isSelected={selected.has(row.id)}
@@ -245,8 +245,8 @@ export default function PartTable({
           setToastMsg(`Translation initiated. Job ID: ${id}`);
           setShowCreatePartDialog(false);
         }}
-        targetFileId={maybeQueryParam(router.query.create)}
-        targetFileName={maybeQueryParam(router.query.n)}
+        targetFileId={queryParamValue(router.query.create)}
+        targetFileName={queryParamValue(router.query.n)}
       />
 
       <CreateSceneDialog

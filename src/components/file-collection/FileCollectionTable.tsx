@@ -13,16 +13,28 @@ import {
   TextField,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
 
-import { toLocaleString } from "../../lib/dates";
+import {
+  toLocalDateInputValue,
+  toLocalDayBoundaryIso,
+  toLocaleString,
+} from "../../lib/dates";
 import {
   FileCollection,
   toFileCollectionPage,
 } from "../../lib/file-collections";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import {
+  buildQuery,
+  cursorPagingStateFromQuery,
+  cursorPagingStateToQuery,
+  SwrProps,
+  useCursorPagingState,
+} from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { queryParamValue, updateRouterQuery } from "../../lib/url-state";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
@@ -42,13 +54,43 @@ export const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created At", sortable: true },
 ];
 
+const UrlStatePrefix = "fileCollection";
+
 interface UseFileCollectionsProps extends SwrProps {
   readonly createdAtEnd?: string;
   readonly createdAtStart?: string;
   readonly sort?: SortState<FileCollectionSortField>;
+  readonly name?: string;
 }
 
 type FileCollectionSortField = "created" | "name";
+
+function isFileCollectionSortField(
+  field: string
+): field is FileCollectionSortField {
+  return field === "created" || field === "name";
+}
+
+function toFileCollectionSortState(
+  value?: string
+): SortState<FileCollectionSortField> | undefined {
+  switch (value) {
+    case "name":
+      return { field: "name", order: "asc" };
+    case "-name":
+      return { field: "name", order: "desc" };
+    case "created":
+      return { field: "created", order: "asc" };
+    case "-created":
+      return { field: "created", order: "desc" };
+    default:
+      return undefined;
+  }
+}
+
+function fileCollectionPath(fileCollectionId: string): string {
+  return `/file-collections/${encodeURIComponent(fileCollectionId)}`;
+}
 
 function useFileCollections({
   createdAtEnd,
@@ -81,28 +123,63 @@ export default function FileCollectionTable({
   activeFileCollectionId,
   onFileCollectionSelected,
 }: Props): JSX.Element {
+  const router = useRouter();
+  const routerReady = router.isReady !== false;
   const pageSize = DefaultPageSize;
   const {
     currentPage,
     cursor,
     cursors,
+    getPageStateForChange,
     handlePageChange,
     resetPaging,
     setCursors,
-  } = useCursorPagingState();
+    setPagingState,
+  } = useCursorPagingState(
+    cursorPagingStateFromQuery(router.query, UrlStatePrefix)
+  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [name, setName] = React.useState<string | undefined>();
   const [sort, setSort] = React.useState<
     SortState<FileCollectionSortField> | undefined
-  >();
-  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
-  const [createdAtFilters, setCreatedAtFilters] =
-    React.useState<CreatedAtDateRange>({});
+  >(() =>
+    toFileCollectionSortState(queryParamValue(router.query.fileCollectionSort))
+  );
+  const [name, setName] = React.useState<string | undefined>(() =>
+    queryParamValue(router.query.fileCollectionName)
+  );
+  const [nameInput, setNameInput] = React.useState(
+    () => queryParamValue(router.query.fileCollectionName) ?? ""
+  );
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>(() =>
+    queryParamValue(router.query.fileCollectionSuppliedId)
+  );
+  const [suppliedIdInput, setSuppliedIdInput] = React.useState(
+    () => queryParamValue(router.query.fileCollectionSuppliedId) ?? ""
+  );
+  const [createdAtStartDate, setCreatedAtStartDate] = React.useState(
+    () => queryParamValue(router.query.fileCollectionCreatedAtStart) ?? ""
+  );
+  const [createdAtEndDate, setCreatedAtEndDate] = React.useState(
+    () => queryParamValue(router.query.fileCollectionCreatedAtEnd) ?? ""
+  );
+  const [createdAtStart, setCreatedAtStart] = React.useState<
+    string | undefined
+  >(() => {
+    const value = queryParamValue(router.query.fileCollectionCreatedAtStart);
+    return value != null ? toLocalDayBoundaryIso(value, "start") : undefined;
+  });
+  const [createdAtEnd, setCreatedAtEnd] = React.useState<string | undefined>(
+    () => {
+      const value = queryParamValue(router.query.fileCollectionCreatedAtEnd);
+      return value != null ? toLocalDayBoundaryIso(value, "end") : undefined;
+    }
+  );
   const [deleteError, setDeleteError] = React.useState<string>();
+  const initializedFromQuery = React.useRef(false);
 
   const { data, error, mutate } = useFileCollections({
-    createdAtEnd: createdAtFilters.createdAtEnd,
-    createdAtStart: createdAtFilters.createdAtStart,
+    createdAtEnd,
+    createdAtStart,
     cursor,
     name,
     pageSize,
@@ -114,23 +191,83 @@ export default function FileCollectionTable({
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
+  const updateFileCollectionTableQuery = React.useCallback(
+    (updates: Record<string, string | undefined>) => {
+      if (!routerReady) return;
+
+      updateRouterQuery(router, updates, "replace");
+    },
+    [router, routerReady]
+  );
+
+  const clearPagingQuery = React.useCallback(
+    () => cursorPagingStateToQuery(UrlStatePrefix),
+    []
+  );
+
   const debouncedSetNameFilter = React.useMemo(
     () =>
       debounce((value: string) => {
+        const nextValue = value === "" ? undefined : value;
         resetPaging();
-        setName(value === "" ? undefined : value);
+        setName(nextValue);
+        updateFileCollectionTableQuery({
+          fileCollectionName: nextValue,
+          ...clearPagingQuery(),
+        });
       }, 300),
-    [resetPaging]
+    [clearPagingQuery, resetPaging, updateFileCollectionTableQuery]
   );
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () =>
       debounce((value: string) => {
+        const nextValue = value === "" ? undefined : value;
         resetPaging();
-        setSuppliedId(value === "" ? undefined : value);
+        setSuppliedId(nextValue);
+        updateFileCollectionTableQuery({
+          fileCollectionSuppliedId: nextValue,
+          ...clearPagingQuery(),
+        });
       }, 300),
-    [resetPaging]
+    [clearPagingQuery, resetPaging, updateFileCollectionTableQuery]
   );
+
+  React.useEffect(() => {
+    if (!routerReady || initializedFromQuery.current) return;
+
+    initializedFromQuery.current = true;
+    setSort(
+      toFileCollectionSortState(
+        queryParamValue(router.query.fileCollectionSort)
+      )
+    );
+    const nextName = queryParamValue(router.query.fileCollectionName);
+    const nextSuppliedId = queryParamValue(
+      router.query.fileCollectionSuppliedId
+    );
+    setName(nextName);
+    setNameInput(nextName ?? "");
+    setSuppliedId(nextSuppliedId);
+    setSuppliedIdInput(nextSuppliedId ?? "");
+    const nextCreatedAtStart =
+      queryParamValue(router.query.fileCollectionCreatedAtStart) ?? "";
+    const nextCreatedAtEnd =
+      queryParamValue(router.query.fileCollectionCreatedAtEnd) ?? "";
+    setCreatedAtStartDate(nextCreatedAtStart);
+    setCreatedAtEndDate(nextCreatedAtEnd);
+    setCreatedAtStart(
+      nextCreatedAtStart !== ""
+        ? toLocalDayBoundaryIso(nextCreatedAtStart, "start")
+        : undefined
+    );
+    setCreatedAtEnd(
+      nextCreatedAtEnd !== ""
+        ? toLocalDayBoundaryIso(nextCreatedAtEnd, "end")
+        : undefined
+    );
+    setPagingState(cursorPagingStateFromQuery(router.query, UrlStatePrefix));
+  }, [router.query, routerReady, setPagingState]);
 
   React.useEffect(() => {
     if (page == null) return;
@@ -140,15 +277,31 @@ export default function FileCollectionTable({
 
   function handleCreatedAtChange(filters: CreatedAtDateRange) {
     resetPaging();
-    setCreatedAtFilters(filters);
+    const createdAtStartDate = toLocalDateInputValue(filters.createdAtStart);
+    const createdAtEndDate = toLocalDateInputValue(filters.createdAtEnd);
+    setCreatedAtStart(filters.createdAtStart);
+    setCreatedAtStartDate(createdAtStartDate);
+    setCreatedAtEnd(filters.createdAtEnd);
+    setCreatedAtEndDate(createdAtEndDate);
+    updateFileCollectionTableQuery({
+      fileCollectionCreatedAtEnd: createdAtEndDate || undefined,
+      fileCollectionCreatedAtStart: createdAtStartDate || undefined,
+      ...clearPagingQuery(),
+    });
   }
 
   function handleSortChange(field: string) {
-    if (field !== "created" && field !== "name") return;
+    if (!isFileCollectionSortField(field)) return;
 
-    setSort((current) =>
-      current == null ? { field, order: "asc" } : toggleSort(current, field)
-    );
+    setSort((current) => {
+      const nextSort: SortState<FileCollectionSortField> =
+        current == null ? { field, order: "asc" } : toggleSort(current, field);
+      updateFileCollectionTableQuery({
+        fileCollectionSort: toSortParam(nextSort),
+        ...clearPagingQuery(),
+      });
+      return nextSort;
+    });
     resetPaging();
   }
 
@@ -172,7 +325,11 @@ export default function FileCollectionTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
+    const nextPagingState = getPageStateForChange(num);
     handlePageChange(num);
+    updateFileCollectionTableQuery(
+      cursorPagingStateToQuery(UrlStatePrefix, nextPagingState)
+    );
   }
 
   async function handleDelete() {
@@ -195,6 +352,10 @@ export default function FileCollectionTable({
     }
 
     mutate();
+  }
+
+  function handleOpenFileCollection(fileCollectionId: string) {
+    router.push(fileCollectionPath(fileCollectionId));
   }
 
   let tableRows: React.ReactNode;
@@ -241,7 +402,8 @@ export default function FileCollectionTable({
           </TableCell>
           <TableCell component="th" scope="row" padding="none">
             <ResourceLink
-              href={`/file-collections/${encodeURIComponent(row.id)}`}
+              href={fileCollectionPath(row.id)}
+              onPrimaryAction={() => handleOpenFileCollection(row.id)}
               primaryActionLabel={`Open ${row.name}`}
             >
               {row.name}
@@ -281,8 +443,11 @@ export default function FileCollectionTable({
               id="nameFilter"
               label="Name"
               type="text"
+              value={nameInput}
               onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+                const value = e.target.value ?? "";
+                setNameInput(value);
+                debouncedSetNameFilter(value.trim());
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
@@ -293,14 +458,23 @@ export default function FileCollectionTable({
               id="suppliedIdFilter"
               label="Supplied ID"
               type="text"
+              value={suppliedIdInput}
               onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                const value = e.target.value ?? "";
+                setSuppliedIdInput(value);
+                debouncedSetSuppliedIdFilter(value.trim());
               }}
               sx={{ mt: 0, width: "16rem" }}
             />
           </Box>
         </Box>
-        <CreatedAtDateRangeFilter onChange={handleCreatedAtChange} />
+        <CreatedAtDateRangeFilter
+          onChange={handleCreatedAtChange}
+          value={{
+            createdAtEnd: createdAtEndDate,
+            createdAtStart: createdAtStartDate,
+          }}
+        />
         <TableContainer>
           <Table>
             <TableHead

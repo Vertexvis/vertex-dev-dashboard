@@ -23,8 +23,15 @@ import useSWR from "swr";
 
 import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
-import { SwrProps } from "../../lib/paging";
+import {
+  buildQuery,
+  cursorPagingStateFromQuery,
+  cursorPagingStateToQuery,
+  SwrProps,
+  useCursorPagingState,
+} from "../../lib/paging";
 import { Scene, toScenePage } from "../../lib/scenes";
+import { queryParamValue, updateRouterQuery } from "../../lib/url-state";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -51,11 +58,16 @@ const headCells: readonly HeadCell[] = [
   { id: "actions", label: "Actions" },
 ];
 
+const UrlStatePrefix = "scene";
+
 function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }${name ? `&name=${encodeURIComponent(name)}` : ""}`
+    buildQuery("/api/scenes", {
+      cursor,
+      name,
+      pageSize,
+      suppliedId,
+    })
   );
 }
 
@@ -83,26 +95,43 @@ export default function SceneTable({
   scene,
   invalidationCount,
 }: Props): JSX.Element {
+  const router = useRouter();
+  const routerReady = router.isReady !== false;
   const pageSize = DefaultPageSize;
-  const [curPage, setCurPage] = React.useState(0);
   const [showMergeScene, setShowMergeScene] = React.useState(false);
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
+  const {
+    currentPage,
+    cursor,
+    cursors,
+    getPageStateForChange,
+    handlePageChange,
+    resetPaging,
+    setCursors,
+    setPagingState,
+  } = useCursorPagingState(
+    cursorPagingStateFromQuery(router.query, UrlStatePrefix)
+  );
   const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
     string | undefined
   >();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
-  );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
-  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>(
+    () => queryParamValue(router.query.sceneSuppliedId)
+  );
+  const [suppliedIdInput, setSuppliedIdInput] = React.useState(
+    () => queryParamValue(router.query.sceneSuppliedId) ?? ""
+  );
+  const [nameFilter, setNameFilter] = React.useState<string | undefined>(() =>
+    queryParamValue(router.query.sceneName)
+  );
+  const [nameInput, setNameInput] = React.useState(
+    () => queryParamValue(router.query.sceneName) ?? ""
+  );
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const initializedFromQuery = React.useRef(false);
 
   const { data, error, mutate } = useScenes({
     cursor,
@@ -115,27 +144,71 @@ export default function SceneTable({
     mutate();
   }, [invalidationCount, mutate]);
 
-  const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
-  const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
+  const updateSceneTableQuery = React.useCallback(
+    (updates: Record<string, string | undefined>) => {
+      if (!routerReady) return;
+
+      updateRouterQuery(router, updates, "replace");
+    },
+    [router, routerReady]
+  );
+
+  const clearPagingQuery = React.useCallback(
+    () => cursorPagingStateToQuery(UrlStatePrefix),
     []
   );
 
-  const debouncedSetNameFilter = React.useMemo(
-    () => debounce(setNameFilter, 300),
-    []
+  const debouncedSetSuppliedIdFilter = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        const nextValue = value === "" ? undefined : value;
+        resetPaging();
+        setSuppliedIdFilter(nextValue);
+        updateSceneTableQuery({
+          sceneSuppliedId: nextValue,
+          ...clearPagingQuery(),
+        });
+      }, 300),
+    [clearPagingQuery, resetPaging, updateSceneTableQuery]
   );
+
+  const debouncedSetNameFilter = React.useMemo(
+    () =>
+      debounce((value: string) => {
+        const nextValue = value === "" ? undefined : value;
+        resetPaging();
+        setNameFilter(nextValue);
+        updateSceneTableQuery({
+          sceneName: nextValue,
+          ...clearPagingQuery(),
+        });
+      }, 300),
+    [clearPagingQuery, resetPaging, updateSceneTableQuery]
+  );
+
+  React.useEffect(() => {
+    if (!routerReady || initializedFromQuery.current) return;
+
+    initializedFromQuery.current = true;
+    const nextName = queryParamValue(router.query.sceneName);
+    const nextSuppliedId = queryParamValue(router.query.sceneSuppliedId);
+    setNameFilter(nextName);
+    setNameInput(nextName ?? "");
+    setSuppliedIdFilter(nextSuppliedId);
+    setSuppliedIdInput(nextSuppliedId ?? "");
+    setPagingState(cursorPagingStateFromQuery(router.query, UrlStatePrefix));
+  }, [router.query, routerReady, setPagingState]);
 
   React.useEffect(() => {
     if (page == null) return;
 
     setCursors(page.cursors ?? undefined);
-  }, [page]);
+  }, [page, setCursors]);
 
   React.useEffect(() => {
     if (scene != null) setActiveSceneId(scene.id);
@@ -166,12 +239,11 @@ export default function SceneTable({
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
   ) {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
+    const nextPagingState = getPageStateForChange(num);
+    handlePageChange(num);
+    updateSceneTableQuery(
+      cursorPagingStateToQuery(UrlStatePrefix, nextPagingState)
+    );
   }
 
   async function handleDelete() {
@@ -243,8 +315,11 @@ export default function SceneTable({
             id="nameFilter"
             label="Name Filter"
             type="text"
+            value={nameInput}
             onChange={(e) => {
-              debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
+              const value = e.target.value ?? "";
+              setNameInput(value);
+              debouncedSetNameFilter(value.trim());
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
@@ -255,8 +330,11 @@ export default function SceneTable({
             id="suppliedIdFilter"
             label="Supplied ID Filter"
             type="text"
+            value={suppliedIdInput}
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
+              const value = e.target.value ?? "";
+              setSuppliedIdInput(value);
+              debouncedSetSuppliedIdFilter(value.trim());
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
@@ -368,7 +446,7 @@ export default function SceneTable({
             )
           }
           rowsPerPage={pageSize}
-          page={curPage}
+          page={currentPage}
           onPageChange={handleChangePage}
           slotProps={{
             actions: {

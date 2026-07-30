@@ -18,7 +18,8 @@ async function get(
 
   const item = await c.partRevisions.getPartRevision({
     id,
-    fieldsPartRevision: "created,suppliedId,metadata",
+    fieldsPartRevision:
+      "created,name,suppliedId,suppliedIterationId,metadata",
   });
 
   return { ...item.data.data, status: 200 };

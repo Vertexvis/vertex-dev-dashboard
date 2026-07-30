@@ -13,12 +13,54 @@ const collectionFilesApiPath = "/api/file-collections/collection-1/files";
 const downloadUrlById = {
   "file-1": "https://example.test/download/file-1",
 } as const;
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockRouter = {
+  isReady: true,
+  pathname: "/file-collections/[fileCollectionId]",
+  push: mockPush,
+  query: { fileCollectionId: "collection-1" } as Record<
+    string,
+    string | string[] | undefined
+  >,
+  replace: mockReplace,
+};
+
+jest.mock("next/router", () => ({
+  useRouter: () => mockRouter,
+}));
+
+const collectionFilesPage = {
+  cursors: { self: "page-1" },
+  data: [
+    {
+      type: "file",
+      id: "file-1",
+      attributes: {
+        name: "File One",
+        status: "complete",
+        suppliedId: "supplied-file-1",
+        created: "2026-06-12T15:30:00Z",
+        uploaded: "2026-06-12T15:31:00Z",
+      },
+    },
+  ],
+  status: 200,
+};
+
+const pagedCollectionFilesPage = {
+  ...collectionFilesPage,
+  cursors: { self: "page-1", next: "page-2" },
+};
 
 describe("FileCollectionFilesTable", () => {
   installJsdomMockServer();
 
   afterEach(() => {
     jest.restoreAllMocks();
+    mockPush.mockClear();
+    mockReplace.mockClear();
+    mockRouter.query = { fileCollectionId: "collection-1" };
   });
 
   it("loads collection files while keeping row interactions", async () => {
@@ -231,6 +273,73 @@ describe("FileCollectionFilesTable", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Error loading data."
     );
+  });
+
+  it("loads cursor paging from the URL", async () => {
+    mockRouter.query = {
+      fileCollectionId: "collection-1",
+      fileCursor: "cursor-2",
+      filePage: "2",
+      filePreviousCursors: JSON.stringify({ 0: "page-1", 1: "page-2" }),
+    };
+    const listCollectionFiles = jest.fn(() =>
+      HttpResponse.json(collectionFilesPage)
+    );
+    mockFileCollectionFilesApi({ listCollectionFiles });
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+    expect(listCollectionFiles).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          url: "http://localhost/api/file-collections/collection-1/files?pageSize=25&cursor=cursor-2",
+        }),
+      })
+    );
+  });
+
+  it("stores cursor paging state in the URL when the page changes", async () => {
+    const listCollectionFiles = jest.fn(({ request }) =>
+      HttpResponse.json(
+        request.url.includes("cursor=page-2")
+          ? collectionFilesPage
+          : pagedCollectionFilesPage
+      )
+    );
+    mockFileCollectionFilesApi({ listCollectionFiles });
+
+    renderTable();
+
+    expect(await screen.findByText("File One")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+
+    await waitFor(() => {
+      expect(listCollectionFiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          request: expect.objectContaining({
+            url: "http://localhost/api/file-collections/collection-1/files?pageSize=25&cursor=page-2",
+          }),
+        })
+      );
+      expect(mockReplace).toHaveBeenCalledWith(
+        {
+          pathname: "/file-collections/[fileCollectionId]",
+          query: {
+            fileCollectionId: "collection-1",
+            fileCursor: "page-2",
+            filePage: "1",
+            filePreviousCursors: JSON.stringify({ 0: "page-1" }),
+          },
+        },
+        undefined,
+        {
+          scroll: false,
+          shallow: true,
+        }
+      );
+    });
   });
 });
 
