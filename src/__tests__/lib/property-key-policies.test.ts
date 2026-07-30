@@ -2,7 +2,7 @@ import {
   PropertyKeyPolicyMode,
   PropertyKeyPolicyResource,
   toPropertyKeyPolicy,
-  toPropertyKeyPolicyEntry,
+  toPropertyKeyPolicyKey,
   toPropertyKeyPolicyPage,
 } from "../../lib/property-key-policies";
 
@@ -77,18 +77,13 @@ describe("property key policy converters", () => {
     });
   });
 
-  it("maps an entry resource into a dashboard entry preserving key case", () => {
-    const entry = toPropertyKeyPolicyEntry({
-      type: "property-key-policy-entry",
-      id: "entry-id",
-      attributes: { key: { name: "MixedCaseKey" } },
-      relationships: {
-        propertyKeyPolicy: {
-          data: { type: "property-key-policy", id: "policy-id" },
-        },
-      },
+  it("maps a key resource into a dashboard key preserving key case", () => {
+    const key = toPropertyKeyPolicyKey({
+      type: "property-key",
+      id: "key-id",
+      attributes: { name: "MixedCaseKey" },
     });
 
-    expect(entry).toEqual({ id: "entry-id", name: "MixedCaseKey" });
+    expect(key).toEqual({ id: "key-id", name: "MixedCaseKey" });
   });
 });

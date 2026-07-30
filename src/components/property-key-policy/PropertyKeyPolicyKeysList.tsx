@@ -6,16 +6,16 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PropertyKeyPolicyEntry } from "../../lib/property-key-policies";
+import { PropertyKeyPolicyKey } from "../../lib/property-key-policies";
 
 interface Props {
-  readonly entries?: readonly PropertyKeyPolicyEntry[];
+  readonly keys?: readonly PropertyKeyPolicyKey[];
   readonly error?: boolean;
   readonly loading?: boolean;
 }
 
-export function PropertyKeyPolicyEntriesList({
-  entries,
+export function PropertyKeyPolicyKeysList({
+  keys,
   error = false,
   loading = false,
 }: Props): JSX.Element {
@@ -27,17 +27,17 @@ export function PropertyKeyPolicyEntriesList({
       <Typography color="text.secondary" variant="caption">
         Metadata property keys are case-sensitive.
       </Typography>
-      {renderBody({ entries: entries ?? [], error, loading })}
+      {renderBody({ keys: keys ?? [], error, loading })}
     </>
   );
 }
 
 function renderBody({
-  entries,
+  keys,
   error,
   loading,
 }: {
-  readonly entries: readonly PropertyKeyPolicyEntry[];
+  readonly keys: readonly PropertyKeyPolicyKey[];
   readonly error: boolean;
   readonly loading: boolean;
 }): JSX.Element {
@@ -58,7 +58,7 @@ function renderBody({
     );
   }
 
-  if (entries.length === 0) {
+  if (keys.length === 0) {
     return (
       <Typography color="text.secondary" variant="body2">
         No property keys.
@@ -68,10 +68,10 @@ function renderBody({
 
   return (
     <List dense disablePadding>
-      {entries.map((entry) => (
-        <ListItem disableGutters key={entry.id}>
+      {keys.map((key) => (
+        <ListItem disableGutters key={key.id}>
           <ListItemText
-            primary={entry.name}
+            primary={key.name}
             primaryTypographyProps={{
               sx: { overflowWrap: "anywhere", whiteSpace: "normal" },
               variant: "body2",

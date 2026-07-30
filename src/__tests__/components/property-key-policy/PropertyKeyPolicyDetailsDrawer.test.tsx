@@ -3,8 +3,8 @@ import { http, HttpResponse } from "msw";
 import React from "react";
 
 import {
-  propertyKeyPolicyEntriesRes,
-  propertyKeyPolicyEntry,
+  propertyKeyPolicyKey,
+  propertyKeyPolicyKeysRes,
 } from "../../../../test/msw/handlers/property-key-policies";
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
@@ -28,12 +28,12 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
 
   it("renders policy attributes and case-preserved entry names", async () => {
     server.use(
-      http.get("*/api/property-key-policies/:id/entries", () =>
+      http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
-          propertyKeyPolicyEntriesRes({
+          propertyKeyPolicyKeysRes({
             data: [
-              propertyKeyPolicyEntry({ id: "entry-1", name: "MixedCase_Key" }),
-              propertyKeyPolicyEntry({ id: "entry-2", name: "ALLCAPS" }),
+              propertyKeyPolicyKey({ id: "key-1", name: "MixedCase_Key" }),
+              propertyKeyPolicyKey({ id: "key-2", name: "ALLCAPS" }),
             ],
           })
         )
@@ -64,7 +64,7 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
 
   it("shows an error when the entries endpoint fails", async () => {
     server.use(
-      http.get("*/api/property-key-policies/:id/entries", () =>
+      http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not load entries.", status: 500 },
           { status: 500 }

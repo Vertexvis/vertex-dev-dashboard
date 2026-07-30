@@ -104,7 +104,7 @@ describe("property key policies API routes", () => {
       stubCreatePolicy("policy-1", async (request) => {
         createBody = await request.json();
       }),
-      stubUpsertEntries("policy-1", undefined, async (request) => {
+      stubUpsertKeys("policy-1", undefined, async (request) => {
         entriesBody = await request.json();
       })
     );
@@ -152,7 +152,7 @@ describe("property key policies API routes", () => {
       stubCreatePolicy("policy-1", async (request) => {
         createBody = await request.json();
       }),
-      stubUpsertEntries("policy-1")
+      stubUpsertKeys("policy-1")
     );
 
     const response = await callPolicies({
@@ -180,7 +180,7 @@ describe("property key policies API routes", () => {
       stubCreatePolicy("policy-1", async (request) => {
         createBody = await request.json();
       }),
-      stubUpsertEntries("policy-1")
+      stubUpsertKeys("policy-1")
     );
 
     const response = await callPolicies({
@@ -201,13 +201,13 @@ describe("property key policies API routes", () => {
     });
   });
 
-  it("keeps the created policy and surfaces the entries error when upsert fails", async () => {
+  it("keeps the created policy and surfaces the keys error when upsert fails", async () => {
     let deleteCalled = false;
 
     nodeMswServer.use(
       stubCreatePolicy("policy-1"),
-      stubUpsertEntries("policy-1", {
-        errors: [{ status: "422", title: "Entries could not be created." }],
+      stubUpsertKeys("policy-1", {
+        errors: [{ status: "422", title: "Keys could not be created." }],
       }),
       http.delete(`${vertexApiOrigin}/property-key-policies/policy-1`, () => {
         deleteCalled = true;
@@ -227,7 +227,7 @@ describe("property key policies API routes", () => {
     expect(response.statusCode()).toBe(201);
     expect(response.body()).toEqual({
       data: policyData("policy-1"),
-      entriesError: "Entries could not be created.",
+      keysError: "Keys could not be created.",
       status: 201,
     });
     expect(deleteCalled).toBe(false);
@@ -571,7 +571,7 @@ function stubCreatePolicy(
   );
 }
 
-function stubUpsertEntries(
+function stubUpsertKeys(
   id: string,
   failure:
     | { errors: Array<{ status: string; title: string }> }
@@ -579,7 +579,7 @@ function stubUpsertEntries(
   assertRequest?: (request: Request) => Promise<void> | void
 ) {
   return http.post(
-    `${vertexApiOrigin}/property-key-policies/${id}/entries`,
+    `${vertexApiOrigin}/property-key-policies/${id}/keys`,
     async ({ request }) => {
       await assertRequest?.(request);
 

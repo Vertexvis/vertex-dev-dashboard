@@ -5,17 +5,17 @@ import { withIronSession } from "next-iron-session";
 import React from "react";
 import useSWR from "swr";
 
-import { PropertyKeyPolicyEntriesList } from "../../components/property-key-policy/PropertyKeyPolicyEntriesList";
+import { PropertyKeyPolicyKeysList } from "../../components/property-key-policy/PropertyKeyPolicyKeysList";
 import { PropertyKeyPolicyMetadataTable } from "../../components/property-key-policy/PropertyKeyPolicyMetadataTable";
 import { AppLink } from "../../components/shared/AppLink";
 import { Layout } from "../../components/shared/Layout";
 import { isErrorFailure, isErrorRes, toErrorRes } from "../../lib/api";
 import {
   getPropertyKeyPoliciesApi,
-  GetPropertyKeyPolicyEntriesRes,
+  GetPropertyKeyPolicyKeysRes,
   PropertyKeyPolicy,
   toPropertyKeyPolicy,
-  toPropertyKeyPolicyEntry,
+  toPropertyKeyPolicyKey,
 } from "../../lib/property-key-policies";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import {
@@ -41,18 +41,18 @@ interface ServerSideContext {
 export default function PropertyKeyPolicyDetails({
   propertyKeyPolicy,
 }: Props): JSX.Element {
-  const { data, error } = useSWR<GetPropertyKeyPolicyEntriesRes | undefined>(
+  const { data, error } = useSWR<GetPropertyKeyPolicyKeysRes | undefined>(
     `/api/property-key-policies/${encodeURIComponent(
       propertyKeyPolicy.id
-    )}/entries`
+    )}/keys`
   );
 
-  const entriesFailed = error != null || isErrorRes(data);
-  const entries =
+  const keysFailed = error != null || isErrorRes(data);
+  const keys =
     data != null && !isErrorRes(data)
-      ? data.data.map(toPropertyKeyPolicyEntry)
+      ? data.data.map(toPropertyKeyPolicyKey)
       : undefined;
-  const entriesLoading = entries == null && !entriesFailed;
+  const keysLoading = keys == null && !keysFailed;
 
   return (
     <Layout
@@ -81,10 +81,10 @@ export default function PropertyKeyPolicyDetails({
               />
             </Box>
             <Box sx={{ mt: 1 }}>
-              <PropertyKeyPolicyEntriesList
-                entries={entries}
-                error={entriesFailed}
-                loading={entriesLoading}
+              <PropertyKeyPolicyKeysList
+                keys={keys}
+                error={keysFailed}
+                loading={keysLoading}
               />
             </Box>
           </Paper>

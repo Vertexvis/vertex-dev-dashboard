@@ -138,18 +138,28 @@ async function create(
     );
     if (isErrorFailure(created)) return toErrorRes({ failure: created });
 
-    const entries = await makeCall(() =>
-      c.upsertPropertyKeyPolicyEntries({
-        id: created.data.id,
-        upsertPropertyKeyPolicyEntriesRequest: {
-          data: body.keys.map((name) => ({ name })),
-        },
-      })
+    // The generated API client has not yet been published with the new
+    // `/keys` operation, so call the merged OpenAPI contract directly while
+    // retaining the client's authenticated Axios instance.
+    const keys = await makeCall(() =>
+      client.axiosInstance.post<void>(
+        `${client.config.basePath}/property-key-policies/${encodeURIComponent(
+          created.data.id
+        )}/keys`,
+        { data: body.keys.map((name) => ({ name })) },
+        {
+          headers: {
+            Accept: "application/vnd.api+json",
+            Authorization: `Bearer ${client.token.access_token}`,
+            "Content-Type": "application/vnd.api+json",
+          },
+        }
+      )
     );
-    if (isErrorFailure(entries)) {
+    if (isErrorFailure(keys)) {
       return {
         data: created.data,
-        entriesError: toErrorRes({ failure: entries }).message,
+        keysError: toErrorRes({ failure: keys }).message,
         status: 201,
       };
     }

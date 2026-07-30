@@ -4,8 +4,8 @@ import type { Session } from "next-iron-session";
 import React from "react";
 
 import {
-  propertyKeyPolicyEntriesRes,
-  propertyKeyPolicyEntry,
+  propertyKeyPolicyKey,
+  propertyKeyPolicyKeysRes,
 } from "../../../../test/msw/handlers/property-key-policies";
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
@@ -52,8 +52,8 @@ describe("PropertyKeyPolicyDetails", () => {
 
   beforeEach(() => {
     server.use(
-      http.get("*/api/property-key-policies/:id/entries", () =>
-        HttpResponse.json(propertyKeyPolicyEntriesRes({ data: [] }))
+      http.get("*/api/property-key-policies/:id/keys", () =>
+        HttpResponse.json(propertyKeyPolicyKeysRes({ data: [] }))
       )
     );
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
@@ -90,12 +90,10 @@ describe("PropertyKeyPolicyDetails", () => {
 
   it("renders the entries list with loaded entries", async () => {
     server.use(
-      http.get("*/api/property-key-policies/:id/entries", () =>
+      http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
-          propertyKeyPolicyEntriesRes({
-            data: [
-              propertyKeyPolicyEntry({ id: "entry-1", name: "entry-key-1" }),
-            ],
+          propertyKeyPolicyKeysRes({
+            data: [propertyKeyPolicyKey({ id: "key-1", name: "entry-key-1" })],
           })
         )
       )
@@ -118,7 +116,7 @@ describe("PropertyKeyPolicyDetails", () => {
 
   it("shows an error state when the entries fetch fails", async () => {
     server.use(
-      http.get("*/api/property-key-policies/:id/entries", () =>
+      http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not load entries.", status: 500 },
           { status: 500 }
