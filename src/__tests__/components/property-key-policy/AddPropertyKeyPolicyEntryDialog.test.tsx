@@ -25,13 +25,10 @@ describe("AddPropertyKeyPolicyEntryDialog", () => {
     const bodies: Array<Record<string, unknown>> = [];
 
     server.use(
-      http.post(
-        "*/api/property-key-policies/:id/entries",
-        async ({ request }) => {
-          bodies.push((await request.json()) as Record<string, unknown>);
-          return HttpResponse.json({ status: 201 }, { status: 201 });
-        }
-      )
+      http.post("*/api/property-key-policies/:id/keys", async ({ request }) => {
+        bodies.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json({ status: 201 }, { status: 201 });
+      })
     );
 
     const onAdded = jest.fn();
@@ -59,13 +56,10 @@ describe("AddPropertyKeyPolicyEntryDialog", () => {
     const bodies: Array<Record<string, unknown>> = [];
 
     server.use(
-      http.post(
-        "*/api/property-key-policies/:id/entries",
-        async ({ request }) => {
-          bodies.push((await request.json()) as Record<string, unknown>);
-          return HttpResponse.json({ status: 201 }, { status: 201 });
-        }
-      )
+      http.post("*/api/property-key-policies/:id/keys", async ({ request }) => {
+        bodies.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json({ status: 201 }, { status: 201 });
+      })
     );
 
     renderDialog();
@@ -84,7 +78,7 @@ describe("AddPropertyKeyPolicyEntryDialog", () => {
 
   it("shows the API error message when the add fails", async () => {
     server.use(
-      http.post("*/api/property-key-policies/:id/entries", () =>
+      http.post("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not add keys.", status: 400 },
           { status: 400 }

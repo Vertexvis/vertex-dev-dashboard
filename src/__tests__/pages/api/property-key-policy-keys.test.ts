@@ -104,7 +104,7 @@ describe("property key policy keys API route", () => {
   });
 
   it("rejects unsupported methods", async () => {
-    const response = await callKeys("policy-1", { method: "DELETE" });
+    const response = await callKeys("policy-1", { method: "PATCH" });
 
     expect(response.statusCode()).toBe(405);
     expect(response.body()).toEqual({

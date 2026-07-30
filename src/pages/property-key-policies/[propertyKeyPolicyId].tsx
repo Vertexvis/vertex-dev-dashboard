@@ -41,7 +41,9 @@ interface ServerSideContext {
 export default function PropertyKeyPolicyDetails({
   propertyKeyPolicy,
 }: Props): JSX.Element {
-  const { data, error } = useSWR<GetPropertyKeyPolicyKeysRes | undefined>(
+  const { data, error, mutate } = useSWR<
+    GetPropertyKeyPolicyKeysRes | undefined
+  >(
     `/api/property-key-policies/${encodeURIComponent(
       propertyKeyPolicy.id
     )}/keys`
@@ -85,6 +87,8 @@ export default function PropertyKeyPolicyDetails({
                 keys={keys}
                 error={keysFailed}
                 loading={keysLoading}
+                onMutate={() => mutate()}
+                policyId={propertyKeyPolicy.id}
               />
             </Box>
           </Paper>

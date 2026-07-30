@@ -47,6 +47,18 @@ export type GetPropertyKeyPolicyKeysRes = Res & {
   readonly data: PropertyKeyPolicyKeyResource[];
 };
 
+export interface AddPropertyKeyPolicyKeysReq {
+  readonly keys: string[];
+}
+
+export type AddPropertyKeyPolicyKeysRes = Res;
+
+export interface DeletePropertyKeyPolicyKeysReq {
+  readonly ids: string[];
+}
+
+export type DeletePropertyKeyPolicyKeysRes = Res;
+
 /**
  * Create request body shared by the POST API route and the create dialog.
  *

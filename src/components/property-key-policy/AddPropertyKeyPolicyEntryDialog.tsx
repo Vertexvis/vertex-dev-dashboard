@@ -15,7 +15,7 @@ import {
 import React from "react";
 
 import { isErrorRes } from "../../lib/api";
-import { AddPropertyKeyPolicyEntriesReq } from "../../lib/property-key-policies";
+import { AddPropertyKeyPolicyKeysReq } from "../../lib/property-key-policies";
 
 interface Props {
   readonly onAdded: () => void;
@@ -79,7 +79,7 @@ export default function AddPropertyKeyPolicyEntryDialog({
       return;
     }
 
-    const body: AddPropertyKeyPolicyEntriesReq = { keys: nonEmptyKeys };
+    const body: AddPropertyKeyPolicyKeysReq = { keys: nonEmptyKeys };
 
     setSubmitting(true);
 
@@ -87,7 +87,7 @@ export default function AddPropertyKeyPolicyEntryDialog({
     let resBody: { message?: string };
     try {
       res = await fetch(
-        `/api/property-key-policies/${encodeURIComponent(policyId)}/entries`,
+        `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
         {
           body: JSON.stringify(body),
           headers: { "Content-Type": "application/json" },
