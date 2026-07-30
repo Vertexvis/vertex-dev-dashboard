@@ -1,6 +1,11 @@
 import { SceneItemData, SceneViewStateData } from "@vertexvis/api-client-node";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { Environment, TapEventDetails } from "@vertexvis/viewer";
+import {
+  DomainPropertyEntry,
+  Environment,
+  SceneItemMetadataResponse,
+  TapEventDetails,
+} from "@vertexvis/viewer";
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import { useRouter } from "next/router";
 import { withIronSession } from "next-iron-session";
@@ -11,13 +16,19 @@ import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { LeftSidebar } from "../../components/viewer/LeftSidebar";
+import { MetadataStatus } from "../../components/viewer/MetadataStates";
 import { PolicySelect } from "../../components/viewer/PolicySelect";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
-import { Metadata, toMetadataFromItem } from "../../lib/metadata";
+import {
+  Metadata,
+  toMetadata,
+  toMetadataFromDomainEntries,
+  toMetadataFromItem,
+} from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
@@ -58,14 +69,28 @@ export default function SceneViewer({
   const [selectedItemId, setSelectedItemId] = React.useState<
     string | undefined
   >();
+  const [selectedIdentifiers, setSelectedIdentifiers] =
+    React.useState<HitIdentifiers>();
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
+  const [streamMetadata, setStreamMetadata] = React.useState<
+    Metadata | undefined
+  >();
+  const [metadataStatus, setMetadataStatus] =
+    React.useState<MetadataStatus>("ready");
+  const [metadataError, setMetadataError] = React.useState<string>();
+  const [metadataDiagnostic, setMetadataDiagnostic] = React.useState<string>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const [policyId, setPolicyId] = React.useState<string | undefined>();
   const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const unrestrictedMetadata = React.useMemo(
+    () =>
+      selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined,
+    [selectedItem.data]
+  );
   const modelViews = useModelViews({
     itemId: selectedItemId,
     viewerState,
@@ -126,12 +151,16 @@ export default function SceneViewer({
 
     if (detail.buttons !== 2) {
       setSelectedItemId(hit?.itemId?.hex ?? undefined);
+      setSelectedIdentifiers(hit ? toHitIdentifiers(hit) : undefined);
+      setStreamMetadata(hit ? toMetadata({ hit }) : undefined);
       await selectByHit({ hit, viewer: viewerState.ref.current });
     }
   }
 
   function handleTreeItemSelected(itemId: string) {
     setSelectedItemId(itemId);
+    setSelectedIdentifiers(undefined);
+    setStreamMetadata(undefined);
   }
 
   function handleViewStateSelected(id: string) {
@@ -148,6 +177,9 @@ export default function SceneViewer({
 
     setSwitchingPolicy(true);
     setStreamKeyError(undefined);
+    setViewId(undefined);
+    setStreamMetadata(undefined);
+    if (selectedItemId != null) setMetadataStatus("loading");
     try {
       const { credentials: nextCredentials, url } = await createPolicySwitch({
         sceneId,
@@ -167,10 +199,51 @@ export default function SceneViewer({
   }
 
   React.useEffect(() => {
-    if (selectedItem.data) {
-      setMetadata(toMetadataFromItem(selectedItem.data));
+    if (selectedItemId == null || viewId == null) {
+      if (selectedItemId != null) {
+        setMetadataStatus("loading");
+        return;
+      }
+      setMetadata(undefined);
+      setMetadataStatus("ready");
+      setMetadataError(undefined);
+      setMetadataDiagnostic(undefined);
+      return;
     }
-  }, [selectedItem.data]);
+
+    const controller = viewerState.ref.current?.sceneItems;
+    if (controller == null) return;
+
+    let cancelled = false;
+    setMetadataStatus("loading");
+    setMetadataError(undefined);
+    setMetadataDiagnostic(undefined);
+
+    void (async () => {
+      try {
+        const { metadata: nextMetadata, entryCount } = await loadItemMetadata({
+          controller,
+          itemId: selectedItemId,
+          viewId,
+          identifiers: selectedIdentifiers,
+        });
+        if (cancelled) return;
+
+        setMetadata(nextMetadata);
+        setMetadataStatus("ready");
+        setMetadataDiagnostic(diagnosePolicy({ policyId, entryCount }));
+      } catch {
+        if (cancelled) return;
+        setMetadata(undefined);
+        setMetadataStatus("error");
+        setMetadataError("Unable to load metadata for this item.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedItemId, viewId, policyId, selectedIdentifiers, viewerState.ref]);
 
   const featureLines = { width: 0.5, color: "#444444" };
 
@@ -228,6 +301,7 @@ export default function SceneViewer({
             }}
             onViewReset={() => {
               setSelectedItemId(undefined);
+              setStreamMetadata(undefined);
               modelViews.actions.unloadModelView();
             }}
           />
@@ -243,6 +317,11 @@ export default function SceneViewer({
         <RightDrawer
           active={openedRightPanel}
           metadata={metadata}
+          unrestrictedMetadata={unrestrictedMetadata}
+          streamMetadata={streamMetadata}
+          metadataStatus={metadataStatus}
+          metadataError={metadataError}
+          metadataDiagnostic={metadataDiagnostic}
           modelViews={modelViews}
           sceneViewStates={data?.data}
           onViewStateSelected={handleViewStateSelected}
@@ -253,6 +332,76 @@ export default function SceneViewer({
   ) : (
     <></>
   );
+}
+
+type SceneItemController = NonNullable<HTMLVertexViewerElement["sceneItems"]>;
+
+export interface HitIdentifiers {
+  readonly suppliedId?: string;
+  readonly partId?: string;
+  readonly partRevisionId?: string;
+  readonly partRevisionSuppliedId?: string;
+}
+
+export function toHitIdentifiers(
+  hit: vertexvis.protobuf.stream.IHit
+): HitIdentifiers {
+  return {
+    suppliedId: hit.itemSuppliedId?.value ?? undefined,
+    partId: hit.partId?.hex ?? undefined,
+    partRevisionId: hit.partRevisionId?.hex ?? undefined,
+    partRevisionSuppliedId: hit.suppliedPartRevisionId?.value ?? undefined,
+  };
+}
+
+export async function loadItemMetadata({
+  controller,
+  itemId,
+  viewId,
+  identifiers,
+}: {
+  controller: SceneItemController;
+  itemId: string;
+  viewId: string;
+  identifiers?: HitIdentifiers;
+}): Promise<{ metadata: Metadata; entryCount: number }> {
+  const entries: DomainPropertyEntry[] = [];
+  let cursor: string | undefined;
+  do {
+    const response: SceneItemMetadataResponse =
+      // eslint-disable-next-line no-await-in-loop
+      await controller.listSceneItemMetadata(itemId, { size: 100, cursor });
+    entries.push(...response.entries);
+    cursor = response.paging?.next ?? undefined;
+  } while (cursor != null);
+
+  const item = await controller
+    .getSceneViewItem(itemId, viewId, {})
+    .catch(() => undefined);
+  return {
+    metadata: toMetadataFromDomainEntries(entries, {
+      id: item?.id ?? itemId,
+      suppliedId: item?.suppliedId ?? identifiers?.suppliedId,
+      name: item?.name ?? undefined,
+      partId: identifiers?.partId,
+      partRevisionId: identifiers?.partRevisionId,
+      partRevisionSuppliedId: identifiers?.partRevisionSuppliedId,
+    }),
+    entryCount: entries.length,
+  };
+}
+
+export function diagnosePolicy({
+  policyId,
+  entryCount,
+}: {
+  policyId?: string;
+  entryCount: number;
+}): string | undefined {
+  if (!policyId) return undefined;
+  return entryCount === 0
+    ? "Policy applied, but no metadata was returned for this item."
+    : undefined;
 }
 
 export async function createStreamKey(
