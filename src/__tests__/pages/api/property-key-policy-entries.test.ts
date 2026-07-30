@@ -74,10 +74,8 @@ describe("property key policy entries API route", () => {
     });
   });
 
-  it("terminates when upstream returns the same cursor repeatedly", async () => {
-    // Simulates a misbehaving upstream that always returns the same `next`
-    // cursor. The handler should break out of the loop and return 200 with
-    // whatever data was accumulated rather than looping forever.
+  it("fails safely when upstream returns the same cursor repeatedly", async () => {
+    // A repeated cursor must not lead to an infinite pagination loop.
     let callCount = 0;
 
     nodeMswServer.use(
@@ -100,16 +98,11 @@ describe("property key policy entries API route", () => {
 
     const response = await callEntries("policy-1", { method: "GET" });
 
-    expect(response.statusCode()).toBe(200);
-    // The handler should have made exactly 1 upstream call: the first request
-    // uses cursor=undefined, gets back next=stuck-cursor, then detects that
-    // the next cursor differs from the current (undefined !== "stuck-cursor")
-    // and sets cursor to "stuck-cursor". On the second call cursor="stuck-cursor"
-    // and next="stuck-cursor" — equal — so the loop breaks after 2 calls total.
+    expect(response.statusCode()).toBe(500);
     expect(callCount).toBe(2);
     expect(response.body()).toEqual({
-      data: [entryData("entry-1", "key-1"), entryData("entry-2", "key-2")],
-      status: 200,
+      message: "Unknown error from Vertex API.",
+      status: 500,
     });
   });
 

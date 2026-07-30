@@ -1,4 +1,5 @@
-import { Cursors } from "@vertexvis/api-client-node";
+import { Cursors, getPage } from "@vertexvis/api-client-node";
+import { AxiosResponse } from "axios";
 import React from "react";
 
 import { GetRes } from "./api";
@@ -103,4 +104,36 @@ export function toPage<T extends { attributes: TA; id: string }, TA>({
     cursors: cursors ?? null,
     items: data.map(({ id, attributes }) => ({ ...attributes, id })),
   };
+}
+
+interface CursorPage<T> {
+  readonly data: T[];
+  readonly links: {
+    readonly next?: { readonly href: string };
+    readonly self?: { readonly href: string };
+  };
+}
+
+/** Fetch every cursor-paginated page using the API client's cursor parser. */
+export async function fetchAllPages<T, TPage extends CursorPage<T>>(
+  fetchPage: (cursor?: string) => Promise<AxiosResponse<TPage>>
+): Promise<T[]> {
+  const items: T[] = [];
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+
+  do {
+    // Each request depends on the cursor returned by the previous page.
+    // eslint-disable-next-line no-await-in-loop
+    const { page, cursor: nextCursor } = await getPage(() => fetchPage(cursor));
+    items.push(...page.data);
+
+    if (nextCursor != null && seenCursors.has(nextCursor))
+      throw new Error("Received a repeated pagination cursor.");
+
+    if (nextCursor != null) seenCursors.add(nextCursor);
+    cursor = nextCursor;
+  } while (cursor != null);
+
+  return items;
 }

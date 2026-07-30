@@ -192,20 +192,11 @@ describe("CreatePropertyKeyPolicyDialog", () => {
   });
 
   describe("when fetch rejects (network error)", () => {
-    let originalFetch: typeof global.fetch;
-
-    beforeEach(() => {
-      originalFetch = global.fetch;
-      global.fetch = jest
-        .fn()
-        .mockRejectedValue(new Error("Network failure")) as typeof global.fetch;
-    });
-
-    afterEach(() => {
-      global.fetch = originalFetch;
-    });
-
     it("shows the generic API error and keeps Create enabled", async () => {
+      server.use(
+        http.post("*/api/property-key-policies", () => HttpResponse.error())
+      );
+
       const onCreated = jest.fn();
       const onClose = jest.fn();
       renderDialog({ onClose, onCreated });
@@ -230,21 +221,18 @@ describe("CreatePropertyKeyPolicyDialog", () => {
   });
 
   describe("when fetch resolves but res.json() rejects", () => {
-    let originalFetch: typeof global.fetch;
-
-    beforeEach(() => {
-      originalFetch = global.fetch;
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.reject(new Error("bad json")),
-      }) as typeof global.fetch;
-    });
-
-    afterEach(() => {
-      global.fetch = originalFetch;
-    });
-
     it("calls onCreated, shows uncertain-outcome warning, and switches to Close-only", async () => {
+      server.use(
+        http.post(
+          "*/api/property-key-policies",
+          () =>
+            new HttpResponse("not json", {
+              headers: { "Content-Type": "application/json" },
+              status: 201,
+            })
+        )
+      );
+
       const onCreated = jest.fn();
       const onClose = jest.fn();
       renderDialog({ onClose, onCreated });

@@ -1,23 +1,29 @@
-import { head, logError, VertexError } from "@vertexvis/api-client-node";
+import {
+  Failure,
+  head,
+  logError,
+  PropertyKeyPolicyEntryList,
+  VertexError,
+} from "@vertexvis/api-client-node";
+import { AxiosError } from "axios";
 import { NextApiResponse } from "next";
 
 import {
   ErrorRes,
-  isErrorFailure,
   MethodNotAllowed,
   ServerError,
   toErrorRes,
 } from "../../../../lib/api";
+import { fetchAllPages } from "../../../../lib/paging";
 import {
   getPropertyKeyPoliciesApi,
   GetPropertyKeyPolicyEntriesRes,
   PropertyKeyPolicyEntryResource,
 } from "../../../../lib/property-key-policies";
-import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
+import { getClientFromSession } from "../../../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
 const EntriesPageSize = 200;
-const MaxPages = 50;
 
 export async function handlePropertyKeyPolicyEntries(
   req: NextIronRequest,
@@ -45,46 +51,26 @@ async function get(
       await getClientFromSession(req.session)
     );
 
-    const data: PropertyKeyPolicyEntryResource[] = [];
-    let cursor: string | undefined;
-    let pageCount = 0;
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const page = await makeCall(() =>
-        c.listPropertyKeyPolicyEntries({
-          filterPropertyKeyPolicyId: id,
-          pageCursor: cursor,
-          pageSize: EntriesPageSize,
-        })
-      );
-      if (isErrorFailure(page)) return toErrorRes({ failure: page });
-
-      data.push(...page.data);
-      pageCount += 1;
-
-      const next = nextCursor(page.links.next?.href);
-      // Guard against a repeated cursor (infinite loop) and enforce a page cap
-      // (MaxPages pages × EntriesPageSize entries = up to 10,000 entries).
-      if (next != null && next === cursor) break;
-      cursor = next;
-    } while (cursor != null && pageCount < MaxPages);
+    const data = await fetchAllPages<
+      PropertyKeyPolicyEntryResource,
+      PropertyKeyPolicyEntryList
+    >((pageCursor) =>
+      c.listPropertyKeyPolicyEntries({
+        filterPropertyKeyPolicyId: id,
+        pageCursor,
+        pageSize: EntriesPageSize,
+      })
+    );
 
     return { data, status: 200 };
   } catch (error) {
     const e = error as VertexError;
+    const ae = error as AxiosError<Failure>;
     logError(e);
     return e.vertexError?.res
       ? toErrorRes({ failure: e.vertexError?.res })
+      : ae.response?.data != null
+      ? toErrorRes({ failure: ae.response.data })
       : ServerError;
-  }
-}
-
-function nextCursor(href?: string): string | undefined {
-  if (href == null) return undefined;
-
-  try {
-    return new URL(href).searchParams.get("page[cursor]") ?? undefined;
-  } catch {
-    return undefined;
   }
 }

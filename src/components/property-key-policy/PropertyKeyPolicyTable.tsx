@@ -22,6 +22,8 @@ import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import {
+  DeletePropertyKeyPoliciesRes,
+  PartialDeletePropertyKeyPoliciesRes,
   PropertyKeyPolicy,
   toPropertyKeyPolicyPage,
 } from "../../lib/property-key-policies";
@@ -160,20 +162,27 @@ export default function PropertyKeyPolicyTable({
       return;
     }
 
-    if (!res.ok) {
-      let message: string | undefined;
+    let body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined;
+    try {
+      body = await res.json();
+    } catch {
+      body = undefined;
+    }
+
+    if (!res.ok || isPartialDelete(body)) {
+      const deletedIds = isPartialDelete(body) ? body.deletedIds : [];
+      const failedIds = isPartialDelete(body) ? body.failedIds : [];
       try {
-        const body = await res.json();
-        message = isErrorRes(body) ? body.message : undefined;
-      } catch {
-        message = undefined;
+        onPoliciesDeleted?.(deletedIds);
+      } finally {
+        setDeleting(false);
+        setSelected(new Set(failedIds));
+        setDeleteError(
+          (isErrorRes(body) ? body.message : undefined) ??
+            "Could not delete the selected property key policies."
+        );
+        mutate();
       }
-      setDeleting(false);
-      setSelected(new Set());
-      setDeleteError(
-        message ?? "Could not delete the selected property key policies."
-      );
-      mutate();
       return;
     }
 
@@ -355,5 +364,20 @@ export default function PropertyKeyPolicyTable({
         </Alert>
       </Snackbar>
     </>
+  );
+}
+
+function isPartialDelete(
+  body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined
+): body is PartialDeletePropertyKeyPoliciesRes {
+  const partial = body as Partial<PartialDeletePropertyKeyPoliciesRes>;
+
+  return (
+    body != null &&
+    "failedIds" in body &&
+    "deletedIds" in body &&
+    Array.isArray(partial.failedIds) &&
+    Array.isArray(partial.deletedIds) &&
+    typeof partial.message === "string"
   );
 }

@@ -15,11 +15,9 @@ import { Paged, toPage } from "./paging";
 export { PropertyKeyPolicyMode };
 
 export type PropertyKeyPolicyResource = PropertyKeyPolicyList["data"][number];
-export type PropertyKeyPolicyAttributes =
-  PropertyKeyPolicyResource["attributes"];
 export type PropertyKeyPolicyPageRes = GetRes<PropertyKeyPolicyResource>;
 
-export type PropertyKeyPolicy = PropertyKeyPolicyAttributes &
+export type PropertyKeyPolicy = PropertyKeyPolicyResource["attributes"] &
   Pick<PropertyKeyPolicyResource, "id">;
 
 export type PropertyKeyPolicyEntryResource =
@@ -71,6 +69,16 @@ export type CreatePropertyKeyPolicyRes = Res & {
   readonly entriesError?: string;
 };
 
+export type DeletePropertyKeyPoliciesRes = Res & {
+  readonly deletedIds: string[];
+};
+
+export type PartialDeletePropertyKeyPoliciesRes =
+  DeletePropertyKeyPoliciesRes & {
+    readonly failedIds: string[];
+    readonly message: string;
+  };
+
 export function toPropertyKeyPolicy(
   data: PropertyKeyPolicyResource
 ): PropertyKeyPolicy {
@@ -80,7 +88,10 @@ export function toPropertyKeyPolicy(
 export function toPropertyKeyPolicyPage(
   res: PropertyKeyPolicyPageRes
 ): Paged<PropertyKeyPolicy> {
-  return toPage<PropertyKeyPolicyResource, PropertyKeyPolicyAttributes>(res);
+  return toPage<
+    PropertyKeyPolicyResource,
+    PropertyKeyPolicyResource["attributes"]
+  >(res);
 }
 
 export function toPropertyKeyPolicyEntry(

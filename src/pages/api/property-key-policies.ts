@@ -16,14 +16,15 @@ import {
   InvalidBody,
   isErrorFailure,
   MethodNotAllowed,
-  Res,
   ServerError,
   toErrorRes,
 } from "../../lib/api";
 import {
   CreatePropertyKeyPolicyReq,
   CreatePropertyKeyPolicyRes,
+  DeletePropertyKeyPoliciesRes,
   getPropertyKeyPoliciesApi,
+  PartialDeletePropertyKeyPoliciesRes,
   PropertyKeyPolicyMode,
   PropertyKeyPolicyPageRes,
 } from "../../lib/property-key-policies";
@@ -35,7 +36,10 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 export async function handlePropertyKeyPolicies(
   req: NextIronRequest,
   res: NextApiResponse<
-    PropertyKeyPolicyPageRes | CreatePropertyKeyPolicyRes | Res | ErrorRes
+    | PropertyKeyPolicyPageRes
+    | CreatePropertyKeyPolicyRes
+    | DeletePropertyKeyPoliciesRes
+    | ErrorRes
   >
 ): Promise<void> {
   if (req.method === "GET") {
@@ -160,7 +164,11 @@ async function create(
   }
 }
 
-async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
+async function del(
+  req: NextIronRequest
+): Promise<
+  ErrorRes | DeletePropertyKeyPoliciesRes | PartialDeletePropertyKeyPoliciesRes
+> {
   if (!req.body) return BodyRequired;
 
   let ids: unknown;
@@ -186,10 +194,25 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
     const results = await Promise.all(
       ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id })))
     );
-    const failure = results.find(isErrorFailure);
-    if (failure != null) return toErrorRes({ failure });
+    const deletedIds = ids.filter(
+      (_, index) => !isErrorFailure(results[index])
+    );
+    const failedIds = ids.filter((_, index) => isErrorFailure(results[index]));
+    if (failedIds.length > 0) {
+      const failure = results.find(isErrorFailure);
+      if (failure == null) return ServerError;
+      if (deletedIds.length === 0) return toErrorRes({ failure });
 
-    return { status: 200 };
+      const error = toErrorRes({ failure });
+      return {
+        deletedIds,
+        failedIds,
+        message: error.message,
+        status: 207,
+      };
+    }
+
+    return { deletedIds, status: 200 };
   } catch (error) {
     const e = error as VertexError;
     logError(e);

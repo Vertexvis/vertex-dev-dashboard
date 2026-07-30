@@ -333,7 +333,7 @@ describe("property key policies API routes", () => {
     });
 
     expect(response.statusCode()).toBe(200);
-    expect(response.body()).toEqual({ status: 200 });
+    expect(response.body()).toEqual({ deletedIds: ["policy-1"], status: 200 });
     expect(deletedIds).toEqual(["policy-1"]);
   });
 
@@ -351,7 +351,10 @@ describe("property key policies API routes", () => {
     });
 
     expect(response.statusCode()).toBe(200);
-    expect(response.body()).toEqual({ status: 200 });
+    expect(response.body()).toEqual({
+      deletedIds: ["policy-1", "policy-2"],
+      status: 200,
+    });
     expect(deletedIds).toEqual(["policy-1", "policy-2"]);
   });
 
@@ -371,6 +374,28 @@ describe("property key policies API routes", () => {
     expect(response.body()).toEqual({
       message: "Policy not found.",
       status: 404,
+    });
+  });
+
+  it("reports successful and failed IDs for a partial delete", async () => {
+    nodeMswServer.use(
+      stubDeletePolicy("policy-1"),
+      stubDeletePolicy("policy-2", {
+        errors: [{ status: "404", title: "Policy not found." }],
+      })
+    );
+
+    const response = await callPolicies({
+      body: JSON.stringify({ ids: ["policy-1", "policy-2"] }),
+      method: "DELETE",
+    });
+
+    expect(response.statusCode()).toBe(207);
+    expect(response.body()).toEqual({
+      deletedIds: ["policy-1"],
+      failedIds: ["policy-2"],
+      message: "Policy not found.",
+      status: 207,
     });
   });
 

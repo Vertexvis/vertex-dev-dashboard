@@ -184,6 +184,47 @@ describe("PropertyKeyPolicyTable", () => {
     expect(deletedIds).toEqual([["policy-1"]]);
   });
 
+  it("reconciles a partial delete and keeps only failed policies selected", async () => {
+    const onPoliciesDeleted = jest.fn();
+    const page = propertyKeyPoliciesPage({
+      data: [
+        propertyKeyPolicy({ id: "policy-1", name: "Deleted Policy" }),
+        propertyKeyPolicy({ id: "policy-2", name: "Failed Policy" }),
+      ],
+    });
+
+    server.use(
+      http.get("*/api/property-key-policies", () => HttpResponse.json(page)),
+      http.delete("*/api/property-key-policies", () =>
+        HttpResponse.json(
+          {
+            deletedIds: ["policy-1"],
+            failedIds: ["policy-2"],
+            message: "Could not delete policy-2.",
+            status: 207,
+          },
+          { status: 207 }
+        )
+      )
+    );
+
+    renderWithSWR(
+      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />
+    );
+
+    expect(await screen.findByText("Deleted Policy")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Select Deleted Policy"));
+    await userEvent.click(screen.getByLabelText("Select Failed Policy"));
+    await userEvent.click(screen.getByLabelText("Delete"));
+
+    expect(
+      await screen.findByText("Could not delete policy-2.")
+    ).toBeInTheDocument();
+    expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"]);
+    expect(screen.getByLabelText("Select Deleted Policy")).not.toBeChecked();
+    expect(screen.getByLabelText("Select Failed Policy")).toBeChecked();
+  });
+
   it("recovers from a non-JSON delete error without getting stuck", async () => {
     let getCount = 0;
 
