@@ -6,19 +6,19 @@ import React from "react";
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
 import { server } from "../../../../test/msw/server";
 import { renderWithSWR } from "../../../../test/render/renderWithSWR";
-import { PropertyKeyPolicyEntriesList } from "../../../components/property-key-policy/PropertyKeyPolicyEntriesList";
-import { PropertyKeyPolicyEntry } from "../../../lib/property-key-policies";
+import { PropertyKeyPolicyKeysList } from "../../../components/property-key-policy/PropertyKeyPolicyKeysList";
+import { PropertyKeyPolicyKey } from "../../../lib/property-key-policies";
 
-const entries: readonly PropertyKeyPolicyEntry[] = [
+const keys: readonly PropertyKeyPolicyKey[] = [
   { id: "entry-1", name: "Alpha" },
   { id: "entry-2", name: "Beta" },
 ];
 
-describe("PropertyKeyPolicyEntriesList", () => {
+describe("PropertyKeyPolicyKeysList", () => {
   installJsdomMockServer();
 
   it("renders read-only with no editing controls when editing props are absent", () => {
-    renderWithSWR(<PropertyKeyPolicyEntriesList entries={entries} />);
+    renderWithSWR(<PropertyKeyPolicyKeysList keys={keys} />);
 
     expect(screen.getByText("Alpha")).toBeInTheDocument();
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -32,8 +32,8 @@ describe("PropertyKeyPolicyEntriesList", () => {
 
   it("renders delete buttons, checkboxes, and an add button in editable mode", () => {
     renderWithSWR(
-      <PropertyKeyPolicyEntriesList
-        entries={entries}
+      <PropertyKeyPolicyKeysList
+        keys={keys}
         onMutate={jest.fn()}
         policyId="policy-1"
       />
@@ -48,13 +48,13 @@ describe("PropertyKeyPolicyEntriesList", () => {
     ).toBeInTheDocument();
   });
 
-  it("deletes a single entry by id and triggers mutate", async () => {
+  it("deletes a single property key by id and triggers mutate", async () => {
     const deletedIds: string[][] = [];
     const onMutate = jest.fn();
 
     server.use(
       http.delete(
-        "*/api/property-key-policies/:id/entries",
+        "*/api/property-key-policies/:id/keys",
         async ({ request }) => {
           const body = (await request.json()) as { ids?: string[] };
           deletedIds.push(body.ids ?? []);
@@ -64,8 +64,8 @@ describe("PropertyKeyPolicyEntriesList", () => {
     );
 
     renderWithSWR(
-      <PropertyKeyPolicyEntriesList
-        entries={entries}
+      <PropertyKeyPolicyKeysList
+        keys={keys}
         onMutate={onMutate}
         policyId="policy-1"
       />
@@ -77,13 +77,13 @@ describe("PropertyKeyPolicyEntriesList", () => {
     await waitFor(() => expect(onMutate).toHaveBeenCalled());
   });
 
-  it("bulk deletes the selected entry ids", async () => {
+  it("bulk deletes the selected property key ids", async () => {
     const deletedIds: string[][] = [];
     const onMutate = jest.fn();
 
     server.use(
       http.delete(
-        "*/api/property-key-policies/:id/entries",
+        "*/api/property-key-policies/:id/keys",
         async ({ request }) => {
           const body = (await request.json()) as { ids?: string[] };
           deletedIds.push(body.ids ?? []);
@@ -93,8 +93,8 @@ describe("PropertyKeyPolicyEntriesList", () => {
     );
 
     renderWithSWR(
-      <PropertyKeyPolicyEntriesList
-        entries={entries}
+      <PropertyKeyPolicyKeysList
+        keys={keys}
         onMutate={onMutate}
         policyId="policy-1"
       />
@@ -112,7 +112,7 @@ describe("PropertyKeyPolicyEntriesList", () => {
     const onMutate = jest.fn();
 
     server.use(
-      http.delete("*/api/property-key-policies/:id/entries", () =>
+      http.delete("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not delete entry-1.", status: 500 },
           { status: 500 }
@@ -121,8 +121,8 @@ describe("PropertyKeyPolicyEntriesList", () => {
     );
 
     renderWithSWR(
-      <PropertyKeyPolicyEntriesList
-        entries={entries}
+      <PropertyKeyPolicyKeysList
+        keys={keys}
         onMutate={onMutate}
         policyId="policy-1"
       />
