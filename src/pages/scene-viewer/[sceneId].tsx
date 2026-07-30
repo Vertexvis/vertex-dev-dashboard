@@ -11,6 +11,7 @@ import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
 import { LeftDrawer } from "../../components/viewer/LeftDrawer";
 import { LeftSidebar } from "../../components/viewer/LeftSidebar";
+import { PolicySelect } from "../../components/viewer/PolicySelect";
 import { RightDrawer } from "../../components/viewer/RightDrawer";
 import { RightSidebar } from "../../components/viewer/RightSidebar";
 import { Viewer } from "../../components/viewer/Viewer";
@@ -23,6 +24,7 @@ import { useViewer } from "../../lib/viewer";
 import {
   CommonProps,
   CookieAttributes,
+  EnvironmentWithCustom,
   NextIronRequest,
   serverSidePropsHandler as commonServerSidePropsHandler,
 } from "../../lib/with-session";
@@ -60,6 +62,8 @@ export default function SceneViewer({
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
+  const [policyId, setPolicyId] = React.useState<string | undefined>();
+  const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
   const modelViews = useModelViews({
@@ -76,6 +80,9 @@ export default function SceneViewer({
     const sk = head(router.query.streamKey);
     const ve = (head(router.query.vertexEnv) as Environment) ?? vertexEnv;
     const sceneId = head(router.query.sceneId);
+    const pId = head(router.query.policyId);
+
+    setPolicyId(pId);
 
     if (cId && sk && ve) {
       setCredentials({ clientId: cId, streamKey: sk, vertexEnv: ve });
@@ -87,10 +94,16 @@ export default function SceneViewer({
 
     requestedStreamKeyForScene.current = sceneId;
     setStreamKeyError(undefined);
-    void createStreamKey(sceneId)
+    void createStreamKey(sceneId, pId)
       .then((streamKey) =>
         router.replace(
-          encodeCreds({ clientId: cId, sceneId, streamKey, vertexEnv: ve }),
+          encodeCreds({
+            clientId: cId,
+            sceneId,
+            streamKey,
+            vertexEnv: ve,
+            policyId: pId,
+          }),
           undefined,
           { shallow: true }
         )
@@ -125,6 +138,34 @@ export default function SceneViewer({
     applySceneViewState({ id, viewer: viewerState.ref.current });
   }
 
+  async function handlePolicyChange(newPolicyId?: string) {
+    if (newPolicyId === policyId) return;
+
+    const sceneId = head(router.query.sceneId);
+    const cId = credentials?.clientId ?? clientId;
+    const ve = credentials?.vertexEnv ?? vertexEnv;
+    if (!sceneId || !cId || !ve) return;
+
+    setSwitchingPolicy(true);
+    setStreamKeyError(undefined);
+    try {
+      const { credentials: nextCredentials, url } = await createPolicySwitch({
+        sceneId,
+        clientId: cId,
+        vertexEnv: ve,
+        policyId: newPolicyId,
+      });
+      requestedStreamKeyForScene.current = sceneId;
+      setPolicyId(newPolicyId);
+      setCredentials(nextCredentials);
+      await router.replace(url, undefined, { shallow: true });
+    } catch {
+      setStreamKeyError("Unable to create a stream key for this scene.");
+    } finally {
+      setSwitchingPolicy(false);
+    }
+  }
+
   React.useEffect(() => {
     if (selectedItem.data) {
       setMetadata(toMetadataFromItem(selectedItem.data));
@@ -139,7 +180,18 @@ export default function SceneViewer({
 
   return router.isReady && credentials ? (
     <Layout
-      header={<Header />}
+      header={
+        <Header
+          actions={
+            <PolicySelect
+              policyId={policyId}
+              onChange={handlePolicyChange}
+              disabled={switchingPolicy}
+              sx={{ minWidth: "14rem" }}
+            />
+          }
+        />
+      }
       leftSidebar={
         <LeftSidebar
           active={openedLeftPanel}
@@ -161,6 +213,7 @@ export default function SceneViewer({
       main={
         viewerState.isReady && (
           <Viewer
+            key={credentials.streamKey}
             credentials={credentials}
             onSelect={handleSelect}
             viewerState={viewerState}
@@ -202,9 +255,15 @@ export default function SceneViewer({
   );
 }
 
-async function createStreamKey(sceneId: string): Promise<string> {
+export async function createStreamKey(
+  sceneId: string,
+  policyId?: string
+): Promise<string> {
   const response = await fetch("/api/stream-keys", {
-    body: JSON.stringify({ id: sceneId }),
+    body: JSON.stringify({
+      id: sceneId,
+      ...(policyId ? { propertyKeyPolicyId: policyId } : {}),
+    }),
     method: "POST",
   });
   if (!response.ok) throw new Error("Stream-key creation failed.");
@@ -214,22 +273,48 @@ async function createStreamKey(sceneId: string): Promise<string> {
   return key;
 }
 
+export async function createPolicySwitch({
+  sceneId,
+  clientId,
+  vertexEnv,
+  policyId,
+}: {
+  sceneId: string;
+  clientId: string;
+  vertexEnv: EnvironmentWithCustom;
+  policyId?: string;
+}): Promise<{
+  streamKey: string;
+  credentials: StreamCredentials;
+  url: string;
+}> {
+  const streamKey = await createStreamKey(sceneId, policyId);
+  return {
+    streamKey,
+    credentials: { clientId, streamKey, vertexEnv },
+    url: encodeCreds({ clientId, sceneId, streamKey, vertexEnv, policyId }),
+  };
+}
+
 export function encodeCreds({
   clientId,
   streamKey,
   vertexEnv,
   sceneId,
+  policyId,
 }: {
   clientId: string;
   streamKey: string;
-  vertexEnv: Environment;
+  vertexEnv: EnvironmentWithCustom;
   sceneId?: string;
+  policyId?: string;
 }): string {
   const path = `/scene-viewer/${encodeURIComponent(sceneId ?? "unknown")}`;
   const cId = `clientId=${encodeURIComponent(clientId)}`;
   const sk = `streamKey=${encodeURIComponent(streamKey)}`;
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
-  return `${path}/?${cId}&${sk}&${ve}`;
+  const pId = policyId ? `&policyId=${encodeURIComponent(policyId)}` : "";
+  return `${path}/?${cId}&${sk}&${ve}${pId}`;
 }
 
 export function serverSidePropsHandler({
