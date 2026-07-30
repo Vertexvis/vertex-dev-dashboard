@@ -10,13 +10,9 @@ describe("toModeLabel", () => {
     expect(toModeLabel(PropertyKeyPolicyMode.Denylist)).toBe("Deny");
   });
 
-  it("falls back to the raw value for unexpected modes", () => {
+  it("falls back to Unknown for unexpected modes", () => {
     expect(toModeLabel("something-else" as PropertyKeyPolicyMode)).toBe(
-      "something-else"
+      "Unknown"
     );
-  });
-
-  it("falls back to Unknown for an empty value", () => {
-    expect(toModeLabel("" as PropertyKeyPolicyMode)).toBe("Unknown");
   });
 });

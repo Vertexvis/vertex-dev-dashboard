@@ -3,13 +3,12 @@ import {
   FileCollectionMetadataData,
   FileCollectionsApi,
   FileMetadataData,
-  getPage,
   VertexClient,
 } from "@vertexvis/api-client-node";
 
 import { GetRes, Res } from "./api";
 import { isCompleteFileStatus } from "./files";
-import { Paged, toPage } from "./paging";
+import { fetchAllPages, Paged, toPage } from "./paging";
 
 export type FileCollectionResource = FileCollectionList["data"][number];
 export type FileCollectionAttributes = FileCollectionResource["attributes"];
@@ -98,31 +97,13 @@ export function getFileCollectionsApi(
   return new FileCollectionsApi(client.config, undefined, client.axiosInstance);
 }
 
-export async function fetchAllFileCollectionFiles(
+export function fetchAllFileCollectionFiles(
   api: FileCollectionsApi,
   id: string
 ): Promise<FileMetadataData[]> {
-  const files: FileMetadataData[] = [];
-  let cursor: string | undefined;
-  let hasNextPage = true;
-
-  while (hasNextPage) {
-    // Each request depends on the cursor returned by the previous page.
-    // eslint-disable-next-line no-await-in-loop
-    const { cursors, page } = await getPage(() =>
-      api.listFileCollectionFiles({
-        id,
-        pageCursor: cursor,
-        pageSize: 200,
-      })
-    );
-
-    files.push(...page.data);
-    hasNextPage = cursors.next != null;
-    cursor = cursors.next;
-  }
-
-  return files;
+  return fetchAllPages((pageCursor) =>
+    api.listFileCollectionFiles({ id, pageCursor, pageSize: 200 })
+  );
 }
 
 export function getFileCollectionExportAvailability(
