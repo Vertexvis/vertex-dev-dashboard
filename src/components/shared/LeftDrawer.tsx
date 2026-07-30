@@ -76,7 +76,7 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/property-key-policies")}
-          selected={isSectionActive("/property-key-policies")}
+          selected={router.route === "/property-key-policies"}
         >
           <ListItemIcon>
             <VpnKeyOutlined />
