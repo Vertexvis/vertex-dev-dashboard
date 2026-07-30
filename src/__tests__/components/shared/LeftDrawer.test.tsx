@@ -48,7 +48,9 @@ describe("LeftDrawer", () => {
     render(<LeftDrawer />);
 
     expect(
-      screen.getByRole("link", { name: "Identity & Administration" })
+      screen.getByRole("link", {
+        name: "Identity & Administration (Preview)",
+      })
     ).toHaveAttribute("href", "/identity-admin");
   });
 });

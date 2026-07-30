@@ -66,9 +66,10 @@ describe("SceneWorkspace", () => {
     );
 
     expect(await screen.findByText("Fixture scene")).toBeVisible();
-    expect(
-      screen.getByRole("link", { name: "Launch Viewer" })
-    ).toHaveAttribute("href", "/scene-viewer/scene-1");
+    expect(screen.getByRole("link", { name: "Launch Viewer" })).toHaveAttribute(
+      "href",
+      "/scene-viewer/scene-1"
+    );
     expect(
       screen.getByRole("link", { name: "Back to scenes" })
     ).toHaveAttribute("href", "/");

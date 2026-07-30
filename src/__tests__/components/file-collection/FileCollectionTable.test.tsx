@@ -60,10 +60,6 @@ const emptyCollectionPage = fileCollectionsPage({ data: [] });
 describe("FileCollectionTable", () => {
   installJsdomMockServer();
 
-  beforeEach(() => {
-    mockPush.mockClear();
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });

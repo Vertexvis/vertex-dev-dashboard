@@ -8,14 +8,11 @@ import {
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
 } from "../../../../test/api/nextJsApiRouteTest";
-import { installNodeMswServer } from "../../../../test/msw/installNodeMswServer";
 import { nodeMswServer } from "../../../../test/msw/server";
 import { handleSceneWorkspaceItems } from "../../../lib/resources/scene-workspace/scene-workspace-items.hooks";
 import { handleSceneWorkspaceViews } from "../../../lib/resources/scene-workspace/scene-workspace-views.hooks";
 
 const vertexApiOrigin = "https://vertex-api.test";
-
-installNodeMswServer();
 
 describe("scene workspace API routes", () => {
   it("serializes scene-item paging and supplied ID filtering through the SDK", async () => {
