@@ -1,4 +1,4 @@
-import { Drawer } from "@mui/material";
+import { Box, Drawer } from "@mui/material";
 import { drawerClasses } from "@mui/material/Drawer";
 import { SceneViewStateData } from "@vertexvis/api-client-node";
 import React from "react";
@@ -24,6 +24,29 @@ interface Props {
   readonly onViewStateSelected: (arg0: string) => void;
 }
 
+const MinWidth = 280;
+const MinViewerWidth = 280;
+const StorageKey = "viewer.rightDrawerWidth";
+const KeyboardStep = 20;
+
+function fallbackMaxWidth(): number {
+  if (typeof window === "undefined") return 800;
+  return Math.min(800, Math.round(window.innerWidth * 0.7));
+}
+
+function clampWidth(width: number, maximum: number): number {
+  return Math.max(MinWidth, Math.min(width, maximum));
+}
+
+function readStoredWidth(): number {
+  if (typeof window === "undefined") return RightDrawerWidth;
+  const raw = window.localStorage.getItem(StorageKey);
+  const parsed = raw != null ? Number.parseInt(raw, 10) : Number.NaN;
+  return Number.isFinite(parsed)
+    ? clampWidth(parsed, fallbackMaxWidth())
+    : RightDrawerWidth;
+}
+
 export function RightDrawer({
   active,
   metadata,
@@ -36,6 +59,113 @@ export function RightDrawer({
   sceneViewStates,
   onViewStateSelected,
 }: Props): JSX.Element {
+  const [width, setWidth] = React.useState(RightDrawerWidth);
+  const drawerRef = React.useRef<HTMLDivElement>(null);
+  const draggingRef = React.useRef(false);
+  const dragStartRef = React.useRef({ clientX: 0, width: RightDrawerWidth });
+
+  const maxWidth = React.useCallback((currentWidth: number): number => {
+    const viewer = drawerRef.current?.previousElementSibling;
+    if (viewer instanceof HTMLElement) {
+      const availableWidth =
+        currentWidth + Math.max(0, viewer.clientWidth - MinViewerWidth);
+      return Math.max(MinWidth, Math.min(800, availableWidth));
+    }
+    return fallbackMaxWidth();
+  }, []);
+
+  function setAndPersistWidth(nextWidth: number) {
+    setWidth((currentWidth) => {
+      const clampedWidth = clampWidth(nextWidth, maxWidth(currentWidth));
+      window.localStorage.setItem(StorageKey, String(clampedWidth));
+      return clampedWidth;
+    });
+  }
+
+  React.useEffect(() => {
+    setWidth((currentWidth) =>
+      clampWidth(readStoredWidth(), maxWidth(currentWidth))
+    );
+  }, [maxWidth]);
+
+  React.useEffect(() => {
+    function stopDragging() {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      document.body.style.userSelect = "";
+      setWidth((current) => {
+        window.localStorage.setItem(StorageKey, String(current));
+        return current;
+      });
+    }
+
+    function onMouseMove(event: MouseEvent) {
+      if (!draggingRef.current) return;
+      const { clientX, width: startWidth } = dragStartRef.current;
+      setWidth(
+        clampWidth(startWidth + clientX - event.clientX, maxWidth(startWidth))
+      );
+    }
+
+    function onResize() {
+      setWidth((currentWidth) =>
+        clampWidth(currentWidth, maxWidth(currentWidth))
+      );
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", stopDragging);
+    window.addEventListener("blur", stopDragging);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", stopDragging);
+      window.removeEventListener("blur", stopDragging);
+      window.removeEventListener("resize", onResize);
+      document.body.style.userSelect = "";
+    };
+  }, [maxWidth]);
+
+  function handleMouseDown(event: React.MouseEvent) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    draggingRef.current = true;
+    dragStartRef.current = { clientX: event.clientX, width };
+    document.body.style.userSelect = "none";
+  }
+
+  function handleDoubleClick() {
+    setAndPersistWidth(RightDrawerWidth);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent) {
+    switch (event.key) {
+      case "ArrowLeft":
+        event.preventDefault();
+        setAndPersistWidth(width + KeyboardStep);
+        break;
+      case "ArrowRight":
+        event.preventDefault();
+        setAndPersistWidth(width - KeyboardStep);
+        break;
+      case "Home":
+        event.preventDefault();
+        setAndPersistWidth(MinWidth);
+        break;
+      case "End":
+        event.preventDefault();
+        setAndPersistWidth(maxWidth(width));
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        handleDoubleClick();
+        break;
+      default:
+        break;
+    }
+  }
+
   const getDisplayedContent = () => {
     switch (active) {
       case "properties":
@@ -66,19 +196,43 @@ export function RightDrawer({
   return (
     <Drawer
       anchor="right"
+      ref={drawerRef}
       sx={{
         display: { sm: "block", xs: "none" },
         position: "relative",
-        width: RightDrawerWidth,
-        [`& .${drawerClasses.paper}`]: { width: RightDrawerWidth },
+        width,
+        [`& .${drawerClasses.paper}`]: { width },
       }}
       PaperProps={{
+        style: { width },
         sx: {
           position: "relative",
         },
       }}
       variant="permanent"
     >
+      <Box
+        aria-label="Resize right drawer"
+        aria-orientation="vertical"
+        aria-valuemax={maxWidth(width)}
+        aria-valuemin={MinWidth}
+        aria-valuenow={width}
+        onDoubleClick={handleDoubleClick}
+        onKeyDown={handleKeyDown}
+        onMouseDown={handleMouseDown}
+        role="separator"
+        tabIndex={0}
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "6px",
+          cursor: "col-resize",
+          zIndex: 1,
+          "&:hover": { backgroundColor: "action.hover" },
+        }}
+      />
       {getDisplayedContent()}
     </Drawer>
   );
