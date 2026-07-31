@@ -58,8 +58,33 @@ const page = {
   status: 200,
 };
 
+const policiesPage = {
+  cursors: { self: "page-1" },
+  data: [
+    {
+      type: "property-key-policy",
+      id: "policy-1",
+      attributes: {
+        createdAt: "2026-06-01T00:00:00Z",
+        name: "My Allowlist",
+        mode: "allowlist",
+        suppliedId: "allow-1",
+      },
+    },
+  ],
+  status: 200,
+};
+
 describe("SceneTable", () => {
   installJsdomMockServer();
+
+  beforeEach(() => {
+    server.use(
+      http.get("*/api/property-key-policies", () =>
+        HttpResponse.json(policiesPage)
+      )
+    );
+  });
 
   afterEach(() => {
     jest.restoreAllMocks();
@@ -138,6 +163,41 @@ describe("SceneTable", () => {
     expect(await screen.findByLabelText("Open Scene One")).toHaveAttribute(
       "href",
       "/scene-viewer/scene-1"
+    );
+  });
+
+  it("adds the selected policy to scene viewer navigation", async () => {
+    server.use(http.get("*/api/scenes", () => HttpResponse.json(page)));
+
+    renderTable(scene);
+
+    await userEvent.click(await screen.findByLabelText("Property Key Policy"));
+    await userEvent.click(
+      await screen.findByRole("option", { name: /My Allowlist/i })
+    );
+
+    expect(await screen.findByLabelText("Open Scene One")).toHaveAttribute(
+      "href",
+      "/scene-viewer/scene-1?policyId=policy-1"
+    );
+  });
+
+  it("uses the selected policy for the View scene action", async () => {
+    server.use(http.get("*/api/scenes", () => HttpResponse.json(page)));
+
+    renderTable(scene);
+
+    await userEvent.click(await screen.findByLabelText("Property Key Policy"));
+    await userEvent.click(
+      await screen.findByRole("option", { name: /My Allowlist/i })
+    );
+    await userEvent.click(screen.getByLabelText("Actions for Scene One"));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "View scene" })
+    );
+
+    expect(mockPush).toHaveBeenCalledWith(
+      "/scene-viewer/scene-1?policyId=policy-1"
     );
   });
 });

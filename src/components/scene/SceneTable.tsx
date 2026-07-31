@@ -34,6 +34,7 @@ import { RowActionsMenu } from "../shared/RowActionsMenu";
 import { SkeletonBody } from "../shared/SkeletonBody";
 import { HeadCell, TableHead } from "../shared/TableHead";
 import { TableToolbar } from "../shared/TableToolbar";
+import { PolicySelect } from "../viewer/PolicySelect";
 
 interface Props {
   readonly onClick: (s: Scene) => void;
@@ -103,6 +104,9 @@ export default function SceneTable({
   >();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [selectedPolicyId, setSelectedPolicyId] = React.useState<
+    string | undefined
+  >();
 
   const { data, error, mutate } = useScenes({
     cursor,
@@ -188,8 +192,15 @@ export default function SceneTable({
     onEditClick(s);
   }
 
+  function sceneViewerHref(sceneId: string): string {
+    const path = `/scene-viewer/${encodeURIComponent(sceneId)}`;
+    return selectedPolicyId
+      ? `${path}?policyId=${encodeURIComponent(selectedPolicyId)}`
+      : path;
+  }
+
   function handleViewClick(sceneId: string) {
-    router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
+    router.push(sceneViewerHref(sceneId));
   }
 
   async function handleGetStreamKey(sceneId: string) {
@@ -248,6 +259,12 @@ export default function SceneTable({
             }}
             sx={{ mt: 0, width: "20rem" }}
           />
+          <PolicySelect
+            policyId={selectedPolicyId}
+            onChange={setSelectedPolicyId}
+            margin="normal"
+            sx={{ mt: 0, width: "20rem" }}
+          />
           <TextField
             variant="standard"
             size="small"
@@ -304,7 +321,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
+                          href={sceneViewerHref(row.id)}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}

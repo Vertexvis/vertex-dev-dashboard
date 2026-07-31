@@ -6,13 +6,19 @@ import React from "react";
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
 import { RightDrawerWidth } from "./Layout";
-import { MetadataProperties } from "./MetadataProperties";
+import { MetadataCompare } from "./MetadataCompare";
+import { MetadataStatus } from "./MetadataStates";
 import { ModelViews } from "./ModelViews";
 import { SceneViewStateList } from "./SceneViewStateList";
 
 interface Props {
   readonly active?: string;
   readonly metadata?: Metadata;
+  readonly unrestrictedMetadata?: Metadata;
+  readonly streamMetadata?: Metadata;
+  readonly metadataStatus?: MetadataStatus;
+  readonly metadataError?: string;
+  readonly metadataDiagnostic?: string;
   readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
@@ -21,6 +27,11 @@ interface Props {
 export function RightDrawer({
   active,
   metadata,
+  unrestrictedMetadata,
+  streamMetadata,
+  metadataStatus,
+  metadataError,
+  metadataDiagnostic,
   modelViews,
   sceneViewStates,
   onViewStateSelected,
@@ -28,7 +39,16 @@ export function RightDrawer({
   const getDisplayedContent = () => {
     switch (active) {
       case "properties":
-        return <MetadataProperties metadata={metadata} />;
+        return (
+          <MetadataCompare
+            unrestricted={unrestrictedMetadata}
+            restricted={metadata}
+            stream={streamMetadata}
+            status={metadataStatus}
+            error={metadataError}
+            diagnostic={metadataDiagnostic}
+          />
+        );
       case "scene-view-states":
         return (
           <SceneViewStateList
