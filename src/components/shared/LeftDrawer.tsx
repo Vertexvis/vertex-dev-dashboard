@@ -4,6 +4,7 @@ import {
   DescriptionOutlined,
   LocalLibraryOutlined,
   PendingOutlined,
+  VpnKeyOutlined,
 } from "@mui/icons-material";
 import {
   Drawer,
@@ -66,6 +67,15 @@ export function LeftDrawer(): JSX.Element {
             <CollectionsBookmarkOutlined />
           </ListItemIcon>
           <ListItemText primary="File Collections" />
+        </ListItemButton>
+        <ListItemButton
+          onClick={() => router.push("/property-key-policies")}
+          selected={router.route === "/property-key-policies"}
+        >
+          <ListItemIcon>
+            <VpnKeyOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Property Key Policies" />
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/parts")}
