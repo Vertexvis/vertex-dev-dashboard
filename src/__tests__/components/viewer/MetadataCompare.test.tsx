@@ -624,8 +624,8 @@ describe("RightDrawer resize handle", () => {
     expect(before).toBe("320px");
 
     const handle = screen.getByRole("separator");
-    fireEvent.mouseDown(handle);
-    // Drawer is anchored right: width = innerWidth - clientX.
+    fireEvent.mouseDown(handle, { clientX: 1280 });
+    // Dragging the left edge 180px left grows the 320px drawer to 500px.
     fireEvent.mouseMove(document, { clientX: 1100 });
     fireEvent.mouseUp(document);
 
