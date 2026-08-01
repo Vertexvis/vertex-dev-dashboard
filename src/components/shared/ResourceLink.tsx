@@ -29,7 +29,7 @@ export function ResourceLink({
     <Tooltip title={primaryActionLabel}>
       <Box
         component={linkComponent}
-        href={disabled ? undefined : href ?? "#"}
+        href={disabled ? undefined : (href ?? "#")}
         {...(linkComponent === NextLink ? { prefetch } : {})}
         role="link"
         tabIndex={disabled ? -1 : undefined}

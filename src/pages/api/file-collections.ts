@@ -32,7 +32,7 @@ export const handleFileCollections = methodRouter({ GET: get, DELETE: del });
 export default withSession(handleFileCollections);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<FileCollectionMetadataData>> {
   const client = await getClientFromSession(req.session);
   const ps = head(req.query.pageSize);
@@ -49,14 +49,14 @@ async function get(
   setFilterExpression(
     query,
     "name",
-    name != null ? ({ contains: name } satisfies FilterExpression) : undefined
+    name != null ? ({ contains: name } satisfies FilterExpression) : undefined,
   );
   setFilterExpression(
     query,
     "suppliedId",
     suppliedId != null
       ? ({ contains: suppliedId } satisfies FilterExpression)
-      : undefined
+      : undefined,
   );
   if (sort != null) query.set("sort", sort);
   setFilterExpression(
@@ -67,7 +67,7 @@ async function get(
           ...(createdAtStart != null ? { gte: createdAtStart } : {}),
           ...(createdAtEnd != null ? { lte: createdAtEnd } : {}),
         } satisfies FilterExpression)
-      : undefined
+      : undefined,
   );
 
   // TODO: Use FileCollectionsApi.listFileCollections once the SDK supports
@@ -81,8 +81,8 @@ async function get(
             Accept: "application/vnd.api+json",
             Authorization: `Bearer ${client.token.access_token}`,
           },
-        }
-      )
+        },
+      ),
   );
   return {
     cursors,
@@ -99,7 +99,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 
   const c = getFileCollectionsApi(await getClientFromSession(req.session));
   const results = await Promise.all(
-    b.ids.map((id) => makeCall(() => c.deleteFileCollection({ id })))
+    b.ids.map((id) => makeCall(() => c.deleteFileCollection({ id }))),
   );
   const failure = results.find(isErrorFailure);
   if (failure != null) return toErrorRes({ failure });

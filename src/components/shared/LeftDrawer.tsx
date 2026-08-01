@@ -29,7 +29,7 @@ export function LeftDrawer(): JSX.Element {
   const isSectionActive = React.useCallback(
     (base: string) =>
       router.route === base || router.route.startsWith(`${base}/`),
-    [router.route]
+    [router.route],
   );
 
   return (
@@ -90,7 +90,7 @@ export function LeftDrawer(): JSX.Element {
             router
               .push("/property-key-policies")
               .catch(
-                reportError("Failed to navigate to /property-key-policies")
+                reportError("Failed to navigate to /property-key-policies"),
               );
           }}
           selected={router.route === "/property-key-policies"}

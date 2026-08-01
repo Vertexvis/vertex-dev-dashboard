@@ -55,7 +55,7 @@
     "lefthook": "^2.1.10",
     "msw": "^2.15.0",
     "playwright": "^1.61.1",
-    "prettier": "^2.4",
+    "prettier": "^3.9.6",
     "testcontainers": "10.28.0",
     "ts-jest": "^29.4.11",
     "tslib": "^2.3",

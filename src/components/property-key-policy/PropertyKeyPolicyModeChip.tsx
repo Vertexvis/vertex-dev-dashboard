@@ -8,7 +8,7 @@ interface Props {
 }
 
 function modeColor(
-  mode: PropertyKeyPolicyMode
+  mode: PropertyKeyPolicyMode,
 ): "default" | "success" | "error" {
   switch (mode) {
     case PropertyKeyPolicyMode.Allowlist:

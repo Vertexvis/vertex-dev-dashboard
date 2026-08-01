@@ -56,9 +56,9 @@ describe("PropertyKeyPolicyTable", () => {
                 name: "Deny Policy",
               }),
             ],
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
 
     renderTable();
@@ -72,8 +72,8 @@ describe("PropertyKeyPolicyTable", () => {
   it("links the policy name to the detail route", async () => {
     server.use(
       http.get("*/api/property-key-policies", () =>
-        HttpResponse.json(firstPage)
-      )
+        HttpResponse.json(firstPage),
+      ),
     );
 
     renderTable();
@@ -81,7 +81,7 @@ describe("PropertyKeyPolicyTable", () => {
     expect(await screen.findByText("Policy One")).toBeInTheDocument();
     expect(screen.getByLabelText("Open Policy One")).toHaveAttribute(
       "href",
-      "/property-key-policies/policy-1"
+      "/property-key-policies/policy-1",
     );
   });
 
@@ -96,9 +96,9 @@ describe("PropertyKeyPolicyTable", () => {
         return HttpResponse.json(
           url.searchParams.get("suppliedId") === "supplied-2"
             ? filteredPage
-            : firstPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -112,8 +112,8 @@ describe("PropertyKeyPolicyTable", () => {
     expect(
       requests.some(
         (search) =>
-          new URLSearchParams(search).get("suppliedId") === "supplied-2"
-      )
+          new URLSearchParams(search).get("suppliedId") === "supplied-2",
+      ),
     ).toBe(true);
   });
 
@@ -122,13 +122,13 @@ describe("PropertyKeyPolicyTable", () => {
 
     server.use(
       http.get("*/api/property-key-policies", () =>
-        HttpResponse.json(firstPage)
+        HttpResponse.json(firstPage),
       ),
       http.delete("*/api/property-key-policies", async ({ request }) => {
         const body = (await request.json()) as { ids?: string[] };
         deletedIds.push(body.ids ?? []);
         return HttpResponse.json({ status: 200 });
-      })
+      }),
     );
 
     renderTable();
@@ -160,9 +160,9 @@ describe("PropertyKeyPolicyTable", () => {
         deletedIds.push(body.ids ?? []);
         return HttpResponse.json(
           { message: "Could not delete policy-1.", status: 500 },
-          { status: 500 }
+          { status: 500 },
         );
-      })
+      }),
     );
 
     renderTable();
@@ -174,7 +174,7 @@ describe("PropertyKeyPolicyTable", () => {
     await userEvent.click(screen.getByLabelText("Delete"));
 
     expect(
-      await screen.findByText("Could not delete policy-1.")
+      await screen.findByText("Could not delete policy-1."),
     ).toBeInTheDocument();
     // On failure the selection clears and the list is reconciled with the
     // server via a re-fetch.
@@ -203,13 +203,13 @@ describe("PropertyKeyPolicyTable", () => {
             message: "Could not delete policy-2.",
             status: 207,
           },
-          { status: 207 }
-        )
-      )
+          { status: 207 },
+        ),
+      ),
     );
 
     renderWithSWR(
-      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />
+      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />,
     );
 
     expect(await screen.findByText("Deleted Policy")).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe("PropertyKeyPolicyTable", () => {
     await userEvent.click(screen.getByLabelText("Delete"));
 
     expect(
-      await screen.findByText("Could not delete policy-2.")
+      await screen.findByText("Could not delete policy-2."),
     ).toBeInTheDocument();
     expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"]);
     expect(screen.getByLabelText("Select Deleted Policy")).not.toBeChecked();
@@ -235,8 +235,8 @@ describe("PropertyKeyPolicyTable", () => {
       }),
       http.delete(
         "*/api/property-key-policies",
-        () => new HttpResponse(null, { status: 500 })
-      )
+        () => new HttpResponse(null, { status: 500 }),
+      ),
     );
 
     renderTable();
@@ -251,8 +251,8 @@ describe("PropertyKeyPolicyTable", () => {
     // component is not stuck: the list refreshes.
     expect(
       await screen.findByText(
-        "Could not delete the selected property key policies."
-      )
+        "Could not delete the selected property key policies.",
+      ),
     ).toBeInTheDocument();
     await waitFor(() => expect(getCount).toBeGreaterThan(getsBeforeDelete));
   });
@@ -262,15 +262,15 @@ describe("PropertyKeyPolicyTable", () => {
 
     server.use(
       http.get("*/api/property-key-policies", () =>
-        HttpResponse.json(firstPage)
+        HttpResponse.json(firstPage),
       ),
       http.delete("*/api/property-key-policies", () =>
-        HttpResponse.json({ status: 200 })
-      )
+        HttpResponse.json({ status: 200 }),
+      ),
     );
 
     renderWithSWR(
-      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />
+      <PropertyKeyPolicyTable onPoliciesDeleted={onPoliciesDeleted} />,
     );
 
     expect(await screen.findByText("Policy One")).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe("PropertyKeyPolicyTable", () => {
     await userEvent.click(screen.getByLabelText("Delete"));
 
     await waitFor(() =>
-      expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"])
+      expect(onPoliciesDeleted).toHaveBeenCalledWith(["policy-1"]),
     );
   });
 
@@ -298,8 +298,8 @@ describe("PropertyKeyPolicyTable", () => {
 
     server.use(
       http.get("*/api/property-key-policies", () =>
-        HttpResponse.json(firstPageWithNext)
-      )
+        HttpResponse.json(firstPageWithNext),
+      ),
     );
 
     renderTable();
@@ -321,8 +321,8 @@ describe("PropertyKeyPolicyTable", () => {
   it("renders the load error state when the list request fails", async () => {
     server.use(
       http.get("*/api/property-key-policies", () =>
-        HttpResponse.json({ message: "boom", status: 500 }, { status: 500 })
-      )
+        HttpResponse.json({ message: "boom", status: 500 }, { status: 500 }),
+      ),
     );
 
     renderTable();

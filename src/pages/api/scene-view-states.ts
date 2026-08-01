@@ -23,7 +23,7 @@ export type CreateViewStateRes = Pick<SceneViewStateData, "id"> & Res;
 export default withSession(methodRouter({ GET: get, POST: create }));
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<SceneViewStateData>> {
   const c = await getClientFromSession(req.session);
   const vId = head(req.query.view);
@@ -38,13 +38,13 @@ async function get(
     c.sceneViewStates.getSceneViewStates({
       id: sceneId,
       pageSize: 50,
-    })
+    }),
   );
   return { cursors, data: page.data, status: 200 };
 }
 
 async function create(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | CreateViewStateRes> {
   if (!req.body) return BodyRequired;
 

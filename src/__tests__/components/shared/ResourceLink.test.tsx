@@ -11,12 +11,12 @@ describe("ResourceLink", () => {
         primaryActionLabel="Open Scene"
       >
         Scene
-      </ResourceLink>
+      </ResourceLink>,
     );
 
     expect(screen.getByRole("link", { name: "Open Scene" })).toHaveAttribute(
       "href",
-      "/scene-viewer/scene-1"
+      "/scene-viewer/scene-1",
     );
   });
 
@@ -28,7 +28,7 @@ describe("ResourceLink", () => {
         <ResourceLink href="#resource" primaryActionLabel="Open Resource">
           Resource
         </ResourceLink>
-      </div>
+      </div>,
     );
 
     const link = screen.getByRole("link", { name: "Open Resource" });
@@ -47,7 +47,7 @@ describe("ResourceLink", () => {
         <ResourceLink disabled primaryActionLabel="Download unavailable">
           Resource
         </ResourceLink>
-      </div>
+      </div>,
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Download unavailable" }));

@@ -66,7 +66,7 @@ type HOCViewerProps = React.RefAttributes<HTMLVertexViewerElement>;
 interface OnSelectProps extends HOCViewerProps {
   readonly onSelect: (
     detail: TapEventDetails,
-    hit?: vertexvis.protobuf.stream.IHit
+    hit?: vertexvis.protobuf.stream.IHit,
   ) => Promise<void>;
 }
 
@@ -131,7 +131,7 @@ function UnwrappedViewer({
       label: "Fit All",
       onSelect: () => {
         fitAll({ viewer: viewer.current }).catch(
-          reportError("Failed to fit all")
+          reportError("Failed to fit all"),
         );
       },
     },
@@ -140,7 +140,7 @@ function UnwrappedViewer({
       label: "Copy camera",
       onSelect: () => {
         copySceneViewCamera({ viewer: viewer.current }).catch(
-          reportError("Failed to copy scene view camera")
+          reportError("Failed to copy scene view camera"),
         );
       },
     },
@@ -154,7 +154,7 @@ function UnwrappedViewer({
       label: "Update base scene with current camera",
       onSelect: () => {
         handleUpdateBaseCamera().catch(
-          reportError("Failed to update base scene camera")
+          reportError("Failed to update base scene camera"),
         );
       },
     },
@@ -273,7 +273,7 @@ function UnwrappedViewer({
 }
 
 function onTap<P extends ViewerProps>(
-  WrappedViewer: ViewerComponentType
+  WrappedViewer: ViewerComponentType,
 ): React.FunctionComponent<P & OnSelectProps> {
   return function Component({
     viewerState,
@@ -283,7 +283,7 @@ function onTap<P extends ViewerProps>(
     const [hit, setHit] = React.useState<vertexvis.protobuf.stream.IHit>();
 
     async function handleTap(
-      e: VertexViewerCustomEvent<TapEventDetails>
+      e: VertexViewerCustomEvent<TapEventDetails>,
     ): Promise<void> {
       if (props.onTap) props.onTap(e);
 

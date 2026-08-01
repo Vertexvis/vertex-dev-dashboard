@@ -16,6 +16,6 @@ describe("toLocalDayBoundaryIso", () => {
       expect(result.getMinutes()).toBe(minutes);
       expect(result.getSeconds()).toBe(seconds);
       expect(result.getMilliseconds()).toBe(milliseconds);
-    }
+    },
   );
 });

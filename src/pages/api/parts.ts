@@ -30,7 +30,7 @@ export type CreatePartReq = Pick<
 export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
 
 export default withSession(
-  methodRouter({ GET: get, DELETE: del, POST: create })
+  methodRouter({ GET: get, DELETE: del, POST: create }),
 );
 
 async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
@@ -44,7 +44,7 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
       pageCursor: pc,
       pageSize: parsePositiveQueryInt(ps, 10),
       filterSuppliedId: sId,
-    })
+    }),
   );
   return { cursors, data: page.data, status: 200 };
 }
@@ -57,7 +57,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 
   const c = await getClientFromSession(req.session);
   await Promise.all(
-    b.ids.map((id) => makeCall(() => c.parts.deletePart({ id })))
+    b.ids.map((id) => makeCall(() => c.parts.deletePart({ id }))),
   );
   return { status: 200 };
 }

@@ -72,7 +72,7 @@ export default function CreatePartDialog({
           disabled={submitDisabled}
           onClick={() => {
             handleSubmit().catch(
-              reportError("Failed to create the view state")
+              reportError("Failed to create the view state"),
             );
           }}
           color="primary"

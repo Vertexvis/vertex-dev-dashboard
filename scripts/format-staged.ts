@@ -10,7 +10,8 @@ import * as fs from "fs";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const prettier: string = require.resolve("prettier/bin-prettier.js");
+// Prettier 3 renamed its CLI entry from bin-prettier.js to bin/prettier.cjs.
+const prettier: string = require.resolve("prettier/bin/prettier.cjs");
 
 type Mode = "write" | "check";
 
@@ -31,15 +32,15 @@ const supportedExtensions = new Set<string>([
 
 function git(
   args: string[],
-  options: SpawnSyncOptionsWithStringEncoding
+  options: SpawnSyncOptionsWithStringEncoding,
 ): SpawnSyncReturns<string>;
 function git(
   args: string[],
-  options?: SpawnSyncOptions
+  options?: SpawnSyncOptions,
 ): SpawnSyncReturns<Buffer>;
 function git(
   args: string[],
-  options: SpawnSyncOptions = {}
+  options: SpawnSyncOptions = {},
 ): SpawnSyncReturns<string | Buffer> {
   const result = spawnSync("git", args, options);
 
@@ -55,7 +56,7 @@ function git(
 function stagedFiles(): string[] {
   const result = git(
     ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
-    { encoding: "utf8" }
+    { encoding: "utf8" },
   );
 
   if (result.status !== 0) {
@@ -100,7 +101,7 @@ function isRegularFile(file: string): boolean {
 
 function formatBlob(
   file: string,
-  input: string | Buffer
+  input: string | Buffer,
 ): SpawnSyncReturns<Buffer> {
   return spawnSync(process.execPath, [prettier, "--stdin-filepath", file], {
     input,

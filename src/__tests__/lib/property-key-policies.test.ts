@@ -13,7 +13,7 @@ function policy(
     suppliedId?: string;
     createdAt: string;
     mode: PropertyKeyPolicyMode;
-  }> = {}
+  }> = {},
 ): PropertyKeyPolicyResource {
   return {
     type: "property-key-policy",
@@ -36,7 +36,7 @@ describe("property key policy converters", () => {
         suppliedId: "plm-123",
         createdAt: "2026-06-10T15:30:00Z",
         mode: PropertyKeyPolicyMode.Allowlist,
-      })
+      }),
     );
 
     expect(model).toEqual({

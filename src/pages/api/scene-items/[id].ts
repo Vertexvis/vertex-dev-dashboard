@@ -8,7 +8,7 @@ import withSession, { NextIronRequest } from "../../../lib/with-session";
 export default withSession(methodRouter({ GET: get }));
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | (SceneItemData & Res)> {
   const c = await getClientFromSession(req.session);
   const id = head(req.query.id);

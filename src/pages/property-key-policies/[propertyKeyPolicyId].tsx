@@ -43,8 +43,8 @@ export default function PropertyKeyPolicyDetails({
 }: Props): JSX.Element {
   const { data, error } = useSWR<GetPropertyKeyPolicyKeysRes | undefined>(
     `/api/property-key-policies/${encodeURIComponent(
-      propertyKeyPolicy.id
-    )}/keys`
+      propertyKeyPolicy.id,
+    )}/keys`,
   );
 
   const keysFailed = error != null || isErrorRes(data);
@@ -96,7 +96,7 @@ export default function PropertyKeyPolicyDetails({
 
 export const getServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes
+  CookieAttributes,
 );
 
 export async function serverSidePropsHandler({
@@ -110,10 +110,10 @@ export async function serverSidePropsHandler({
   if (propertyKeyPolicyId == null) return { notFound: true };
 
   const api = getPropertyKeyPoliciesApi(
-    await getClientFromSession(req.session)
+    await getClientFromSession(req.session),
   );
   const res = await makeCall(() =>
-    api.getPropertyKeyPolicy({ id: propertyKeyPolicyId })
+    api.getPropertyKeyPolicy({ id: propertyKeyPolicyId }),
   );
 
   if (isErrorFailure(res)) {

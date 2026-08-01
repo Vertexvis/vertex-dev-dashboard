@@ -33,7 +33,7 @@ interface PropertyKeyPolicyKeyList {
 
 export async function handlePropertyKeyPolicyKeys(
   req: NextIronRequest,
-  res: NextApiResponse<GetPropertyKeyPolicyKeysRes | ErrorRes>
+  res: NextApiResponse<GetPropertyKeyPolicyKeysRes | ErrorRes>,
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -46,7 +46,7 @@ export async function handlePropertyKeyPolicyKeys(
 export default withSession(handlePropertyKeyPolicyKeys);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetPropertyKeyPolicyKeysRes> {
   try {
     const id = head(req.query.id);
@@ -70,7 +70,7 @@ async function get(
           ...(pageCursor != null ? { "page[cursor]": pageCursor } : {}),
           "page[size]": KeysPageSize,
         },
-      })
+      }),
     );
 
     return { data, status: 200 };

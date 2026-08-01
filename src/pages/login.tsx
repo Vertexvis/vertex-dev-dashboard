@@ -71,7 +71,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
       }
 
       return {};
-    }
+    },
   );
 
   const router = useRouter();
@@ -81,10 +81,10 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   const invalidApiHost = !isValidHttpUrl(networkConfig.apiHost);
   const invalidRenderingHost = !isValidHttpUrl(networkConfig.renderingHost);
   const invalidSceneTreeHost = !isValidHttpUrlNullable(
-    networkConfig.sceneTreeHost
+    networkConfig.sceneTreeHost,
   );
   const invalidSceneViewHost = !isValidHttpUrlNullable(
-    networkConfig.sceneViewHost
+    networkConfig.sceneViewHost,
   );
   const customConfigurationValidated =
     !invalidApiHost &&
@@ -96,7 +96,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     if (networkConfig != null) {
       localStorage.setItem(
         "vertexvis.network.config",
-        JSON.stringify(networkConfig)
+        JSON.stringify(networkConfig),
       );
     }
     localStorage.setItem("vertexvis.env", env);
@@ -143,7 +143,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   });
 
   const createEditButton = (
-    field: keyof typeof editableFields
+    field: keyof typeof editableFields,
   ): JSX.Element => (
     <InputAdornment position="end">
       <IconButton
@@ -189,8 +189,8 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
             serverProvidedNetworkConfig != null
               ? "800px"
               : env === "custom"
-              ? "800px"
-              : "500px",
+                ? "800px"
+                : "500px",
           minWidth: "30%",
           mx: 2,
           my: 4,

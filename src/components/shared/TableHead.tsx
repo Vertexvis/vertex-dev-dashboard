@@ -41,7 +41,7 @@ export function TableHead({
         {renderHeadCells(
           headCells.filter((hc) => hc.beforeCheckbox),
           onSortChange,
-          sort
+          sort,
         )}
         <TableCell padding="checkbox">
           <Checkbox
@@ -54,7 +54,7 @@ export function TableHead({
         {renderHeadCells(
           headCells.filter((hc) => !hc.beforeCheckbox),
           onSortChange,
-          sort
+          sort,
         )}
       </TableRow>
     </MuiTableHead>
@@ -63,7 +63,7 @@ export function TableHead({
 function renderHeadCells(
   cells: readonly HeadCell[],
   onSortChange?: (field: string) => void,
-  sort?: SortState
+  sort?: SortState,
 ): JSX.Element[] {
   return cells.map((hc) => (
     <TableCell

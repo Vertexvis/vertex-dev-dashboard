@@ -91,7 +91,7 @@ async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<FileData>> {
           Accept: "application/vnd.api+json",
           Authorization: `Bearer ${c.token.access_token}`,
         },
-      }) as Promise<AxiosResponse<FileList>>
+      }) as Promise<AxiosResponse<FileList>>,
   );
   return { cursors, data: page.data, status: 200 };
 }
@@ -104,7 +104,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 
   const c = await getClientFromSession(req.session);
   await Promise.all(
-    b.ids.map((id) => makeCall(() => c.files.deleteFile({ id })))
+    b.ids.map((id) => makeCall(() => c.files.deleteFile({ id }))),
   );
   return { status: 200 };
 }

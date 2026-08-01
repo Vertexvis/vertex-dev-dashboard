@@ -5,7 +5,7 @@ import withSession, { getToken, NextIronRequest } from "../../lib/with-session";
 
 export default withSession(function handler(
   req: NextIronRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   const token = getToken(req.session);
   assert(token);

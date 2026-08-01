@@ -70,7 +70,7 @@ describe("SceneTable", () => {
     server.use(
       http.get("*/api/scenes", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     const { rerender } = renderTable(scene);
@@ -90,7 +90,7 @@ describe("SceneTable", () => {
     server.use(
       http.get("*/api/scenes", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable(scene);
@@ -111,7 +111,7 @@ describe("SceneTable", () => {
     server.use(
       http.get("*/api/scenes", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable(scene);
@@ -120,7 +120,7 @@ describe("SceneTable", () => {
     await userEvent.hover(name);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Open Scene One"
+      "Open Scene One",
     );
   });
 
@@ -130,14 +130,14 @@ describe("SceneTable", () => {
     server.use(
       http.get("*/api/scenes", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable(scene, { onClick });
 
     expect(await screen.findByLabelText("Open Scene One")).toHaveAttribute(
       "href",
-      "/scene-viewer/scene-1"
+      "/scene-viewer/scene-1",
     );
   });
 });
@@ -151,14 +151,14 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
 
 function renderTable(
   scene?: Scene,
-  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {},
 ): ReturnType<typeof renderWithSWR> {
   return renderWithSWR(renderTableElement(scene, props));
 }
 
 function renderTableElement(
   scene?: Scene,
-  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {},
 ): JSX.Element {
   return (
     <SceneTable

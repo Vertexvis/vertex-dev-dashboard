@@ -101,11 +101,11 @@ export function useModelViews({
   return {
     modelViewList: modelViewResponses.reduce(
       (modelViews, r) => [...modelViews, ...r.modelViews],
-      [] as ModelView[]
+      [] as ModelView[],
     ),
     annotationList: annotationResponses.reduce(
       (annotations, r) => [...annotations, ...r.annotations],
-      [] as PmiAnnotation[]
+      [] as PmiAnnotation[],
     ),
     loadedModelViewId,
     loadedSceneItemId,
@@ -124,7 +124,7 @@ interface UseModelViewActionsProps {
   readonly setLoadedSceneItemId: (id?: string) => void;
   readonly updateLoadedModelViews: (response: ModelViewListResponse) => void;
   readonly updateLoadedAnnotations: (
-    response: PmiAnnotationListResponse
+    response: PmiAnnotationListResponse,
   ) => void;
 }
 
@@ -159,7 +159,7 @@ function useModelViewActions({
             hasAnnotations: true,
             size: 100,
             cursor: modelViewCursor,
-          }
+          },
         );
 
         updateLoadedModelViews(resp);

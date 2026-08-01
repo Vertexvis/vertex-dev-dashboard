@@ -61,12 +61,12 @@ function useScenes({
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }${name ? `&name=${encodeURIComponent(name)}` : ""}`
+    }${name ? `&name=${encodeURIComponent(name)}` : ""}`,
   );
 }
 
 function stateColor(
-  state?: string
+  state?: string,
 ): "default" | "success" | "warning" | "error" {
   switch (state) {
     case "commit":
@@ -98,11 +98,11 @@ export default function SceneTable({
     string | undefined
   >();
   const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {}
+    {},
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
-    () => scene?.id
+    () => scene?.id,
   );
   const [suppliedId, setSuppliedIdFilter] = React.useState<
     string | undefined
@@ -129,12 +129,12 @@ export default function SceneTable({
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
-    []
+    [],
   );
 
   const debouncedSetNameFilter = React.useMemo(
     () => debounce(setNameFilter, 300),
-    []
+    [],
   );
 
   React.useEffect(() => {
@@ -170,7 +170,7 @@ export default function SceneTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ): void {
     if (curPage < num) {
       setPrev({ ...prev, [num - 1]: cursors?.self });
@@ -374,7 +374,7 @@ export default function SceneTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null
+              page != null,
             )
           }
           rowsPerPage={pageSize}

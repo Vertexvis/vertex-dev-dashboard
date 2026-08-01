@@ -28,13 +28,13 @@ interface QueuedTranslationsTableProps {
 function useRunningTranslations(
   status: string,
   refreshInterval: number,
-  fetchAll: boolean
+  fetchAll: boolean,
 ): SWRResponse {
   return useSWR(
     `/api/queued-translations?status=${status}&fetchAll=${fetchAll}`,
     {
       refreshInterval,
-    }
+    },
   );
 }
 
@@ -48,7 +48,7 @@ export function QueuedTranslationsTable({
   const { data, isValidating } = useRunningTranslations(
     status,
     refreshInterval || 0,
-    fetchAll ?? false
+    fetchAll ?? false,
   );
   const page = data ? toQueuedJobPage(data) : undefined;
   const items = filter ? page?.items.filter(filter) : page?.items;

@@ -73,7 +73,7 @@ export function RightDrawer({
 
   React.useEffect(() => {
     setWidth((currentWidth) =>
-      clampWidth(readStoredWidth(), maxWidth(currentWidth))
+      clampWidth(readStoredWidth(), maxWidth(currentWidth)),
     );
   }, [maxWidth]);
 
@@ -92,13 +92,13 @@ export function RightDrawer({
       if (!draggingRef.current) return;
       const { clientX, width: startWidth } = dragStartRef.current;
       setWidth(
-        clampWidth(startWidth + clientX - event.clientX, maxWidth(startWidth))
+        clampWidth(startWidth + clientX - event.clientX, maxWidth(startWidth)),
       );
     }
 
     function onResize(): void {
       setWidth((currentWidth) =>
-        clampWidth(currentWidth, maxWidth(currentWidth))
+        clampWidth(currentWidth, maxWidth(currentWidth)),
       );
     }
 

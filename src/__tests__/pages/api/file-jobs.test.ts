@@ -23,7 +23,7 @@ describe("file jobs API routes", () => {
         "cursor-2": [fileData("file-3", "complete")],
       }),
       stubCreateFile("collection-1", "file-collection-collection-1.zip"),
-      stubCreateFileJob(["file-1", "file-2", "file-3"])
+      stubCreateFileJob(["file-1", "file-2", "file-3"]),
     );
 
     const response = await callFileJobs({
@@ -47,7 +47,7 @@ describe("file jobs API routes", () => {
         "": [fileData("file-1", "complete")],
       }),
       stubCreateFile("collection-1", "Custom collection.zip"),
-      stubCreateFileJob(["file-1"])
+      stubCreateFileJob(["file-1"]),
     );
 
     const response = await callFileJobs({
@@ -83,7 +83,7 @@ describe("file jobs API routes", () => {
     nodeMswServer.use(
       stubListFileCollectionFiles("collection-1", {
         "": [fileData("file-1", "completed"), fileData("file-2", "ready")],
-      })
+      }),
     );
 
     const response = await callFileJobs({
@@ -104,7 +104,7 @@ describe("file jobs API routes", () => {
         data: queuedJobData("job-1", {
           links: { download: { href: "https://zip" } },
         }),
-      })
+      }),
     );
 
     const response = await callFileJobById("job-1", { method: "GET" });
@@ -158,7 +158,7 @@ function callFileJobs(req: ApiRouteRequest): Promise<ApiRouteResponse> {
 
 function callFileJobById(
   id: string | undefined,
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return callApi(handleFileJob, {
     ...req,
@@ -168,7 +168,7 @@ function callFileJobById(
 
 function callApi(
   handler: Parameters<typeof invokeNextJsApiRouteHandler>[0],
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return invokeNextJsApiRouteHandler(handler, {
     ...req,
@@ -178,7 +178,7 @@ function callApi(
 
 function stubListFileCollectionFiles(
   id: string,
-  pages: Record<string, ReturnType<typeof fileData>[]>
+  pages: Record<string, ReturnType<typeof fileData>[]>,
 ): ReturnType<typeof http.get> {
   return http.get(
     `${vertexApiOrigin}/file-collections/${id}/files`,
@@ -206,13 +206,13 @@ function stubListFileCollectionFiles(
                 },
               },
       });
-    }
+    },
   );
 }
 
 function stubCreateFile(
   fileCollectionId: string,
-  name: string
+  name: string,
 ): ReturnType<typeof http.post> {
   return http.post(`${vertexApiOrigin}/files`, async ({ request }) => {
     expect(await request.json()).toEqual({
@@ -257,7 +257,7 @@ function stubCreateFileJob(fileIds: string[]): ReturnType<typeof http.post> {
 
 function stubGetFileJob(
   id: string,
-  body: { data: ReturnType<typeof queuedJobData> }
+  body: { data: ReturnType<typeof queuedJobData> },
 ): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-jobs/${id}`, () => {
     return HttpResponse.json(body);
@@ -266,7 +266,7 @@ function stubGetFileJob(
 
 function queuedJobData(
   id: string,
-  dataOverrides: Record<string, unknown> = {}
+  dataOverrides: Record<string, unknown> = {},
 ): {
   attributes: { created: string; status: string };
   id: string;
@@ -285,7 +285,7 @@ function queuedJobData(
 
 function fileData(
   id: string,
-  status: string
+  status: string,
 ): {
   attributes: {
     created: string;

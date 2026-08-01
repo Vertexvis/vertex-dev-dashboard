@@ -21,7 +21,7 @@ const QueryParamOrder = ["pageSize", "cursor", "sort", "suppliedId", "name"];
 
 export function buildQuery(
   path: string,
-  params: Record<string, QueryValue>
+  params: Record<string, QueryValue>,
 ): string {
   const query = new URLSearchParams();
   const entries = Object.entries(params).sort(([leftKey], [rightKey]) => {
@@ -83,7 +83,7 @@ export function useCursorPagingState(): {
 
       setCurrentPage(nextPage);
     },
-    [currentPage, cursors, previous]
+    [currentPage, cursors, previous],
   );
 
   return {
@@ -116,7 +116,7 @@ interface CursorPage<T> {
 
 /** Fetch every cursor-paginated page using the API client's cursor parser. */
 export async function fetchAllPages<T, TPage extends CursorPage<T>>(
-  fetchPage: (cursor?: string) => Promise<AxiosResponse<TPage>>
+  fetchPage: (cursor?: string) => Promise<AxiosResponse<TPage>>,
 ): Promise<T[]> {
   const items: T[] = [];
   const seenCursors = new Set<string>();

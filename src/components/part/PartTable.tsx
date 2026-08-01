@@ -47,12 +47,12 @@ function useParts({ cursor, pageSize, suppliedId }: SwrProps): SWRResponse {
       pageSize,
       suppliedId,
     }),
-    { refreshInterval: 30000 }
+    { refreshInterval: 30000 },
   );
 }
 
 const maybeQueryParam = (
-  target: string | string[] | undefined
+  target: string | string[] | undefined,
 ): string | undefined => (Array.isArray(target) ? target[0] : target);
 
 interface Props {
@@ -77,7 +77,7 @@ export default function PartTable({
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
-    !!router.query.create
+    !!router.query.create,
   );
   const [targetRevisionId, setTargetRevisionId] = React.useState<
     string | undefined
@@ -99,7 +99,7 @@ export default function PartTable({
         resetPaging();
         setSuppliedIdFilter(value);
       }, 300),
-    [resetPaging]
+    [resetPaging],
   );
 
   React.useEffect(() => {
@@ -126,7 +126,7 @@ export default function PartTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ): void {
     handlePageChange(num);
   }
@@ -228,7 +228,7 @@ export default function PartTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null
+              page != null,
             )
           }
           rowsPerPage={pageSize}

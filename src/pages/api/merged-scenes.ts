@@ -78,7 +78,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
           },
         },
       });
-    })
+    }),
   );
 
   await makeCall(() =>
@@ -95,7 +95,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
           type: "scene",
         },
       },
-    })
+    }),
   );
 
   return { status: 200, queuedItemIds: items.map((i) => i.data.data.id) };

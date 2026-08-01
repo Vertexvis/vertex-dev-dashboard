@@ -24,10 +24,10 @@ describe("property key policies API routes", () => {
           expect(searchParams.get("page[cursor]")).toBe("cursor-1");
           expect(searchParams.get("page[size]")).toBe("50");
           expect(searchParams.get("filter[suppliedId][contains]")).toBe(
-            "LIED-1"
+            "LIED-1",
           );
-        }
-      )
+        },
+      ),
     );
 
     const response = await callPolicies({
@@ -55,8 +55,8 @@ describe("property key policies API routes", () => {
           expect(searchParams.get("filter[name][contains]")).toBeNull();
           expect(searchParams.get("filter[createdAt][gte]")).toBeNull();
           expect(searchParams.get("filter[createdAt][lte]")).toBeNull();
-        }
-      )
+        },
+      ),
     );
 
     const response = await callPolicies({
@@ -82,8 +82,8 @@ describe("property key policies API routes", () => {
         { data: [policyData("policy-1")], links: {} },
         ({ searchParams }) => {
           expect(searchParams.get("page[size]")).toBe("10");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callPolicies({ method: "GET" });
@@ -106,7 +106,7 @@ describe("property key policies API routes", () => {
       }),
       stubUpsertKeys("policy-1", undefined, async (request) => {
         entriesBody = await request.json();
-      })
+      }),
     );
 
     const response = await callPolicies({
@@ -152,7 +152,7 @@ describe("property key policies API routes", () => {
       stubCreatePolicy("policy-1", async (request) => {
         createBody = await request.json();
       }),
-      stubUpsertKeys("policy-1")
+      stubUpsertKeys("policy-1"),
     );
 
     const response = await callPolicies({
@@ -180,7 +180,7 @@ describe("property key policies API routes", () => {
       stubCreatePolicy("policy-1", async (request) => {
         createBody = await request.json();
       }),
-      stubUpsertKeys("policy-1")
+      stubUpsertKeys("policy-1"),
     );
 
     const response = await callPolicies({
@@ -212,7 +212,7 @@ describe("property key policies API routes", () => {
       http.delete(`${vertexApiOrigin}/property-key-policies/policy-1`, () => {
         deleteCalled = true;
         return new HttpResponse(null, { status: 204 });
-      })
+      }),
     );
 
     const response = await callPolicies({
@@ -237,7 +237,7 @@ describe("property key policies API routes", () => {
     nodeMswServer.use(
       stubCreatePolicy("policy-1", undefined, {
         errors: [{ status: "400", title: "Bad policy." }],
-      })
+      }),
     );
 
     const response = await callPolicies({
@@ -342,7 +342,7 @@ describe("property key policies API routes", () => {
 
     nodeMswServer.use(
       stubDeletePolicy("policy-1", undefined, deletedIds),
-      stubDeletePolicy("policy-2", undefined, deletedIds)
+      stubDeletePolicy("policy-2", undefined, deletedIds),
     );
 
     const response = await callPolicies({
@@ -362,7 +362,7 @@ describe("property key policies API routes", () => {
     nodeMswServer.use(
       stubDeletePolicy("policy-1", {
         errors: [{ status: "404", title: "Policy not found." }],
-      })
+      }),
     );
 
     const response = await callPolicies({
@@ -382,7 +382,7 @@ describe("property key policies API routes", () => {
       stubDeletePolicy("policy-1"),
       stubDeletePolicy("policy-2", {
         errors: [{ status: "404", title: "Policy not found." }],
-      })
+      }),
     );
 
     const response = await callPolicies({
@@ -404,7 +404,7 @@ describe("property key policies API routes", () => {
       stubGetPolicy("policy-1", {
         data: policyData("policy-1"),
         links: {},
-      })
+      }),
     );
 
     const response = await callPolicyById("policy-1", { method: "GET" });
@@ -418,7 +418,7 @@ describe("property key policies API routes", () => {
 
   it("returns Vertex API failures from get requests", async () => {
     nodeMswServer.use(
-      stubGetPolicy("policy-1", failureBody("500", "Vertex is upset."), 500)
+      stubGetPolicy("policy-1", failureBody("500", "Vertex is upset."), 500),
     );
 
     const response = await callPolicyById("policy-1", { method: "GET" });
@@ -457,7 +457,7 @@ function callPolicies(req: ApiRouteRequest): Promise<ApiRouteResponse> {
 
 function callPolicyById(
   id: string,
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return callApi(handlePropertyKeyPolicy, {
     ...req,
@@ -467,7 +467,7 @@ function callPolicyById(
 
 function callApi(
   handler: Parameters<typeof invokeNextJsApiRouteHandler>[0],
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return invokeNextJsApiRouteHandler(handler, {
     ...req,
@@ -478,7 +478,7 @@ function callApi(
 function policyData(
   id: string,
   createdAt = "2026-06-10T15:30:00Z",
-  name = "Policy One"
+  name = "Policy One",
 ): {
   attributes: {
     createdAt: string;
@@ -520,7 +520,7 @@ function policyList(data: ReturnType<typeof policyData>[]): {
 
 function failureBody(
   status: string,
-  title: string
+  title: string,
 ): { errors: Array<{ status: string; title: string }> } {
   return { errors: [{ status, title }] };
 }
@@ -530,7 +530,7 @@ function stubListPolicies(
     data: ReturnType<typeof policyData>[];
     links: { next?: { href: string }; self?: { href: string } };
   },
-  assertRequest?: (request: URL) => void
+  assertRequest?: (request: URL) => void,
 ): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/property-key-policies`, ({ request }) => {
     assertRequest?.(new URL(request.url));
@@ -549,7 +549,7 @@ function stubGetPolicy(
         data: ReturnType<typeof policyData>;
         links: Record<string, never>;
       },
-  status = 200
+  status = 200,
 ): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/property-key-policies/${id}`, () => {
     return HttpResponse.json(body, {
@@ -564,7 +564,7 @@ function stubCreatePolicy(
   assertRequest?: (request: Request) => Promise<void> | void,
   failure:
     | { errors: Array<{ status: string; title: string }> }
-    | undefined = undefined
+    | undefined = undefined,
 ): ReturnType<typeof http.post> {
   return http.post(
     `${vertexApiOrigin}/property-key-policies`,
@@ -580,9 +580,9 @@ function stubCreatePolicy(
 
       return HttpResponse.json(
         { data: policyData(id), links: {} },
-        { headers: { "content-type": "application/vnd.api+json" } }
+        { headers: { "content-type": "application/vnd.api+json" } },
       );
-    }
+    },
   );
 }
 
@@ -591,7 +591,7 @@ function stubUpsertKeys(
   failure:
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
-  assertRequest?: (request: Request) => Promise<void> | void
+  assertRequest?: (request: Request) => Promise<void> | void,
 ): ReturnType<typeof http.post> {
   return http.post(
     `${vertexApiOrigin}/property-key-policies/${id}/keys`,
@@ -606,7 +606,7 @@ function stubUpsertKeys(
       }
 
       return new HttpResponse(null, { status: 204 });
-    }
+    },
   );
 }
 
@@ -615,7 +615,7 @@ function stubDeletePolicy(
   failure:
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
-  deletedIds?: string[]
+  deletedIds?: string[],
 ): ReturnType<typeof http.delete> {
   return http.delete(`${vertexApiOrigin}/property-key-policies/${id}`, () => {
     deletedIds?.push(id);

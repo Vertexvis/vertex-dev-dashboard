@@ -47,14 +47,14 @@ interface FileCollectionSort {
  */
 export function sortFileCollections(
   fileCollections: FileCollectionList["data"],
-  sort?: string
+  sort?: string,
 ): FileCollectionList["data"] {
   const parsedSort = parseFileCollectionSort(sort);
   if (parsedSort == null) return fileCollections;
 
   return [...fileCollections].sort((left, right) => {
     const comparison = (left.attributes[parsedSort.field] ?? "").localeCompare(
-      right.attributes[parsedSort.field] ?? ""
+      right.attributes[parsedSort.field] ?? "",
     );
 
     return parsedSort.order === "asc" ? comparison : -comparison;
@@ -62,7 +62,7 @@ export function sortFileCollections(
 }
 
 function parseFileCollectionSort(
-  sort?: string
+  sort?: string,
 ): FileCollectionSort | undefined {
   if (sort == null) return undefined;
 
@@ -74,40 +74,40 @@ function parseFileCollectionSort(
 }
 
 function isFileCollectionSortField(
-  field: string
+  field: string,
 ): field is FileCollectionSortField {
   return FileCollectionSortFields.includes(field as FileCollectionSortField);
 }
 
 export function toFileCollection(
-  data: FileCollectionMetadataData
+  data: FileCollectionMetadataData,
 ): FileCollection {
   return { ...data.attributes, id: data.id };
 }
 
 export function toFileCollectionPage(
-  res: FileCollectionPageRes
+  res: FileCollectionPageRes,
 ): Paged<FileCollection> {
   return toPage<FileCollectionResource, FileCollectionAttributes>(res);
 }
 
 export function getFileCollectionsApi(
-  client: VertexClient
+  client: VertexClient,
 ): FileCollectionsApi {
   return new FileCollectionsApi(client.config, undefined, client.axiosInstance);
 }
 
 export function fetchAllFileCollectionFiles(
   api: FileCollectionsApi,
-  id: string
+  id: string,
 ): Promise<FileMetadataData[]> {
   return fetchAllPages((pageCursor) =>
-    api.listFileCollectionFiles({ id, pageCursor, pageSize: 200 })
+    api.listFileCollectionFiles({ id, pageCursor, pageSize: 200 }),
   );
 }
 
 export function getFileCollectionExportAvailability(
-  files: FileMetadataData[]
+  files: FileMetadataData[],
 ): FileCollectionExportAvailability {
   if (files.length === 0) {
     return {
@@ -118,7 +118,7 @@ export function getFileCollectionExportAvailability(
   }
 
   const hasIncompleteFiles = files.some(
-    (file) => !isCompleteFileStatus(file.attributes.status)
+    (file) => !isCompleteFileStatus(file.attributes.status),
   );
 
   if (hasIncompleteFiles) {

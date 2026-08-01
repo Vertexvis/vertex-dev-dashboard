@@ -2,11 +2,7 @@ import { Box } from "@mui/material";
 import React from "react";
 
 export type IconName =
-  | "expand-all"
-  | "collapse-all"
-  | "eye-open"
-  | "eye-half"
-  | "fit";
+  "expand-all" | "collapse-all" | "eye-open" | "eye-half" | "fit";
 
 export type IconSize = "xs" | "sm" | "md" | "lg";
 

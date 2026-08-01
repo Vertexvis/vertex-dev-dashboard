@@ -22,7 +22,7 @@ describe("RightDrawer", () => {
 
   it("resizes with arrow keys from the drawer's perspective", () => {
     render(
-      <RightDrawer modelViews={modelViews} onViewStateSelected={jest.fn()} />
+      <RightDrawer modelViews={modelViews} onViewStateSelected={jest.fn()} />,
     );
 
     const resizeHandle = screen.getByRole("separator", {

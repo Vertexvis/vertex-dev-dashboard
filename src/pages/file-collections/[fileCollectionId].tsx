@@ -59,7 +59,7 @@ const FileCollectionFilesTable = dynamic(
   () => import("../../components/file-collection/FileCollectionFilesTable"),
   {
     ssr: false,
-  }
+  },
 );
 
 type ServerSideProps = CommonProps & Props;
@@ -344,7 +344,7 @@ export default function FileCollectionDetails({
   const fileCollectionIdRef = React.useRef(fileCollection.id);
   const [file, setFile] = React.useState<File | undefined>();
   const [exportStateCollectionId, setExportStateCollectionId] = React.useState(
-    fileCollection.id
+    fileCollection.id,
   );
   const [readiness, setReadiness] = React.useState<ExportReadinessState>();
   const [readinessError, setReadinessError] = React.useState<string>();
@@ -359,10 +359,10 @@ export default function FileCollectionDetails({
   const [jobStatus, setJobStatus] = React.useState<ExportJobStatus>("idle");
   const drawerOpen = Boolean(file);
   const filesApiPath = `/api/file-collections/${encodeURIComponent(
-    fileCollection.id
+    fileCollection.id,
   )}/files`;
   const readinessApiPath = `/api/file-collections/${encodeURIComponent(
-    fileCollection.id
+    fileCollection.id,
   )}?includeExportAvailability=true`;
   const exportStateIsCurrent = exportStateCollectionId === fileCollection.id;
   const currentArchiveFileId = exportStateIsCurrent ? archiveFileId : undefined;
@@ -404,7 +404,7 @@ export default function FileCollectionDetails({
           setReadiness(undefined);
           setReadinessError(
             ("message" in body ? body.message : undefined) ??
-              "Could not check export availability."
+              "Could not check export availability.",
           );
           return;
         }
@@ -425,7 +425,7 @@ export default function FileCollectionDetails({
         }
       }
     },
-    [fileCollection.id, readinessApiPath]
+    [fileCollection.id, readinessApiPath],
   );
 
   React.useEffect(() => {
@@ -447,7 +447,7 @@ export default function FileCollectionDetails({
     const controller = new AbortController();
 
     loadReadiness(controller.signal).catch(
-      reportError("Failed to check export availability")
+      reportError("Failed to check export availability"),
     );
 
     return () => controller.abort();
@@ -463,7 +463,7 @@ export default function FileCollectionDetails({
 
     const timeout = window.setTimeout(
       () => setArchiveReadyMessageVisible(false),
-      6000
+      6000,
     );
 
     return () => window.clearTimeout(timeout);
@@ -495,7 +495,7 @@ export default function FileCollectionDetails({
         if (signal.aborted) return;
 
         const res = await fetch(
-          `/api/file-jobs/${encodeURIComponent(currentJobId)}`
+          `/api/file-jobs/${encodeURIComponent(currentJobId)}`,
         );
         const body = (await res.json()) as FileJobRes | ErrorRes;
 
@@ -505,7 +505,7 @@ export default function FileCollectionDetails({
           setJobStatus("error");
           setExportError(
             ("message" in body ? body.message : undefined) ??
-              "Archive job failed."
+              "Archive job failed.",
           );
           return;
         }
@@ -548,7 +548,7 @@ export default function FileCollectionDetails({
     setJobStatus("creating");
 
     const created = await createFileJob(currentFileCollectionId).catch(
-      () => undefined
+      () => undefined,
     );
 
     if (created == null) {
@@ -583,7 +583,7 @@ export default function FileCollectionDetails({
               ready: false,
               status: body.status,
             }
-          : current
+          : current,
       );
       return;
     }
@@ -604,7 +604,7 @@ export default function FileCollectionDetails({
     try {
       const res = await fetch(
         `/api/files/${encodeURIComponent(currentArchiveFileId)}/download-url`,
-        { method: "POST" }
+        { method: "POST" },
       );
       const body = (await res.json()) as FileDownloadUrlRes | ErrorRes;
 
@@ -613,7 +613,7 @@ export default function FileCollectionDetails({
       if (!res.ok || !("url" in body)) {
         setExportError(
           ("message" in body ? body.message : undefined) ??
-            "Could not create a download URL for this archive."
+            "Could not create a download URL for this archive.",
         );
         return;
       }
@@ -686,17 +686,17 @@ export default function FileCollectionDetails({
                 jobStatus={currentJobStatus}
                 onDownloadArchive={() => {
                   handleDownloadArchive().catch(
-                    reportError("Failed to download the archive")
+                    reportError("Failed to download the archive"),
                   );
                 }}
                 onExport={() => {
                   handleExport().catch(
-                    reportError("Failed to export the file collection")
+                    reportError("Failed to export the file collection"),
                   );
                 }}
                 onRefreshReadiness={() => {
                   handleRefreshReadiness().catch(
-                    reportError("Failed to refresh export availability")
+                    reportError("Failed to refresh export availability"),
                   );
                 }}
                 onRetry={handleRetry}
@@ -729,7 +729,7 @@ export default function FileCollectionDetails({
 
 export const getServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes
+  CookieAttributes,
 );
 
 export async function serverSidePropsHandler({
@@ -744,7 +744,7 @@ export async function serverSidePropsHandler({
 
   const api = getFileCollectionsApi(await getClientFromSession(req.session));
   const res = await makeCall(() =>
-    api.getFileCollection({ id: fileCollectionId })
+    api.getFileCollection({ id: fileCollectionId }),
   );
 
   if (isErrorFailure(res)) {

@@ -24,7 +24,7 @@ export default function SceneViewerBySuppliedId(): JSX.Element {
 export const getServerSideProps = withSession(serverSidePropsHandler);
 
 export async function serverSidePropsHandler(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<GetServerSidePropsResult<unknown>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const session = (req as any).req.session;
@@ -71,7 +71,7 @@ async function fetchSceneBySuppliedId(
   client: VertexClient,
   nameFilter: string,
   pageNumber = 0,
-  cursor?: string
+  cursor?: string,
 ): Promise<SceneData | undefined> {
   if (pageNumber >= 10) {
     throw new Error(`Failed to find requested scene in the first ten pages.`);
@@ -81,13 +81,13 @@ async function fetchSceneBySuppliedId(
     client.scenes.getScenes({
       pageCursor: cursor,
       pageSize: 50,
-    })
+    }),
   );
 
   const scene = page.data.find(
     (s) =>
       s.attributes.name?.includes(nameFilter) ||
-      s.attributes.name?.toLowerCase().includes(nameFilter)
+      s.attributes.name?.toLowerCase().includes(nameFilter),
   );
 
   if (scene != null) {
@@ -97,7 +97,7 @@ async function fetchSceneBySuppliedId(
       client,
       nameFilter,
       pageNumber + 1,
-      cursors.next
+      cursors.next,
     );
   }
 }

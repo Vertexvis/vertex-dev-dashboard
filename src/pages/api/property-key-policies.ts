@@ -40,7 +40,7 @@ export async function handlePropertyKeyPolicies(
     | CreatePropertyKeyPolicyRes
     | DeletePropertyKeyPoliciesRes
     | ErrorRes
-  >
+  >,
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -63,7 +63,7 @@ export async function handlePropertyKeyPolicies(
 export default withSession(handlePropertyKeyPolicies);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | PropertyKeyPolicyPageRes> {
   try {
     const client = await getClientFromSession(req.session);
@@ -79,7 +79,7 @@ async function get(
       "suppliedId",
       suppliedId != null
         ? ({ contains: suppliedId } satisfies FilterExpression)
-        : undefined
+        : undefined,
     );
 
     const { cursors, page } = await getPage(
@@ -91,8 +91,8 @@ async function get(
               Accept: "application/vnd.api+json",
               Authorization: `Bearer ${client.token.access_token}`,
             },
-          }
-        )
+          },
+        ),
     );
     return {
       cursors,
@@ -109,7 +109,7 @@ async function get(
 }
 
 async function create(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | CreatePropertyKeyPolicyRes> {
   if (!req.body) return BodyRequired;
 
@@ -134,7 +134,7 @@ async function create(
             },
           },
         },
-      })
+      }),
     );
     if (isErrorFailure(created)) return toErrorRes({ failure: created });
 
@@ -144,7 +144,7 @@ async function create(
     const keys = await makeCall(() =>
       client.axiosInstance.post<void>(
         `${client.config.basePath}/property-key-policies/${encodeURIComponent(
-          created.data.id
+          created.data.id,
         )}/keys`,
         { data: body.keys.map((name) => ({ name })) },
         {
@@ -153,8 +153,8 @@ async function create(
             Authorization: `Bearer ${client.token.access_token}`,
             "Content-Type": "application/vnd.api+json",
           },
-        }
-      )
+        },
+      ),
     );
     if (isErrorFailure(keys)) {
       return {
@@ -175,7 +175,7 @@ async function create(
 }
 
 async function del(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<
   ErrorRes | DeletePropertyKeyPoliciesRes | PartialDeletePropertyKeyPoliciesRes
 > {
@@ -199,13 +199,13 @@ async function del(
 
   try {
     const c = getPropertyKeyPoliciesApi(
-      await getClientFromSession(req.session)
+      await getClientFromSession(req.session),
     );
     const results = await Promise.all(
-      ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id })))
+      ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id }))),
     );
     const deletedIds = ids.filter(
-      (_, index) => !isErrorFailure(results[index])
+      (_, index) => !isErrorFailure(results[index]),
     );
     const failedIds = ids.filter((_, index) => isErrorFailure(results[index]));
     if (failedIds.length > 0) {
@@ -233,7 +233,7 @@ async function del(
 }
 
 function parseCreatePropertyKeyPolicyReq(
-  body: unknown
+  body: unknown,
 ): CreatePropertyKeyPolicyReq | undefined {
   try {
     const parsed = (
@@ -268,7 +268,7 @@ function parseCreatePropertyKeyPolicyReq(
 }
 
 function isPropertyKeyPolicyMode(
-  value: unknown
+  value: unknown,
 ): value is PropertyKeyPolicyMode {
   return (
     value === PropertyKeyPolicyMode.Allowlist ||

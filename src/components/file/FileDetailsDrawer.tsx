@@ -130,9 +130,9 @@ function useFileCollections({
 
       const res = await fetch(
         `/api/files/${encodeURIComponent(
-          fileId
+          fileId,
         )}/file-collections?${params.toString()}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       const body = await res.json();
 
@@ -141,7 +141,7 @@ function useFileCollections({
       if (!res.ok) {
         throw new Error(
           (body as { message?: string }).message ??
-            "Could not load file collections."
+            "Could not load file collections.",
         );
       }
 
@@ -168,7 +168,7 @@ function useFileCollections({
           setError(
             err instanceof Error
               ? err.message
-              : "Could not load file collections."
+              : "Could not load file collections.",
           );
           setLoading(false);
         }
@@ -319,7 +319,7 @@ function FileCollectionIdsRow({
                   <TableCell sx={{ px: 0, py: 0.75, verticalAlign: "top" }}>
                     <AppLink
                       href={`/file-collections/${encodeURIComponent(
-                        collection.id
+                        collection.id,
                       )}`}
                       underline="hover"
                     >
@@ -341,7 +341,7 @@ function FileCollectionIdsRow({
                     >
                       <AppLink
                         href={`/file-collections/${encodeURIComponent(
-                          collection.id
+                          collection.id,
                         )}`}
                         underline="hover"
                         sx={{ minWidth: 0 }}
@@ -366,7 +366,7 @@ function FileCollectionIdsRow({
                           aria-label={`Copy ${collection.id}`}
                           onClick={() => {
                             copyId(collection.id).catch(
-                              reportError("Failed to copy file collection ID")
+                              reportError("Failed to copy file collection ID"),
                             );
                           }}
                           size="small"

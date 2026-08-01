@@ -56,14 +56,14 @@ describe("FileTable", () => {
       http.get("*/api/files", ({ request }) => {
         requests.push(request.url);
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
 
     expect(await screen.findByText("alpha.jt")).toBeInTheDocument();
     expect(requests).toContain(
-      "http://localhost/api/files?pageSize=25&sort=-created"
+      "http://localhost/api/files?pageSize=25&sort=-created",
     );
   });
 
@@ -71,14 +71,14 @@ describe("FileTable", () => {
     server.use(
       http.get("*/api/files", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
 
     expect(await screen.findByLabelText("Download alpha.jt")).toHaveAttribute(
       "href",
-      "/api/files/file-1/download"
+      "/api/files/file-1/download",
     );
   });
 
@@ -89,7 +89,7 @@ describe("FileTable", () => {
       http.get("*/api/files", ({ request }) => {
         requests.push(request.url);
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
@@ -99,14 +99,14 @@ describe("FileTable", () => {
     await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
-        "http://localhost/api/files?pageSize=25&sort=name"
+        "http://localhost/api/files?pageSize=25&sort=name",
       );
     });
 
     await userEvent.click(getNameSortButton());
     await waitFor(() => {
       expect(requests).toContain(
-        "http://localhost/api/files?pageSize=25&sort=-name"
+        "http://localhost/api/files?pageSize=25&sort=-name",
       );
     });
   });
@@ -126,9 +126,9 @@ describe("FileTable", () => {
         }
 
         return HttpResponse.json(
-          url.searchParams.get("sort") === "name" ? page : pagedPage
+          url.searchParams.get("sort") === "name" ? page : pagedPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -148,7 +148,7 @@ describe("FileTable", () => {
     server.use(
       http.get("*/api/files", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
@@ -171,7 +171,7 @@ describe("FileTable", () => {
     server.use(
       http.get("*/api/files", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
@@ -188,7 +188,7 @@ describe("FileTable", () => {
     server.use(
       http.get("*/api/files", () => {
         return HttpResponse.json(page);
-      })
+      }),
     );
 
     renderTable();
@@ -210,7 +210,7 @@ describe("FileTable", () => {
 
 function renderTable(
   onFileSelected = jest.fn(),
-  props: Partial<React.ComponentProps<typeof FileTable>> = {}
+  props: Partial<React.ComponentProps<typeof FileTable>> = {},
 ): void {
   renderWithSWR(<FileTable onFileSelected={onFileSelected} {...props} />);
 }

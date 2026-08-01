@@ -11,7 +11,7 @@ const DefaultDownloadExpirySeconds = 30;
 export default withSession(methodRouter({ POST: create }));
 
 async function create(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<FileDownloadUrlRes | ErrorRes> {
   const id = head(req.query.id);
   if (id == null) return InvalidBody;

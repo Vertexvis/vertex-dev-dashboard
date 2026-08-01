@@ -35,9 +35,9 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
               propertyKeyPolicyKey({ id: "key-1", name: "MixedCase_Key" }),
               propertyKeyPolicyKey({ id: "key-2", name: "ALLCAPS" }),
             ],
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
 
     renderDrawer();
@@ -53,12 +53,12 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
 
     // Case-sensitivity note is present.
     expect(
-      screen.getByText("Metadata property keys are case-sensitive.")
+      screen.getByText("Metadata property keys are case-sensitive."),
     ).toBeInTheDocument();
 
     // No misleading "full policy details" error appears.
     expect(
-      screen.queryByText("Could not load the full policy details.")
+      screen.queryByText("Could not load the full policy details."),
     ).not.toBeInTheDocument();
   });
 
@@ -67,9 +67,9 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
       http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not load entries.", status: 500 },
-          { status: 500 }
-        )
-      )
+          { status: 500 },
+        ),
+      ),
     );
 
     renderDrawer();
@@ -78,7 +78,7 @@ describe("PropertyKeyPolicyDetailsDrawer", () => {
     expect(await screen.findByText("My Policy")).toBeInTheDocument();
     // The entries branch surfaces its own error.
     expect(
-      await screen.findByText("Could not load property keys.")
+      await screen.findByText("Could not load property keys."),
     ).toBeInTheDocument();
   });
 });
@@ -89,6 +89,6 @@ function renderDrawer(): void {
       onClose={jest.fn()}
       open
       propertyKeyPolicy={policy}
-    />
+    />,
   );
 }

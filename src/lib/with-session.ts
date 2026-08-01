@@ -56,14 +56,14 @@ export const CookieAttributes: SessionOptions = {
 export type NextIronRequest = NextApiRequest & { readonly session: Session };
 
 export default function withSession(
-  handler: Handler<NextIronRequest, NextApiResponse>
+  handler: Handler<NextIronRequest, NextApiResponse>,
 ): Handler<NextApiRequest, NextApiResponse> {
   return withIronSession(handler, CookieAttributes);
 }
 
 export const defaultServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes
+  CookieAttributes,
 );
 
 export function serverSidePropsHandler({
@@ -106,7 +106,7 @@ export function setCreds(session: Session, val: OAuthCredentials): void {
 export function setEnv(
   session: Session,
   val: EnvironmentWithCustom,
-  networkConfig?: NetworkConfig
+  networkConfig?: NetworkConfig,
 ): void {
   session.set(EnvKey, val);
 

@@ -14,7 +14,7 @@ export function toPartRevision(data: PartRevisionData): PartRevision {
 }
 
 export function toPartRevisionPage(
-  res: GetRes<PartRevisionData>
+  res: GetRes<PartRevisionData>,
 ): Paged<PartRevision> {
   return toPage<PartRevisionData, PartRevisionDataAttributes>(res);
 }

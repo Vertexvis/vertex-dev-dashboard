@@ -9,7 +9,7 @@ const VertexAPIStorageEngine = {
   _handleFile: async (
     req: Request & { session: ironSession.Session },
     file: Express.Multer.File,
-    cb: (error?: Error, info?: Partial<Express.Multer.File>) => void
+    cb: (error?: Error, info?: Partial<Express.Multer.File>) => void,
   ): Promise<void> => {
     await ironSession.applySession(req, null, CookieAttributes);
 

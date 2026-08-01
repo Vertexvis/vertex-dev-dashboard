@@ -15,7 +15,7 @@ export const handleFileCollectionsByFile = methodRouter({ GET: get });
 export default withSession(handleFileCollectionsByFile);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<FileCollectionMetadataData>> {
   const id = head(req.query.id);
   if (id == null) return { message: "File ID required.", status: 400 };
@@ -29,7 +29,7 @@ async function get(
       id,
       pageCursor: cursor,
       pageSize: parsePositiveQueryInt(pageSize, 10),
-    })
+    }),
   );
 
   return { cursors, data: page.data, status: 200 };

@@ -36,7 +36,7 @@ function useSceneViewStates({
   viewId?: string;
 }): SWRResponse<GetRes<SceneViewStateData>, ErrorRes> {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
-    viewId ? `/api/scene-view-states?view=${viewId}` : null
+    viewId ? `/api/scene-view-states?view=${viewId}` : null,
   );
 }
 
@@ -46,7 +46,7 @@ function useSceneItem({
   itemId?: string;
 }): SWRResponse<SceneItemData, ErrorRes> {
   return useSWR<SceneItemData, ErrorRes>(
-    itemId ? `/api/scene-items/${itemId}` : null
+    itemId ? `/api/scene-items/${itemId}` : null,
   );
 }
 
@@ -101,17 +101,17 @@ export default function SceneViewer({
         router.replace(
           encodeCreds({ clientId: cId, sceneId, streamKey, vertexEnv: ve }),
           undefined,
-          { shallow: true }
-        )
+          { shallow: true },
+        ),
       )
       .catch(() =>
-        setStreamKeyError("Unable to create a stream key for this scene.")
+        setStreamKeyError("Unable to create a stream key for this scene."),
       );
   }, [clientId, router, vertexEnv]);
 
   async function handleSelect(
     detail: TapEventDetails,
-    hit?: vertexvis.protobuf.stream.IHit
+    hit?: vertexvis.protobuf.stream.IHit,
   ): Promise<void> {
     console.debug({
       hitNormal: hit?.hitNormal,
@@ -132,7 +132,7 @@ export default function SceneViewer({
 
   function handleViewStateSelected(id: string): void {
     applySceneViewState({ id, viewer: viewerState.ref.current }).catch(
-      reportError("Failed to apply the scene view state")
+      reportError("Failed to apply the scene view state"),
     );
   }
 
@@ -183,7 +183,7 @@ export default function SceneViewer({
             viewerId={ViewerId}
             onViewStateCreated={() => {
               mutate().catch(
-                reportError("Failed to refresh scene view states")
+                reportError("Failed to refresh scene view states"),
               );
             }}
             networkConfig={networkConfig}
@@ -191,7 +191,7 @@ export default function SceneViewer({
             rotateAroundTapPoint={true}
             onSceneReady={() => {
               handleSceneReady().catch(
-                reportError("Failed to prepare the scene view")
+                reportError("Failed to prepare the scene view"),
               );
             }}
             onViewReset={() => {
@@ -272,5 +272,5 @@ export function serverSidePropsHandler({
 
 export const getServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes
+  CookieAttributes,
 );

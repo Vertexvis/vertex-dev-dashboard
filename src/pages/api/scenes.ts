@@ -43,11 +43,11 @@ export type UpdateSceneReq = Pick<ScenesApiUpdateSceneRequest, "id"> &
   >;
 
 export default withSession(
-  methodRouter({ GET: get, DELETE: del, PATCH: upd, POST: create })
+  methodRouter({ GET: get, DELETE: del, PATCH: upd, POST: create }),
 );
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<SceneData>> {
   const c = await getClientFromSession(req.session);
   const ps = head(req.query.pageSize);
@@ -63,7 +63,7 @@ async function get(
   query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
   query.set(
     "fields[scene]",
-    "metadata,state,camera,worldOrientation,name,suppliedId,created,modified,sceneItemCount"
+    "metadata,state,camera,worldOrientation,name,suppliedId,created,modified,sceneItemCount",
   );
   setFilterExpression(query, "name", filterName);
   setFilterExpression(query, "suppliedId", filterSuppliedId);
@@ -75,7 +75,7 @@ async function get(
           Accept: "application/vnd.api+json",
           Authorization: `Bearer ${c.token.access_token}`,
         },
-      }) as Promise<AxiosResponse<SceneList>>
+      }) as Promise<AxiosResponse<SceneList>>,
   );
   return { cursors, data: page.data, status: 200 };
 }
@@ -88,7 +88,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
 
   const c = await getClientFromSession(req.session);
   await Promise.all(
-    b.ids.map((id) => makeCall(() => c.scenes.deleteScene({ id })))
+    b.ids.map((id) => makeCall(() => c.scenes.deleteScene({ id }))),
   );
   return { status: 200 };
 }
@@ -97,7 +97,7 @@ async function upd(req: NextIronRequest): Promise<ErrorRes | Res> {
   if (!req.body) return BodyRequired;
 
   const { id, name, suppliedId, camera, metadata }: UpdateSceneReq = JSON.parse(
-    req.body
+    req.body,
   );
   const c = await getClientFromSession(req.session);
   await makeCall(() =>
@@ -109,13 +109,13 @@ async function upd(req: NextIronRequest): Promise<ErrorRes | Res> {
           type: "scene",
         },
       },
-    })
+    }),
   );
   return { status: 200 };
 }
 
 async function create(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | CreateSceneRes> {
   const b: CreateSceneReq = JSON.parse(req.body);
   if (!req.body) return InvalidBody;
@@ -167,7 +167,7 @@ async function create(
           type: "scene",
         },
       },
-    })
+    }),
   );
 
   return { status: 200, id: res.data.data.id };

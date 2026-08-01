@@ -36,18 +36,18 @@ function shouldForwardProp(prop: PropertyKey): boolean {
   );
 }
 
-const AppBar = styled(MuiAppBar, { shouldForwardProp })<DrawerProps>(
-  ({ theme }) => {
-    return {
+const AppBar = styled(MuiAppBar, { shouldForwardProp })<DrawerProps>(({
+  theme,
+}) => {
+  return {
+    width: `100%`,
+    zIndex: theme.zIndex.drawer + 1,
+    [theme.breakpoints.down("sm")]: {
+      margin: 0,
       width: `100%`,
-      zIndex: theme.zIndex.drawer + 1,
-      [theme.breakpoints.down("sm")]: {
-        margin: 0,
-        width: `100%`,
-      },
-    };
-  }
-);
+    },
+  };
+});
 
 const Main = styled("main", { shouldForwardProp })<{
   bottomDrawerHeight: number;

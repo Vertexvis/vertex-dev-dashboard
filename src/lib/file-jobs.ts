@@ -23,7 +23,7 @@ export function getFileJobsApi(client: VertexClient): FileJobsApi {
 
 export function buildFileArchiveJobRequest(
   files: FileMetadataData[],
-  archiveFileId: string
+  archiveFileId: string,
 ): CreateFileJobRequest {
   const fileIds = files.map((file) => file.id);
 
@@ -46,7 +46,7 @@ export function buildFileArchiveJobRequest(
 export function toFileJobRes(
   job: QueuedJob,
   status = 200,
-  archiveFileId?: string
+  archiveFileId?: string,
 ): FileJobRes {
   return {
     ...(archiveFileId == null ? {} : { archiveFileId }),

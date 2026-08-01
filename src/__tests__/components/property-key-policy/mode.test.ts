@@ -12,7 +12,7 @@ describe("toModeLabel", () => {
 
   it("falls back to Unknown for unexpected modes", () => {
     expect(toModeLabel("something-else" as PropertyKeyPolicyMode)).toBe(
-      "Unknown"
+      "Unknown",
     );
   });
 });

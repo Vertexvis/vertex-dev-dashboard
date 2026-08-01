@@ -35,10 +35,10 @@ describe("file collection API routes", () => {
           expect(searchParams.get("page[size]")).toBe("50");
           expect(searchParams.get("filter[name][contains]")).toBe("COLLECT");
           expect(searchParams.get("filter[suppliedId][contains]")).toBe(
-            "LIED-1"
+            "LIED-1",
           );
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFileCollections({
@@ -76,8 +76,8 @@ describe("file collection API routes", () => {
         ({ searchParams }) => {
           expect(searchParams.get("filter[name][contains]")).toBe("missing");
           expect(searchParams.get("page[size]")).toBe("10");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFileCollections({
@@ -114,14 +114,14 @@ describe("file collection API routes", () => {
         },
         ({ searchParams }) => {
           expect(searchParams.get("filter[createdAt][gte]")).toBe(
-            "2026-06-11T00:00:00.000Z"
+            "2026-06-11T00:00:00.000Z",
           );
           expect(searchParams.get("filter[createdAt][lte]")).toBe(
-            "2026-06-11T23:59:59.999Z"
+            "2026-06-11T23:59:59.999Z",
           );
           expect(searchParams.get("page[size]")).toBe("10");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFileCollections({
@@ -150,7 +150,7 @@ describe("file collection API routes", () => {
       stubListFileCollections(fileCollectionsList(data), ({ searchParams }) => {
         expect(searchParams.get("page[size]")).toBe("10");
         expect(searchParams.get("sort")).toBe("-created");
-      })
+      }),
     );
 
     const response = await callFileCollections({
@@ -176,7 +176,7 @@ describe("file collection API routes", () => {
       stubListFileCollections(fileCollectionsList(data), ({ searchParams }) => {
         expect(searchParams.get("page[size]")).toBe("10");
         expect(searchParams.get("sort")).toBe("name");
-      })
+      }),
     );
 
     const response = await callFileCollections({
@@ -201,8 +201,8 @@ describe("file collection API routes", () => {
         },
         ({ searchParams }) => {
           expect(searchParams.get("page[size]")).toBe("10");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFileCollections({ method: "GET" });
@@ -239,7 +239,7 @@ describe("file collection API routes", () => {
 
     nodeMswServer.use(
       stubDeleteCollection("collection-1", undefined, deletedIds),
-      stubDeleteCollection("collection-2", undefined, deletedIds)
+      stubDeleteCollection("collection-2", undefined, deletedIds),
     );
 
     const response = await callFileCollections({
@@ -256,7 +256,7 @@ describe("file collection API routes", () => {
     nodeMswServer.use(
       stubDeleteCollection("collection-1", {
         errors: [{ status: "404", title: "Collection not found." }],
-      })
+      }),
     );
 
     const response = await callFileCollections({
@@ -276,7 +276,7 @@ describe("file collection API routes", () => {
       stubGetFileCollection("collection-1", {
         data: fileCollectionData("collection-1"),
         links: {},
-      })
+      }),
     );
 
     const response = await callFileCollectionById("collection-1", {
@@ -304,8 +304,8 @@ describe("file collection API routes", () => {
         },
         ({ searchParams }) => {
           expect(searchParams.get("page[size]")).toBe("200");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFileCollectionById("collection-1", {
@@ -326,8 +326,8 @@ describe("file collection API routes", () => {
       stubGetFileCollection(
         "collection-1",
         failureBody("500", "Vertex is upset."),
-        500
-      )
+        500,
+      ),
     );
 
     const response = await callFileCollectionById("collection-1", {
@@ -371,7 +371,7 @@ function callFileCollections(req: ApiRouteRequest): Promise<ApiRouteResponse> {
 
 function callFileCollectionById(
   id: string,
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return callApi(handleFileCollection, {
     ...req,
@@ -381,7 +381,7 @@ function callFileCollectionById(
 
 function callApi(
   handler: Parameters<typeof invokeNextJsApiRouteHandler>[0],
-  req: ApiRouteRequest
+  req: ApiRouteRequest,
 ): Promise<ApiRouteResponse> {
   return invokeNextJsApiRouteHandler(handler, {
     ...req,
@@ -392,7 +392,7 @@ function callApi(
 function fileCollectionData(
   id: string,
   created = "2026-06-10T15:30:00Z",
-  name = "Collection One"
+  name = "Collection One",
 ): {
   attributes: { created: string; name: string; suppliedId: string };
   id: string;
@@ -411,7 +411,7 @@ function fileCollectionData(
 
 function fileData(
   id: string,
-  status: string
+  status: string,
 ): {
   attributes: {
     created: string;
@@ -438,7 +438,7 @@ function fileData(
 
 function failureBody(
   status: string,
-  title: string
+  title: string,
 ): { errors: Array<{ status: string; title: string }> } {
   return {
     errors: [{ status, title }],
@@ -470,7 +470,7 @@ function stubListFileCollections(
       self?: { href: string };
     };
   },
-  assertRequest?: (request: URL) => void
+  assertRequest?: (request: URL) => void,
 ): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-collections`, ({ request }) => {
     const url = new URL(request.url);
@@ -489,7 +489,7 @@ function stubDeleteCollection(
   failure:
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
-  deletedIds?: string[]
+  deletedIds?: string[],
 ): ReturnType<typeof http.delete> {
   return http.delete(`${vertexApiOrigin}/file-collections/${id}`, () => {
     deletedIds?.push(id);
@@ -515,7 +515,7 @@ function stubGetFileCollection(
         data: ReturnType<typeof fileCollectionData>;
         links: Record<string, never>;
       },
-  status = 200
+  status = 200,
 ): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-collections/${id}`, () => {
     return HttpResponse.json(body, {
@@ -530,7 +530,7 @@ function stubGetFileCollection(
 function stubListFileCollectionFiles(
   id: string,
   body: { data: ReturnType<typeof fileData>[]; links: Record<string, never> },
-  assertRequest?: (request: URL) => void
+  assertRequest?: (request: URL) => void,
 ): ReturnType<typeof http.get> {
   return http.get(
     `${vertexApiOrigin}/file-collections/${id}/files`,
@@ -542,6 +542,6 @@ function stubListFileCollectionFiles(
           "content-type": "application/vnd.api+json",
         },
       });
-    }
+    },
   );
 }

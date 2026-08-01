@@ -17,7 +17,7 @@ import withSession, { NextIronRequest } from "../../../../lib/with-session";
 
 export async function handlePropertyKeyPolicy(
   req: NextIronRequest,
-  res: NextApiResponse<GetPropertyKeyPolicyRes | ErrorRes>
+  res: NextApiResponse<GetPropertyKeyPolicyRes | ErrorRes>,
 ): Promise<void> {
   if (req.method === "GET") {
     const r = await get(req);
@@ -30,7 +30,7 @@ export async function handlePropertyKeyPolicy(
 export default withSession(handlePropertyKeyPolicy);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetPropertyKeyPolicyRes> {
   try {
     const id = head(req.query.id);
@@ -38,7 +38,7 @@ async function get(
       return { message: "Property Key Policy ID required.", status: 400 };
 
     const c = getPropertyKeyPoliciesApi(
-      await getClientFromSession(req.session)
+      await getClientFromSession(req.session),
     );
     const res = await makeCall(() => c.getPropertyKeyPolicy({ id }));
     if (isErrorFailure(res)) return toErrorRes({ failure: res });

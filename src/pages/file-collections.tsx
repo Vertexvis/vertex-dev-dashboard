@@ -11,7 +11,7 @@ const FileCollectionsTable = dynamic(
   () => import("../components/file-collection/FileCollectionTable"),
   {
     ssr: false,
-  }
+  },
 );
 
 export default function FileCollections(): JSX.Element {

@@ -20,7 +20,7 @@ export function toLocaleString(date?: string, fallback = ""): string {
  */
 export function toLocalDayBoundaryIso(
   value: string,
-  boundary: DayBoundary
+  boundary: DayBoundary,
 ): string {
   const [year, month, day] = value.split("-").map(Number);
   const date =
