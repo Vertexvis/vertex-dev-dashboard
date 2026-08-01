@@ -28,15 +28,15 @@ export interface CommonProps {
   readonly networkConfig?: NetworkConfig;
 }
 
-export type SessionToken = {
+export interface SessionToken {
   readonly token: OAuth2Token;
   readonly expiration: number;
-};
+}
 
-export type OAuthCredentials = {
+export interface OAuthCredentials {
   readonly id: string;
   readonly secret: string;
-};
+}
 
 export const CookieName = "sess";
 export const CredsKey = "creds";

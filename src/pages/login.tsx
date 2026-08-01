@@ -104,6 +104,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
       localStorage.setItem("vertexvis.client.id", id);
     }
   }
+
   async function handleSubmit() {
     if (!id || !secret) return;
     setLoading(true);

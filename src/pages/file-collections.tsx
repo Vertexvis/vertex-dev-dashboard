@@ -4,6 +4,7 @@ import React from "react";
 import { FileCollectionDetailsDrawer } from "../components/file-collection/FileCollectionDetailsDrawer";
 import { Layout } from "../components/shared/Layout";
 import { FileCollection } from "../lib/file-collections";
+
 export { defaultServerSideProps as getServerSideProps } from "../lib/with-session";
 
 const FileCollectionsTable = dynamic(
