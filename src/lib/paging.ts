@@ -124,7 +124,6 @@ export async function fetchAllPages<T, TPage extends CursorPage<T>>(
 
   do {
     // Each request depends on the cursor returned by the previous page.
-    // eslint-disable-next-line no-await-in-loop
     const { page, cursor: nextCursor } = await getPage(() => fetchPage(cursor));
     items.push(...page.data);
 

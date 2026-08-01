@@ -380,7 +380,7 @@ export default function FileCollectionDetails({
           ready: body.export?.enabled === true,
           status: body.status,
         });
-      } catch (error) {
+      } catch {
         if (
           !signal?.aborted &&
           fileCollectionIdRef.current === currentFileCollectionId

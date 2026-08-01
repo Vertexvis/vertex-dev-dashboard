@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "child_process";
 import type {
   SpawnSyncOptions,
   SpawnSyncOptionsWithStringEncoding,
   SpawnSyncReturns,
 } from "child_process";
+import { spawnSync } from "child_process";
 import * as fs from "fs";
 import { createRequire } from "module";
 

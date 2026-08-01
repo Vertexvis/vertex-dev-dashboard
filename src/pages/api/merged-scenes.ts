@@ -9,11 +9,11 @@ import { methodRouter } from "../../lib/api-handler";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import withSession, { NextIronRequest } from "../../lib/with-session";
 
-export type MergeSceneReq = {
+export interface MergeSceneReq {
   readonly name?: string;
   readonly suppliedId?: string;
   readonly sceneIds: string[];
-};
+}
 
 export type MergeSceneRes = Res & {
   readonly queuedItemIds: string[];
