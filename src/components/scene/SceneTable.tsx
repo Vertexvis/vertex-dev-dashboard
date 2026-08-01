@@ -19,7 +19,7 @@ import { Cursors, SceneData } from "@vertexvis/api-client-node";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
@@ -51,7 +51,12 @@ const headCells: readonly HeadCell[] = [
   { id: "actions", label: "Actions" },
 ];
 
-function useScenes({ cursor, pageSize, suppliedId, name }: SwrProps) {
+function useScenes({
+  cursor,
+  pageSize,
+  suppliedId,
+  name,
+}: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
       suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
@@ -141,7 +146,7 @@ export default function SceneTable({
     if (scene != null) setActiveSceneId(scene.id);
   }, [scene]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -149,7 +154,7 @@ export default function SceneTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -157,7 +162,7 @@ export default function SceneTable({
     setSelected(upd);
   }
 
-  function handleClick(s: Scene) {
+  function handleClick(s: Scene): void {
     setActiveSceneId(s.id);
     onClick(s);
   }
@@ -165,7 +170,7 @@ export default function SceneTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     if (curPage < num) {
       setPrev({ ...prev, [num - 1]: cursors?.self });
       setCursor(cursors?.next);
@@ -174,7 +179,7 @@ export default function SceneTable({
     setCurPage(num);
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     setSelected(new Set());
     await fetch("/api/scenes", {
       body: JSON.stringify({ ids: [...selected] }),
@@ -183,16 +188,16 @@ export default function SceneTable({
     mutate();
   }
 
-  function handleEditClick(s: Scene) {
+  function handleEditClick(s: Scene): void {
     setActiveSceneId(s.id);
     onEditClick(s);
   }
 
-  function handleViewClick(sceneId: string) {
+  function handleViewClick(sceneId: string): void {
     router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
   }
 
-  async function handleGetStreamKey(sceneId: string) {
+  async function handleGetStreamKey(sceneId: string): Promise<void> {
     setKeyLoadingSceneId(sceneId);
     const b = await fetch("/api/stream-keys", {
       body: JSON.stringify({ id: sceneId }),

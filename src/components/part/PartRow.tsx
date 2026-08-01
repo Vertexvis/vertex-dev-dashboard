@@ -44,7 +44,7 @@ export default function PartRow({
   >();
 
   React.useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       const result = await fetch(`/api/part-revisions?partId=${part.id}`);
       setRevisions(toPartRevisionPage(await result.json()));
     };

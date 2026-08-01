@@ -432,7 +432,7 @@ export default function FileCollectionDetails({
     return () => window.clearTimeout(timeout);
   }, [archiveReadyMessageVisible, exportStateIsCurrent, jobStatus]);
 
-  async function handleRefreshReadiness() {
+  async function handleRefreshReadiness(): Promise<void> {
     if (currentReadinessRefreshInFlight || exportInFlight) return;
 
     setExportStateCollectionId(fileCollection.id);
@@ -452,7 +452,7 @@ export default function FileCollectionDetails({
     let active = true;
     let timeout: number | undefined;
 
-    async function pollJob() {
+    async function pollJob(): Promise<void> {
       try {
         const res = await fetch(
           `/api/file-jobs/${encodeURIComponent(currentJobId)}`
@@ -496,7 +496,7 @@ export default function FileCollectionDetails({
     };
   }, [exportStateIsCurrent, jobId, jobStatus]);
 
-  async function handleExport() {
+  async function handleExport(): Promise<void> {
     if (exportDisabled) return;
 
     const currentFileCollectionId = fileCollection.id;
@@ -556,7 +556,7 @@ export default function FileCollectionDetails({
     setJobStatus("running");
   }
 
-  async function handleDownloadArchive() {
+  async function handleDownloadArchive(): Promise<void> {
     if (currentArchiveFileId == null || currentDownloadInFlight) return;
 
     const currentFileCollectionId = fileCollection.id;
@@ -596,7 +596,7 @@ export default function FileCollectionDetails({
     }
   }
 
-  function handleRetry() {
+  function handleRetry(): void {
     setExportStateCollectionId(fileCollection.id);
     setArchiveFileId(undefined);
     setArchiveReadyMessageVisible(false);

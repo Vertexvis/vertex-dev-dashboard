@@ -393,7 +393,11 @@ function fileCollectionData(
   id: string,
   created = "2026-06-10T15:30:00Z",
   name = "Collection One"
-) {
+): {
+  attributes: { created: string; name: string; suppliedId: string };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
       created,
@@ -405,7 +409,20 @@ function fileCollectionData(
   };
 }
 
-function fileData(id: string, status: string) {
+function fileData(
+  id: string,
+  status: string
+): {
+  attributes: {
+    created: string;
+    name: string;
+    status: string;
+    suppliedId: string;
+    uploaded: string;
+  };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
       created: "2026-06-12T15:30:00Z",
@@ -419,13 +436,19 @@ function fileData(id: string, status: string) {
   };
 }
 
-function failureBody(status: string, title: string) {
+function failureBody(
+  status: string,
+  title: string
+): { errors: Array<{ status: string; title: string }> } {
   return {
     errors: [{ status, title }],
   };
 }
 
-function fileCollectionsList(data: ReturnType<typeof fileCollectionData>[]) {
+function fileCollectionsList(data: ReturnType<typeof fileCollectionData>[]): {
+  data: ReturnType<typeof fileCollectionData>[];
+  links: { next: { href: string }; self: { href: string } };
+} {
   return {
     data,
     links: {
@@ -448,7 +471,7 @@ function stubListFileCollections(
     };
   },
   assertRequest?: (request: URL) => void
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-collections`, ({ request }) => {
     const url = new URL(request.url);
     assertRequest?.(url);
@@ -467,7 +490,7 @@ function stubDeleteCollection(
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
   deletedIds?: string[]
-) {
+): ReturnType<typeof http.delete> {
   return http.delete(`${vertexApiOrigin}/file-collections/${id}`, () => {
     deletedIds?.push(id);
 
@@ -493,7 +516,7 @@ function stubGetFileCollection(
         links: Record<string, never>;
       },
   status = 200
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-collections/${id}`, () => {
     return HttpResponse.json(body, {
       status,
@@ -508,7 +531,7 @@ function stubListFileCollectionFiles(
   id: string,
   body: { data: ReturnType<typeof fileData>[]; links: Record<string, never> },
   assertRequest?: (request: URL) => void
-) {
+): ReturnType<typeof http.get> {
   return http.get(
     `${vertexApiOrigin}/file-collections/${id}/files`,
     ({ request }) => {

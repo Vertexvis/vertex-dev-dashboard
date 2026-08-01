@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
@@ -56,7 +56,7 @@ function useCollectionFiles({
   apiPath,
   cursor,
   pageSize,
-}: UseCollectionFilesProps) {
+}: UseCollectionFilesProps): SWRResponse {
   return useSWR(
     buildQuery(apiPath, {
       cursor,
@@ -122,11 +122,11 @@ export default function FileCollectionFilesTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  async function handleDownload(id: string) {
+  async function handleDownload(id: string): Promise<void> {
     setDownloadError(undefined);
 
     const res = await fetch(

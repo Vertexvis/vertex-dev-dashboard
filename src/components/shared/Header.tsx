@@ -8,7 +8,7 @@ import { AppLink } from "./AppLink";
 export function Header(): JSX.Element {
   const router = useRouter();
 
-  async function handleSignOut() {
+  async function handleSignOut(): Promise<void> {
     await fetch("/api/logout");
     router.push("/login");
   }

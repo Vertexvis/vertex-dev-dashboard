@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
@@ -72,7 +72,7 @@ function useFiles({
   pageSize,
   sort,
   suppliedId,
-}: UseFilesProps) {
+}: UseFilesProps): SWRResponse {
   return useSWR(
     buildQuery("/api/files", {
       createdAtEnd,
@@ -198,7 +198,7 @@ export default function FileTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (visiblePage == null) return;
 
     const upd = new Set<string>();
@@ -206,7 +206,7 @@ export default function FileTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -217,21 +217,21 @@ export default function FileTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  function handleSortChange(field: string) {
+  function handleSortChange(field: string): void {
     setSort((current) => toggleSort(current, field));
     resetPaging();
   }
 
-  function handleCreatedAtChange(filters: CreatedAtDateRange) {
+  function handleCreatedAtChange(filters: CreatedAtDateRange): void {
     resetPaging();
     setCreatedAtFilters(filters);
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     setSelected(new Set());
     await fetch("/api/files", {
       body: JSON.stringify({ ids: [...selected] }),
@@ -240,7 +240,7 @@ export default function FileTable({
     mutate();
   }
 
-  async function handleDownload(id: string) {
+  async function handleDownload(id: string): Promise<void> {
     setDownloadError(undefined);
 
     const res = await fetch(

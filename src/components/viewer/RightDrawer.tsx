@@ -63,7 +63,7 @@ export function RightDrawer({
     return fallbackMaxWidth();
   }, []);
 
-  function setAndPersistWidth(nextWidth: number) {
+  function setAndPersistWidth(nextWidth: number): void {
     setWidth((currentWidth) => {
       const clampedWidth = clampWidth(nextWidth, maxWidth(currentWidth));
       window.localStorage.setItem(StorageKey, String(clampedWidth));
@@ -78,7 +78,7 @@ export function RightDrawer({
   }, [maxWidth]);
 
   React.useEffect(() => {
-    function stopDragging() {
+    function stopDragging(): void {
       if (!draggingRef.current) return;
       draggingRef.current = false;
       document.body.style.userSelect = "";
@@ -88,7 +88,7 @@ export function RightDrawer({
       });
     }
 
-    function onMouseMove(event: MouseEvent) {
+    function onMouseMove(event: MouseEvent): void {
       if (!draggingRef.current) return;
       const { clientX, width: startWidth } = dragStartRef.current;
       setWidth(
@@ -96,7 +96,7 @@ export function RightDrawer({
       );
     }
 
-    function onResize() {
+    function onResize(): void {
       setWidth((currentWidth) =>
         clampWidth(currentWidth, maxWidth(currentWidth))
       );
@@ -115,7 +115,7 @@ export function RightDrawer({
     };
   }, [maxWidth]);
 
-  function handleMouseDown(event: React.MouseEvent) {
+  function handleMouseDown(event: React.MouseEvent): void {
     if (event.button !== 0) return;
     event.preventDefault();
     draggingRef.current = true;
@@ -123,11 +123,11 @@ export function RightDrawer({
     document.body.style.userSelect = "none";
   }
 
-  function handleDoubleClick() {
+  function handleDoubleClick(): void {
     setAndPersistWidth(RightDrawerWidth);
   }
 
-  function handleKeyDown(event: React.KeyboardEvent) {
+  function handleKeyDown(event: React.KeyboardEvent): void {
     switch (event.key) {
       case "ArrowLeft":
         event.preventDefault();
@@ -155,7 +155,7 @@ export function RightDrawer({
     }
   }
 
-  const getDisplayedContent = () => {
+  const getDisplayedContent = (): JSX.Element => {
     switch (active) {
       case "properties":
         return <MetadataProperties metadata={metadata} />;

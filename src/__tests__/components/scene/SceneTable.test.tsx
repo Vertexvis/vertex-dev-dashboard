@@ -152,7 +152,7 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
 function renderTable(
   scene?: Scene,
   props: Partial<React.ComponentProps<typeof SceneTable>> = {}
-) {
+): ReturnType<typeof renderWithSWR> {
   return renderWithSWR(renderTableElement(scene, props));
 }
 

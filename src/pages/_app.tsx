@@ -27,7 +27,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
   const routeProgressTimer = React.useRef<number>();
 
   React.useEffect(() => {
-    function handleChange(url: string) {
+    function handleChange(url: string): void {
       /* eslint-disable @typescript-eslint/ban-ts-comment */
       // @ts-ignore
       if (window.gtag) {
@@ -47,13 +47,13 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
   }, [events]);
 
   React.useEffect(() => {
-    function handleRouteChangeStart() {
+    function handleRouteChangeStart(): void {
       routeProgressTimer.current = window.setTimeout(() => {
         setShowRouteProgress(true);
       }, RouteProgressDelayMs);
     }
 
-    function handleRouteChangeEnd() {
+    function handleRouteChangeEnd(): void {
       if (routeProgressTimer.current != null) {
         window.clearTimeout(routeProgressTimer.current);
         routeProgressTimer.current = undefined;

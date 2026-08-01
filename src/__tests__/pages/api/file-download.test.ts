@@ -52,7 +52,11 @@ describe("file download route", () => {
   });
 });
 
-function createResponse() {
+function createResponse(): {
+  json: jest.Mock;
+  redirect: jest.Mock;
+  status: jest.Mock;
+} {
   const res = {
     json: jest.fn(),
     redirect: jest.fn(),

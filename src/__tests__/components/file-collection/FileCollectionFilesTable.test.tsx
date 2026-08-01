@@ -305,7 +305,17 @@ function fileResource({
   readonly status: string;
   readonly suppliedId: string;
   readonly uploaded?: string;
-}) {
+}): {
+  readonly type: string;
+  readonly id: string;
+  readonly attributes: {
+    readonly created: string;
+    readonly name: string;
+    readonly status: string;
+    readonly suppliedId: string;
+    readonly uploaded: string;
+  };
+} {
   return {
     type: "file",
     id,

@@ -18,7 +18,7 @@ export function SceneViewStateList({
 
   if (!sceneViewStates || !sceneViewStates.length) return <NoData />;
 
-  const handleListItemClick = (id: string, index: number) => {
+  const handleListItemClick = (id: string, index: number): void => {
     onViewStateSelected(id);
     setSelectedIndex(index);
   };

@@ -650,7 +650,14 @@ function createSession({
   } as unknown as Session;
 }
 
-function fileCollection() {
+function fileCollection(): {
+  id: string;
+  name: string;
+  suppliedId: string;
+  created: string;
+  expiresAt: string;
+  metadata: { source: string };
+} {
   return {
     id: "collection-1",
     name: "Collection One",

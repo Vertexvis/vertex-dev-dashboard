@@ -67,7 +67,7 @@ function stubListFiles(
     };
   },
   assertRequest: (request: URL) => void
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/files`, ({ request }) => {
     assertRequest(new URL(request.url));
 
@@ -79,7 +79,17 @@ function stubListFiles(
   });
 }
 
-function fileData(id: string) {
+function fileData(id: string): {
+  attributes: {
+    created: string;
+    name: string;
+    status: string;
+    suppliedId: string;
+    uploaded: string;
+  };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
       created: "2026-06-10T15:30:00Z",

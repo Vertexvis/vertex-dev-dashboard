@@ -29,7 +29,7 @@ export default function CreatePartDialog({
   const [name, setName] = React.useState<string | undefined>();
   const [submitDisabled, setSubmitDisabled] = React.useState(false);
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (viewer.current) {
       setSubmitDisabled(true);
 

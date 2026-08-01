@@ -122,7 +122,10 @@ function callKeys(id: string, req: ApiRouteRequest): Promise<ApiRouteResponse> {
   });
 }
 
-function keyData(id: string, name: string) {
+function keyData(
+  id: string,
+  name: string
+): { attributes: { name: string }; id: string; type: string } {
   return {
     attributes: { name },
     id,
@@ -133,7 +136,7 @@ function keyData(id: string, name: string) {
 function stubListKeys(
   policyId: string,
   pages: Record<string, ReturnType<typeof keyData>[]>
-) {
+): ReturnType<typeof http.get> {
   return http.get(
     `${vertexApiOrigin}/property-key-policies/${policyId}/keys`,
     ({ request }) => {

@@ -74,7 +74,7 @@ export default function CreatePropertyKeyPolicyDialog({
     }
   }, [focusIndex, keys]);
 
-  function reset() {
+  function reset(): void {
     setName("");
     setSuppliedId("");
     setMode(PropertyKeyPolicyMode.Allowlist);
@@ -91,13 +91,13 @@ export default function CreatePropertyKeyPolicyDialog({
   // to dismiss.
   const policyCreated = entriesWarning != null || uncertainOutcome;
 
-  function handleClose() {
+  function handleClose(): void {
     if (submitting) return;
     reset();
     onClose();
   }
 
-  function handleKeyChange(index: number, value: string) {
+  function handleKeyChange(index: number, value: string): void {
     setKeys((current) =>
       current.map((key, i) => (i === index ? { ...key, value } : key))
     );
@@ -105,12 +105,12 @@ export default function CreatePropertyKeyPolicyDialog({
 
   // Append a new empty key field and move keyboard focus to it. The new index
   // is the current length, since we append to the end.
-  function addKeyAndFocus() {
+  function addKeyAndFocus(): void {
     setFocusIndex(keys.length);
     setKeys((current) => [...current, newKeyField()]);
   }
 
-  function handleAddKey() {
+  function handleAddKey(): void {
     addKeyAndFocus();
   }
 
@@ -118,7 +118,7 @@ export default function CreatePropertyKeyPolicyDialog({
     e: React.KeyboardEvent<HTMLDivElement>,
     index: number,
     value: string
-  ) {
+  ): void {
     if (e.key !== "Enter") return;
     e.preventDefault();
 
@@ -132,7 +132,7 @@ export default function CreatePropertyKeyPolicyDialog({
     addKeyAndFocus();
   }
 
-  function handleRemoveKey(index: number) {
+  function handleRemoveKey(index: number): void {
     setKeys((current) =>
       current.length === 1
         ? [newKeyField()]
@@ -169,7 +169,7 @@ export default function CreatePropertyKeyPolicyDialog({
     nonEmptyKeys.length === 0 ||
     hasKeyErrors;
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     setApiError(undefined);
     setEntriesWarning(undefined);
     setUncertainOutcome(false);

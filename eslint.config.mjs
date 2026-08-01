@@ -92,12 +92,6 @@ const config = [
       'testing-library/no-unnecessary-act': 'error',
     },
   },
-  // TEMP(PLAT-9101 stack): re-enabled in layer 2
-  {
-    rules: {
-      '@typescript-eslint/explicit-function-return-type': 'off',
-    },
-  },
 ];
 
 export default config;

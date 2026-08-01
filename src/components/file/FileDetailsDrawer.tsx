@@ -150,7 +150,7 @@ function useFileCollections({
         : [...page.items, ...(await loadPage(body.cursors.next))];
     };
 
-    const load = async () => {
+    const load = async (): Promise<void> => {
       setFileCollections([]);
       setLoading(true);
       setError(undefined);
@@ -290,7 +290,7 @@ function FileCollectionIdsRow({
   readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 }): JSX.Element {
-  async function copyId(id: string) {
+  async function copyId(id: string): Promise<void> {
     await navigator.clipboard.writeText(id);
   }
 
