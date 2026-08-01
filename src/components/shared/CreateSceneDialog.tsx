@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
+import { reportError } from "../../lib/report-error";
 import { MergeSceneReq, MergeSceneRes } from "../../pages/api/merged-scenes";
 import { CreateSceneReq, CreateSceneRes } from "../../pages/api/scenes";
 
@@ -118,7 +119,9 @@ export default function CreateSceneDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           disabled={submitDisabled}
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit().catch(reportError("Failed to create the scene"));
+          }}
           color="primary"
           variant="contained"
         >

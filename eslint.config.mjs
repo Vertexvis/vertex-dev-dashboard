@@ -93,6 +93,21 @@ const config = [
       ],
     },
   },
+  // Type-aware rules for all TypeScript (src, tests, scripts, test helpers —
+  // root tsconfig.json includes **/*.ts(x), so projectService covers them all).
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
   // Testing Library rules for test files.
   {
     files: TEST_FILES,

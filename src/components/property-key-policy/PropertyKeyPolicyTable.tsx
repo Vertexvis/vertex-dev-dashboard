@@ -27,6 +27,7 @@ import {
   PropertyKeyPolicy,
   toPropertyKeyPolicyPage,
 } from "../../lib/property-key-policies";
+import { reportError } from "../../lib/report-error";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
 import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
@@ -177,20 +178,20 @@ export default function PropertyKeyPolicyTable({
           (isErrorRes(body) ? body.message : undefined) ??
             "Could not delete the selected property key policies."
         );
-        mutate();
+        mutate().catch(reportError("Failed to refresh property key policies"));
       }
       return;
     }
 
     setDeleting(false);
     setSelected(new Set());
-    mutate();
+    mutate().catch(reportError("Failed to refresh property key policies"));
     onPoliciesDeleted?.(ids);
   }
 
   function handleCreated(): void {
     resetPaging();
-    mutate();
+    mutate().catch(reportError("Failed to refresh property key policies"));
   }
 
   const tableRows = loadFailed ? (
@@ -267,7 +268,14 @@ export default function PropertyKeyPolicyTable({
             ) : undefined
           }
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(() => {
+              setDeleting(false);
+              setDeleteError(
+                "Could not delete the selected property key policies."
+              );
+            });
+          }}
           title="Property Key Policies"
         />
         <Box

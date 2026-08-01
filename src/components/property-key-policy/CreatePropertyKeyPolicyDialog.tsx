@@ -357,7 +357,12 @@ export default function CreatePropertyKeyPolicyDialog({
             <Button
               color="primary"
               disabled={submitDisabled}
-              onClick={handleSubmit}
+              onClick={() => {
+                handleSubmit().catch(() => {
+                  setSubmitting(false);
+                  setApiError("Could not create the property key policy.");
+                });
+              }}
               variant="contained"
             >
               Create

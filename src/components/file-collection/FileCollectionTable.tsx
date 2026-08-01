@@ -22,6 +22,7 @@ import {
   toFileCollectionPage,
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { reportError } from "../../lib/report-error";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
   CreatedAtDateRange,
@@ -194,7 +195,7 @@ export default function FileCollectionTable({
       return;
     }
 
-    mutate();
+    mutate().catch(reportError("Failed to refresh file collections"));
   }
 
   function renderTableRows(): React.ReactNode {
@@ -265,7 +266,11 @@ export default function FileCollectionTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(() => {
+              setDeleteError("Could not delete the selected file collections.");
+            });
+          }}
           title="File Collections"
         />
         <Box

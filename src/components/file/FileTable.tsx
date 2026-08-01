@@ -29,6 +29,7 @@ import {
   toFilePage,
 } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { reportError } from "../../lib/report-error";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
   CreatedAtDateRange,
@@ -237,7 +238,7 @@ export default function FileTable({
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
-    mutate();
+    await mutate();
   }
 
   async function handleDownload(id: string): Promise<void> {
@@ -377,7 +378,9 @@ export default function FileTable({
             ) : undefined
           }
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(reportError("Failed to delete files"));
+          }}
           title="Files"
         />
         <Box
@@ -478,7 +481,7 @@ export default function FileTable({
         onFileCreated={() => {
           setShowDialog(false);
           setShowToast(true);
-          mutate();
+          mutate().catch(reportError("Failed to refresh files"));
         }}
       />
       <Snackbar

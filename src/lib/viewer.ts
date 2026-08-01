@@ -3,6 +3,8 @@ import { SceneItemQueryExecutor } from "@vertexvis/viewer/dist/types/lib/scenes/
 import { defineCustomElements } from "@vertexvis/viewer/loader";
 import React from "react";
 
+import { reportError } from "./report-error";
+
 export interface ViewerState {
   readonly ref: React.MutableRefObject<HTMLVertexViewerElement | null>;
   readonly isReady: boolean;
@@ -19,7 +21,9 @@ export function useViewer(): ViewerState {
   });
 
   React.useEffect(() => {
-    defineCustomElements().then(() => setIsReady(true));
+    defineCustomElements()
+      .then(() => setIsReady(true))
+      .catch(reportError("Failed to initialize the Vertex viewer"));
   }, []);
 
   return { ref: viewerRef, isReady, actions };

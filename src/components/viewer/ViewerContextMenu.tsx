@@ -2,6 +2,7 @@ import { Divider } from "@mui/material";
 import { vertexvis } from "@vertexvis/frame-streaming-protos";
 import * as React from "react";
 
+import { reportError } from "../../lib/report-error";
 import { ViewerActions } from "../../lib/viewer";
 import { ContextMenuItem } from "../shared/ContextMenuItem";
 import { ContextMenu } from "./ContextMenu";
@@ -31,7 +32,9 @@ export const ViewerContextMenu = ({
         disabled={hit == null}
         onClick={() => {
           if (hit?.itemId?.hex != null) {
-            actions.setVisibility(hit.itemId.hex, false);
+            actions
+              .setVisibility(hit.itemId.hex, false)
+              .catch(reportError("Failed to hide part"));
           }
         }}
       />
@@ -41,7 +44,9 @@ export const ViewerContextMenu = ({
         label="Hide Selected"
         disabled={!hasSelection}
         onClick={() => {
-          actions.setVisibilitySelected(false);
+          actions
+            .setVisibilitySelected(false)
+            .catch(reportError("Failed to hide selected items"));
         }}
       />
       <ContextMenuItem
@@ -49,7 +54,9 @@ export const ViewerContextMenu = ({
         iconSize="sm"
         label="Hide All Parts"
         onClick={() => {
-          actions.setVisibilityAll(false);
+          actions
+            .setVisibilityAll(false)
+            .catch(reportError("Failed to hide all parts"));
         }}
       />
       <ContextMenuItem
@@ -59,7 +66,9 @@ export const ViewerContextMenu = ({
         disabled={hit == null}
         onClick={() => {
           if (hit?.itemId?.hex != null) {
-            actions.showOnly(hit.itemId.hex);
+            actions
+              .showOnly(hit.itemId.hex)
+              .catch(reportError("Failed to show only part"));
           }
         }}
       />
@@ -69,7 +78,9 @@ export const ViewerContextMenu = ({
         label="Show Only Selected"
         disabled={!hasSelection}
         onClick={() => {
-          actions.showOnlySelected();
+          actions
+            .showOnlySelected()
+            .catch(reportError("Failed to show only selected items"));
         }}
       />
       <ContextMenuItem
@@ -77,7 +88,9 @@ export const ViewerContextMenu = ({
         iconSize="sm"
         label="Show All Parts"
         onClick={() => {
-          actions.setVisibilityAll(true);
+          actions
+            .setVisibilityAll(true)
+            .catch(reportError("Failed to show all parts"));
         }}
       />
       <Divider />
@@ -88,7 +101,9 @@ export const ViewerContextMenu = ({
         disabled={hit == null}
         onClick={() => {
           if (hit?.itemId?.hex != null) {
-            actions.fit(hit.itemId.hex);
+            actions
+              .fit(hit.itemId.hex)
+              .catch(reportError("Failed to fly to part"));
           }
         }}
       />
@@ -98,7 +113,9 @@ export const ViewerContextMenu = ({
         label="Fit Selected"
         disabled={!hasSelection}
         onClick={() => {
-          actions.fitSelected();
+          actions
+            .fitSelected()
+            .catch(reportError("Failed to fit selected items"));
         }}
       />
     </ContextMenu>

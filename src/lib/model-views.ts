@@ -6,6 +6,7 @@ import {
 } from "@vertexvis/viewer";
 import React from "react";
 
+import { reportError } from "./report-error";
 import { ViewerState } from "./viewer";
 
 export interface UseModelViewsProps {
@@ -74,7 +75,9 @@ export function useModelViews({
       modelViewCursor == null
     ) {
       setLoadedSceneItemId(itemId);
-      actions.fetchNextModelViews(itemId);
+      actions
+        .fetchNextModelViews(itemId)
+        .catch(reportError("Failed to load model views"));
     }
   }, [actions, itemId, modelViewResponses, modelViewCursor]);
 
@@ -89,7 +92,9 @@ export function useModelViews({
       annotationResponses.length === 0 &&
       annotationCursor == null
     ) {
-      actions.fetchNextAnnotations(loadedModelViewId);
+      actions
+        .fetchNextAnnotations(loadedModelViewId)
+        .catch(reportError("Failed to load PMI annotations"));
     }
   }, [actions, loadedModelViewId, annotationResponses, annotationCursor]);
 
