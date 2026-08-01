@@ -197,20 +197,23 @@ export default function FileCollectionTable({
     mutate();
   }
 
-  let tableRows: React.ReactNode;
-  if (error) {
-    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
-  } else if (!page) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={true}
-        numCellsPerRow={headCells.length}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = page.items.map((row) => {
+  function renderTableRows(): React.ReactNode {
+    if (error) {
+      return <DataLoadError colSpan={headCells.length + 1} />;
+    }
+
+    if (!page) {
+      return (
+        <SkeletonBody
+          includeCheckbox={true}
+          numCellsPerRow={headCells.length}
+          numRows={pageSize - pageLength}
+          rowHeight={DefaultRowHeight}
+        />
+      );
+    }
+
+    return page.items.map((row) => {
       const isSel = selected.has(row.id);
       const isActive = activeFileCollectionId === row.id;
 
@@ -254,6 +257,8 @@ export default function FileCollectionTable({
       );
     });
   }
+
+  const tableRows = renderTableRows();
 
   return (
     <>

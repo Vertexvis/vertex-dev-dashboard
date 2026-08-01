@@ -150,20 +150,23 @@ export default function FileCollectionFilesTable({
     }
   }
 
-  let tableRows: React.ReactNode;
-  if (loadError) {
-    tableRows = <DataLoadError colSpan={headCells.length} />;
-  } else if (!page) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={false}
-        numCellsPerRow={headCells.length}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = page.items.map((row) => {
+  function renderTableRows(): React.ReactNode {
+    if (loadError) {
+      return <DataLoadError colSpan={headCells.length} />;
+    }
+
+    if (!page) {
+      return (
+        <SkeletonBody
+          includeCheckbox={false}
+          numCellsPerRow={headCells.length}
+          numRows={pageSize - pageLength}
+          rowHeight={DefaultRowHeight}
+        />
+      );
+    }
+
+    return page.items.map((row) => {
       const isActive = activeFileId === row.id;
       const isAvailable = isFileAvailable(row);
 
@@ -222,6 +225,8 @@ export default function FileCollectionFilesTable({
       );
     });
   }
+
+  const tableRows = renderTableRows();
 
   return (
     <>
