@@ -2,6 +2,8 @@ import Router from "next/router";
 import { useEffect } from "react";
 import useSWR from "swr";
 
+import { reportError } from "../report-error";
+
 interface UseUserResponse {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly user: any;
@@ -30,7 +32,7 @@ export default function useUser({
       // If redirectIfFound is also set, redirect if the user was found
       (redirectIfFound && user?.isLoggedIn)
     ) {
-      Router.push(redirectTo);
+      Router.push(redirectTo).catch(reportError("Failed to redirect"));
     }
   }, [user, redirectIfFound, redirectTo]);
 

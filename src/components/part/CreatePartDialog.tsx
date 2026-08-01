@@ -17,6 +17,7 @@ import React from "react";
 import useSWR, { SWRResponse } from "swr";
 
 import { toFilePage } from "../../lib/files";
+import { reportError } from "../../lib/report-error";
 import { CreatePartReq, CreatePartRes } from "../../pages/api/parts";
 
 interface CreatePartDialogProps {
@@ -161,7 +162,9 @@ export default function CreatePartDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           disabled={submitDisabled}
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit().catch(reportError("Failed to create the part"));
+          }}
           color="primary"
           variant="contained"
         >

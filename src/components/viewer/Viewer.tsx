@@ -33,6 +33,7 @@ import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { StreamCredentials } from "../../lib/config";
+import { reportError } from "../../lib/report-error";
 import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
 import { viewerHasSelection, ViewerState } from "../../lib/viewer";
 import { NetworkConfig } from "../../lib/with-session";
@@ -88,13 +89,13 @@ function UnwrappedViewer({
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const router = useRouter();
 
-  useHotkeys("s", () => handleShortcutS(), { keyup: true });
-
   function handleShortcutS(): void {
     if (ref?.current == null) return;
 
     ref.current.focus();
   }
+
+  useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
   function handleClose(): void {
     setKey(Date.now());
@@ -128,12 +129,20 @@ function UnwrappedViewer({
     {
       icon: <ZoomOutMapOutlined fontSize="small" />,
       label: "Fit All",
-      onSelect: () => fitAll({ viewer: viewer.current }),
+      onSelect: () => {
+        fitAll({ viewer: viewer.current }).catch(
+          reportError("Failed to fit all"),
+        );
+      },
     },
     {
       icon: <FileCopyOutlined fontSize="small" />,
       label: "Copy camera",
-      onSelect: () => copySceneViewCamera({ viewer: viewer.current }),
+      onSelect: () => {
+        copySceneViewCamera({ viewer: viewer.current }).catch(
+          reportError("Failed to copy scene view camera"),
+        );
+      },
     },
     {
       icon: <CameraAltOutlined fontSize="small" />,
@@ -143,13 +152,19 @@ function UnwrappedViewer({
     {
       icon: <SystemUpdateAltOutlined fontSize="small" />,
       label: "Update base scene with current camera",
-      onSelect: handleUpdateBaseCamera,
+      onSelect: () => {
+        handleUpdateBaseCamera().catch(
+          reportError("Failed to update base scene camera"),
+        );
+      },
     },
     {
       icon: <RestartAltOutlined fontSize="small" />,
       label: "Reset View",
       onSelect: () => {
-        viewerState.actions.reset();
+        viewerState.actions
+          .reset()
+          .catch(reportError("Failed to reset the view"));
         onViewReset?.();
       },
     },
@@ -288,7 +303,13 @@ function onTap<P extends ViewerProps>(
 
     return (
       <>
-        <WrappedViewer viewerState={viewerState} {...props} onTap={handleTap} />
+        <WrappedViewer
+          viewerState={viewerState}
+          {...props}
+          onTap={(e) => {
+            handleTap(e).catch(reportError("Failed to handle viewer tap"));
+          }}
+        />
         <ViewerContextMenu
           hit={hit}
           hasSelection={viewerHasSelection(viewerState.ref)}

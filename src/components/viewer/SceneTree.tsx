@@ -4,6 +4,7 @@ import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/com
 import { VertexSceneTree } from "@vertexvis/viewer-react";
 import React from "react";
 
+import { reportError } from "../../lib/report-error";
 import { viewerHasSelection, ViewerState } from "../../lib/viewer";
 import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
 import { SceneTreeContextMenu } from "./SceneTreeContextMenu";
@@ -61,17 +62,29 @@ export function SceneTree({
 
   React.useEffect(() => {
     const effectRef = ref.current;
-    if (selectedItemId) effectRef?.scrollToItem(selectedItemId);
+    if (selectedItemId) {
+      effectRef
+        ?.scrollToItem(selectedItemId)
+        .catch(reportError("Failed to scroll to the scene item"));
+    }
   }, [selectedItemId]);
 
   React.useEffect(() => {
     const effectRef = ref.current;
-    if (expandAll) effectRef?.expandAll();
+    if (expandAll) {
+      effectRef
+        ?.expandAll()
+        .catch(reportError("Failed to expand the scene tree"));
+    }
   }, [expandAll]);
 
   React.useEffect(() => {
     const effectRef = ref.current;
-    if (collapseAll) effectRef?.collapseAll();
+    if (collapseAll) {
+      effectRef
+        ?.collapseAll()
+        .catch(reportError("Failed to collapse the scene tree"));
+    }
   }, [collapseAll]);
 
   return (

@@ -12,6 +12,7 @@ import { FixedSizeList } from "react-window";
 
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
+import { reportError } from "../../lib/report-error";
 import { Title } from "../shared/Title";
 import { PmiAnnotations } from "./PmiAnnotations";
 
@@ -33,7 +34,13 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
 
   return (
     <>
-      <DrawerTitle onClear={() => modelViews.actions.unloadModelView()} />
+      <DrawerTitle
+        onClear={() => {
+          modelViews.actions
+            .unloadModelView()
+            .catch(reportError("Failed to unload the model view"));
+        }}
+      />
       <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
         <AutoSizer>
           {({ height, width }: Size) => {
@@ -48,7 +55,9 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
                     renderState.visibleStopIndex ===
                     modelViewList.length - 1
                   ) {
-                    modelViews.actions.fetchNextModelViews(loadedSceneItemId);
+                    modelViews.actions
+                      .fetchNextModelViews(loadedSceneItemId)
+                      .catch(reportError("Failed to load model views"));
                   }
                 }}
               >
@@ -60,10 +69,9 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
                       key={index}
                       style={style}
                       onClick={() => {
-                        modelViews.actions.loadModelView(
-                          loadedSceneItemId,
-                          modelView.id,
-                        );
+                        modelViews.actions
+                          .loadModelView(loadedSceneItemId, modelView.id)
+                          .catch(reportError("Failed to load the model view"));
                       }}
                       alignItems="flex-start"
                       selected={loadedModelViewId === modelView.id}

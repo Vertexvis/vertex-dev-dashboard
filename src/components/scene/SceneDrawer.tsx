@@ -21,6 +21,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { toLocaleString } from "../../lib/dates";
+import { reportError } from "../../lib/report-error";
 import { Scene } from "../../lib/scenes";
 import { UpdateSceneReq } from "../../pages/api/scenes";
 import { Input } from "../shared/Input";
@@ -63,7 +64,7 @@ export function SceneDrawer({
     };
 
     if (scene != null && open) {
-      fetchData();
+      fetchData().catch(reportError("Failed to load scene details"));
     }
   }, [scene, open]);
 
@@ -110,7 +111,9 @@ export function SceneDrawer({
   }
 
   function copyCamera(): void {
-    navigator.clipboard.writeText(JSON.stringify(scene?.camera));
+    navigator.clipboard
+      .writeText(JSON.stringify(scene?.camera))
+      .catch(reportError("Failed to copy camera JSON to clipboard"));
   }
 
   React.useEffect(() => {
@@ -150,7 +153,13 @@ export function SceneDrawer({
       </Box>
       {scene && editing ? (
         <Box sx={{ mx: 2, mb: 2 }}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={(e) => {
+              handleSubmit(onSubmit)(e).catch(
+                reportError("Failed to update the scene"),
+              );
+            }}
+          >
             <Input<FormData> control={control} label="Name" name="name" />
             <Input<FormData>
               control={control}

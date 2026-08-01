@@ -18,6 +18,7 @@ import { ErrorRes, GetRes } from "../../lib/api";
 import { head, StreamCredentials } from "../../lib/config";
 import { Metadata, toMetadataFromItem } from "../../lib/metadata";
 import { useModelViews } from "../../lib/model-views";
+import { reportError } from "../../lib/report-error";
 import { applySceneViewState, selectByHit } from "../../lib/scene-items";
 import { useViewer } from "../../lib/viewer";
 import {
@@ -130,7 +131,14 @@ export default function SceneViewer({
   }
 
   function handleViewStateSelected(id: string): void {
-    applySceneViewState({ id, viewer: viewerState.ref.current });
+    applySceneViewState({ id, viewer: viewerState.ref.current }).catch(
+      reportError("Failed to apply the scene view state"),
+    );
+  }
+
+  async function handleSceneReady(): Promise<void> {
+    const scene = await viewerState.ref.current?.scene();
+    if (scene) setViewId(scene.sceneViewId);
   }
 
   React.useEffect(() => {
@@ -173,17 +181,24 @@ export default function SceneViewer({
             onSelect={handleSelect}
             viewerState={viewerState}
             viewerId={ViewerId}
-            onViewStateCreated={mutate}
+            onViewStateCreated={() => {
+              mutate().catch(
+                reportError("Failed to refresh scene view states"),
+              );
+            }}
             networkConfig={networkConfig}
             featureLines={featureLines}
             rotateAroundTapPoint={true}
-            onSceneReady={async () => {
-              const scene = await viewerState.ref.current?.scene();
-              if (scene) setViewId(scene.sceneViewId);
+            onSceneReady={() => {
+              handleSceneReady().catch(
+                reportError("Failed to prepare the scene view"),
+              );
             }}
             onViewReset={() => {
               setSelectedItemId(undefined);
-              modelViews.actions.unloadModelView();
+              modelViews.actions
+                .unloadModelView()
+                .catch(reportError("Failed to unload the model view"));
             }}
           />
         )

@@ -3,6 +3,7 @@ import { Box, Button } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
+import { reportError } from "../../lib/report-error";
 import { AppLink } from "./AppLink";
 
 export function Header(): JSX.Element {
@@ -10,7 +11,7 @@ export function Header(): JSX.Element {
 
   async function handleSignOut(): Promise<void> {
     await fetch("/api/logout");
-    router.push("/login");
+    await router.push("/login");
   }
 
   return (
@@ -30,7 +31,13 @@ export function Header(): JSX.Element {
         <p>Vertex Developer Dashboard</p>
       </Box>
       <Box sx={{ ml: "auto" }}>
-        <Button onClick={handleSignOut}>Sign Out</Button>
+        <Button
+          onClick={() => {
+            handleSignOut().catch(reportError("Failed to sign out"));
+          }}
+        >
+          Sign Out
+        </Button>
       </Box>
     </Box>
   );

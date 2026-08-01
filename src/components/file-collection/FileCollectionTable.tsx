@@ -194,7 +194,7 @@ export default function FileCollectionTable({
       return;
     }
 
-    mutate();
+    await mutate();
   }
 
   function renderTableRows(): React.ReactNode {
@@ -265,7 +265,11 @@ export default function FileCollectionTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(() => {
+              setDeleteError("Could not delete the selected file collections.");
+            });
+          }}
           title="File Collections"
         />
         <Box

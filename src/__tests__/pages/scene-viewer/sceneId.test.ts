@@ -9,8 +9,8 @@ import {
 import { serverSidePropsHandler } from "../../../pages/scene-viewer/[sceneId]";
 
 describe("scene viewer route", () => {
-  it("does not create a stream key while serving a scene route", async () => {
-    const result = await serverSidePropsHandler({
+  it("does not create a stream key while serving a scene route", () => {
+    const result = serverSidePropsHandler({
       query: { sceneId: "scene-1" },
       req: createReq(),
     });
@@ -24,8 +24,8 @@ describe("scene viewer route", () => {
     });
   });
 
-  it("does not mutate when a supplied stream key is present", async () => {
-    const result = await serverSidePropsHandler({
+  it("does not mutate when a supplied stream key is present", () => {
+    const result = serverSidePropsHandler({
       query: { sceneId: "scene-1", streamKey: "provided-key" },
       req: createReq(),
     });

@@ -22,6 +22,7 @@ import {
 } from "../../lib/file-collections";
 import { File } from "../../lib/files";
 import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
+import { reportError } from "../../lib/report-error";
 import { AppLink } from "../shared/AppLink";
 import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
 
@@ -174,7 +175,7 @@ function useFileCollections({
       }
     };
 
-    load();
+    load().catch(reportError("Failed to load file collections"));
 
     return () => {
       controller.abort();
@@ -363,7 +364,11 @@ function FileCollectionIdsRow({
                       <Tooltip title="Copy file collection ID">
                         <IconButton
                           aria-label={`Copy ${collection.id}`}
-                          onClick={() => copyId(collection.id)}
+                          onClick={() => {
+                            copyId(collection.id).catch(
+                              reportError("Failed to copy file collection ID"),
+                            );
+                          }}
                           size="small"
                           sx={{ flexShrink: 0 }}
                         >

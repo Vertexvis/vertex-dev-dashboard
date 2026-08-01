@@ -5,6 +5,7 @@ import { FixedSizeList } from "react-window";
 
 import { Metadata } from "../../lib/metadata";
 import { ModelViewsState } from "../../lib/model-views";
+import { reportError } from "../../lib/report-error";
 import { Title } from "../shared/Title";
 
 export interface Props {
@@ -56,7 +57,9 @@ export function PmiAnnotations({ metadata, modelViews }: Props): JSX.Element {
                     loadedModelViewId != null &&
                     renderState.visibleStopIndex === annotationList.length - 1
                   ) {
-                    modelViews.actions.fetchNextAnnotations(loadedModelViewId);
+                    modelViews.actions
+                      .fetchNextAnnotations(loadedModelViewId)
+                      .catch(reportError("Failed to load PMI annotations"));
                   }
                 }}
               >

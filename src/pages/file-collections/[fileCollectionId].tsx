@@ -33,6 +33,7 @@ import {
 } from "../../lib/file-collections";
 import { FileJobRes } from "../../lib/file-jobs";
 import { File, FileDownloadUrlRes } from "../../lib/files";
+import { reportError } from "../../lib/report-error";
 import { getClientFromSession, makeCall } from "../../lib/vertex-api";
 import {
   CommonProps,
@@ -440,7 +441,9 @@ export default function FileCollectionDetails({
   React.useEffect(() => {
     const controller = new AbortController();
 
-    loadReadiness(controller.signal);
+    loadReadiness(controller.signal).catch(
+      reportError("Failed to check export availability"),
+    );
 
     return () => controller.abort();
   }, [loadReadiness]);
@@ -676,9 +679,21 @@ export default function FileCollectionDetails({
                 exportError={currentExportError}
                 exportInFlight={exportInFlight}
                 jobStatus={currentJobStatus}
-                onDownloadArchive={handleDownloadArchive}
-                onExport={handleExport}
-                onRefreshReadiness={handleRefreshReadiness}
+                onDownloadArchive={() => {
+                  handleDownloadArchive().catch(
+                    reportError("Failed to download the archive"),
+                  );
+                }}
+                onExport={() => {
+                  handleExport().catch(
+                    reportError("Failed to export the file collection"),
+                  );
+                }}
+                onRefreshReadiness={() => {
+                  handleRefreshReadiness().catch(
+                    reportError("Failed to refresh export availability"),
+                  );
+                }}
                 onRetry={handleRetry}
                 readinessCheckInFlight={readinessCheckInFlight}
                 readinessLoading={readinessLoading}

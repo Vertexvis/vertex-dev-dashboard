@@ -17,6 +17,7 @@ import { Paged } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartRevisionPage } from "../../lib/part-revisions";
 import { Part } from "../../lib/parts";
+import { reportError } from "../../lib/report-error";
 import { RowActionsMenu } from "../shared/RowActionsMenu";
 
 interface PartRowProps {
@@ -50,7 +51,7 @@ export default function PartRow({
     };
 
     if (open) {
-      fetchData();
+      fetchData().catch(reportError("Failed to load part revisions"));
     }
   }, [part.id, open]);
 

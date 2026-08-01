@@ -21,6 +21,7 @@ import useSWR, { SWRResponse } from "swr";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
 import { toPartPage } from "../../lib/parts";
+import { reportError } from "../../lib/report-error";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
 import { DataLoadError } from "../shared/DataLoadError";
@@ -136,7 +137,7 @@ export default function PartTable({
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
-    mutate();
+    await mutate();
   }
 
   return (
@@ -144,7 +145,9 @@ export default function PartTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(reportError("Failed to delete parts"));
+          }}
           title="Parts"
         />
         <Box

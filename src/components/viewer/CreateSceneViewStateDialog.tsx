@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
+import { reportError } from "../../lib/report-error";
 import {
   CreateViewStateReq,
   CreateViewStateRes,
@@ -69,7 +70,11 @@ export default function CreatePartDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           disabled={submitDisabled}
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit().catch(
+              reportError("Failed to create the view state"),
+            );
+          }}
           color="primary"
           variant="contained"
         >

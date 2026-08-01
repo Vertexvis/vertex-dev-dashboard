@@ -119,7 +119,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     if (res.status === 401) {
       setError("Invalid credentials.");
       setLoading(false);
-    } else if (res.status === 200) router.push("/");
+    } else if (res.status === 200) await router.push("/");
   }
 
   const predefinedEnv =
@@ -449,7 +449,12 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               <Button
                 sx={{ mt: 2 }}
                 variant="outlined"
-                onClick={handleSubmit}
+                onClick={() => {
+                  handleSubmit().catch(() => {
+                    setError("Could not sign in.");
+                    setLoading(false);
+                  });
+                }}
                 disabled={
                   loading || (env === "custom" && !customConfigurationValidated)
                 }
@@ -464,7 +469,12 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
           <Button
             sx={{ mt: 2 }}
             variant="outlined"
-            onClick={handleSubmit}
+            onClick={() => {
+              handleSubmit().catch(() => {
+                setError("Could not sign in.");
+                setLoading(false);
+              });
+            }}
             disabled={
               loading || (env === "custom" && !customConfigurationValidated)
             }

@@ -24,6 +24,7 @@ import useSWR, { SWRResponse } from "swr";
 import { ErrorRes, GetRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
 import { SwrProps } from "../../lib/paging";
+import { reportError } from "../../lib/report-error";
 import { Scene, toScenePage } from "../../lib/scenes";
 import CreateSceneDialog from "../shared/CreateSceneDialog";
 import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
@@ -117,7 +118,7 @@ export default function SceneTable({
   });
 
   useEffect(() => {
-    mutate();
+    mutate().catch(reportError("Failed to refresh scenes"));
   }, [invalidationCount, mutate]);
 
   const router = useRouter();
@@ -185,7 +186,7 @@ export default function SceneTable({
       body: JSON.stringify({ ids: [...selected] }),
       method: "DELETE",
     });
-    mutate();
+    await mutate();
   }
 
   function handleEditClick(s: Scene): void {
@@ -194,7 +195,9 @@ export default function SceneTable({
   }
 
   function handleViewClick(sceneId: string): void {
-    router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
+    router
+      .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
+      .catch(reportError("Failed to navigate to the scene viewer"));
   }
 
   async function handleGetStreamKey(sceneId: string): Promise<void> {
@@ -219,7 +222,9 @@ export default function SceneTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(reportError("Failed to delete scenes"));
+          }}
           title="Scenes"
           customActions={[
             <React.Fragment key="merge">

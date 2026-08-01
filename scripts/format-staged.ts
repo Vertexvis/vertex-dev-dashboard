@@ -10,7 +10,8 @@ import * as fs from "fs";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const prettier: string = require.resolve("prettier/bin-prettier.js");
+// Prettier 3 renamed its CLI entry from bin-prettier.js to bin/prettier.cjs.
+const prettier: string = require.resolve("prettier/bin/prettier.cjs");
 
 type Mode = "write" | "check";
 

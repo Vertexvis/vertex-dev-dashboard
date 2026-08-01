@@ -17,6 +17,7 @@ import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
 import { useRouter } from "next/router";
 import React from "react";
 
+import { reportError } from "../../lib/report-error";
 import { CreateFileRes } from "../../pages/api/files";
 
 interface CreateFileDialogProps {
@@ -70,7 +71,7 @@ export default function CreateFileDialog({
     onFileCreated(fileRes.id);
 
     if (createPart) {
-      router.push(`/parts?create=${fileRes.id}&n=${file?.name}`);
+      await router.push(`/parts?create=${fileRes.id}&n=${file?.name}`);
     }
 
     setFile(undefined);
@@ -149,7 +150,9 @@ export default function CreateFileDialog({
         <Button
           disabled={submitDisabled}
           startIcon={<CloudUploadOutlined />}
-          onClick={handleUpload}
+          onClick={() => {
+            handleUpload().catch(reportError("Failed to upload the file"));
+          }}
           color="primary"
           variant="contained"
         >
