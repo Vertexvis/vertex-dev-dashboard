@@ -66,7 +66,6 @@ export const fetchAllTranslations = async (
       }),
     );
     promises.push(resPromise);
-    // eslint-disable-next-line no-await-in-loop
     const { cursors, page } = await resPromise;
     cursor = cursors.next;
     if (cursor === undefined) {
