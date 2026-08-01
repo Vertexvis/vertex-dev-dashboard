@@ -31,15 +31,15 @@ const supportedExtensions = new Set<string>([
 
 function git(
   args: string[],
-  options: SpawnSyncOptionsWithStringEncoding
+  options: SpawnSyncOptionsWithStringEncoding,
 ): SpawnSyncReturns<string>;
 function git(
   args: string[],
-  options?: SpawnSyncOptions
+  options?: SpawnSyncOptions,
 ): SpawnSyncReturns<Buffer>;
 function git(
   args: string[],
-  options: SpawnSyncOptions = {}
+  options: SpawnSyncOptions = {},
 ): SpawnSyncReturns<string | Buffer> {
   const result = spawnSync("git", args, options);
 
@@ -55,7 +55,7 @@ function git(
 function stagedFiles(): string[] {
   const result = git(
     ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
-    { encoding: "utf8" }
+    { encoding: "utf8" },
   );
 
   if (result.status !== 0) {
@@ -100,7 +100,7 @@ function isRegularFile(file: string): boolean {
 
 function formatBlob(
   file: string,
-  input: string | Buffer
+  input: string | Buffer,
 ): SpawnSyncReturns<Buffer> {
   return spawnSync(process.execPath, [prettier, "--stdin-filepath", file], {
     input,

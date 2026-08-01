@@ -45,7 +45,7 @@ export function propertyKeyPoliciesPage({
 }
 
 export function propertyKeyPolicyRes(
-  policy: PropertyKeyPolicyResource
+  policy: PropertyKeyPolicyResource,
 ): GetPropertyKeyPolicyRes {
   return { data: policy, status: 200 };
 }

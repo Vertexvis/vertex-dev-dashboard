@@ -20,7 +20,7 @@ describe("property key policy keys API route", () => {
       stubListKeys("policy-1", {
         "": [keyData("key-1", "MixedCaseKey")],
         "cursor-2": [keyData("key-2", "another_key")],
-      })
+      }),
     );
 
     const response = await callKeys("policy-1", { method: "GET" });
@@ -40,9 +40,9 @@ describe("property key policy keys API route", () => {
           {
             status: 500,
             headers: { "content-type": "application/vnd.api+json" },
-          }
-        )
-      )
+          },
+        ),
+      ),
     );
 
     const response = await callKeys("policy-1", { method: "GET" });
@@ -61,7 +61,7 @@ describe("property key policy keys API route", () => {
         method: "GET",
         query: {},
         session: createAuthenticatedVertexApiTestSession(vertexApiOrigin),
-      }
+      },
     );
 
     expect(response.statusCode()).toBe(400);
@@ -88,9 +88,9 @@ describe("property key policy keys API route", () => {
               },
             },
           },
-          { headers: { "content-type": "application/vnd.api+json" } }
+          { headers: { "content-type": "application/vnd.api+json" } },
         );
-      })
+      }),
     );
 
     const response = await callKeys("policy-1", { method: "GET" });
@@ -132,7 +132,7 @@ function keyData(id: string, name: string) {
 
 function stubListKeys(
   policyId: string,
-  pages: Record<string, ReturnType<typeof keyData>[]>
+  pages: Record<string, ReturnType<typeof keyData>[]>,
 ) {
   return http.get(
     `${vertexApiOrigin}/property-key-policies/${policyId}/keys`,
@@ -161,8 +161,8 @@ function stubListKeys(
                   },
                 },
         },
-        { headers: { "content-type": "application/vnd.api+json" } }
+        { headers: { "content-type": "application/vnd.api+json" } },
       );
-    }
+    },
   );
 }

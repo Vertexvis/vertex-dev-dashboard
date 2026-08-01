@@ -28,7 +28,7 @@ export function LeftDrawer(): JSX.Element {
   const isSectionActive = React.useCallback(
     (base: string) =>
       router.route === base || router.route.startsWith(`${base}/`),
-    [router.route]
+    [router.route],
   );
 
   return (

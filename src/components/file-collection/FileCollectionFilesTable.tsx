@@ -61,7 +61,7 @@ function useCollectionFiles({
     buildQuery(apiPath, {
       cursor,
       pageSize,
-    })
+    }),
   );
 }
 
@@ -74,7 +74,7 @@ function statusLabel(status?: string): string {
 }
 
 function statusColor(
-  status?: string
+  status?: string,
 ): "default" | "success" | "warning" | "error" {
   switch (normalizeFileStatus(status)) {
     case FileStatusComplete:
@@ -121,7 +121,7 @@ export default function FileCollectionFilesTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ) {
     handlePageChange(num);
   }
@@ -133,13 +133,13 @@ export default function FileCollectionFilesTable({
       `/api/files/${encodeURIComponent(id)}/download-url`,
       {
         method: "POST",
-      }
+      },
     );
 
     const body = await res.json();
     if (!res.ok || body.url == null) {
       setDownloadError(
-        body.message ?? "Could not create a download URL for this file."
+        body.message ?? "Could not create a download URL for this file.",
       );
       return;
     }
@@ -255,7 +255,7 @@ export default function FileCollectionFilesTable({
               displayedRows,
               paginationCursors?.next != null,
               pageLength,
-              page != null
+              page != null,
             )
           }
           rowsPerPage={pageSize}

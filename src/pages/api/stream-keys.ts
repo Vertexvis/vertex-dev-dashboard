@@ -23,7 +23,7 @@ type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, "id">;
 export default withSession(methodRouter({ POST: create }));
 
 async function create(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | CreateStreamKeyRes> {
   if (!req.body) return BodyRequired;
 
@@ -37,7 +37,7 @@ async function create(
       createStreamKeyRequest: {
         data: { type: "stream-key", attributes: { expiry: 86400 } },
       },
-    })
+    }),
   );
   return isFailure(r)
     ? toErrorRes({ failure: r })

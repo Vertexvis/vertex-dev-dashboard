@@ -4,7 +4,7 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 
 export default withSession(function (
   req: NextIronRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   req.session.destroy();
   const r = { status: 200 };

@@ -17,7 +17,7 @@ export default withSession(handleFileDownload);
 
 export async function handleFileDownload(
   req: NextIronRequest,
-  res: NextApiResponse<ErrorRes>
+  res: NextApiResponse<ErrorRes>,
 ): Promise<void> {
   if (req.method !== "GET") {
     return res.status(MethodNotAllowed.status).json(MethodNotAllowed);

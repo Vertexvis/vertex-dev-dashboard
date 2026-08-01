@@ -29,7 +29,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
 
     await userEvent.type(
       screen.getByLabelText("Property key 1"),
-      "Alpha{Enter}"
+      "Alpha{Enter}",
     );
 
     const secondField = screen.getByLabelText("Property key 2");
@@ -43,11 +43,11 @@ describe("CreatePropertyKeyPolicyDialog", () => {
 
     await userEvent.type(
       screen.getByLabelText("Property key 1"),
-      "Alpha{Enter}"
+      "Alpha{Enter}",
     );
     await userEvent.type(
       screen.getByLabelText("Property key 2"),
-      "Alpha{Enter}"
+      "Alpha{Enter}",
     );
 
     // Both fields are flagged as duplicates via the per-field error.
@@ -64,7 +64,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     await userEvent.type(screen.getByLabelText("Property key 1"), "   ");
 
     expect(
-      screen.getByText("Property key cannot be blank.")
+      screen.getByText("Property key cannot be blank."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
   });
@@ -75,7 +75,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     await userEvent.type(screen.getByLabelText(/Name/), "My Policy");
     await userEvent.type(
       screen.getByLabelText("Property key 1"),
-      "Alpha{Enter}"
+      "Alpha{Enter}",
     );
     await userEvent.type(screen.getByLabelText("Property key 2"), "Alpha");
 
@@ -88,7 +88,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     await userEvent.type(screen.getByLabelText("Property key 2"), "Beta");
 
     expect(
-      screen.queryByText("Duplicate property key.")
+      screen.queryByText("Duplicate property key."),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
   });
@@ -109,9 +109,9 @@ describe("CreatePropertyKeyPolicyDialog", () => {
         bodies.push((await request.json()) as Record<string, unknown>);
         return HttpResponse.json(
           propertyKeyPolicyRes(propertyKeyPolicy({ id: "policy-1" })),
-          { status: 201 }
+          { status: 201 },
         );
-      })
+      }),
     );
 
     const onCreated = jest.fn();
@@ -122,7 +122,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Deny" }));
     await userEvent.type(
       screen.getByLabelText("Property key 1"),
-      "MixedCase_Key"
+      "MixedCase_Key",
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
@@ -142,9 +142,9 @@ describe("CreatePropertyKeyPolicyDialog", () => {
       http.post("*/api/property-key-policies", () =>
         HttpResponse.json(
           { message: "Name already in use.", status: 400 },
-          { status: 400 }
-        )
-      )
+          { status: 400 },
+        ),
+      ),
     );
 
     const onCreated = jest.fn();
@@ -169,9 +169,9 @@ describe("CreatePropertyKeyPolicyDialog", () => {
             keysError: "Keys upsert failed.",
             status: 201,
           },
-          { status: 201 }
-        )
-      )
+          { status: 201 },
+        ),
+      ),
     );
 
     const onCreated = jest.fn();
@@ -192,7 +192,7 @@ describe("CreatePropertyKeyPolicyDialog", () => {
   describe("when fetch rejects (network error)", () => {
     it("shows the generic API error and keeps Create enabled", async () => {
       server.use(
-        http.post("*/api/property-key-policies", () => HttpResponse.error())
+        http.post("*/api/property-key-policies", () => HttpResponse.error()),
       );
 
       const onCreated = jest.fn();
@@ -204,16 +204,16 @@ describe("CreatePropertyKeyPolicyDialog", () => {
       await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
       expect(
-        await screen.findByText("Could not create the property key policy.")
+        await screen.findByText("Could not create the property key policy."),
       ).toBeInTheDocument();
       // onCreated must not be called — nothing was processed server-side.
       expect(onCreated).not.toHaveBeenCalled();
       // Dialog must stay in the normal state: Cancel + Create (not Close-only).
       expect(
-        screen.getByRole("button", { name: "Create" })
+        screen.getByRole("button", { name: "Create" }),
       ).toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: "Close" })
+        screen.queryByRole("button", { name: "Close" }),
       ).not.toBeInTheDocument();
     });
   });
@@ -227,8 +227,8 @@ describe("CreatePropertyKeyPolicyDialog", () => {
             new HttpResponse("not json", {
               headers: { "Content-Type": "application/json" },
               status: 201,
-            })
-        )
+            }),
+        ),
       );
 
       const onCreated = jest.fn();
@@ -244,13 +244,13 @@ describe("CreatePropertyKeyPolicyDialog", () => {
       // The uncertain-outcome warning must be visible.
       expect(
         await screen.findByText(
-          /The request completed but the response could not be read/
-        )
+          /The request completed but the response could not be read/,
+        ),
       ).toBeInTheDocument();
       // Dialog must show only Close — no Create button (duplicate protection).
       expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: "Create" })
+        screen.queryByRole("button", { name: "Create" }),
       ).not.toBeInTheDocument();
       // onClose must NOT have been called automatically.
       expect(onClose).not.toHaveBeenCalled();
@@ -262,13 +262,13 @@ function renderDialog(
   props: {
     readonly onClose?: () => void;
     readonly onCreated?: () => void;
-  } = {}
+  } = {},
 ): void {
   renderWithSWR(
     <CreatePropertyKeyPolicyDialog
       onClose={props.onClose ?? jest.fn()}
       onCreated={props.onCreated ?? jest.fn()}
       open
-    />
+    />,
   );
 }

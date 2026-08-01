@@ -31,13 +31,13 @@ const ViewerId = "vertex-viewer-id";
 
 function useSceneViewStates({ viewId }: { viewId?: string }) {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
-    viewId ? `/api/scene-view-states?view=${viewId}` : null
+    viewId ? `/api/scene-view-states?view=${viewId}` : null,
   );
 }
 
 function useSceneItem({ itemId }: { itemId?: string }) {
   return useSWR<SceneItemData, ErrorRes>(
-    itemId ? `/api/scene-items/${itemId}` : null
+    itemId ? `/api/scene-items/${itemId}` : null,
   );
 }
 
@@ -92,17 +92,17 @@ export default function SceneViewer({
         router.replace(
           encodeCreds({ clientId: cId, sceneId, streamKey, vertexEnv: ve }),
           undefined,
-          { shallow: true }
-        )
+          { shallow: true },
+        ),
       )
       .catch(() =>
-        setStreamKeyError("Unable to create a stream key for this scene.")
+        setStreamKeyError("Unable to create a stream key for this scene."),
       );
   }, [clientId, router, vertexEnv]);
 
   async function handleSelect(
     detail: TapEventDetails,
-    hit?: vertexvis.protobuf.stream.IHit
+    hit?: vertexvis.protobuf.stream.IHit,
   ) {
     console.debug({
       hitNormal: hit?.hitNormal,
@@ -249,5 +249,5 @@ export function serverSidePropsHandler({
 
 export const getServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes
+  CookieAttributes,
 );

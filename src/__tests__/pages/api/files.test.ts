@@ -33,8 +33,8 @@ describe("files API route", () => {
           expect(searchParams.get("page[cursor]")).toBe("cursor-1");
           expect(searchParams.get("page[size]")).toBe("50");
           expect(searchParams.get("sort")).toBe("-created");
-        }
-      )
+        },
+      ),
     );
 
     const response = await callFiles({
@@ -66,7 +66,7 @@ function stubListFiles(
       self: { href: string };
     };
   },
-  assertRequest: (request: URL) => void
+  assertRequest: (request: URL) => void,
 ) {
   return http.get(`${vertexApiOrigin}/files`, ({ request }) => {
     assertRequest(new URL(request.url));

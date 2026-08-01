@@ -47,7 +47,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
   async function updateVisibility(
     scene: Scene,
     visible: boolean,
-    queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder
+    queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder,
   ): Promise<void> {
     await scene
       .items((op) => {
@@ -65,7 +65,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
   async function updateSelection(
     scene: Scene,
     selected: boolean,
-    queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder
+    queryBuilder: (op: SceneItemQueryExecutor) => SceneItemOperationsBuilder,
   ): Promise<void> {
     await scene
       .items((op) => {
@@ -110,7 +110,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) =>
-          op.where((q) => q.withItemIds([itemId]))
+          op.where((q) => q.withItemIds([itemId])),
         );
       }
     },
@@ -119,7 +119,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) =>
-          op.where((q) => q.all())
+          op.where((q) => q.all()),
         );
       }
     },
@@ -128,7 +128,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) =>
-          op.where((q) => q.withSelected())
+          op.where((q) => q.withSelected()),
         );
       }
     },
@@ -137,7 +137,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
       if (scene != null) {
         await updateSelection(scene, selected, (op) =>
-          op.where((q) => q.withItemIds([itemId]))
+          op.where((q) => q.withItemIds([itemId])),
         );
       }
     },
@@ -177,7 +177,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 }
 
 export function viewerHasSelection(
-  viewer: React.MutableRefObject<HTMLVertexViewerElement | null>
+  viewer: React.MutableRefObject<HTMLVertexViewerElement | null>,
 ): boolean {
   return (
     viewer.current?.frame?.scene.sceneViewSummary.selectedVisibleSummary !=

@@ -84,13 +84,13 @@ export type PartialDeletePropertyKeyPoliciesRes =
   };
 
 export function toPropertyKeyPolicy(
-  data: PropertyKeyPolicyResource
+  data: PropertyKeyPolicyResource,
 ): PropertyKeyPolicy {
   return { ...data.attributes, id: data.id };
 }
 
 export function toPropertyKeyPolicyPage(
-  res: PropertyKeyPolicyPageRes
+  res: PropertyKeyPolicyPageRes,
 ): Paged<PropertyKeyPolicy> {
   return toPage<
     PropertyKeyPolicyResource,
@@ -99,17 +99,17 @@ export function toPropertyKeyPolicyPage(
 }
 
 export function toPropertyKeyPolicyKey(
-  data: PropertyKeyPolicyKeyResource
+  data: PropertyKeyPolicyKeyResource,
 ): PropertyKeyPolicyKey {
   return { id: data.id, name: data.attributes.name };
 }
 
 export function getPropertyKeyPoliciesApi(
-  client: VertexClient
+  client: VertexClient,
 ): PropertyKeyPoliciesApi {
   return new PropertyKeyPoliciesApi(
     client.config,
     undefined,
-    client.axiosInstance
+    client.axiosInstance,
   );
 }

@@ -49,11 +49,11 @@ export function SceneDrawer({
   });
 
   const [editableMetadata, setMetadata] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const [sceneDetails, setSceneDetails] = useState<SceneData | undefined>(
-    undefined
+    undefined,
   );
 
   React.useEffect(() => {
@@ -118,13 +118,13 @@ export function SceneDrawer({
   }, [defaultValues, reset]);
 
   function isOrthographic(
-    camera: OrthographicCamera | PerspectiveCamera
+    camera: OrthographicCamera | PerspectiveCamera,
   ): camera is OrthographicCamera {
     return camera.type === "orthographic";
   }
 
   function isPerspective(
-    camera: OrthographicCamera | PerspectiveCamera
+    camera: OrthographicCamera | PerspectiveCamera,
   ): camera is PerspectiveCamera {
     return camera.type === "perspective";
   }

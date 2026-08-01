@@ -62,7 +62,7 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
                       onClick={() => {
                         modelViews.actions.loadModelView(
                           loadedSceneItemId,
-                          modelView.id
+                          modelView.id,
                         );
                       }}
                       alignItems="flex-start"

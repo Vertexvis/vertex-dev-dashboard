@@ -15,7 +15,7 @@ const FilterOperations: FilterOperation[] = [
 export function setFilterExpression(
   params: URLSearchParams,
   field: string,
-  filter?: FilterExpression
+  filter?: FilterExpression,
 ): void {
   if (filter == null) return;
 

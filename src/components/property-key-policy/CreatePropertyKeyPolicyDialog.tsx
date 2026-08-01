@@ -45,7 +45,7 @@ export default function CreatePropertyKeyPolicyDialog({
   const [name, setName] = React.useState("");
   const [suppliedId, setSuppliedId] = React.useState("");
   const [mode, setMode] = React.useState<PropertyKeyPolicyMode>(
-    PropertyKeyPolicyMode.Allowlist
+    PropertyKeyPolicyMode.Allowlist,
   );
   const [keys, setKeys] = React.useState<KeyField[]>([{ id: 0, value: "" }]);
   const [submitting, setSubmitting] = React.useState(false);
@@ -99,7 +99,7 @@ export default function CreatePropertyKeyPolicyDialog({
 
   function handleKeyChange(index: number, value: string) {
     setKeys((current) =>
-      current.map((key, i) => (i === index ? { ...key, value } : key))
+      current.map((key, i) => (i === index ? { ...key, value } : key)),
     );
   }
 
@@ -117,7 +117,7 @@ export default function CreatePropertyKeyPolicyDialog({
   function handleKeyDown(
     e: React.KeyboardEvent<HTMLDivElement>,
     index: number,
-    value: string
+    value: string,
   ) {
     if (e.key !== "Enter") return;
     e.preventDefault();
@@ -136,7 +136,7 @@ export default function CreatePropertyKeyPolicyDialog({
     setKeys((current) =>
       current.length === 1
         ? [newKeyField()]
-        : current.filter((_, i) => i !== index)
+        : current.filter((_, i) => i !== index),
     );
   }
 
@@ -198,9 +198,9 @@ export default function CreatePropertyKeyPolicyDialog({
     }
 
     const resBody:
-      | CreatePropertyKeyPolicyRes
-      | { message?: string }
-      | undefined = await res.json().catch(() => undefined);
+      CreatePropertyKeyPolicyRes | { message?: string } | undefined = await res
+      .json()
+      .catch(() => undefined);
     if (resBody == null) {
       // Response received but body could not be parsed. The server may have
       // already created the policy, so we must not let the user resubmit (duplicate
@@ -217,7 +217,7 @@ export default function CreatePropertyKeyPolicyDialog({
     if (!res.ok || isErrorRes(resBody)) {
       setApiError(
         (isErrorRes(resBody) ? resBody.message : undefined) ??
-          "Could not create the property key policy."
+          "Could not create the property key policy.",
       );
       return;
     }

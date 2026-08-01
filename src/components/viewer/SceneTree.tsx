@@ -36,12 +36,12 @@ export function SceneTree({
     const effectRef = ref.current;
 
     const onSelection = (
-      event: VertexSceneTreeTableCellCustomEvent<SceneTreeTableCellEventDetails>
+      event: VertexSceneTreeTableCellCustomEvent<SceneTreeTableCellEventDetails>,
     ): void => {
       const node = event.detail.node;
       if (node != null && onRowClick) {
         console.debug(
-          `Selected ${node.suppliedId?.value ?? node.id?.hex},${node.name}`
+          `Selected ${node.suppliedId?.value ?? node.id?.hex},${node.name}`,
         );
 
         onRowClick(node.id?.hex || "");
@@ -50,12 +50,12 @@ export function SceneTree({
 
     effectRef?.addEventListener(
       "selectionToggled",
-      onSelection as EventListener
+      onSelection as EventListener,
     );
     return () =>
       effectRef?.removeEventListener(
         "selectionToggled",
-        onSelection as EventListener
+        onSelection as EventListener,
       );
   }, [ref, onRowClick]);
 

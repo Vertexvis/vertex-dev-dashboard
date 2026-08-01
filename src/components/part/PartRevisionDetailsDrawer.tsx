@@ -38,7 +38,7 @@ export function PartRevisionDetailsDrawer({
   partRevision,
 }: Props): JSX.Element {
   const { data, error } = useSWR(
-    partRevision == null ? null : `/api/part-revisions/${partRevision.id}`
+    partRevision == null ? null : `/api/part-revisions/${partRevision.id}`,
   );
   const fetchedRevision =
     data != null && !isErrorRes(data) ? toPartRevision(data) : undefined;
@@ -46,8 +46,8 @@ export function PartRevisionDetailsDrawer({
     partRevision == null
       ? fetchedRevision
       : fetchedRevision == null
-      ? partRevision
-      : { ...partRevision, ...fetchedRevision };
+        ? partRevision
+        : { ...partRevision, ...fetchedRevision };
   const showMetadataLoading =
     partRevision != null && fetchedRevision?.metadata == null && error == null;
 
@@ -93,8 +93,8 @@ export function PartRevisionDetailsDrawer({
                   error != null
                     ? "error"
                     : showMetadataLoading
-                    ? "loading"
-                    : "ready"
+                      ? "loading"
+                      : "ready"
                 }
               />
             </TableBody>
@@ -235,7 +235,7 @@ function MetadataRow({
 }
 
 function normalizeMetadataEntries(
-  metadata: NonNullable<PartRevision["metadata"]>
+  metadata: NonNullable<PartRevision["metadata"]>,
 ): MetadataEntry[] {
   return Object.entries(metadata).map(([key, value]) => ({
     key,

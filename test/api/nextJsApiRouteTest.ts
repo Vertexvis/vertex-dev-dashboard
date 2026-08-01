@@ -11,7 +11,7 @@ import {
 
 type NextJsApiRouteHandler = (
   req: NextIronRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) => Promise<void>;
 
 export interface ApiRouteRequest {
@@ -28,7 +28,7 @@ export interface ApiRouteResponse {
 
 export async function invokeNextJsApiRouteHandler(
   handler: NextJsApiRouteHandler,
-  request: ApiRouteRequest & { readonly session: Session }
+  request: ApiRouteRequest & { readonly session: Session },
 ): Promise<ApiRouteResponse> {
   const response = createResponse();
   await handler(createRequest(request), response as unknown as NextApiResponse);
@@ -36,7 +36,7 @@ export async function invokeNextJsApiRouteHandler(
 }
 
 export function createAuthenticatedVertexApiTestSession(
-  apiHost: string
+  apiHost: string,
 ): Session {
   const values = new Map<string, unknown>([
     [CredsKey, { id: "client-id", secret: "client-secret" }],

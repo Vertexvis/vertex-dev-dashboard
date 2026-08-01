@@ -5,7 +5,7 @@ function createRelativeUrlFetch(nativeFetch: typeof fetch): typeof fetch {
     if (typeof input === "string" || input instanceof URL) {
       return nativeFetch(
         new URL(input.toString(), "http://localhost").toString(),
-        init
+        init,
       );
     }
 

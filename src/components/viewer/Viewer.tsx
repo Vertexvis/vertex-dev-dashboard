@@ -65,7 +65,7 @@ type HOCViewerProps = React.RefAttributes<HTMLVertexViewerElement>;
 interface OnSelectProps extends HOCViewerProps {
   readonly onSelect: (
     detail: TapEventDetails,
-    hit?: vertexvis.protobuf.stream.IHit
+    hit?: vertexvis.protobuf.stream.IHit,
   ) => Promise<void>;
 }
 
@@ -258,7 +258,7 @@ function UnwrappedViewer({
 }
 
 function onTap<P extends ViewerProps>(
-  WrappedViewer: ViewerComponentType
+  WrappedViewer: ViewerComponentType,
 ): React.FunctionComponent<P & OnSelectProps> {
   return function Component({
     viewerState,

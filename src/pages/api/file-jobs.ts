@@ -46,7 +46,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
   const { fileCollectionId } = body;
   const files = await fetchAllFileCollectionFiles(
     getFileCollectionsApi(client),
-    fileCollectionId
+    fileCollectionId,
   );
 
   const exportAvailability = getFileCollectionExportAvailability(files);
@@ -71,7 +71,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
           },
         },
       },
-    })
+    }),
   );
   if (isErrorFailure(archiveFile)) return toErrorRes({ failure: archiveFile });
 
@@ -79,9 +79,9 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
     getFileJobsApi(client).createFileJob({
       createFileJobRequest: buildFileArchiveJobRequest(
         files,
-        archiveFile.data.id
+        archiveFile.data.id,
       ),
-    })
+    }),
   );
   if (isErrorFailure(job)) return toErrorRes({ failure: job });
 

@@ -42,8 +42,10 @@ jest.mock("../../../lib/file-collections", () => {
 
 type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
 
-interface TestRes
-  extends Pick<NextApiResponse, "json" | "setHeader" | "status"> {
+interface TestRes extends Pick<
+  NextApiResponse,
+  "json" | "setHeader" | "status"
+> {
   readonly body: () => unknown;
   readonly statusCode: () => number | undefined;
 }
@@ -154,7 +156,7 @@ async function callFileCollectionFiles(req: {
   const res = createRes();
   await handleFileCollectionFiles(
     createReq(req),
-    res as unknown as NextApiResponse
+    res as unknown as NextApiResponse,
   );
   return res;
 }

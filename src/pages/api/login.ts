@@ -23,7 +23,7 @@ export interface LoginReq {
 
 export async function handleLogin(
   req: NextIronRequest,
-  res: NextApiResponse<Res | ErrorRes>
+  res: NextApiResponse<Res | ErrorRes>,
 ): Promise<void> {
   if (req.method === "POST") {
     const b: LoginReq = JSON.parse(req.body);

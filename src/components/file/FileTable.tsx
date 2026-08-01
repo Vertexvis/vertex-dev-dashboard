@@ -83,7 +83,7 @@ function useFiles({
       pageSize,
       sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
-    })
+    }),
   );
 }
 
@@ -96,7 +96,7 @@ function statusLabel(status?: string): string {
 }
 
 function statusColor(
-  status?: string
+  status?: string,
 ): "default" | "success" | "warning" | "error" {
   switch (normalizeFileStatus(status)) {
     case FileStatusComplete:
@@ -121,7 +121,7 @@ type SetOptionalString = React.Dispatch<
 >;
 function useDebouncedFilter(
   setFilter: SetOptionalString,
-  resetPaging: () => void
+  resetPaging: () => void,
 ): (value: string) => void {
   return React.useMemo(
     () =>
@@ -129,7 +129,7 @@ function useDebouncedFilter(
         resetPaging();
         setFilter(value === "" ? undefined : value);
       }, 300),
-    [resetPaging, setFilter]
+    [resetPaging, setFilter],
   );
 }
 
@@ -185,11 +185,11 @@ export default function FileTable({
   const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
   const debouncedSetFileIdFilter = useDebouncedFilter(
     setFileIdFilter,
-    resetPaging
+    resetPaging,
   );
   const debouncedSetSuppliedIdFilter = useDebouncedFilter(
     setSuppliedIdFilter,
-    resetPaging
+    resetPaging,
   );
 
   React.useEffect(() => {
@@ -216,7 +216,7 @@ export default function FileTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ) {
     handlePageChange(num);
   }
@@ -247,13 +247,13 @@ export default function FileTable({
       `/api/files/${encodeURIComponent(id)}/download-url`,
       {
         method: "POST",
-      }
+      },
     );
 
     const body = await res.json();
     if (!res.ok || body.url == null) {
       setDownloadError(
-        body.message ?? "Could not create a download URL for this file."
+        body.message ?? "Could not create a download URL for this file.",
       );
       return;
     }
@@ -454,7 +454,7 @@ export default function FileTable({
               displayedRows,
               paginationCursors?.next != null,
               pageLength,
-              visiblePage != null
+              visiblePage != null,
             )
           }
           rowsPerPage={pageSize}

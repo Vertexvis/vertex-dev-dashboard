@@ -27,7 +27,7 @@ const mockFileCollectionFilesTable = jest.fn(
     <div data-api-path={apiPath} data-testid="file-collection-files-table">
       File Collection Files Table
     </div>
-  )
+  ),
 );
 const originalFetch = global.fetch;
 
@@ -38,7 +38,7 @@ jest.mock("../../../components/shared/Layout", () => ({
 jest.mock(
   "next/dynamic",
   () => () => (props: Record<string, unknown>) =>
-    mockFileCollectionFilesTable(props)
+    mockFileCollectionFilesTable(props),
 );
 
 jest.mock("../../../lib/vertex-api", () => {
@@ -65,7 +65,7 @@ describe("FileCollectionDetails", () => {
       jsonResponse({
         export: { enabled: true, fileCount: 2 },
         status: 200,
-      })
+      }),
     );
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
     mockGetFileCollectionsApi.mockReturnValue({
@@ -91,11 +91,11 @@ describe("FileCollectionDetails", () => {
           expiresAt: "2026-07-10T15:30:00Z",
           metadata: { source: "unit-test" },
         }}
-      />
+      />,
     );
 
     expect(
-      screen.getByRole("link", { name: "File Collections" })
+      screen.getByRole("link", { name: "File Collections" }),
     ).toHaveAttribute("href", "/file-collections");
     expect(screen.getByText("File Collection Details")).toBeInTheDocument();
     expect(screen.getAllByText("Collection One").length).toBeGreaterThan(0);
@@ -105,8 +105,8 @@ describe("FileCollectionDetails", () => {
     expect(screen.getByText("unit-test")).toBeInTheDocument();
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Export Archive" })
-      ).toBeEnabled()
+        screen.getByRole("button", { name: "Export Archive" }),
+      ).toBeEnabled(),
     );
   });
 
@@ -121,21 +121,21 @@ describe("FileCollectionDetails", () => {
           expiresAt: "2026-07-10T15:30:00Z",
           metadata: { source: "unit-test" },
         }}
-      />
+      />,
     );
 
     const fileCollectionFilesTable = await screen.findByTestId(
-      "file-collection-files-table"
+      "file-collection-files-table",
     );
 
     expect(fileCollectionFilesTable).toHaveAttribute(
       "data-api-path",
-      "/api/file-collections/collection-1/files"
+      "/api/file-collections/collection-1/files",
     );
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Export Archive" })
-      ).toBeEnabled()
+        screen.getByRole("button", { name: "Export Archive" }),
+      ).toBeEnabled(),
     );
   });
 
@@ -148,7 +148,7 @@ describe("FileCollectionDetails", () => {
           fileCount: 0,
         },
         status: 200,
-      })
+      }),
     );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -158,7 +158,7 @@ describe("FileCollectionDetails", () => {
     });
 
     expect(
-      await screen.findByText("File collection has no files to export.")
+      await screen.findByText("File collection has no files to export."),
     ).toBeInTheDocument();
     expect(button).toBeDisabled();
   });
@@ -174,13 +174,13 @@ describe("FileCollectionDetails", () => {
             fileCount: 2,
           },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -191,12 +191,12 @@ describe("FileCollectionDetails", () => {
     expect(exportButton).toBeDisabled();
     expect(
       await screen.findByText(
-        "File collection contains files that are not ready to export."
-      )
+        "File collection contains files that are not ready to export.",
+      ),
     ).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Refresh Availability" })
+      screen.getByRole("button", { name: "Refresh Availability" }),
     );
 
     await waitFor(() => expect(exportButton).toBeEnabled());
@@ -209,7 +209,7 @@ describe("FileCollectionDetails", () => {
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -219,11 +219,11 @@ describe("FileCollectionDetails", () => {
     });
     expect(exportButton).toBeDisabled();
     expect(
-      await screen.findByText("Could not check export availability.")
+      await screen.findByText("Could not check export availability."),
     ).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Refresh Availability" })
+      screen.getByRole("button", { name: "Refresh Availability" }),
     );
 
     await waitFor(() => expect(exportButton).toBeEnabled());
@@ -237,7 +237,7 @@ describe("FileCollectionDetails", () => {
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse(
@@ -249,8 +249,8 @@ describe("FileCollectionDetails", () => {
             },
             status: 201,
           },
-          201
-        )
+          201,
+        ),
       )
       .mockResolvedValueOnce(
         jsonResponse({
@@ -259,7 +259,7 @@ describe("FileCollectionDetails", () => {
             id: "job-1",
           },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse({
@@ -268,13 +268,13 @@ describe("FileCollectionDetails", () => {
             id: "job-1",
           },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse({
           status: 200,
           url: "https://example.test/archive.zip",
-        })
+        }),
       );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -291,10 +291,10 @@ describe("FileCollectionDetails", () => {
         body: JSON.stringify({ fileCollectionId: "collection-1" }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
-      })
+      }),
     );
     expect(
-      screen.getByRole("button", { name: "Exporting Archive" })
+      screen.getByRole("button", { name: "Exporting Archive" }),
     ).toBeDisabled();
     await screen.findByText("Archive job is running.");
 
@@ -307,10 +307,10 @@ describe("FileCollectionDetails", () => {
     });
 
     await waitFor(() =>
-      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1")
+      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1"),
     );
     expect(
-      screen.getByRole("button", { name: "Exporting Archive" })
+      screen.getByRole("button", { name: "Exporting Archive" }),
     ).toBeDisabled();
 
     await act(async () => {
@@ -319,7 +319,7 @@ describe("FileCollectionDetails", () => {
     });
 
     await waitFor(() =>
-      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1")
+      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1"),
     );
 
     const download = await screen.findByRole("button", {
@@ -327,10 +327,10 @@ describe("FileCollectionDetails", () => {
     });
     expect(global.fetch).not.toHaveBeenCalledWith(
       "/api/files/archive-file-1/download-url",
-      { method: "POST" }
+      { method: "POST" },
     );
     expect(
-      screen.getByText("Archive is ready to download.")
+      screen.getByText("Archive is ready to download."),
     ).toBeInTheDocument();
 
     fireEvent.click(download);
@@ -338,13 +338,13 @@ describe("FileCollectionDetails", () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         "/api/files/archive-file-1/download-url",
-        { method: "POST" }
-      )
+        { method: "POST" },
+      ),
     );
     expect(window.open).toHaveBeenCalledWith(
       "https://example.test/archive.zip",
       "_blank",
-      "noopener"
+      "noopener",
     );
   });
 
@@ -354,7 +354,7 @@ describe("FileCollectionDetails", () => {
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       )
       .mockRejectedValueOnce(new Error("Network error"));
 
@@ -368,12 +368,12 @@ describe("FileCollectionDetails", () => {
     fireEvent.click(exportButton);
 
     expect(
-      await screen.findByText("Could not start archive export.")
+      await screen.findByText("Could not start archive export."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(
-      screen.getByRole("button", { name: "Export Archive" })
+      screen.getByRole("button", { name: "Export Archive" }),
     ).toBeEnabled();
   });
 
@@ -384,7 +384,7 @@ describe("FileCollectionDetails", () => {
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse(
@@ -396,8 +396,8 @@ describe("FileCollectionDetails", () => {
             },
             status: 201,
           },
-          201
-        )
+          201,
+        ),
       )
       .mockResolvedValueOnce(
         jsonResponse({
@@ -406,7 +406,7 @@ describe("FileCollectionDetails", () => {
             id: "job-1",
           },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse(
@@ -414,8 +414,8 @@ describe("FileCollectionDetails", () => {
             message: "Could not create download URL.",
             status: 500,
           },
-          500
-        )
+          500,
+        ),
       );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -438,7 +438,7 @@ describe("FileCollectionDetails", () => {
     });
 
     await waitFor(() =>
-      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1")
+      expect(global.fetch).toHaveBeenCalledWith("/api/file-jobs/job-1"),
     );
 
     const download = await screen.findByRole("button", {
@@ -450,14 +450,14 @@ describe("FileCollectionDetails", () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         "/api/files/archive-file-1/download-url",
-        { method: "POST" }
-      )
+        { method: "POST" },
+      ),
     );
     expect(
-      await screen.findByText("Could not create download URL.")
+      await screen.findByText("Could not create download URL."),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Download Archive" })
+      screen.getByRole("button", { name: "Download Archive" }),
     ).toBeEnabled();
   });
 
@@ -468,7 +468,7 @@ describe("FileCollectionDetails", () => {
         jsonResponse({
           export: { enabled: true, fileCount: 2 },
           status: 200,
-        })
+        }),
       )
       .mockResolvedValueOnce(
         jsonResponse(
@@ -480,8 +480,8 @@ describe("FileCollectionDetails", () => {
             },
             status: 201,
           },
-          201
-        )
+          201,
+        ),
       )
       .mockResolvedValueOnce(
         jsonResponse({
@@ -490,7 +490,7 @@ describe("FileCollectionDetails", () => {
             id: "job-1",
           },
           status: 200,
-        })
+        }),
       );
 
     render(<FileCollectionDetails fileCollection={fileCollection()} />);
@@ -516,7 +516,7 @@ describe("FileCollectionDetails", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(
-      screen.getByRole("button", { name: "Export Archive" })
+      screen.getByRole("button", { name: "Export Archive" }),
     ).toBeEnabled();
   });
 

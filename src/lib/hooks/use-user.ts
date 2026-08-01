@@ -8,7 +8,7 @@ interface UseUserResponse {
   readonly mutate: (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: any,
-    shouldRevalidate?: boolean | undefined
+    shouldRevalidate?: boolean | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<any>;
 }

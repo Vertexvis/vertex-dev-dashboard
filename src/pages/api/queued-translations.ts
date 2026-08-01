@@ -14,7 +14,7 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 export default withSession(methodRouter({ GET: get }));
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<QueuedJobData>> {
   const c = await getClientFromSession(req.session);
   const ps = head(req.query.pageSize);
@@ -43,7 +43,7 @@ async function get(
         pageCursor: pc,
         pageSize: parsePositiveQueryInt(ps, 200),
         filterStatus: status,
-      })
+      }),
     );
     return { cursors, data: page.data, status: 200 };
   }
@@ -51,7 +51,7 @@ async function get(
 
 export const fetchAllTranslations = async (
   c: VertexClient,
-  status: string
+  status: string,
 ): Promise<QueuedJobData[]> => {
   const queuedJobData: QueuedJobData[][] = [];
   let cursor: string | undefined;
@@ -63,7 +63,7 @@ export const fetchAllTranslations = async (
         pageCursor: cursor ?? undefined,
         pageSize: 200,
         filterStatus: status,
-      })
+      }),
     );
     promises.push(resPromise);
     // eslint-disable-next-line no-await-in-loop

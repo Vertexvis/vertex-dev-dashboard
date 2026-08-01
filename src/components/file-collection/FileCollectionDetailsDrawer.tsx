@@ -26,7 +26,7 @@ export function FileCollectionDetailsDrawer({
   const { data, error } = useSWR<GetFileCollectionRes | undefined>(
     fileCollection == null
       ? null
-      : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`
+      : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`,
   );
   const detailRequestFailed = error != null || isErrorRes(data);
   const fetchedFileCollection =
@@ -42,8 +42,8 @@ export function FileCollectionDetailsDrawer({
     fileCollection == null
       ? undefined
       : fetchedFileCollection == null
-      ? fileCollection
-      : { ...fileCollection, ...fetchedFileCollection };
+        ? fileCollection
+        : { ...fileCollection, ...fetchedFileCollection };
 
   return (
     <Drawer

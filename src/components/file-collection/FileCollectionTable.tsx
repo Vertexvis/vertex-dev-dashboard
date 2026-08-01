@@ -68,7 +68,7 @@ function useFileCollections({
       pageSize,
       sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
-    })
+    }),
   );
 }
 
@@ -120,7 +120,7 @@ export default function FileCollectionTable({
         resetPaging();
         setName(value === "" ? undefined : value);
       }, 300),
-    [resetPaging]
+    [resetPaging],
   );
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
@@ -129,7 +129,7 @@ export default function FileCollectionTable({
         resetPaging();
         setSuppliedId(value === "" ? undefined : value);
       }, 300),
-    [resetPaging]
+    [resetPaging],
   );
 
   React.useEffect(() => {
@@ -147,7 +147,7 @@ export default function FileCollectionTable({
     if (field !== "created" && field !== "name") return;
 
     setSort((current) =>
-      current == null ? { field, order: "asc" } : toggleSort(current, field)
+      current == null ? { field, order: "asc" } : toggleSort(current, field),
     );
     resetPaging();
   }
@@ -170,7 +170,7 @@ export default function FileCollectionTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ) {
     handlePageChange(num);
   }
@@ -188,7 +188,7 @@ export default function FileCollectionTable({
     if (!res.ok) {
       const body = await res.json();
       setDeleteError(
-        body.message ?? "Could not delete the selected file collections."
+        body.message ?? "Could not delete the selected file collections.",
       );
       setSelected(new Set(ids));
       return;
@@ -337,7 +337,7 @@ export default function FileCollectionTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null
+              page != null,
             )
           }
           rowsPerPage={pageSize}

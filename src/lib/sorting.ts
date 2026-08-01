@@ -6,14 +6,14 @@ export interface SortState<TField extends string = string> {
 }
 
 export function toSortParam<TField extends string>(
-  sort: SortState<TField>
+  sort: SortState<TField>,
 ): string {
   return sort.order === "desc" ? `-${sort.field}` : sort.field;
 }
 
 export function toggleSort<TField extends string>(
   current: SortState<TField>,
-  field: TField
+  field: TField,
 ): SortState<TField> {
   return {
     field,

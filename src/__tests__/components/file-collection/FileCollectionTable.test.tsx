@@ -71,9 +71,9 @@ describe("FileCollectionTable", () => {
         return HttpResponse.json(
           url.searchParams.get("cursor") === "page-2"
             ? nextPage
-            : firstPageWithNextCursor
+            : firstPageWithNextCursor,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -90,7 +90,7 @@ describe("FileCollectionTable", () => {
         return (
           params.get("cursor") === "page-2" && params.get("pageSize") === "25"
         );
-      })
+      }),
     ).toBe(true);
   });
 
@@ -101,7 +101,7 @@ describe("FileCollectionTable", () => {
       http.get("*/api/file-collections", ({ request }) => {
         requests.push(new URL(request.url).search);
         return HttpResponse.json(firstPage);
-      })
+      }),
     );
 
     renderTable();
@@ -111,7 +111,7 @@ describe("FileCollectionTable", () => {
       requests.some((search) => {
         const params = new URLSearchParams(search);
         return params.get("pageSize") === "25" && !params.has("sort");
-      })
+      }),
     ).toBe(true);
   });
 
@@ -123,9 +123,9 @@ describe("FileCollectionTable", () => {
         const url = new URL(request.url);
         requests.push(url.search);
         return HttpResponse.json(
-          url.searchParams.get("sort") === "name" ? nextPage : firstPage
+          url.searchParams.get("sort") === "name" ? nextPage : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -136,16 +136,16 @@ describe("FileCollectionTable", () => {
     expect(await screen.findByText("Collection Two")).toBeInTheDocument();
     expect(
       requests.some(
-        (search) => new URLSearchParams(search).get("sort") === "name"
-      )
+        (search) => new URLSearchParams(search).get("sort") === "name",
+      ),
     ).toBe(true);
 
     await userEvent.click(screen.getByRole("button", { name: "Name" }));
     expect(await screen.findByText("Collection One")).toBeInTheDocument();
     expect(
       requests.some(
-        (search) => new URLSearchParams(search).get("sort") === "-name"
-      )
+        (search) => new URLSearchParams(search).get("sort") === "-name",
+      ),
     ).toBe(true);
   });
 
@@ -159,9 +159,9 @@ describe("FileCollectionTable", () => {
         return HttpResponse.json(
           url.searchParams.get("cursor") === "page-2"
             ? nextPage
-            : firstPageWithNextCursor
+            : firstPageWithNextCursor,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -177,7 +177,7 @@ describe("FileCollectionTable", () => {
       requests.some((search) => {
         const params = new URLSearchParams(search);
         return params.get("sort") === "created" && !params.has("cursor");
-      })
+      }),
     ).toBe(true);
   });
 
@@ -193,7 +193,7 @@ describe("FileCollectionTable", () => {
         deletedIds.push(body.ids ?? []);
 
         return HttpResponse.json({ status: 200 });
-      })
+      }),
     );
 
     renderTable();
@@ -209,7 +209,7 @@ describe("FileCollectionTable", () => {
     expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).not.toBeChecked();
     expect(
-      screen.queryByText("Could not delete collection-1.")
+      screen.queryByText("Could not delete collection-1."),
     ).not.toBeInTheDocument();
   });
 
@@ -224,9 +224,9 @@ describe("FileCollectionTable", () => {
         return HttpResponse.json(
           url.searchParams.get("suppliedId") === "supplied-2"
             ? nextPage
-            : firstPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -244,7 +244,7 @@ describe("FileCollectionTable", () => {
           params.get("pageSize") === "25" &&
           params.get("suppliedId") === "supplied-2"
         );
-      })
+      }),
     ).toBe(true);
   });
 
@@ -252,7 +252,7 @@ describe("FileCollectionTable", () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(multiCollectionPage);
-      })
+      }),
     );
 
     renderTable();
@@ -288,9 +288,9 @@ describe("FileCollectionTable", () => {
 
         return HttpResponse.json(
           { message: "Could not delete collection-1." },
-          { status: 500 }
+          { status: 500 },
         );
-      })
+      }),
     );
 
     renderTable();
@@ -301,7 +301,7 @@ describe("FileCollectionTable", () => {
     await userEvent.click(screen.getByLabelText("Delete"));
 
     expect(
-      await screen.findByText("Could not delete collection-1.")
+      await screen.findByText("Could not delete collection-1."),
     ).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByLabelText("Select Collection One")).toBeChecked();
@@ -317,9 +317,11 @@ describe("FileCollectionTable", () => {
         requests.push(url.search);
 
         return HttpResponse.json(
-          url.searchParams.get("suppliedId") === "LIED-2" ? nextPage : firstPage
+          url.searchParams.get("suppliedId") === "LIED-2"
+            ? nextPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -338,7 +340,7 @@ describe("FileCollectionTable", () => {
           params.get("pageSize") === "25" &&
           params.get("suppliedId") === "LIED-2"
         );
-      })
+      }),
     ).toBe(true);
   });
 
@@ -354,9 +356,9 @@ describe("FileCollectionTable", () => {
           url.searchParams.get("name") === "Collection" &&
             url.searchParams.get("suppliedId") === "2"
             ? nextPage
-            : firstPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -375,7 +377,7 @@ describe("FileCollectionTable", () => {
           params.get("name") === "Collection" &&
           params.get("suppliedId") === "2"
         );
-      })
+      }),
     ).toBe(true);
   });
 
@@ -387,9 +389,9 @@ describe("FileCollectionTable", () => {
         return HttpResponse.json(
           url.searchParams.get("name") === "missing"
             ? emptyCollectionPage
-            : firstPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -399,7 +401,7 @@ describe("FileCollectionTable", () => {
     await userEvent.type(screen.getByLabelText("Name"), "missing");
 
     expect(
-      await screen.findByText("No file collections found.")
+      await screen.findByText("No file collections found."),
     ).toBeInTheDocument();
   });
 
@@ -415,9 +417,9 @@ describe("FileCollectionTable", () => {
           url.searchParams.has("createdAtStart") &&
             url.searchParams.has("createdAtEnd")
             ? nextPage
-            : firstPage
+            : firstPage,
         );
-      })
+      }),
     );
 
     renderTable();
@@ -437,7 +439,7 @@ describe("FileCollectionTable", () => {
       requests.some((search) => {
         const params = new URLSearchParams(search);
         return params.has("createdAtStart") && params.has("createdAtEnd");
-      })
+      }),
     ).toBe(true);
   });
 
@@ -445,7 +447,7 @@ describe("FileCollectionTable", () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(firstPage);
-      })
+      }),
     );
 
     renderTable();
@@ -462,7 +464,7 @@ describe("FileCollectionTable", () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(firstPage);
-      })
+      }),
     );
 
     renderTable();
@@ -480,9 +482,9 @@ describe("FileCollectionTable", () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(
-          fileCollectionsPage({ cursors: { self: "page-1" }, data: [] })
+          fileCollectionsPage({ cursors: { self: "page-1" }, data: [] }),
         );
-      })
+      }),
     );
 
     renderTable();
@@ -490,7 +492,7 @@ describe("FileCollectionTable", () => {
     await userEvent.click(screen.getByRole("button", { name: "Name" }));
 
     expect(
-      await screen.findByText("No file collections found.")
+      await screen.findByText("No file collections found."),
     ).toBeInTheDocument();
   });
 
@@ -498,7 +500,7 @@ describe("FileCollectionTable", () => {
     server.use(
       http.get("*/api/file-collections", () => {
         return HttpResponse.json(firstPage);
-      })
+      }),
     );
 
     renderTable();
@@ -507,7 +509,7 @@ describe("FileCollectionTable", () => {
 
     expect(screen.getByLabelText("Open Collection One")).toHaveAttribute(
       "href",
-      "/file-collections/collection-1"
+      "/file-collections/collection-1",
     );
   });
 });

@@ -51,7 +51,7 @@ export type MethodHandler = (req: NextIronRequest) => Promise<Res>;
 export function methodRouter(handlers: Partial<Record<Method, MethodHandler>>) {
   return async function handle(
     req: NextIronRequest,
-    res: NextApiResponse
+    res: NextApiResponse,
   ): Promise<void> {
     const handler = handlers[req.method as Method];
     if (handler == null) {

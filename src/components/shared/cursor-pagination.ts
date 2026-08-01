@@ -8,7 +8,7 @@ export function formatCursorPaginationLabel(
   { from, to }: DisplayedRows,
   hasNextPage: boolean,
   visibleRowCount: number,
-  isLoaded: boolean
+  isLoaded: boolean,
 ): string {
   if (!isLoaded) return `${from}\u2013${to}`;
   if (isLoaded && visibleRowCount === 0) return "0–0";

@@ -26,7 +26,7 @@ describe("FileCollectionFilesTable", () => {
       const url = new URL(request.url);
 
       expect(request.url).toBe(
-        `http://localhost${collectionFilesApiPath}?pageSize=${DefaultPageSize}`
+        `http://localhost${collectionFilesApiPath}?pageSize=${DefaultPageSize}`,
       );
       expect(url.searchParams.get("pageSize")).toBe(DefaultPageSize.toString());
       expect(url.searchParams.get("cursor")).toBeNull();
@@ -41,7 +41,7 @@ describe("FileCollectionFilesTable", () => {
             created: "2026-06-12T15:30:00Z",
             uploaded: "2026-06-12T15:31:00Z",
           }),
-        ])
+        ]),
       );
     });
     const createDownloadUrl = jest.fn(({ params }) => {
@@ -67,26 +67,26 @@ describe("FileCollectionFilesTable", () => {
     expect(listCollectionFiles).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Name")).not.toHaveAttribute("role", "button");
     expect(
-      screen.queryByLabelText("Supplied ID Filter (exact)")
+      screen.queryByLabelText("Supplied ID Filter (exact)"),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "New" })
+      screen.queryByRole("button", { name: "New" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Select File One")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Delete")).not.toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Name" })).not.toHaveClass(
-      "MuiTableCell-paddingNone"
+      "MuiTableCell-paddingNone",
     );
     expect(screen.getByText("File One").closest("th")).not.toHaveClass(
-      "MuiTableCell-paddingNone"
+      "MuiTableCell-paddingNone",
     );
 
     const name = screen.getByLabelText("Download File One");
     await userEvent.hover(name);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Download File One"
+      "Download File One",
     );
 
     expect(name).toHaveAttribute("href", "/api/files/file-1/download");
@@ -104,10 +104,10 @@ describe("FileCollectionFilesTable", () => {
     });
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
+      screen.getByRole("button", { name: "Actions for File One" }),
     );
     await userEvent.click(
-      screen.getByRole("menuitem", { name: "Download file" })
+      screen.getByRole("menuitem", { name: "Download file" }),
     );
 
     await waitFor(() => {
@@ -116,7 +116,7 @@ describe("FileCollectionFilesTable", () => {
     expect(window.open).toHaveBeenLastCalledWith(
       downloadUrlById["file-1"],
       "_blank",
-      "noopener"
+      "noopener",
     );
   });
 
@@ -143,10 +143,10 @@ describe("FileCollectionFilesTable", () => {
     expect(screen.getByText("pending")).toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
+      screen.getByRole("button", { name: "Actions for File One" }),
     );
     expect(
-      screen.getByRole("menuitem", { name: "Download file" })
+      screen.getByRole("menuitem", { name: "Download file" }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(createDownloadUrl).not.toHaveBeenCalled();
   });
@@ -169,7 +169,7 @@ describe("FileCollectionFilesTable", () => {
 
     const statusLabel = await screen.findByText("ready");
     expect(statusLabel.closest(".MuiChip-root")).toHaveClass(
-      "MuiChip-colorDefault"
+      "MuiChip-colorDefault",
     );
   });
 
@@ -196,10 +196,10 @@ describe("FileCollectionFilesTable", () => {
     expect(await screen.findByText("completed")).toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
+      screen.getByRole("button", { name: "Actions for File One" }),
     );
     expect(
-      screen.getByRole("menuitem", { name: "Download file" })
+      screen.getByRole("menuitem", { name: "Download file" }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(createDownloadUrl).not.toHaveBeenCalled();
     expect(window.open).not.toHaveBeenCalled();
@@ -222,14 +222,14 @@ describe("FileCollectionFilesTable", () => {
           message: "Could not load collection files.",
           status: 500,
         },
-        { status: 500 }
+        { status: 500 },
       ),
     });
 
     renderTable();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Error loading data."
+      "Error loading data.",
     );
   });
 });
@@ -239,7 +239,7 @@ function renderTable(onFileSelected = jest.fn()): void {
     <FileCollectionFilesTable
       apiPath={collectionFilesApiPath}
       onFileSelected={onFileSelected}
-    />
+    />,
   );
 }
 
@@ -254,7 +254,7 @@ function mockFileCollectionFilesApi({
   createDownloadUrl = jest.fn(({ params }) =>
     HttpResponse.json({
       url: `https://example.test/download/${params.id as string}`,
-    })
+    }),
   ),
   files = [
     fileResource({
@@ -275,7 +275,9 @@ function mockFileCollectionFilesApi({
 
       return listCollectionFiles(info);
     }),
-    http.post("*/api/files/:id/download-url", (info) => createDownloadUrl(info))
+    http.post("*/api/files/:id/download-url", (info) =>
+      createDownloadUrl(info),
+    ),
   );
 }
 

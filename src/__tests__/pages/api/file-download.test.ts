@@ -33,7 +33,7 @@ describe("file download route", () => {
         query: { id: "file-1" },
         session: {},
       } as NextIronRequest,
-      res as unknown as NextApiResponse
+      res as unknown as NextApiResponse,
     );
 
     expect(mockCreateDownloadUrl).toHaveBeenCalledWith({
@@ -47,7 +47,7 @@ describe("file download route", () => {
     });
     expect(res.redirect).toHaveBeenCalledWith(
       302,
-      "https://downloads.example.test/file-1"
+      "https://downloads.example.test/file-1",
     );
   });
 });

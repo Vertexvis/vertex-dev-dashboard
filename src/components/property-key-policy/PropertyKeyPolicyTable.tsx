@@ -57,7 +57,7 @@ function usePropertyKeyPolicies({
       cursor,
       pageSize,
       suppliedId,
-    })
+    }),
   );
 }
 
@@ -65,7 +65,7 @@ interface Props {
   readonly activePropertyKeyPolicyId?: string;
   readonly onPoliciesDeleted?: (ids: string[]) => void;
   readonly onPropertyKeyPolicySelected?: (
-    propertyKeyPolicy: PropertyKeyPolicy
+    propertyKeyPolicy: PropertyKeyPolicy,
   ) => void;
 }
 
@@ -110,7 +110,7 @@ export default function PropertyKeyPolicyTable({
         setSuppliedId(value === "" ? undefined : value);
         setSelected(new Set());
       }, 300),
-    [resetPaging]
+    [resetPaging],
   );
 
   React.useEffect(() => {
@@ -137,7 +137,7 @@ export default function PropertyKeyPolicyTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
+    num: number,
   ) {
     handlePageChange(num);
     setSelected(new Set());
@@ -161,9 +161,8 @@ export default function PropertyKeyPolicyTable({
     }
 
     const body:
-      | DeletePropertyKeyPoliciesRes
-      | { message?: string }
-      | undefined = await res.json().catch(() => undefined);
+      DeletePropertyKeyPoliciesRes | { message?: string } | undefined =
+      await res.json().catch(() => undefined);
 
     if (!res.ok || isPartialDelete(body)) {
       const deletedIds = isPartialDelete(body) ? body.deletedIds : [];
@@ -175,7 +174,7 @@ export default function PropertyKeyPolicyTable({
         setSelected(new Set(failedIds));
         setDeleteError(
           (isErrorRes(body) ? body.message : undefined) ??
-            "Could not delete the selected property key policies."
+            "Could not delete the selected property key policies.",
         );
         mutate();
       }
@@ -329,7 +328,7 @@ export default function PropertyKeyPolicyTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null
+              page != null,
             )
           }
           rowsPerPage={pageSize}
@@ -361,7 +360,7 @@ export default function PropertyKeyPolicyTable({
 }
 
 function isPartialDelete(
-  body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined
+  body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined,
 ): body is PartialDeletePropertyKeyPoliciesRes {
   const partial = body as Partial<PartialDeletePropertyKeyPoliciesRes>;
 

@@ -38,7 +38,7 @@ jest.mock(
           </button>
         </>
       );
-    }
+    },
 );
 
 jest.mock("../../components/shared/Layout", () => ({
@@ -64,7 +64,7 @@ jest.mock(
         {open ? "open" : "closed"}
       </div>
     ),
-  })
+  }),
 );
 
 describe("PropertyKeyPolicies", () => {
@@ -72,21 +72,21 @@ describe("PropertyKeyPolicies", () => {
     renderWithSWR(<PropertyKeyPolicies />);
 
     expect(screen.getByTestId("property-key-policy-drawer")).toHaveTextContent(
-      "closed"
+      "closed",
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Select policy" })
+      screen.getByRole("button", { name: "Select policy" }),
     );
     expect(screen.getByTestId("property-key-policy-drawer")).toHaveTextContent(
-      "open"
+      "open",
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Delete policy" })
+      screen.getByRole("button", { name: "Delete policy" }),
     );
     expect(screen.getByTestId("property-key-policy-drawer")).toHaveTextContent(
-      "closed"
+      "closed",
     );
   });
 });

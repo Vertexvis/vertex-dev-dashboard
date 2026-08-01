@@ -7,7 +7,7 @@ function readRequiredEnv(names: string[]): string[] {
   const missing = names.filter((name) => !process.env[name]);
   if (missing.length > 0) {
     throw new Error(
-      `Missing required environment variable(s): ${missing.join(", ")}`
+      `Missing required environment variable(s): ${missing.join(", ")}`,
     );
   }
 
@@ -20,7 +20,7 @@ function readCustomNetworkHosts(): { apiHost: string; renderingHost: string } {
 
   if (!apiHost || !renderingHost) {
     throw new Error(
-      "DEV_ENVIRONMENT=custom requires DEV_API_HOST and DEV_RENDERING_HOST to be set."
+      "DEV_ENVIRONMENT=custom requires DEV_API_HOST and DEV_RENDERING_HOST to be set.",
     );
   }
 
@@ -29,7 +29,7 @@ function readCustomNetworkHosts(): { apiHost: string; renderingHost: string } {
 
 function parseBoolean(
   value: string | undefined,
-  defaultValue: boolean
+  defaultValue: boolean,
 ): boolean {
   if (value == null) return defaultValue;
 
@@ -37,7 +37,7 @@ function parseBoolean(
   if (["0", "false", "no"].includes(value.toLowerCase())) return false;
 
   throw new Error(
-    `Expected PLAYWRIGHT_VISIBLE to be true or false; received ${value}`
+    `Expected PLAYWRIGHT_VISIBLE to be true or false; received ${value}`,
   );
 }
 
@@ -47,15 +47,15 @@ const [username, credential] = readRequiredEnv([
 ]);
 
 const baseUrl = new URL(
-  process.env.DEV_DASHBOARD_URL ?? "http://localhost:3000"
+  process.env.DEV_DASHBOARD_URL ?? "http://localhost:3000",
 );
 const destination = new URL(
   process.env.DEV_DASHBOARD_PATH ?? "/",
-  baseUrl
+  baseUrl,
 ).toString();
 const loginUrl = new URL("/login", baseUrl).toString();
 const storageStatePath = path.resolve(
-  process.env.PLAYWRIGHT_STORAGE_STATE ?? "playwright/.auth/dev-dashboard.json"
+  process.env.PLAYWRIGHT_STORAGE_STATE ?? "playwright/.auth/dev-dashboard.json",
 );
 const visible = parseBoolean(process.env.PLAYWRIGHT_VISIBLE, false);
 const environment = process.env.DEV_ENVIRONMENT ?? "platdev";
@@ -103,7 +103,7 @@ async function loginAndSaveState(browser: Browser): Promise<void> {
 }
 
 async function openAuthenticatedDashboard(
-  browser: Browser
+  browser: Browser,
 ): Promise<BrowserContext> {
   const context = await browser.newContext({ storageState: storageStatePath });
   const page = await context.newPage();
@@ -114,14 +114,14 @@ async function openAuthenticatedDashboard(
   if (new URL(page.url()).pathname.endsWith("/login")) {
     await context.close();
     throw new Error(
-      "Saved authentication state was not accepted by the dashboard."
+      "Saved authentication state was not accepted by the dashboard.",
     );
   }
 
   if (response != null && !response.ok()) {
     await context.close();
     throw new Error(
-      `Dashboard responded with HTTP ${response.status()} for ${destination}.`
+      `Dashboard responded with HTTP ${response.status()} for ${destination}.`,
     );
   }
 

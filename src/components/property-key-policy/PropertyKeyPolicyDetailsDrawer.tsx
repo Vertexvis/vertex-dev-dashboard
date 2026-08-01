@@ -34,7 +34,7 @@ export function PropertyKeyPolicyDetailsDrawer({
   >(
     id == null
       ? null
-      : `/api/property-key-policies/${encodeURIComponent(id)}/keys`
+      : `/api/property-key-policies/${encodeURIComponent(id)}/keys`,
   );
 
   const details = propertyKeyPolicy;

@@ -8,7 +8,7 @@ const TranslationTables = dynamic(
   () => import("../components/translation/TranslationTables"),
   {
     ssr: false,
-  }
+  },
 );
 
 export default function Translations(): JSX.Element {

@@ -53,8 +53,8 @@ describe("PropertyKeyPolicyDetails", () => {
   beforeEach(() => {
     server.use(
       http.get("*/api/property-key-policies/:id/keys", () =>
-        HttpResponse.json(propertyKeyPolicyKeysRes({ data: [] }))
-      )
+        HttpResponse.json(propertyKeyPolicyKeysRes({ data: [] })),
+      ),
     );
     mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
     mockGetPropertyKeyPoliciesApi.mockReturnValue({
@@ -77,11 +77,11 @@ describe("PropertyKeyPolicyDetails", () => {
           createdAt: "2026-06-10T15:30:00Z",
           mode: "allowlist",
         }}
-      />
+      />,
     );
 
     expect(
-      screen.getByRole("link", { name: "Property Key Policies" })
+      screen.getByRole("link", { name: "Property Key Policies" }),
     ).toHaveAttribute("href", "/property-key-policies");
     expect(screen.getByText("Property Key Policy")).toBeInTheDocument();
     expect(screen.getAllByText("My Policy").length).toBeGreaterThan(0);
@@ -94,9 +94,9 @@ describe("PropertyKeyPolicyDetails", () => {
         HttpResponse.json(
           propertyKeyPolicyKeysRes({
             data: [propertyKeyPolicyKey({ id: "key-1", name: "entry-key-1" })],
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
 
     renderWithSWR(
@@ -108,7 +108,7 @@ describe("PropertyKeyPolicyDetails", () => {
           createdAt: "2026-06-10T15:30:00Z",
           mode: "allowlist",
         }}
-      />
+      />,
     );
 
     expect(await screen.findByText("entry-key-1")).toBeInTheDocument();
@@ -119,9 +119,9 @@ describe("PropertyKeyPolicyDetails", () => {
       http.get("*/api/property-key-policies/:id/keys", () =>
         HttpResponse.json(
           { message: "Could not load entries.", status: 500 },
-          { status: 500 }
-        )
-      )
+          { status: 500 },
+        ),
+      ),
     );
 
     renderWithSWR(
@@ -133,11 +133,11 @@ describe("PropertyKeyPolicyDetails", () => {
           createdAt: "2026-06-10T15:30:00Z",
           mode: "allowlist",
         }}
-      />
+      />,
     );
 
     expect(
-      await screen.findByText("Could not load property keys.")
+      await screen.findByText("Could not load property keys."),
     ).toBeInTheDocument();
   });
 
@@ -251,7 +251,7 @@ describe("PropertyKeyPolicyDetails", () => {
       serverSidePropsHandler({
         query: { propertyKeyPolicyId: "policy-1" },
         req: createReq(createSession()),
-      })
+      }),
     ).rejects.toThrow("Internal server error.");
   });
 });

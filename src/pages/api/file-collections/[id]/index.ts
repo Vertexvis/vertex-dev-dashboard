@@ -16,7 +16,7 @@ export const handleFileCollection = methodRouter({ GET: get });
 export default withSession(handleFileCollection);
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetFileCollectionRes> {
   const id = head(req.query.id);
   if (id == null)

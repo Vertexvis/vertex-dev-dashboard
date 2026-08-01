@@ -9,7 +9,7 @@ import withSession, { NextIronRequest } from "../../lib/with-session";
 export default withSession(methodRouter({ GET: get }));
 
 async function get(
-  req: NextIronRequest
+  req: NextIronRequest,
 ): Promise<ErrorRes | GetRes<PartRevisionData>> {
   const c = await getClientFromSession(req.session);
   const ps = head(req.query.pageSize);
@@ -22,7 +22,7 @@ async function get(
     c.partRevisions.getPartRevisions({
       id: pId,
       pageSize: parsePositiveQueryInt(ps, 10),
-    })
+    }),
   );
   return { cursors, data: page.data, status: 200 };
 }

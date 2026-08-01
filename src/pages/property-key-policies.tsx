@@ -10,7 +10,7 @@ const PropertyKeyPolicyTable = dynamic(
   () => import("../components/property-key-policy/PropertyKeyPolicyTable"),
   {
     ssr: false,
-  }
+  },
 );
 
 export default function PropertyKeyPolicies(): JSX.Element {
