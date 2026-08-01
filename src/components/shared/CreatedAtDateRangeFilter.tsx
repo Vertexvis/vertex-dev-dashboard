@@ -20,7 +20,7 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
   const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
   const [createdAtEndDate, setCreatedAtEndDate] = React.useState("");
 
-  function handleCreatedAtStartChange(value: string) {
+  function handleCreatedAtStartChange(value: string): void {
     const nextEndDate =
       value !== "" &&
       createdAtEndDate !== "" &&
@@ -38,7 +38,7 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
     });
   }
 
-  function handleCreatedAtEndChange(value: string) {
+  function handleCreatedAtEndChange(value: string): void {
     const nextStartDate =
       value !== "" &&
       createdAtStartDate !== "" &&

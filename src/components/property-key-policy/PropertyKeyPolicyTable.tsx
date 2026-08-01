@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { isErrorRes } from "../../lib/api";
 import { toLocaleString } from "../../lib/dates";
@@ -51,7 +51,7 @@ function usePropertyKeyPolicies({
   cursor,
   pageSize,
   suppliedId,
-}: UsePropertyKeyPoliciesProps) {
+}: UsePropertyKeyPoliciesProps): SWRResponse {
   return useSWR(
     buildQuery("/api/property-key-policies", {
       cursor,
@@ -119,7 +119,7 @@ export default function PropertyKeyPolicyTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -127,7 +127,7 @@ export default function PropertyKeyPolicyTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -138,12 +138,12 @@ export default function PropertyKeyPolicyTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number,
-  ) {
+  ): void {
     handlePageChange(num);
     setSelected(new Set());
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     if (deleting) return;
 
     setDeleteError(undefined);
@@ -187,7 +187,7 @@ export default function PropertyKeyPolicyTable({
     onPoliciesDeleted?.(ids);
   }
 
-  function handleCreated() {
+  function handleCreated(): void {
     resetPaging();
     mutate();
   }

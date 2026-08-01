@@ -92,7 +92,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     !invalidSceneTreeHost &&
     !invalidSceneViewHost;
 
-  function setLocalStorageItems() {
+  function setLocalStorageItems(): void {
     if (networkConfig != null) {
       localStorage.setItem(
         "vertexvis.network.config",
@@ -105,7 +105,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (!id || !secret) return;
     setLoading(true);
     setLocalStorageItems();
@@ -142,7 +142,9 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     sceneViewHost: false,
   });
 
-  const createEditButton = (field: keyof typeof editableFields) => (
+  const createEditButton = (
+    field: keyof typeof editableFields,
+  ): JSX.Element => (
     <InputAdornment position="end">
       <IconButton
         size="small"
@@ -165,7 +167,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     </InputAdornment>
   );
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setEditableFields({
       apiHost: true,
       renderingHost: true,

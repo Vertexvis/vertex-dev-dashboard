@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import debounce from "lodash.debounce";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { toLocaleString } from "../../lib/dates";
 import {
@@ -58,7 +58,7 @@ function useFileCollections({
   pageSize,
   sort,
   suppliedId,
-}: UseFileCollectionsProps) {
+}: UseFileCollectionsProps): SWRResponse {
   return useSWR(
     buildQuery("/api/file-collections", {
       createdAtEnd,
@@ -138,12 +138,12 @@ export default function FileCollectionTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleCreatedAtChange(filters: CreatedAtDateRange) {
+  function handleCreatedAtChange(filters: CreatedAtDateRange): void {
     resetPaging();
     setCreatedAtFilters(filters);
   }
 
-  function handleSortChange(field: string) {
+  function handleSortChange(field: string): void {
     if (field !== "created" && field !== "name") return;
 
     setSort((current) =>
@@ -152,7 +152,7 @@ export default function FileCollectionTable({
     resetPaging();
   }
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -160,7 +160,7 @@ export default function FileCollectionTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -171,11 +171,11 @@ export default function FileCollectionTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number,
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     setDeleteError(undefined);
     const ids = [...selected];
     setSelected(new Set());

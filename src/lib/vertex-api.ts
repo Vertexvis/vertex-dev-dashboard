@@ -26,7 +26,7 @@ import {
 
 const TenMinsInMs = 600_000;
 
-const basePath = (env: string, networkConfig?: NetworkConfig) => {
+const basePath = (env: string, networkConfig?: NetworkConfig): string => {
   if (env === "custom" && networkConfig != null) {
     return networkConfig.apiHost;
   }

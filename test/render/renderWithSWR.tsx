@@ -1,8 +1,13 @@
-import { render } from "@testing-library/react";
+import { render, RenderResult } from "@testing-library/react";
 import React from "react";
 import { SWRConfig } from "swr";
 
-export function renderWithSWR(ui: React.ReactElement) {
+export function renderWithSWR(ui: React.ReactElement): Omit<
+  RenderResult,
+  "rerender"
+> & {
+  rerender: (nextUi: React.ReactElement) => void;
+} {
   function wrap(children: React.ReactElement): React.ReactElement {
     return (
       <SWRConfig

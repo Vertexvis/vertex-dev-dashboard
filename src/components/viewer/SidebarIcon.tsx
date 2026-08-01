@@ -17,7 +17,7 @@ export const SidebarIcon = ({
   children,
   onSelectSidebar,
 }: Props): JSX.Element => {
-  const toggleSidebar = (name: string) => {
+  const toggleSidebar = (name: string): void => {
     if (name !== active) {
       onSelectSidebar(name);
     } else {

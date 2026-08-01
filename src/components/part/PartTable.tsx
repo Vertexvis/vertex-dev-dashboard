@@ -16,7 +16,7 @@ import {
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { PartRevision } from "../../lib/part-revisions";
@@ -39,7 +39,7 @@ const headCells: readonly HeadCell[] = [
   { id: "created", label: "Created" },
 ];
 
-function useParts({ cursor, pageSize, suppliedId }: SwrProps) {
+function useParts({ cursor, pageSize, suppliedId }: SwrProps): SWRResponse {
   return useSWR(
     buildQuery("/api/parts", {
       cursor,
@@ -107,7 +107,7 @@ export default function PartTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -115,7 +115,7 @@ export default function PartTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -126,11 +126,11 @@ export default function PartTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number,
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     setSelected(new Set());
     await fetch("/api/parts", {
       body: JSON.stringify({ ids: [...selected] }),

@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { toLocaleString } from "../../lib/dates";
 import { QueuedJob, toQueuedJobPage } from "../../lib/queued-jobs";
@@ -29,7 +29,7 @@ function useRunningTranslations(
   status: string,
   refreshInterval: number,
   fetchAll: boolean,
-) {
+): SWRResponse {
   return useSWR(
     `/api/queued-translations?status=${status}&fetchAll=${fetchAll}`,
     {

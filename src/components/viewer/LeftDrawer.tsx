@@ -28,7 +28,7 @@ export function LeftDrawer({
   viewerState,
   onItemSelected,
 }: Props): JSX.Element {
-  const getDisplayedHeader = () => {
+  const getDisplayedHeader = (): string => {
     switch (active) {
       case "scene-tree":
         return "Assembly";
@@ -37,7 +37,7 @@ export function LeftDrawer({
     }
   };
 
-  const getActiveContent = () => {
+  const getActiveContent = (): JSX.Element => {
     switch (active) {
       case "scene-tree":
         return (

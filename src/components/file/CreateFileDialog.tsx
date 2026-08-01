@@ -38,7 +38,7 @@ export default function CreateFileDialog({
   const [progress, setProgress] = React.useState<boolean>(false);
   const router = useRouter();
 
-  async function handleUpload() {
+  async function handleUpload(): Promise<void> {
     if (file == null) return;
 
     setSubmitDisabled(true);

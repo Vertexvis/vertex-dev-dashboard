@@ -16,12 +16,12 @@ export default function Home(): JSX.Element {
   const drawerOpen = Boolean(scene);
   const [invalidationCount, setInvalidationCount] = React.useState(0);
 
-  function handleClick(s: Scene) {
+  function handleClick(s: Scene): void {
     setScene(s);
     setEditing(false);
   }
 
-  function handleEditClick(s: Scene) {
+  function handleEditClick(s: Scene): void {
     setScene(s);
     setEditing(true);
   }

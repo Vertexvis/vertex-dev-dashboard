@@ -179,7 +179,7 @@ function callApi(
 function stubListFileCollectionFiles(
   id: string,
   pages: Record<string, ReturnType<typeof fileData>[]>,
-) {
+): ReturnType<typeof http.get> {
   return http.get(
     `${vertexApiOrigin}/file-collections/${id}/files`,
     ({ request }) => {
@@ -210,7 +210,10 @@ function stubListFileCollectionFiles(
   );
 }
 
-function stubCreateFile(fileCollectionId: string, name: string) {
+function stubCreateFile(
+  fileCollectionId: string,
+  name: string,
+): ReturnType<typeof http.post> {
   return http.post(`${vertexApiOrigin}/files`, async ({ request }) => {
     expect(await request.json()).toEqual({
       data: {
@@ -227,7 +230,7 @@ function stubCreateFile(fileCollectionId: string, name: string) {
   });
 }
 
-function stubCreateFileJob(fileIds: string[]) {
+function stubCreateFileJob(fileIds: string[]): ReturnType<typeof http.post> {
   return http.post(`${vertexApiOrigin}/file-jobs`, async ({ request }) => {
     expect(await request.json()).toEqual({
       data: {
@@ -255,7 +258,7 @@ function stubCreateFileJob(fileIds: string[]) {
 function stubGetFileJob(
   id: string,
   body: { data: ReturnType<typeof queuedJobData> },
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/file-jobs/${id}`, () => {
     return HttpResponse.json(body);
   });
@@ -264,7 +267,11 @@ function stubGetFileJob(
 function queuedJobData(
   id: string,
   dataOverrides: Record<string, unknown> = {},
-) {
+): {
+  attributes: { created: string; status: string };
+  id: string;
+  type: string;
+} & Record<string, unknown> {
   return {
     attributes: {
       created: "2026-06-29T15:30:00Z",
@@ -276,7 +283,20 @@ function queuedJobData(
   };
 }
 
-function fileData(id: string, status: string) {
+function fileData(
+  id: string,
+  status: string,
+): {
+  attributes: {
+    created: string;
+    name: string;
+    status: string;
+    suppliedId: string;
+    uploaded: string;
+  };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
       created: "2026-06-12T15:30:00Z",

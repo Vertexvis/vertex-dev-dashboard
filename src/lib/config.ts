@@ -32,7 +32,7 @@ export function isValidHttpUrl(givenUrl?: string): boolean {
       url.protocol === "ws:" ||
       url.protocol === "wss:"
     );
-  } catch (_) {
+  } catch {
     return false;
   }
 }

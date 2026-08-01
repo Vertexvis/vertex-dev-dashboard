@@ -479,7 +479,16 @@ function policyData(
   id: string,
   createdAt = "2026-06-10T15:30:00Z",
   name = "Policy One",
-) {
+): {
+  attributes: {
+    createdAt: string;
+    mode: string;
+    name: string;
+    suppliedId: string;
+  };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
       createdAt,
@@ -492,7 +501,10 @@ function policyData(
   };
 }
 
-function policyList(data: ReturnType<typeof policyData>[]) {
+function policyList(data: ReturnType<typeof policyData>[]): {
+  data: ReturnType<typeof policyData>[];
+  links: { next: { href: string }; self: { href: string } };
+} {
   return {
     data,
     links: {
@@ -506,7 +518,10 @@ function policyList(data: ReturnType<typeof policyData>[]) {
   };
 }
 
-function failureBody(status: string, title: string) {
+function failureBody(
+  status: string,
+  title: string,
+): { errors: Array<{ status: string; title: string }> } {
   return { errors: [{ status, title }] };
 }
 
@@ -516,7 +531,7 @@ function stubListPolicies(
     links: { next?: { href: string }; self?: { href: string } };
   },
   assertRequest?: (request: URL) => void,
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/property-key-policies`, ({ request }) => {
     assertRequest?.(new URL(request.url));
 
@@ -535,7 +550,7 @@ function stubGetPolicy(
         links: Record<string, never>;
       },
   status = 200,
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/property-key-policies/${id}`, () => {
     return HttpResponse.json(body, {
       status,
@@ -550,7 +565,7 @@ function stubCreatePolicy(
   failure:
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
-) {
+): ReturnType<typeof http.post> {
   return http.post(
     `${vertexApiOrigin}/property-key-policies`,
     async ({ request }) => {
@@ -577,7 +592,7 @@ function stubUpsertKeys(
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
   assertRequest?: (request: Request) => Promise<void> | void,
-) {
+): ReturnType<typeof http.post> {
   return http.post(
     `${vertexApiOrigin}/property-key-policies/${id}/keys`,
     async ({ request }) => {
@@ -601,7 +616,7 @@ function stubDeletePolicy(
     | { errors: Array<{ status: string; title: string }> }
     | undefined = undefined,
   deletedIds?: string[],
-) {
+): ReturnType<typeof http.delete> {
   return http.delete(`${vertexApiOrigin}/property-key-policies/${id}`, () => {
     deletedIds?.push(id);
 

@@ -5,7 +5,7 @@ import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import { useRouter } from "next/router";
 import { withIronSession } from "next-iron-session";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { Header } from "../../components/shared/Header";
 import { Layout } from "../../components/viewer/Layout";
@@ -29,13 +29,21 @@ import {
 
 const ViewerId = "vertex-viewer-id";
 
-function useSceneViewStates({ viewId }: { viewId?: string }) {
+function useSceneViewStates({
+  viewId,
+}: {
+  viewId?: string;
+}): SWRResponse<GetRes<SceneViewStateData>, ErrorRes> {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
     viewId ? `/api/scene-view-states?view=${viewId}` : null,
   );
 }
 
-function useSceneItem({ itemId }: { itemId?: string }) {
+function useSceneItem({
+  itemId,
+}: {
+  itemId?: string;
+}): SWRResponse<SceneItemData, ErrorRes> {
   return useSWR<SceneItemData, ErrorRes>(
     itemId ? `/api/scene-items/${itemId}` : null,
   );
@@ -103,7 +111,7 @@ export default function SceneViewer({
   async function handleSelect(
     detail: TapEventDetails,
     hit?: vertexvis.protobuf.stream.IHit,
-  ) {
+  ): Promise<void> {
     console.debug({
       hitNormal: hit?.hitNormal,
       hitPoint: hit?.hitPoint,
@@ -117,11 +125,11 @@ export default function SceneViewer({
     }
   }
 
-  function handleTreeItemSelected(itemId: string) {
+  function handleTreeItemSelected(itemId: string): void {
     setSelectedItemId(itemId);
   }
 
-  function handleViewStateSelected(id: string) {
+  function handleViewStateSelected(id: string): void {
     applySceneViewState({ id, viewer: viewerState.ref.current });
   }
 

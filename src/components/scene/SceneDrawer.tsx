@@ -57,7 +57,7 @@ export function SceneDrawer({
   );
 
   React.useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       const result = await fetch(`/api/scenes/${scene?.id}`);
       setSceneDetails(await result.json());
     };
@@ -75,7 +75,7 @@ export function SceneDrawer({
     }
   }, [scene, sceneDetails]);
 
-  async function onSubmit(data: FormData) {
+  async function onSubmit(data: FormData): Promise<void> {
     const metadata = typeSafeMetadata(editableMetadata);
 
     // Omit camera data when saving this form, since it's not
@@ -109,7 +109,7 @@ export function SceneDrawer({
     return metadata;
   }
 
-  function copyCamera() {
+  function copyCamera(): void {
     navigator.clipboard.writeText(JSON.stringify(scene?.camera));
   }
 
@@ -458,7 +458,7 @@ export function SceneDrawer({
   );
 }
 
-const getMetadataTable = (metadata: Record<string, string>) => {
+const getMetadataTable = (metadata: Record<string, string>): JSX.Element => {
   return (
     <Table size="small">
       <TableBody>

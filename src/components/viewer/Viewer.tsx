@@ -90,17 +90,17 @@ function UnwrappedViewer({
 
   useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
-  function handleShortcutS() {
+  function handleShortcutS(): void {
     if (ref?.current == null) return;
 
     ref.current.focus();
   }
 
-  function handleClose() {
+  function handleClose(): void {
     setKey(Date.now());
   }
 
-  async function handleUpdateBaseCamera() {
+  async function handleUpdateBaseCamera(): Promise<void> {
     const { sceneId } = router.query;
     const parsedSceneId = Array.isArray(sceneId) ? sceneId[0] : sceneId || "";
     const camera = await getCamera({ viewer: viewer.current });
@@ -267,7 +267,9 @@ function onTap<P extends ViewerProps>(
   }: P & OnSelectProps) {
     const [hit, setHit] = React.useState<vertexvis.protobuf.stream.IHit>();
 
-    async function handleTap(e: VertexViewerCustomEvent<TapEventDetails>) {
+    async function handleTap(
+      e: VertexViewerCustomEvent<TapEventDetails>,
+    ): Promise<void> {
       if (props.onTap) props.onTap(e);
 
       if (!e.defaultPrevented) {

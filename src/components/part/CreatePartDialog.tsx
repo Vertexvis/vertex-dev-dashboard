@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { SWRResponse } from "swr";
 
 import { toFilePage } from "../../lib/files";
 import { CreatePartReq, CreatePartRes } from "../../pages/api/parts";
@@ -27,7 +27,7 @@ interface CreatePartDialogProps {
   readonly targetFileName?: string;
 }
 
-function useFiles() {
+function useFiles(): SWRResponse {
   return useSWR(`/api/files?pageSize=25`);
 }
 
@@ -55,7 +55,7 @@ export default function CreatePartDialog({
     setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
   }, [file, suppliedId, suppliedRevisionId]);
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (!file || !suppliedId || !suppliedRevisionId) {
       return;
     }

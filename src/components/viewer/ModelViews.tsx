@@ -104,7 +104,7 @@ function NoData(): JSX.Element {
   );
 }
 
-function DrawerTitle({ onClear }: { onClear?: VoidFunction }) {
+function DrawerTitle({ onClear }: { onClear?: VoidFunction }): JSX.Element {
   return (
     <Title
       sx={{
