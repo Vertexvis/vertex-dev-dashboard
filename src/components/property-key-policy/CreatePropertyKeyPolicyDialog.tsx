@@ -32,6 +32,11 @@ interface Props {
   readonly open: boolean;
 }
 
+interface KeyField {
+  readonly id: number;
+  readonly value: string;
+}
+
 export default function CreatePropertyKeyPolicyDialog({
   onClose,
   onCreated,
@@ -42,7 +47,7 @@ export default function CreatePropertyKeyPolicyDialog({
   const [mode, setMode] = React.useState<PropertyKeyPolicyMode>(
     PropertyKeyPolicyMode.Allowlist
   );
-  const [keys, setKeys] = React.useState<string[]>([""]);
+  const [keys, setKeys] = React.useState<KeyField[]>([{ id: 0, value: "" }]);
   const [submitting, setSubmitting] = React.useState(false);
   const [apiError, setApiError] = React.useState<string>();
   const [entriesWarning, setEntriesWarning] = React.useState<string>();
@@ -51,7 +56,14 @@ export default function CreatePropertyKeyPolicyDialog({
   // Refs to the underlying key inputs so we can move keyboard focus to a
   // newly added field. MUI forwards `inputRef` to the underlying <input>.
   const keyInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const nextKeyId = React.useRef(1);
   const [focusIndex, setFocusIndex] = React.useState<number | null>(null);
+
+  function newKeyField(): KeyField {
+    const id = nextKeyId.current;
+    nextKeyId.current += 1;
+    return { id, value: "" };
+  }
 
   React.useEffect(() => {
     if (focusIndex == null) return;
@@ -66,7 +78,7 @@ export default function CreatePropertyKeyPolicyDialog({
     setName("");
     setSuppliedId("");
     setMode(PropertyKeyPolicyMode.Allowlist);
-    setKeys([""]);
+    setKeys([newKeyField()]);
     setSubmitting(false);
     setApiError(undefined);
     setEntriesWarning(undefined);
@@ -86,14 +98,16 @@ export default function CreatePropertyKeyPolicyDialog({
   }
 
   function handleKeyChange(index: number, value: string) {
-    setKeys((current) => current.map((k, i) => (i === index ? value : k)));
+    setKeys((current) =>
+      current.map((key, i) => (i === index ? { ...key, value } : key))
+    );
   }
 
   // Append a new empty key field and move keyboard focus to it. The new index
   // is the current length, since we append to the end.
   function addKeyAndFocus() {
     setFocusIndex(keys.length);
-    setKeys((current) => [...current, ""]);
+    setKeys((current) => [...current, newKeyField()]);
   }
 
   function handleAddKey() {
@@ -113,14 +127,16 @@ export default function CreatePropertyKeyPolicyDialog({
 
     // Case-sensitive exact match against the other key values. The field already
     // surfaces the per-field "Duplicate property key." error, so just bail.
-    if (keys.some((k, i) => i !== index && k === value)) return;
+    if (keys.some((key, i) => i !== index && key.value === value)) return;
 
     addKeyAndFocus();
   }
 
   function handleRemoveKey(index: number) {
     setKeys((current) =>
-      current.length === 1 ? [""] : current.filter((_, i) => i !== index)
+      current.length === 1
+        ? [newKeyField()]
+        : current.filter((_, i) => i !== index)
     );
   }
 
@@ -128,12 +144,12 @@ export default function CreatePropertyKeyPolicyDialog({
   // A completely empty row is neutral (ignored on submit); only whitespace-only
   // or verbatim (case-sensitive) duplicate values are invalid.
   function keyFieldError(index: number): string | undefined {
-    const value = keys[index];
+    const value = keys[index].value;
     if (value === "") return undefined; // empty rows are neutral/ignored
     if (value.trim() === "") return "Property key cannot be blank."; // whitespace-only = invalid
     // Case-sensitive exact duplicate of another field (verbatim, matching how
     // keys are saved).
-    if (keys.some((k, i) => i !== index && k === value)) {
+    if (keys.some((key, i) => i !== index && key.value === value)) {
       return "Duplicate property key.";
     }
     return undefined;
@@ -144,7 +160,9 @@ export default function CreatePropertyKeyPolicyDialog({
 
   // Keys are NOT trimmed here to preserve case exactly. We only skip entries
   // that are empty or whitespace-only when deciding what to submit.
-  const nonEmptyKeys = keys.filter((k) => k.trim() !== "");
+  const nonEmptyKeys = keys
+    .map((key) => key.value)
+    .filter((key) => key.trim() !== "");
   const submitDisabled =
     submitting ||
     name.trim() === "" ||
@@ -166,14 +184,12 @@ export default function CreatePropertyKeyPolicyDialog({
 
     setSubmitting(true);
 
-    let res: Response;
-    try {
-      res = await fetch("/api/property-key-policies", {
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-    } catch {
+    const res = await fetch("/api/property-key-policies", {
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }).catch(() => undefined);
+    if (res == null) {
       // True network error — no response was received, so nothing was processed
       // server-side. Safe to retry.
       setSubmitting(false);
@@ -181,10 +197,11 @@ export default function CreatePropertyKeyPolicyDialog({
       return;
     }
 
-    let resBody: CreatePropertyKeyPolicyRes | { message?: string };
-    try {
-      resBody = await res.json();
-    } catch {
+    const resBody:
+      | CreatePropertyKeyPolicyRes
+      | { message?: string }
+      | undefined = await res.json().catch(() => undefined);
+    if (resBody == null) {
       // Response received but body could not be parsed. The server may have
       // already created the policy, so we must not let the user resubmit (duplicate
       // risk). Refresh the list in case the policy was created, and switch to the
@@ -295,7 +312,7 @@ export default function CreatePropertyKeyPolicyDialog({
           <Stack spacing={1} sx={{ mt: 1 }}>
             {keys.map((key, index) => (
               <Box
-                key={index}
+                key={key.id}
                 sx={{ alignItems: "center", display: "flex", gap: 1 }}
               >
                 <TextField
@@ -308,10 +325,10 @@ export default function CreatePropertyKeyPolicyDialog({
                   }}
                   label={`Property key ${index + 1}`}
                   onChange={(e) => handleKeyChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, index, key)}
+                  onKeyDown={(e) => handleKeyDown(e, index, key.value)}
                   size="small"
                   type="text"
-                  value={key}
+                  value={key.value}
                 />
                 <IconButton
                   aria-label={`Remove property key ${index + 1}`}

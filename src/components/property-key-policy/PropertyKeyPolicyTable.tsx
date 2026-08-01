@@ -150,24 +150,20 @@ export default function PropertyKeyPolicyTable({
     setDeleting(true);
     const ids = [...selected];
 
-    let res: Response;
-    try {
-      res = await fetch("/api/property-key-policies", {
-        body: JSON.stringify({ ids }),
-        method: "DELETE",
-      });
-    } catch {
+    const res = await fetch("/api/property-key-policies", {
+      body: JSON.stringify({ ids }),
+      method: "DELETE",
+    }).catch(() => undefined);
+    if (res == null) {
       setDeleting(false);
       setDeleteError("Could not delete the selected property key policies.");
       return;
     }
 
-    let body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined;
-    try {
-      body = await res.json();
-    } catch {
-      body = undefined;
-    }
+    const body:
+      | DeletePropertyKeyPoliciesRes
+      | { message?: string }
+      | undefined = await res.json().catch(() => undefined);
 
     if (!res.ok || isPartialDelete(body)) {
       const deletedIds = isPartialDelete(body) ? body.deletedIds : [];
@@ -197,20 +193,17 @@ export default function PropertyKeyPolicyTable({
     mutate();
   }
 
-  let tableRows: React.ReactNode;
-  if (loadFailed) {
-    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
-  } else if (!page) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={true}
-        numCellsPerRow={headCells.length}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = page.items.map((row) => {
+  const tableRows = loadFailed ? (
+    <DataLoadError colSpan={headCells.length + 1} />
+  ) : !page ? (
+    <SkeletonBody
+      includeCheckbox={true}
+      numCellsPerRow={headCells.length}
+      numRows={pageSize - pageLength}
+      rowHeight={DefaultRowHeight}
+    />
+  ) : (
+    page.items.map((row) => {
       const isSel = selected.has(row.id);
       const isActive = activePropertyKeyPolicyId === row.id;
 
@@ -255,8 +248,8 @@ export default function PropertyKeyPolicyTable({
           <TableCell>{toLocaleString(row.createdAt)}</TableCell>
         </TableRow>
       );
-    });
-  }
+    })
+  );
 
   return (
     <>
