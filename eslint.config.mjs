@@ -1,37 +1,69 @@
-import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
+import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
+import nextPlugin from '@next/eslint-plugin-next';
 import vertexvisTypescript from '@vertexvis/eslint-config-vertexvis-typescript';
+import prettier from 'eslint-config-prettier/flat';
+import importPlugin from 'eslint-plugin-import';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import testingLibrary from 'eslint-plugin-testing-library';
 
-const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
-// eslint-config-next is legacy-format-only and extends
-// 'plugin:react-hooks/recommended'. With eslint-plugin-react-hooks forced to
-// v6 (whose `recommended` is a flat-format config), FlatCompat cannot
-// translate that entry. Strip it and register react-hooks v6 natively below.
-const nextConfig = require('eslint-config-next');
-// Maintenance hazard: on future eslint-config-next bumps, react-hooks rules
-// added directly under its `rules` key (rather than via extends) would bypass
-// this filter and resolve against the pinned v6 plugin — re-verify the shape.
-const nextWithoutReactHooks = {
-  ...nextConfig,
-  parser: require.resolve('eslint-config-next/parser'),
-  extends: [
-    ...nextConfig.extends.filter((name) => !name.includes('react-hooks')),
-    'plugin:@next/next/core-web-vitals',
-  ],
+// eslint-config-next 15.5.22 ships legacy (eslintrc) format only and its
+// loader requires @rushstack/eslint-patch, which hard-fails on ESLint 10.
+// We therefore no longer load it (directly or via FlatCompat). Instead we
+// recompose its exact contribution natively below:
+//   - plugin:@next/next/core-web-vitals  -> nextPlugin.flatConfig.coreWebVitals
+//   - plugin:react/recommended           -> react.configs.flat.recommended
+//   - its explicit rules overrides       -> the nextCompatRules entry below
+//   - plugin:react-hooks/recommended     -> registered separately (see below)
+// Dropped relative to eslint-config-next (documented deltas):
+//   - the Babel parser for plain JS files (only 4 root config .js files are
+//     linted; espree handles them),
+//   - eslint-plugin-import resolver settings (no enabled rule needs module
+//     resolution; only import/no-anonymous-default-export is on),
+//   - env browser/node globals (no enabled rule consults globals; no-undef is
+//     not enabled by our config surface).
+// Maintenance hazard: when next/eslint-config-next is upgraded, re-verify
+// eslint-config-next's composition and mirror any changes here.
+//
+// eslint-plugin-react 7.37.5, eslint-plugin-jsx-a11y 6.10.2 and
+// eslint-plugin-import 2.32.0 all cap their eslint peer range at ^9 and call
+// context APIs removed in ESLint 10 (e.g. context.getFilename). Wrap them with
+// @eslint/compat's fixup helpers, the documented bridge for pre-v10 plugins.
+const nextCompatRules = {
+  plugins: {
+    'jsx-a11y': fixupPluginRules(jsxA11y),
+    import: fixupPluginRules(importPlugin),
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
+  rules: {
+    'import/no-anonymous-default-export': 'warn',
+    'react/no-unknown-property': 'off',
+    'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 'off',
+    'react/jsx-no-target-blank': 'off',
+    'jsx-a11y/alt-text': [
+      'warn',
+      {
+        elements: ['img'],
+        img: ['Image'],
+      },
+    ],
+    'jsx-a11y/aria-props': 'warn',
+    'jsx-a11y/aria-proptypes': 'warn',
+    'jsx-a11y/aria-unsupported-elements': 'warn',
+    'jsx-a11y/role-has-required-aria-props': 'warn',
+    'jsx-a11y/role-supports-aria-props': 'warn',
+  },
 };
 
 const TEST_FILES = [
@@ -58,10 +90,21 @@ const config = [
     ],
   },
   ...vertexvisTypescript,
-  ...compat.config(nextWithoutReactHooks),
-  ...compat.extends('prettier'),
-  // react-hooks v6 (flat) — sole registration of the 'react-hooks' namespace.
-  ...reactHooks.configs.recommended,
+  ...fixupConfigRules(react.configs.flat.recommended),
+  nextPlugin.flatConfig.coreWebVitals,
+  nextCompatRules,
+  prettier,
+  // react-hooks v7 — sole registration of the 'react-hooks' namespace.
+  // v7 moved the flat preset to configs.flat.recommended (configs.recommended
+  // reverted to legacy format) and its recommended set now enables the full
+  // compiler rule suite. We register the plugin and enable only the rules we
+  // had under v6 recommended plus our explicit additions, to keep the enforced
+  // surface identical (v6 recommended = rules-of-hooks, exhaustive-deps).
+  {
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+  },
   {
     files: ['**/*.{js,jsx,mjs,cjs}'],
     rules: {
@@ -78,7 +121,7 @@ const config = [
       'simple-import-sort/exports': 'error',
     },
   },
-  // React source files: react-hooks/immutability (v6 compiler-backed rule).
+  // React source files: react-hooks/immutability (compiler-backed rule).
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
