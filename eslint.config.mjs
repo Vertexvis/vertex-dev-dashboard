@@ -22,6 +22,9 @@ const compat = new FlatCompat({
 // v6 (whose `recommended` is a flat-format config), FlatCompat cannot
 // translate that entry. Strip it and register react-hooks v6 natively below.
 const nextConfig = require('eslint-config-next');
+// Maintenance hazard: on future eslint-config-next bumps, react-hooks rules
+// added directly under its `rules` key (rather than via extends) would bypass
+// this filter and resolve against the pinned v6 plugin — re-verify the shape.
 const nextWithoutReactHooks = {
   ...nextConfig,
   parser: require.resolve('eslint-config-next/parser'),

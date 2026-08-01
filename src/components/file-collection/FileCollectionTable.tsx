@@ -22,6 +22,7 @@ import {
   toFileCollectionPage,
 } from "../../lib/file-collections";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { reportError } from "../../lib/report-error";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
 import {
   CreatedAtDateRange,
@@ -194,7 +195,7 @@ export default function FileCollectionTable({
       return;
     }
 
-    await mutate();
+    mutate().catch(reportError("Failed to refresh file collections"));
   }
 
   function renderTableRows(): React.ReactNode {
