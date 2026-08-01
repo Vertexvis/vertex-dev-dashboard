@@ -89,13 +89,13 @@ function UnwrappedViewer({
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const router = useRouter();
 
-  useHotkeys("s", () => handleShortcutS(), { keyup: true });
-
   function handleShortcutS(): void {
     if (ref?.current == null) return;
 
     ref.current.focus();
   }
+
+  useHotkeys("s", () => handleShortcutS(), { keyup: true });
 
   function handleClose(): void {
     setKey(Date.now());

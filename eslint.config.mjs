@@ -78,6 +78,13 @@ const config = [
       'simple-import-sort/exports': 'error',
     },
   },
+  // React source files: react-hooks/immutability (v6 compiler-backed rule).
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/immutability': 'error',
+    },
+  },
   // Production .tsx: prohibit `let`. Tests and all .ts files are exempt.
   {
     files: ['src/**/*.tsx'],
@@ -106,6 +113,7 @@ const config = [
     rules: {
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
     },
   },
   // Testing Library rules for test files.
