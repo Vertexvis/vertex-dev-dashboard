@@ -70,6 +70,40 @@ interface ServerSideContext {
   readonly req: NextIronRequest;
 }
 
+function delay(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+
+    const onAbort = (): void => {
+      window.clearTimeout(timeout);
+      resolve();
+    };
+    const timeout = window.setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+async function createFileJob(fileCollectionId: string): Promise<{
+  readonly body: FileJobRes | ErrorRes;
+  readonly res: Response;
+}> {
+  const res = await fetch("/api/file-jobs", {
+    body: JSON.stringify({ fileCollectionId }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  const body = (await res.json()) as FileJobRes | ErrorRes;
+
+  return { body, res };
+}
+
 interface ExportControlsProps {
   readonly archiveFileId?: string;
   readonly disabledReason?: string;
@@ -449,17 +483,20 @@ export default function FileCollectionDetails({
       return;
 
     const currentJobId = jobId;
-    let active = true;
-    let timeout: number | undefined;
+    const controller = new AbortController();
+    const { signal } = controller;
 
     async function pollJob(): Promise<void> {
-      try {
+      while (!signal.aborted) {
+        await delay(1000, signal);
+        if (signal.aborted) return;
+
         const res = await fetch(
           `/api/file-jobs/${encodeURIComponent(currentJobId)}`
         );
         const body = (await res.json()) as FileJobRes | ErrorRes;
 
-        if (!active) return;
+        if (signal.aborted) return;
 
         if (!res.ok || "message" in body) {
           setJobStatus("error");
@@ -474,26 +511,25 @@ export default function FileCollectionDetails({
         if (status === "complete") {
           setJobStatus("complete");
           setArchiveReadyMessageVisible(true);
-        } else if (status === "error") {
-          setJobStatus("error");
-          setExportError("Archive job failed.");
-        } else {
-          timeout = window.setTimeout(pollJob, 1000);
+          return;
         }
-      } catch {
-        if (active) {
+
+        if (status === "error") {
           setJobStatus("error");
           setExportError("Archive job failed.");
+          return;
         }
       }
     }
 
-    timeout = window.setTimeout(pollJob, 1000);
+    pollJob().catch(() => {
+      if (!signal.aborted) {
+        setJobStatus("error");
+        setExportError("Archive job failed.");
+      }
+    });
 
-    return () => {
-      active = false;
-      if (timeout != null) window.clearTimeout(timeout);
-    };
+    return () => controller.abort();
   }, [exportStateIsCurrent, jobId, jobStatus]);
 
   async function handleExport(): Promise<void> {
@@ -508,22 +544,20 @@ export default function FileCollectionDetails({
     setJobId(undefined);
     setJobStatus("creating");
 
-    let res: Response;
-    let body: FileJobRes | ErrorRes;
-    try {
-      res = await fetch("/api/file-jobs", {
-        body: JSON.stringify({ fileCollectionId: fileCollection.id }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-      body = (await res.json()) as FileJobRes | ErrorRes;
-    } catch {
+    const created = await createFileJob(currentFileCollectionId).catch(
+      () => undefined
+    );
+
+    if (created == null) {
       if (fileCollectionIdRef.current === currentFileCollectionId) {
         setJobStatus("error");
         setExportError("Could not start archive export.");
       }
+
       return;
     }
+
+    const { body, res } = created;
 
     if (fileCollectionIdRef.current !== currentFileCollectionId) return;
 

@@ -78,6 +78,21 @@ const config = [
       'simple-import-sort/exports': 'error',
     },
   },
+  // Production .tsx: prohibit `let`. Tests and all .ts files are exempt.
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/__tests__/**', '**/*.test.tsx', '**/*.spec.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "VariableDeclaration[kind='let']",
+          message:
+            'Use const with immutable bindings in production .tsx files; refactor control flow instead of let.',
+        },
+      ],
+    },
+  },
   // Testing Library rules for test files.
   {
     files: TEST_FILES,

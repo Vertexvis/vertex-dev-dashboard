@@ -264,20 +264,23 @@ export default function FileTable({
     }
   }
 
-  let tableRows: React.ReactNode;
-  if (loadError) {
-    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
-  } else if (!visiblePage) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={true}
-        numCellsPerRow={8}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = visiblePage.items.map((row) => {
+  function renderTableRows(): React.ReactNode {
+    if (loadError) {
+      return <DataLoadError colSpan={headCells.length + 1} />;
+    }
+
+    if (!visiblePage) {
+      return (
+        <SkeletonBody
+          includeCheckbox={true}
+          numCellsPerRow={8}
+          numRows={pageSize - pageLength}
+          rowHeight={DefaultRowHeight}
+        />
+      );
+    }
+
+    return visiblePage.items.map((row) => {
       const isSel = selected.has(row.id);
       const isActive = activeFileId === row.id;
       const isAvailable = isFileAvailable(row);
@@ -353,6 +356,8 @@ export default function FileTable({
       );
     });
   }
+
+  const tableRows = renderTableRows();
 
   return (
     <>
