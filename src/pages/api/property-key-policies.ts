@@ -73,7 +73,7 @@ async function get(
 
     const query = new URLSearchParams();
     if (pc != null) query.set("page[cursor]", pc);
-    query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
+    query.set("page[size]", parsePositiveQueryInt(ps, 25).toString());
     setFilterExpression(
       query,
       "suppliedId",

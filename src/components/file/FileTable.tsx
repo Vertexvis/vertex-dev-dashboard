@@ -30,6 +30,7 @@ import {
 } from "../../lib/files";
 import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
 import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { confirmResourceDeletion } from "../shared/confirm-delete";
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
@@ -232,6 +233,9 @@ export default function FileTable({
   }
 
   async function handleDelete() {
+    if (selected.size === 0 || !confirmResourceDeletion(selected.size, "file"))
+      return;
+
     setSelected(new Set());
     await fetch("/api/files", {
       body: JSON.stringify({ ids: [...selected] }),

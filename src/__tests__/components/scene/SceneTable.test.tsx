@@ -140,6 +140,22 @@ describe("SceneTable", () => {
       "/scene-viewer/scene-1"
     );
   });
+
+  it("offers the additive workspace without changing the existing viewer action", async () => {
+    server.use(
+      http.get("*/api/scenes", () => {
+        return HttpResponse.json(page);
+      })
+    );
+    renderTable(scene);
+
+    await userEvent.click(
+      await screen.findByLabelText("Actions for Scene One")
+    );
+    await userEvent.click(screen.getByText("Open workspace"));
+
+    expect(mockPush).toHaveBeenCalledWith("/scene-workspace/scene-1");
+  });
 });
 
 function getSceneRow(name = "Scene One"): HTMLTableRowElement {

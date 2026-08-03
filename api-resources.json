@@ -1,0 +1,90 @@
+{
+  "resources": [
+    {
+      "name": "files",
+      "group": "core-import-library",
+      "displayName": "Files",
+      "route": "files",
+      "resourceType": "file",
+      "operations": ["list", "create"],
+      "list": {
+        "defaultPageSize": 10,
+        "filters": [
+          "name",
+          "fileId",
+          "suppliedId",
+          "createdAtStart",
+          "createdAtEnd"
+        ]
+      }
+    },
+    {
+      "name": "scene-workspace-items",
+      "group": "scene-workspace",
+      "displayName": "Scene Workspace Items",
+      "route": "scene-workspace-items",
+      "resourceType": "scene-item",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["sceneId", "suppliedId"]
+      }
+    },
+    {
+      "name": "scene-workspace-views",
+      "group": "scene-workspace",
+      "displayName": "Scene Workspace Views",
+      "route": "scene-workspace-views",
+      "resourceType": "scene-view",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["sceneId"]
+      }
+    },
+    {
+      "name": "documents",
+      "group": "exports-documents",
+      "displayName": "Documents Preview",
+      "route": "documents",
+      "resourceType": "document",
+      "operations": ["list", "create", "get"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["suppliedId"]
+      }
+    },
+    {
+      "name": "property-entries",
+      "group": "properties-search",
+      "displayName": "Property Entries",
+      "route": "property-entries",
+      "resourceType": "property-entry",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["resourceId", "resourceType"]
+      }
+    },
+    {
+      "name": "property-key-policies",
+      "group": "properties-search",
+      "displayName": "Property Key Policies",
+      "route": "property-key-policies",
+      "resourceType": "property-key-policy",
+      "operations": ["list"],
+      "list": {
+        "defaultPageSize": 25,
+        "filters": ["suppliedId"]
+      }
+    },
+    {
+      "name": "search-sessions",
+      "group": "properties-search",
+      "displayName": "Search Sessions",
+      "route": "search-sessions",
+      "resourceType": "search-session",
+      "operations": ["get"]
+    }
+  ]
+}

@@ -1,10 +1,12 @@
 import {
+  AdminPanelSettingsOutlined,
   CollectionsBookmarkOutlined,
   DatasetOutlined,
   DescriptionOutlined,
   LocalLibraryOutlined,
   PendingOutlined,
   VpnKeyOutlined,
+  SearchOutlined,
 } from "@mui/icons-material";
 import {
   Drawer,
@@ -19,6 +21,7 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { LeftDrawerWidth } from "../shared/Layout";
+import { AppLink } from "./AppLink";
 
 export type Content = "settings" | "instructions" | "parts";
 
@@ -57,6 +60,17 @@ export function LeftDrawer(): JSX.Element {
           <ListItemText primary="Scenes" />
         </ListItemButton>
         <ListItemButton
+          component={AppLink}
+          href="/scenes-preview"
+          selected={router.route === "/scenes-preview"}
+          underline="none"
+        >
+          <ListItemIcon>
+            <LocalLibraryOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Scenes (Preview)" />
+        </ListItemButton>
+        <ListItemButton
           onClick={() => router.push("/files")}
           selected={isSectionActive("/files")}
         >
@@ -64,6 +78,35 @@ export function LeftDrawer(): JSX.Element {
             <DescriptionOutlined />
           </ListItemIcon>
           <ListItemText primary="Files" />
+        </ListItemButton>
+        <ListItemButton
+          onClick={() => router.push("/documents")}
+          selected={router.route === "/documents"}
+        >
+          <ListItemIcon>
+            <DescriptionOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Documents (Preview)" />
+        </ListItemButton>
+        <ListItemButton
+          onClick={() => router.push("/properties-search")}
+          selected={router.route === "/properties-search"}
+        >
+          <ListItemIcon>
+            <SearchOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Properties & Search (Preview)" />
+        </ListItemButton>
+        <ListItemButton
+          component={AppLink}
+          href="/identity-admin"
+          selected={router.route === "/identity-admin"}
+          underline="none"
+        >
+          <ListItemIcon>
+            <AdminPanelSettingsOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Identity & Administration (Preview)" />
         </ListItemButton>
         <ListItemButton
           onClick={() => router.push("/file-collections")}

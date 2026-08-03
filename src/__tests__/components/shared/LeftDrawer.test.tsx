@@ -42,4 +42,15 @@ describe("LeftDrawer", () => {
     expect(selectedButton("Scenes")).toHaveClass("Mui-selected");
     expect(selectedButton("Files")).not.toHaveClass("Mui-selected");
   });
+
+  it("provides an SPA link to the additive Identity & Administration workspace", () => {
+    mockRoute = "/identity-admin";
+    render(<LeftDrawer />);
+
+    expect(
+      screen.getByRole("link", {
+        name: "Identity & Administration (Preview)",
+      })
+    ).toHaveAttribute("href", "/identity-admin");
+  });
 });
