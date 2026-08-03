@@ -12,7 +12,7 @@ import React from "react";
 import useSWR from "swr";
 
 import { GetRes } from "../../lib/api";
-import { toPolicyPage } from "../../lib/property-key-policies";
+import { toPropertyKeyPolicyPage } from "../../lib/property-key-policies";
 
 interface Props {
   readonly policyId?: string;
@@ -33,7 +33,7 @@ export function PolicySelect({
     "/api/property-key-policies"
   );
   const loading = !data && !error;
-  const policies = data ? toPolicyPage(data).items : [];
+  const policies = data ? toPropertyKeyPolicyPage(data).items : [];
   const selectedPolicyId = policies.some((policy) => policy.id === policyId)
     ? policyId
     : "";
