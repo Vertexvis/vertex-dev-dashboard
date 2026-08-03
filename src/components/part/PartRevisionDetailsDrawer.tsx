@@ -1,4 +1,4 @@
-import { Close } from "@mui/icons-material";
+import { Close } from '@mui/icons-material';
 import {
   Box,
   Drawer,
@@ -10,14 +10,14 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@mui/material";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import React from 'react';
+import useSWR from 'swr';
 
-import { isErrorRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
-import { PartRevision, toPartRevision } from "../../lib/part-revisions";
-import { RightDrawerWidth } from "../shared/Layout";
+import { isErrorRes } from '../../lib/api';
+import { toLocaleString } from '../../lib/dates';
+import { PartRevision, toPartRevision } from '../../lib/part-revisions';
+import { RightDrawerWidth } from '../shared/Layout';
 
 interface Props {
   readonly open: boolean;
@@ -25,7 +25,7 @@ interface Props {
   readonly partRevision?: PartRevision;
 }
 
-type MetadataValue = NonNullable<PartRevision["metadata"]>[string];
+type MetadataValue = NonNullable<PartRevision['metadata']>[string];
 
 interface MetadataEntry {
   readonly key: string;
@@ -46,8 +46,8 @@ export function PartRevisionDetailsDrawer({
     partRevision == null
       ? fetchedRevision
       : fetchedRevision == null
-      ? partRevision
-      : { ...partRevision, ...fetchedRevision };
+        ? partRevision
+        : { ...partRevision, ...fetchedRevision };
   const showMetadataLoading =
     partRevision != null && fetchedRevision?.metadata == null && error == null;
 
@@ -58,11 +58,11 @@ export function PartRevisionDetailsDrawer({
       sx={{
         flexShrink: 0,
         width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
+        '& .MuiDrawer-paper': { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
           Part Revision Details
         </Typography>
@@ -72,17 +72,14 @@ export function PartRevisionDetailsDrawer({
       </Box>
       {revisionDetails ? (
         <TableContainer>
-          <Table size="small" sx={{ whiteSpace: "nowrap" }}>
+          <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
             <TableBody>
               <DetailsRow label="Name" value={revisionDetails.name} />
               <DetailsRow
                 label="Created"
                 value={toLocaleString(revisionDetails.created)}
               />
-              <DetailsRow
-                label="Supplied ID"
-                value={revisionDetails.suppliedId}
-              />
+              <DetailsRow label="Supplied ID" value={revisionDetails.suppliedId} />
               <DetailsRow
                 label="Supplied Iteration ID"
                 value={revisionDetails.suppliedIterationId}
@@ -90,11 +87,7 @@ export function PartRevisionDetailsDrawer({
               <MetadataRow
                 metadata={revisionDetails.metadata}
                 status={
-                  error != null
-                    ? "error"
-                    : showMetadataLoading
-                    ? "loading"
-                    : "ready"
+                  error != null ? 'error' : showMetadataLoading ? 'loading' : 'ready'
                 }
               />
             </TableBody>
@@ -119,10 +112,10 @@ function DetailsRow({
       <TableCell>
         <Typography variant="subtitle2">{label}</Typography>
         <Typography
-          sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+          sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
           variant="body2"
         >
-          {value ?? "N/A"}
+          {value ?? 'N/A'}
         </Typography>
       </TableCell>
     </TableRow>
@@ -133,8 +126,8 @@ function MetadataRow({
   metadata,
   status,
 }: {
-  readonly metadata?: PartRevision["metadata"];
-  readonly status: "error" | "loading" | "ready";
+  readonly metadata?: PartRevision['metadata'];
+  readonly status: 'error' | 'loading' | 'ready';
 }): JSX.Element {
   const entries = metadata == null ? [] : normalizeMetadataEntries(metadata);
 
@@ -142,16 +135,16 @@ function MetadataRow({
     <TableRow>
       <TableCell>
         <Typography variant="subtitle2">Metadata</Typography>
-        {status === "loading" ? (
+        {status === 'loading' ? (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             Loading metadata...
           </Typography>
-        ) : status === "error" ? (
+        ) : status === 'error' ? (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             Failed to load metadata
@@ -160,14 +153,14 @@ function MetadataRow({
           <Table
             size="small"
             sx={{
-              tableLayout: "fixed",
-              whiteSpace: "normal",
-              width: "100%",
+              tableLayout: 'fixed',
+              whiteSpace: 'normal',
+              width: '100%',
             }}
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ px: 0, width: "38%" }}>
+                <TableCell sx={{ px: 0, width: '38%' }}>
                   <Typography variant="subtitle2">Key</Typography>
                 </TableCell>
                 <TableCell>
@@ -180,18 +173,18 @@ function MetadataRow({
                 <TableRow key={entry.key}>
                   <TableCell
                     sx={{
-                      overflowWrap: "anywhere",
+                      overflowWrap: 'anywhere',
                       px: 0,
-                      verticalAlign: "top",
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
+                      verticalAlign: 'top',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
                     }}
                   >
                     <Typography
                       sx={{
-                        overflowWrap: "anywhere",
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
+                        overflowWrap: 'anywhere',
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
                       }}
                       variant="body2"
                     >
@@ -200,17 +193,17 @@ function MetadataRow({
                   </TableCell>
                   <TableCell
                     sx={{
-                      overflowWrap: "anywhere",
-                      verticalAlign: "top",
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
+                      overflowWrap: 'anywhere',
+                      verticalAlign: 'top',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
                     }}
                   >
                     <Typography
                       sx={{
-                        overflowWrap: "anywhere",
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
+                        overflowWrap: 'anywhere',
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
                       }}
                       variant="body2"
                     >
@@ -223,7 +216,7 @@ function MetadataRow({
           </Table>
         ) : (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             No metadata
@@ -235,7 +228,7 @@ function MetadataRow({
 }
 
 function normalizeMetadataEntries(
-  metadata: NonNullable<PartRevision["metadata"]>
+  metadata: NonNullable<PartRevision['metadata']>
 ): MetadataEntry[] {
   return Object.entries(metadata).map(([key, value]) => ({
     key,
@@ -244,5 +237,5 @@ function normalizeMetadataEntries(
 }
 
 function toMetadataValue(value: MetadataValue): string {
-  return "value" in value ? String(value.value) : "N/A";
+  return 'value' in value ? String(value.value) : 'N/A';
 }

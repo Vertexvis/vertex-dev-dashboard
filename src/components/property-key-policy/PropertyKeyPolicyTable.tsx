@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -13,36 +13,37 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@mui/material";
-import debounce from "lodash.debounce";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import debounce from 'lodash.debounce';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { isErrorRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
+import { isErrorRes } from '../../lib/api';
+import { toLocaleString } from '../../lib/dates';
+import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
 import {
   DeletePropertyKeyPoliciesRes,
   PartialDeletePropertyKeyPoliciesRes,
   PropertyKeyPolicy,
   toPropertyKeyPolicyPage,
-} from "../../lib/property-key-policies";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { ResourceLink } from "../shared/ResourceLink";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
-import { TableToolbar } from "../shared/TableToolbar";
-import CreatePropertyKeyPolicyDialog from "./CreatePropertyKeyPolicyDialog";
-import { PropertyKeyPolicyModeChip } from "./PropertyKeyPolicyModeChip";
+} from '../../lib/property-key-policies';
+import { reportError } from '../../lib/report-error';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { ResourceLink } from '../shared/ResourceLink';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { HeadCell, TableHead } from '../shared/TableHead';
+import { TableToolbar } from '../shared/TableToolbar';
+import CreatePropertyKeyPolicyDialog from './CreatePropertyKeyPolicyDialog';
+import { PropertyKeyPolicyModeChip } from './PropertyKeyPolicyModeChip';
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name" },
-  { id: "id", label: "ID" },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "mode", label: "Mode" },
-  { id: "created", label: "Created At" },
+  { id: 'name', disablePadding: true, label: 'Name' },
+  { id: 'id', label: 'ID' },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'mode', label: 'Mode' },
+  { id: 'created', label: 'Created At' },
 ];
 
 type UsePropertyKeyPoliciesProps = SwrProps;
@@ -51,9 +52,9 @@ function usePropertyKeyPolicies({
   cursor,
   pageSize,
   suppliedId,
-}: UsePropertyKeyPoliciesProps) {
+}: UsePropertyKeyPoliciesProps): SWRResponse {
   return useSWR(
-    buildQuery("/api/property-key-policies", {
+    buildQuery('/api/property-key-policies', {
       cursor,
       pageSize,
       suppliedId,
@@ -64,9 +65,7 @@ function usePropertyKeyPolicies({
 interface Props {
   readonly activePropertyKeyPolicyId?: string;
   readonly onPoliciesDeleted?: (ids: string[]) => void;
-  readonly onPropertyKeyPolicySelected?: (
-    propertyKeyPolicy: PropertyKeyPolicy
-  ) => void;
+  readonly onPropertyKeyPolicySelected?: (propertyKeyPolicy: PropertyKeyPolicy) => void;
 }
 
 export default function PropertyKeyPolicyTable({
@@ -75,14 +74,8 @@ export default function PropertyKeyPolicyTable({
   onPropertyKeyPolicySelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const {
-    currentPage,
-    cursor,
-    cursors,
-    handlePageChange,
-    resetPaging,
-    setCursors,
-  } = useCursorPagingState();
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [deleteError, setDeleteError] = React.useState<string>();
@@ -96,9 +89,7 @@ export default function PropertyKeyPolicyTable({
   });
   const loadFailed = error != null || isErrorRes(data);
   const page =
-    data != null && !isErrorRes(data)
-      ? toPropertyKeyPolicyPage(data)
-      : undefined;
+    data != null && !isErrorRes(data) ? toPropertyKeyPolicyPage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
@@ -107,7 +98,7 @@ export default function PropertyKeyPolicyTable({
     () =>
       debounce((value: string) => {
         resetPaging();
-        setSuppliedId(value === "" ? undefined : value);
+        setSuppliedId(value === '' ? undefined : value);
         setSelected(new Set());
       }, 300),
     [resetPaging]
@@ -119,7 +110,7 @@ export default function PropertyKeyPolicyTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -127,7 +118,7 @@ export default function PropertyKeyPolicyTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -138,32 +129,30 @@ export default function PropertyKeyPolicyTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     handlePageChange(num);
     setSelected(new Set());
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     if (deleting) return;
 
     setDeleteError(undefined);
     setDeleting(true);
     const ids = [...selected];
 
-    const res = await fetch("/api/property-key-policies", {
+    const res = await fetch('/api/property-key-policies', {
       body: JSON.stringify({ ids }),
-      method: "DELETE",
+      method: 'DELETE',
     }).catch(() => undefined);
     if (res == null) {
       setDeleting(false);
-      setDeleteError("Could not delete the selected property key policies.");
+      setDeleteError('Could not delete the selected property key policies.');
       return;
     }
 
-    const body:
-      | DeletePropertyKeyPoliciesRes
-      | { message?: string }
-      | undefined = await res.json().catch(() => undefined);
+    const body: DeletePropertyKeyPoliciesRes | { message?: string } | undefined =
+      await res.json().catch(() => undefined);
 
     if (!res.ok || isPartialDelete(body)) {
       const deletedIds = isPartialDelete(body) ? body.deletedIds : [];
@@ -175,22 +164,22 @@ export default function PropertyKeyPolicyTable({
         setSelected(new Set(failedIds));
         setDeleteError(
           (isErrorRes(body) ? body.message : undefined) ??
-            "Could not delete the selected property key policies."
+            'Could not delete the selected property key policies.'
         );
-        mutate();
+        mutate().catch(reportError('Failed to refresh property key policies'));
       }
       return;
     }
 
     setDeleting(false);
     setSelected(new Set());
-    mutate();
+    mutate().catch(reportError('Failed to refresh property key policies'));
     onPoliciesDeleted?.(ids);
   }
 
-  function handleCreated() {
+  function handleCreated(): void {
     resetPaging();
-    mutate();
+    mutate().catch(reportError('Failed to refresh property key policies'));
   }
 
   const tableRows = loadFailed ? (
@@ -218,7 +207,7 @@ export default function PropertyKeyPolicyTable({
         >
           <TableCell
             padding="checkbox"
-            style={{ cursor: "default" }}
+            style={{ cursor: 'default' }}
             onClick={(e) => {
               e.stopPropagation();
               handleCheck(row.id);
@@ -228,7 +217,7 @@ export default function PropertyKeyPolicyTable({
               color="primary"
               checked={isSel}
               inputProps={{
-                "aria-label": `Select ${row.name ?? row.id}`,
+                'aria-label': `Select ${row.name ?? row.id}`,
               }}
             />
           </TableCell>
@@ -267,20 +256,25 @@ export default function PropertyKeyPolicyTable({
             ) : undefined
           }
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(() => {
+              setDeleting(false);
+              setDeleteError('Could not delete the selected property key policies.');
+            });
+          }}
           title="Property Key Policies"
         />
         <Box
           sx={{
             px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             gap: 2,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flex: 1 }}>
             <TextField
               variant="standard"
               size="small"
@@ -289,9 +283,9 @@ export default function PropertyKeyPolicyTable({
               label="Supplied ID"
               type="text"
               onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
           </Box>
         </Box>
@@ -367,10 +361,10 @@ function isPartialDelete(
 
   return (
     body != null &&
-    "failedIds" in body &&
-    "deletedIds" in body &&
+    'failedIds' in body &&
+    'deletedIds' in body &&
     Array.isArray(partial.failedIds) &&
     Array.isArray(partial.deletedIds) &&
-    typeof partial.message === "string"
+    typeof partial.message === 'string'
   );
 }

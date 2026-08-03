@@ -1,12 +1,7 @@
-import {
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  MenuItemProps,
-} from "@mui/material";
-import React from "react";
+import { ListItemIcon, ListItemText, MenuItem, MenuItemProps } from '@mui/material';
+import React from 'react';
 
-import { Icon, IconName, IconSize } from "./Icon";
+import { Icon, IconName, IconSize } from './Icon';
 
 export interface Props extends MenuItemProps {
   label: string;
@@ -20,7 +15,7 @@ export const ContextMenuItem = (props: Props): JSX.Element => {
   return (
     <MenuItem
       sx={{
-        color: "#444",
+        color: '#444',
       }}
       {...materialProps}
     >
@@ -30,7 +25,7 @@ export const ContextMenuItem = (props: Props): JSX.Element => {
       <ListItemText
         primaryTypographyProps={{
           sx: {
-            fontSize: "0.875rem",
+            fontSize: '0.875rem',
           },
         }}
       >

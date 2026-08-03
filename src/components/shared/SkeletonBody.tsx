@@ -1,5 +1,5 @@
-import { Checkbox, Skeleton, TableCell, TableRow } from "@mui/material";
-import React from "react";
+import { Checkbox, Skeleton, TableCell, TableRow } from '@mui/material';
+import React from 'react';
 
 interface Props {
   readonly includeCheckbox: boolean;
@@ -34,8 +34,8 @@ function SkeletonRow({
   includeCheckbox,
   numCellsPerRow,
   rowHeight,
-}: Omit<Props, "numRows">): JSX.Element {
-  const role = includeCheckbox ? "checkbox" : undefined;
+}: Omit<Props, 'numRows'>): JSX.Element {
+  const role = includeCheckbox ? 'checkbox' : undefined;
   return (
     <TableRow role={role} tabIndex={-1} sx={{ height: rowHeight }}>
       <TableCell padding={role}>

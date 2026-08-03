@@ -4,8 +4,8 @@ import {
   FilterExpression,
   getPage,
   head,
-} from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
+} from '@vertexvis/api-client-node';
+import { AxiosResponse } from 'axios';
 
 import {
   BodyRequired,
@@ -16,16 +16,13 @@ import {
   isErrorFailure,
   Res,
   toErrorRes,
-} from "../../lib/api";
-import { methodRouter } from "../../lib/api-handler";
-import {
-  getFileCollectionsApi,
-  sortFileCollections,
-} from "../../lib/file-collections";
-import { setFilterExpression } from "../../lib/query-filters";
-import { parsePositiveQueryInt } from "../../lib/query-params";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+} from '../../lib/api';
+import { methodRouter } from '../../lib/api-handler';
+import { getFileCollectionsApi, sortFileCollections } from '../../lib/file-collections';
+import { setFilterExpression } from '../../lib/query-filters';
+import { parsePositiveQueryInt } from '../../lib/query-params';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 export const handleFileCollections = methodRouter({ GET: get, DELETE: del });
 
@@ -44,24 +41,22 @@ async function get(
   const sort = head(req.query.sort);
 
   const query = new URLSearchParams();
-  if (pc != null) query.set("page[cursor]", pc);
-  query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
+  if (pc != null) query.set('page[cursor]', pc);
+  query.set('page[size]', parsePositiveQueryInt(ps, 10).toString());
   setFilterExpression(
     query,
-    "name",
+    'name',
     name != null ? ({ contains: name } satisfies FilterExpression) : undefined
   );
   setFilterExpression(
     query,
-    "suppliedId",
-    suppliedId != null
-      ? ({ contains: suppliedId } satisfies FilterExpression)
-      : undefined
+    'suppliedId',
+    suppliedId != null ? ({ contains: suppliedId } satisfies FilterExpression) : undefined
   );
-  if (sort != null) query.set("sort", sort);
+  if (sort != null) query.set('sort', sort);
   setFilterExpression(
     query,
-    "createdAt",
+    'createdAt',
     createdAtStart != null || createdAtEnd != null
       ? ({
           ...(createdAtStart != null ? { gte: createdAtStart } : {}),
@@ -78,7 +73,7 @@ async function get(
         `${client.config.basePath}/file-collections?${query.toString()}`,
         {
           headers: {
-            Accept: "application/vnd.api+json",
+            Accept: 'application/vnd.api+json',
             Authorization: `Bearer ${client.token.access_token}`,
           },
         }

@@ -1,6 +1,6 @@
-import { Typography, TypographyProps } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import React from "react";
+import { Typography, TypographyProps } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import React from 'react';
 
 export interface Props extends TypographyProps {
   readonly children: React.ReactNode;
@@ -9,10 +9,10 @@ export interface Props extends TypographyProps {
 export const Title = styled((props: Props) => (
   <Typography
     sx={{
-      padding: "1rem",
+      padding: '1rem',
       ...props.sx,
     }}
     variant="body2"
     {...props}
   />
-))(() => ({ textTransform: "uppercase" }));
+))(() => ({ textTransform: 'uppercase' }));
