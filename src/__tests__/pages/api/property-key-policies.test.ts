@@ -81,7 +81,7 @@ describe("property key policies API routes", () => {
       stubListPolicies(
         { data: [policyData("policy-1")], links: {} },
         ({ searchParams }) => {
-          expect(searchParams.get("page[size]")).toBe("10");
+          expect(searchParams.get("page[size]")).toBe("25");
         }
       )
     );
