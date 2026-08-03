@@ -11,16 +11,15 @@ const coverageConfig = {
   coverageReporters: ['text', 'lcov'],
 };
 
-// Directories that can appear inside the repo root depending on workflow
-// (git worktrees created in-tree, codex temp dirs, stray sibling checkouts).
-// Jest scans from rootDir, so without these ignores it would discover and run
-// their test files, causing spurious local failures. Applied to every project.
+// Directories that dev tooling can create inside the repo root depending on
+// workflow (git worktrees created in-tree, codex temp dirs). Jest scans from
+// rootDir, so without these ignores it would discover and run their test files,
+// causing spurious local failures. Applied to every project.
 const nestedCheckoutIgnorePatterns = [
   '/node_modules/',
   '<rootDir>/.worktrees/',
   '<rootDir>/.claude/',
   '<rootDir>/.codex[^/]*/',
-  '<rootDir>/vertex-web-sdk/',
 ];
 
 const projectConfig = {
