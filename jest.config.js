@@ -11,10 +11,7 @@ const coverageConfig = {
   coverageReporters: ['text', 'lcov'],
 };
 
-// Directories that dev tooling can create inside the repo root depending on
-// workflow (git worktrees created in-tree, codex temp dirs). Jest scans from
-// rootDir, so without these ignores it would discover and run their test files,
-// causing spurious local failures. Applied to every project.
+// Ignore common in-tree worktree locations that would otherwise pollute Jest test discovery.
 const nestedCheckoutIgnorePatterns = [
   '/node_modules/',
   '<rootDir>/.worktrees/',
