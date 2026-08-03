@@ -64,30 +64,23 @@ export function PropertyKeyPolicyKeysList({
 
     const body: DeletePropertyKeyPolicyKeysReq = { ids };
 
-    let res: Response;
-    try {
-      res = await fetch(
-        `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
-        {
-          body: JSON.stringify(body),
-          headers: { "Content-Type": "application/json" },
-          method: "DELETE",
-        }
-      );
-    } catch {
+    const res = await fetch(
+      `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
+      {
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+        method: "DELETE",
+      }
+    ).catch(() => undefined);
+    if (res == null) {
       setDeleting(false);
       setDeleteError("Could not delete the selected property keys.");
       return;
     }
 
     if (!res.ok) {
-      let message: string | undefined;
-      try {
-        const errBody = await res.json();
-        message = isErrorRes(errBody) ? errBody.message : undefined;
-      } catch {
-        message = undefined;
-      }
+      const errBody = await res.json().catch(() => undefined);
+      const message = isErrorRes(errBody) ? errBody.message : undefined;
       setDeleting(false);
       setDeleteError(message ?? "Could not delete the selected property keys.");
       return;

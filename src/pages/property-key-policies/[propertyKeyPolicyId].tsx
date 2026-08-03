@@ -87,7 +87,7 @@ export default function PropertyKeyPolicyDetails({
                 keys={keys}
                 error={keysFailed}
                 loading={keysLoading}
-                onMutate={() => mutate()}
+                onMutate={mutate}
                 policyId={propertyKeyPolicy.id}
               />
             </Box>

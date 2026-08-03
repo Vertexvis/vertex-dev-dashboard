@@ -83,23 +83,29 @@ export default function AddPropertyKeyPolicyEntryDialog({
 
     setSubmitting(true);
 
-    let res: Response;
-    let resBody: { message?: string };
-    try {
-      res = await fetch(
-        `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
-        {
-          body: JSON.stringify(body),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }
-      );
-      resBody = await res.json();
-    } catch {
+    const res = await fetch(
+      `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
+      {
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }
+    ).catch(() => undefined);
+    if (res == null) {
+      // True network error — no response was received, so nothing was processed
+      // server-side. Safe to retry.
       setSubmitting(false);
       setApiError("Could not add the property keys.");
       return;
     }
+
+    // Parse the body separately from the request. A successful response with an
+    // empty/unparseable body (e.g. 204 or a proxy page) must NOT be treated as a
+    // failure: the keys may already have been added server-side, and surfacing an
+    // error here would invite a duplicate add.
+    const resBody: { message?: string } | undefined = await res
+      .json()
+      .catch(() => undefined);
 
     setSubmitting(false);
 
