@@ -137,11 +137,9 @@ function errorRes(error: unknown): ErrorRes {
   const e = error as VertexError;
   const ae = error as AxiosError<Failure>;
   logError(e);
-  return e.vertexError?.res
-    ? toErrorRes({ failure: e.vertexError.res })
-    : ae.response?.data != null
-      ? toErrorRes({ failure: ae.response.data })
-      : ServerError;
+  if (e.vertexError?.res != null) return toErrorRes({ failure: e.vertexError.res });
+  if (ae.response?.data != null) return toErrorRes({ failure: ae.response.data });
+  return ServerError;
 }
 
 export default withSession(handlePropertyKeyPolicyKeys);
@@ -175,13 +173,6 @@ async function get(
 
     return { data, status: 200 };
   } catch (error) {
-    const e = error as VertexError;
-    const ae = error as AxiosError<Failure>;
-    logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError.res })
-      : ae.response?.data != null
-        ? toErrorRes({ failure: ae.response.data })
-        : ServerError;
+    return errorRes(error);
   }
 }
