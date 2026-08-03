@@ -1,4 +1,4 @@
-import { Download } from "@mui/icons-material";
+import { Download } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
@@ -8,39 +8,34 @@ import {
   Paper,
   Stack,
   Typography,
-} from "@mui/material";
-import { head } from "@vertexvis/api-client-node";
-import { GetServerSidePropsResult } from "next";
-import dynamic from "next/dynamic";
-import { withIronSession } from "next-iron-session";
-import React from "react";
+} from '@mui/material';
+import { head } from '@vertexvis/api-client-node';
+import { GetServerSidePropsResult } from 'next';
+import dynamic from 'next/dynamic';
+import { withIronSession } from 'next-iron-session';
+import React from 'react';
 
-import { FileDetailsDrawer } from "../../components/file/FileDetailsDrawer";
-import { FileCollectionMetadataTable } from "../../components/file-collection/FileCollectionMetadataTable";
-import { AppLink } from "../../components/shared/AppLink";
-import { Layout } from "../../components/shared/Layout";
-import {
-  ErrorRes,
-  isErrorFailure,
-  isErrorRes,
-  toErrorRes,
-} from "../../lib/api";
+import { FileDetailsDrawer } from '../../components/file/FileDetailsDrawer';
+import { FileCollectionMetadataTable } from '../../components/file-collection/FileCollectionMetadataTable';
+import { AppLink } from '../../components/shared/AppLink';
+import { Layout } from '../../components/shared/Layout';
+import { ErrorRes, isErrorFailure, isErrorRes, toErrorRes } from '../../lib/api';
 import {
   FileCollection,
   GetFileCollectionRes,
   getFileCollectionsApi,
   toFileCollection,
-} from "../../lib/file-collections";
-import { FileJobRes } from "../../lib/file-jobs";
-import { File, FileDownloadUrlRes } from "../../lib/files";
-import { reportError } from "../../lib/report-error";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
+} from '../../lib/file-collections';
+import { FileJobRes } from '../../lib/file-jobs';
+import { File, FileDownloadUrlRes } from '../../lib/files';
+import { reportError } from '../../lib/report-error';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
 import {
   CommonProps,
   CookieAttributes,
   NextIronRequest,
   serverSidePropsHandler as commonServerSidePropsHandler,
-} from "../../lib/with-session";
+} from '../../lib/with-session';
 
 interface Props {
   readonly fileCollection: FileCollection;
@@ -53,13 +48,13 @@ interface ExportReadinessState {
   readonly status: number;
 }
 
-type ExportJobStatus = "idle" | "creating" | "running" | "complete" | "error";
+type ExportJobStatus = 'idle' | 'creating' | 'running' | 'complete' | 'error';
 
 const FileCollectionFilesTable = dynamic(
-  () => import("../../components/file-collection/FileCollectionFilesTable"),
+  () => import('../../components/file-collection/FileCollectionFilesTable'),
   {
     ssr: false,
-  },
+  }
 );
 
 type ServerSideProps = CommonProps & Props;
@@ -83,11 +78,11 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
       resolve();
     };
     const timeout = window.setTimeout(() => {
-      signal.removeEventListener("abort", onAbort);
+      signal.removeEventListener('abort', onAbort);
       resolve();
     }, ms);
 
-    signal.addEventListener("abort", onAbort, { once: true });
+    signal.addEventListener('abort', onAbort, { once: true });
   });
 }
 
@@ -95,10 +90,10 @@ async function createFileJob(fileCollectionId: string): Promise<{
   readonly body: FileJobRes | ErrorRes;
   readonly res: Response;
 }> {
-  const res = await fetch("/api/file-jobs", {
+  const res = await fetch('/api/file-jobs', {
     body: JSON.stringify({ fileCollectionId }),
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
   });
   const body = (await res.json()) as FileJobRes | ErrorRes;
 
@@ -140,7 +135,7 @@ function ExportControls({
 }: ExportControlsProps): JSX.Element {
   return (
     <Stack
-      alignItems={{ xs: "flex-start", sm: "flex-end" }}
+      alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
       spacing={0.75}
       sx={{ flexShrink: 0 }}
     >
@@ -155,11 +150,11 @@ function ExportControls({
       />
       <Box
         sx={{
-          alignItems: "flex-start",
-          display: "flex",
-          justifyContent: { xs: "flex-start", sm: "flex-end" },
+          alignItems: 'flex-start',
+          display: 'flex',
+          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
           minHeight: 34,
-          width: "100%",
+          width: '100%',
         }}
       >
         <ExportStatusMessage
@@ -199,7 +194,7 @@ function ExportPrimaryButton({
   onDownloadArchive,
   onExport,
 }: ExportPrimaryButtonProps): JSX.Element {
-  if (jobStatus === "complete" && archiveFileId != null) {
+  if (jobStatus === 'complete' && archiveFileId != null) {
     return (
       <Button
         disabled={downloadInFlight}
@@ -207,7 +202,7 @@ function ExportPrimaryButton({
         startIcon={<Download />}
         variant="contained"
       >
-        {downloadInFlight ? "Opening Archive" : "Download Archive"}
+        {downloadInFlight ? 'Opening Archive' : 'Download Archive'}
       </Button>
     );
   }
@@ -217,15 +212,11 @@ function ExportPrimaryButton({
       disabled={exportDisabled}
       onClick={onExport}
       startIcon={
-        exportInFlight ? (
-          <CircularProgress color="inherit" size={16} />
-        ) : (
-          <Download />
-        )
+        exportInFlight ? <CircularProgress color="inherit" size={16} /> : <Download />
       }
       variant="contained"
     >
-      {exportInFlight ? "Exporting Archive" : "Export Archive"}
+      {exportInFlight ? 'Exporting Archive' : 'Export Archive'}
     </Button>
   );
 }
@@ -262,18 +253,18 @@ function ExportStatusMessage({
       <Stack
         alignItems="center"
         direction="row"
-        justifyContent={{ sm: "flex-end" }}
+        justifyContent={{ sm: 'flex-end' }}
         spacing={1}
         sx={{ maxWidth: 360 }}
       >
         <Typography
           color="error.main"
-          sx={{ overflowWrap: "anywhere", textAlign: { sm: "right" } }}
+          sx={{ overflowWrap: 'anywhere', textAlign: { sm: 'right' } }}
           variant="body2"
         >
           {exportError}
         </Typography>
-        {jobStatus === "error" && (
+        {jobStatus === 'error' && (
           <Button onClick={onRetry} size="small">
             Retry
           </Button>
@@ -282,7 +273,7 @@ function ExportStatusMessage({
     );
   }
 
-  if (jobStatus === "complete" && archiveFileId != null) {
+  if (jobStatus === 'complete' && archiveFileId != null) {
     return (
       <Fade in={archiveReadyMessageVisible} timeout={500} unmountOnExit>
         <Typography color="success.main" variant="body2">
@@ -292,7 +283,7 @@ function ExportStatusMessage({
     );
   }
 
-  if (jobStatus === "running") {
+  if (jobStatus === 'running') {
     return (
       <Typography color="text.secondary" variant="body2">
         Archive job is running.
@@ -314,55 +305,46 @@ function ExportStatusMessage({
     <Stack
       alignItems="center"
       direction="row"
-      justifyContent={{ sm: "flex-end" }}
+      justifyContent={{ sm: 'flex-end' }}
       spacing={1}
       sx={{ maxWidth: 420 }}
     >
       <Typography
         color="text.secondary"
-        sx={{ overflowWrap: "anywhere", textAlign: { sm: "right" } }}
+        sx={{ overflowWrap: 'anywhere', textAlign: { sm: 'right' } }}
         variant="body2"
       >
         {disabledReason}
       </Typography>
-      <Button
-        disabled={readinessCheckInFlight}
-        onClick={onRefreshReadiness}
-        size="small"
-      >
-        {readinessCheckInFlight
-          ? "Checking Availability"
-          : "Refresh Availability"}
+      <Button disabled={readinessCheckInFlight} onClick={onRefreshReadiness} size="small">
+        {readinessCheckInFlight ? 'Checking Availability' : 'Refresh Availability'}
       </Button>
     </Stack>
   );
 }
 
-export default function FileCollectionDetails({
-  fileCollection,
-}: Props): JSX.Element {
+export default function FileCollectionDetails({ fileCollection }: Props): JSX.Element {
   const fileCollectionIdRef = React.useRef(fileCollection.id);
   const [file, setFile] = React.useState<File | undefined>();
   const [exportStateCollectionId, setExportStateCollectionId] = React.useState(
-    fileCollection.id,
+    fileCollection.id
   );
   const [readiness, setReadiness] = React.useState<ExportReadinessState>();
   const [readinessError, setReadinessError] = React.useState<string>();
-  const [readinessRefreshInFlight, setReadinessRefreshInFlight] =
-    React.useState(false);
+  const [readinessRefreshInFlight, setReadinessRefreshInFlight] = React.useState(false);
   const [exportError, setExportError] = React.useState<string>();
   const [archiveReadyMessageVisible, setArchiveReadyMessageVisible] =
     React.useState(false);
   const [downloadInFlight, setDownloadInFlight] = React.useState(false);
   const [archiveFileId, setArchiveFileId] = React.useState<string>();
   const [jobId, setJobId] = React.useState<string>();
-  const [jobStatus, setJobStatus] = React.useState<ExportJobStatus>("idle");
+  const [jobStatus, setJobStatus] = React.useState<ExportJobStatus>('idle');
   const drawerOpen = Boolean(file);
   const filesApiPath = `/api/file-collections/${encodeURIComponent(
-    fileCollection.id,
+    fileCollection.id
   )}/files`;
   const readinessApiPath = `/api/file-collections/${encodeURIComponent(
-    fileCollection.id,
+    fileCollection.id
   )}?includeExportAvailability=true`;
   const exportStateIsCurrent = exportStateCollectionId === fileCollection.id;
   const currentArchiveFileId = exportStateIsCurrent ? archiveFileId : undefined;
@@ -370,24 +352,18 @@ export default function FileCollectionDetails({
     exportStateIsCurrent && archiveReadyMessageVisible;
   const currentDownloadInFlight = exportStateIsCurrent && downloadInFlight;
   const currentExportError = exportStateIsCurrent ? exportError : undefined;
-  const currentJobStatus = exportStateIsCurrent ? jobStatus : "idle";
+  const currentJobStatus = exportStateIsCurrent ? jobStatus : 'idle';
   const currentReadiness = exportStateIsCurrent ? readiness : undefined;
-  const currentReadinessError = exportStateIsCurrent
-    ? readinessError
-    : undefined;
+  const currentReadinessError = exportStateIsCurrent ? readinessError : undefined;
   const currentReadinessRefreshInFlight =
     exportStateIsCurrent && readinessRefreshInFlight;
-  const readinessLoading =
-    currentReadiness == null && currentReadinessError == null;
+  const readinessLoading = currentReadiness == null && currentReadinessError == null;
   const exportInFlight =
-    currentJobStatus === "creating" || currentJobStatus === "running";
-  const readinessCheckInFlight =
-    readinessLoading || currentReadinessRefreshInFlight;
+    currentJobStatus === 'creating' || currentJobStatus === 'running';
+  const readinessCheckInFlight = readinessLoading || currentReadinessRefreshInFlight;
   const disabledReason = currentReadinessError ?? currentReadiness?.message;
   const exportDisabled =
-    exportInFlight ||
-    readinessCheckInFlight ||
-    currentReadiness?.ready !== true;
+    exportInFlight || readinessCheckInFlight || currentReadiness?.ready !== true;
 
   const loadReadiness = React.useCallback(
     async (signal?: AbortSignal) => {
@@ -400,11 +376,11 @@ export default function FileCollectionDetails({
 
         if (fileCollectionIdRef.current !== currentFileCollectionId) return;
 
-        if (!res.ok || "message" in body) {
+        if (!res.ok || 'message' in body) {
           setReadiness(undefined);
           setReadinessError(
-            ("message" in body ? body.message : undefined) ??
-              "Could not check export availability.",
+            ('message' in body ? body.message : undefined) ??
+              'Could not check export availability.'
           );
           return;
         }
@@ -416,16 +392,13 @@ export default function FileCollectionDetails({
           status: body.status,
         });
       } catch {
-        if (
-          !signal?.aborted &&
-          fileCollectionIdRef.current === currentFileCollectionId
-        ) {
+        if (!signal?.aborted && fileCollectionIdRef.current === currentFileCollectionId) {
           setReadiness(undefined);
-          setReadinessError("Could not check export availability.");
+          setReadinessError('Could not check export availability.');
         }
       }
     },
-    [fileCollection.id, readinessApiPath],
+    [fileCollection.id, readinessApiPath]
   );
 
   React.useEffect(() => {
@@ -440,31 +413,24 @@ export default function FileCollectionDetails({
     setDownloadInFlight(false);
     setArchiveFileId(undefined);
     setJobId(undefined);
-    setJobStatus("idle");
+    setJobStatus('idle');
   }, [fileCollection.id]);
 
   React.useEffect(() => {
     const controller = new AbortController();
 
     loadReadiness(controller.signal).catch(
-      reportError("Failed to check export availability"),
+      reportError('Failed to check export availability')
     );
 
     return () => controller.abort();
   }, [loadReadiness]);
 
   React.useEffect(() => {
-    if (
-      !exportStateIsCurrent ||
-      jobStatus !== "complete" ||
-      !archiveReadyMessageVisible
-    )
+    if (!exportStateIsCurrent || jobStatus !== 'complete' || !archiveReadyMessageVisible)
       return;
 
-    const timeout = window.setTimeout(
-      () => setArchiveReadyMessageVisible(false),
-      6000,
-    );
+    const timeout = window.setTimeout(() => setArchiveReadyMessageVisible(false), 6000);
 
     return () => window.clearTimeout(timeout);
   }, [archiveReadyMessageVisible, exportStateIsCurrent, jobStatus]);
@@ -482,8 +448,7 @@ export default function FileCollectionDetails({
   }
 
   React.useEffect(() => {
-    if (!exportStateIsCurrent || jobId == null || jobStatus !== "running")
-      return;
+    if (!exportStateIsCurrent || jobId == null || jobStatus !== 'running') return;
 
     const currentJobId = jobId;
     const controller = new AbortController();
@@ -494,32 +459,29 @@ export default function FileCollectionDetails({
         await delay(1000, signal);
         if (signal.aborted) return;
 
-        const res = await fetch(
-          `/api/file-jobs/${encodeURIComponent(currentJobId)}`,
-        );
+        const res = await fetch(`/api/file-jobs/${encodeURIComponent(currentJobId)}`);
         const body = (await res.json()) as FileJobRes | ErrorRes;
 
         if (signal.aborted) return;
 
-        if (!res.ok || "message" in body) {
-          setJobStatus("error");
+        if (!res.ok || 'message' in body) {
+          setJobStatus('error');
           setExportError(
-            ("message" in body ? body.message : undefined) ??
-              "Archive job failed.",
+            ('message' in body ? body.message : undefined) ?? 'Archive job failed.'
           );
           return;
         }
 
         const status = body.data?.attributes?.status;
-        if (status === "complete") {
-          setJobStatus("complete");
+        if (status === 'complete') {
+          setJobStatus('complete');
           setArchiveReadyMessageVisible(true);
           return;
         }
 
-        if (status === "error") {
-          setJobStatus("error");
-          setExportError("Archive job failed.");
+        if (status === 'error') {
+          setJobStatus('error');
+          setExportError('Archive job failed.');
           return;
         }
       }
@@ -527,8 +489,8 @@ export default function FileCollectionDetails({
 
     pollJob().catch(() => {
       if (!signal.aborted) {
-        setJobStatus("error");
-        setExportError("Archive job failed.");
+        setJobStatus('error');
+        setExportError('Archive job failed.');
       }
     });
 
@@ -545,16 +507,14 @@ export default function FileCollectionDetails({
     setDownloadInFlight(false);
     setExportError(undefined);
     setJobId(undefined);
-    setJobStatus("creating");
+    setJobStatus('creating');
 
-    const created = await createFileJob(currentFileCollectionId).catch(
-      () => undefined,
-    );
+    const created = await createFileJob(currentFileCollectionId).catch(() => undefined);
 
     if (created == null) {
       if (fileCollectionIdRef.current === currentFileCollectionId) {
-        setJobStatus("error");
-        setExportError("Could not start archive export.");
+        setJobStatus('error');
+        setExportError('Could not start archive export.');
       }
 
       return;
@@ -566,14 +526,12 @@ export default function FileCollectionDetails({
 
     if (
       !res.ok ||
-      !("data" in body) ||
+      !('data' in body) ||
       body.data.id == null ||
       body.archiveFileId == null
     ) {
-      const message = isErrorRes(body)
-        ? body.message
-        : "Could not start archive export.";
-      setJobStatus("error");
+      const message = isErrorRes(body) ? body.message : 'Could not start archive export.';
+      setJobStatus('error');
       setExportError(message);
       setReadiness((current) =>
         res.status === 400
@@ -583,14 +541,14 @@ export default function FileCollectionDetails({
               ready: false,
               status: body.status,
             }
-          : current,
+          : current
       );
       return;
     }
 
     setArchiveFileId(body.archiveFileId);
     setJobId(body.data.id);
-    setJobStatus("running");
+    setJobStatus('running');
   }
 
   async function handleDownloadArchive(): Promise<void> {
@@ -604,27 +562,27 @@ export default function FileCollectionDetails({
     try {
       const res = await fetch(
         `/api/files/${encodeURIComponent(currentArchiveFileId)}/download-url`,
-        { method: "POST" },
+        { method: 'POST' }
       );
       const body = (await res.json()) as FileDownloadUrlRes | ErrorRes;
 
       if (fileCollectionIdRef.current !== currentFileCollectionId) return;
 
-      if (!res.ok || !("url" in body)) {
+      if (!res.ok || !('url' in body)) {
         setExportError(
-          ("message" in body ? body.message : undefined) ??
-            "Could not create a download URL for this archive.",
+          ('message' in body ? body.message : undefined) ??
+            'Could not create a download URL for this archive.'
         );
         return;
       }
 
-      const opened = window.open(body.url, "_blank", "noopener");
+      const opened = window.open(body.url, '_blank', 'noopener');
       if (opened == null) {
         window.location.assign(body.url);
       }
     } catch {
       if (fileCollectionIdRef.current === currentFileCollectionId) {
-        setExportError("Could not create a download URL for this archive.");
+        setExportError('Could not create a download URL for this archive.');
       }
     } finally {
       if (fileCollectionIdRef.current === currentFileCollectionId) {
@@ -640,7 +598,7 @@ export default function FileCollectionDetails({
     setDownloadInFlight(false);
     setExportError(undefined);
     setJobId(undefined);
-    setJobStatus("idle");
+    setJobStatus('idle');
   }
 
   return (
@@ -658,18 +616,18 @@ export default function FileCollectionDetails({
           <Paper sx={{ p: 2 }}>
             <Box
               sx={{
-                alignItems: { sm: "flex-start" },
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { sm: 'flex-start' },
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
                 gap: 2,
-                justifyContent: "space-between",
+                justifyContent: 'space-between',
               }}
             >
               <Box>
                 <Typography variant="h5">File Collection Details</Typography>
                 <Typography
                   color="text.secondary"
-                  sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                  sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
                   variant="body2"
                 >
                   {fileCollection.id}
@@ -686,17 +644,17 @@ export default function FileCollectionDetails({
                 jobStatus={currentJobStatus}
                 onDownloadArchive={() => {
                   handleDownloadArchive().catch(
-                    reportError("Failed to download the archive"),
+                    reportError('Failed to download the archive')
                   );
                 }}
                 onExport={() => {
                   handleExport().catch(
-                    reportError("Failed to export the file collection"),
+                    reportError('Failed to export the file collection')
                   );
                 }}
                 onRefreshReadiness={() => {
                   handleRefreshReadiness().catch(
-                    reportError("Failed to refresh export availability"),
+                    reportError('Failed to refresh export availability')
                   );
                 }}
                 onRetry={handleRetry}
@@ -729,7 +687,7 @@ export default function FileCollectionDetails({
 
 export const getServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes,
+  CookieAttributes
 );
 
 export async function serverSidePropsHandler({
@@ -737,15 +695,13 @@ export async function serverSidePropsHandler({
   req,
 }: ServerSideContext): Promise<GetServerSidePropsResult<ServerSideProps>> {
   const authResult = commonServerSidePropsHandler({ req });
-  if (!("props" in authResult)) return authResult;
+  if (!('props' in authResult)) return authResult;
 
   const fileCollectionId = head(query.fileCollectionId);
   if (fileCollectionId == null) return { notFound: true };
 
   const api = getFileCollectionsApi(await getClientFromSession(req.session));
-  const res = await makeCall(() =>
-    api.getFileCollection({ id: fileCollectionId }),
-  );
+  const res = await makeCall(() => api.getFileCollection({ id: fileCollectionId }));
 
   if (isErrorFailure(res)) {
     const error = toErrorRes({ failure: res });

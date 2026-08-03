@@ -1,29 +1,22 @@
-import {
-  getPage,
-  head,
-  QueuedJobData,
-  VertexClient,
-} from "@vertexvis/api-client-node";
+import { getPage, head, QueuedJobData, VertexClient } from '@vertexvis/api-client-node';
 
-import { ErrorRes, GetRes } from "../../lib/api";
-import { methodRouter } from "../../lib/api-handler";
-import { parsePositiveQueryInt } from "../../lib/query-params";
-import { getClientFromSession } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+import { ErrorRes, GetRes } from '../../lib/api';
+import { methodRouter } from '../../lib/api-handler';
+import { parsePositiveQueryInt } from '../../lib/query-params';
+import { getClientFromSession } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 export default withSession(methodRouter({ GET: get }));
 
-async function get(
-  req: NextIronRequest,
-): Promise<ErrorRes | GetRes<QueuedJobData>> {
+async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<QueuedJobData>> {
   const c = await getClientFromSession(req.session);
   const ps = head(req.query.pageSize);
   const pc = head(req.query.cursor);
-  const fetchAll = (head(req.query.fetchAll) ?? "false") === "true";
+  const fetchAll = (head(req.query.fetchAll) ?? 'false') === 'true';
   const status = head(req.query.status);
 
   if (status == null) {
-    throw new Error("Status not set and is required");
+    throw new Error('Status not set and is required');
   }
 
   if (fetchAll) {
@@ -43,7 +36,7 @@ async function get(
         pageCursor: pc,
         pageSize: parsePositiveQueryInt(ps, 200),
         filterStatus: status,
-      }),
+      })
     );
     return { cursors, data: page.data, status: 200 };
   }
@@ -51,7 +44,7 @@ async function get(
 
 export const fetchAllTranslations = async (
   c: VertexClient,
-  status: string,
+  status: string
 ): Promise<QueuedJobData[]> => {
   const queuedJobData: QueuedJobData[][] = [];
   let cursor: string | undefined;
@@ -63,7 +56,7 @@ export const fetchAllTranslations = async (
         pageCursor: cursor ?? undefined,
         pageSize: 200,
         filterStatus: status,
-      }),
+      })
     );
     promises.push(resPromise);
     const { cursors, page } = await resPromise;

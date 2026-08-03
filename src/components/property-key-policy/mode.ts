@@ -1,4 +1,4 @@
-import { PropertyKeyPolicyMode } from "../../lib/property-key-policies";
+import { PropertyKeyPolicyMode } from '../../lib/property-key-policies';
 
 /**
  * Human-readable label for a policy mode. `allowlist` renders as "Allow" and
@@ -10,10 +10,10 @@ import { PropertyKeyPolicyMode } from "../../lib/property-key-policies";
 export function toModeLabel(mode: PropertyKeyPolicyMode): string {
   switch (mode) {
     case PropertyKeyPolicyMode.Allowlist:
-      return "Allow";
+      return 'Allow';
     case PropertyKeyPolicyMode.Denylist:
-      return "Deny";
+      return 'Deny';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 }

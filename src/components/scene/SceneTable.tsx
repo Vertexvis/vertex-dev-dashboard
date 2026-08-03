@@ -1,4 +1,4 @@
-import { MergeTypeOutlined } from "@mui/icons-material";
+import { MergeTypeOutlined } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -14,27 +14,27 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@mui/material";
-import { Cursors, SceneData } from "@vertexvis/api-client-node";
-import debounce from "lodash.debounce";
-import { useRouter } from "next/router";
-import React, { useEffect } from "react";
-import useSWR, { SWRResponse } from "swr";
+} from '@mui/material';
+import { Cursors, SceneData } from '@vertexvis/api-client-node';
+import debounce from 'lodash.debounce';
+import { useRouter } from 'next/router';
+import React, { useEffect } from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { ErrorRes, GetRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
-import { SwrProps } from "../../lib/paging";
-import { reportError } from "../../lib/report-error";
-import { Scene, toScenePage } from "../../lib/scenes";
-import CreateSceneDialog from "../shared/CreateSceneDialog";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { ResourceLink } from "../shared/ResourceLink";
-import { RowActionsMenu } from "../shared/RowActionsMenu";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
-import { TableToolbar } from "../shared/TableToolbar";
+import { ErrorRes, GetRes } from '../../lib/api';
+import { toLocaleString } from '../../lib/dates';
+import { SwrProps } from '../../lib/paging';
+import { reportError } from '../../lib/report-error';
+import { Scene, toScenePage } from '../../lib/scenes';
+import CreateSceneDialog from '../shared/CreateSceneDialog';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { ResourceLink } from '../shared/ResourceLink';
+import { RowActionsMenu } from '../shared/RowActionsMenu';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { HeadCell, TableHead } from '../shared/TableHead';
+import { TableToolbar } from '../shared/TableToolbar';
 
 interface Props {
   readonly onClick: (s: Scene) => void;
@@ -44,12 +44,12 @@ interface Props {
 }
 
 const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name" },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "state", label: "State" },
-  { id: "id", label: "ID" },
-  { id: "created", label: "Created" },
-  { id: "actions", label: "Actions" },
+  { id: 'name', disablePadding: true, label: 'Name' },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'state', label: 'State' },
+  { id: 'id', label: 'ID' },
+  { id: 'created', label: 'Created' },
+  { id: 'actions', label: 'Actions' },
 ];
 
 function useScenes({
@@ -59,27 +59,25 @@ function useScenes({
   name,
 }: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ""}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ""
-    }${name ? `&name=${encodeURIComponent(name)}` : ""}`,
+    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ''}${
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ''
+    }${name ? `&name=${encodeURIComponent(name)}` : ''}`
   );
 }
 
-function stateColor(
-  state?: string,
-): "default" | "success" | "warning" | "error" {
+function stateColor(state?: string): 'default' | 'success' | 'warning' | 'error' {
   switch (state) {
-    case "commit":
-    case "committed":
-    case "ready":
-      return "success";
-    case "draft":
-      return "warning";
-    case "error":
-    case "failed":
-      return "error";
+    case 'commit':
+    case 'committed':
+    case 'ready':
+      return 'success';
+    case 'draft':
+      return 'warning';
+    case 'error':
+    case 'failed':
+      return 'error';
     default:
-      return "default";
+      return 'default';
   }
 }
 
@@ -94,19 +92,13 @@ export default function SceneTable({
   const [showMergeScene, setShowMergeScene] = React.useState(false);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<
-    string | undefined
-  >();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>(
-    {},
-  );
+  const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<string | undefined>();
+  const [prev, setPrev] = React.useState<Record<number, string | undefined>>({});
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
-    () => scene?.id,
+    () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
@@ -118,7 +110,7 @@ export default function SceneTable({
   });
 
   useEffect(() => {
-    mutate().catch(reportError("Failed to refresh scenes"));
+    mutate().catch(reportError('Failed to refresh scenes'));
   }, [invalidationCount, mutate]);
 
   const router = useRouter();
@@ -129,13 +121,10 @@ export default function SceneTable({
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
     () => debounce(setSuppliedIdFilter, 300),
-    [],
+    []
   );
 
-  const debouncedSetNameFilter = React.useMemo(
-    () => debounce(setNameFilter, 300),
-    [],
-  );
+  const debouncedSetNameFilter = React.useMemo(() => debounce(setNameFilter, 300), []);
 
   React.useEffect(() => {
     if (page == null) return;
@@ -170,7 +159,7 @@ export default function SceneTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number,
+    num: number
   ): void {
     if (curPage < num) {
       setPrev({ ...prev, [num - 1]: cursors?.self });
@@ -182,9 +171,9 @@ export default function SceneTable({
 
   async function handleDelete(): Promise<void> {
     setSelected(new Set());
-    await fetch("/api/scenes", {
+    await fetch('/api/scenes', {
       body: JSON.stringify({ ids: [...selected] }),
-      method: "DELETE",
+      method: 'DELETE',
     });
     await mutate();
   }
@@ -197,21 +186,21 @@ export default function SceneTable({
   function handleViewClick(sceneId: string): void {
     router
       .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
-      .catch(reportError("Failed to navigate to the scene viewer"));
+      .catch(reportError('Failed to navigate to the scene viewer'));
   }
 
   async function handleGetStreamKey(sceneId: string): Promise<void> {
     setKeyLoadingSceneId(sceneId);
-    const b = await fetch("/api/stream-keys", {
+    const b = await fetch('/api/stream-keys', {
       body: JSON.stringify({ id: sceneId }),
-      method: "POST",
+      method: 'POST',
     });
     const { key } = await b.json();
     try {
       await navigator.clipboard.writeText(key);
       setToastMsg(`Stream key "${key}" copied to clipboard.`);
     } catch (e) {
-      console.error("Error copying stream key to clipboard", e);
+      console.error('Error copying stream key to clipboard', e);
     } finally {
       setKeyLoadingSceneId(undefined);
     }
@@ -223,7 +212,7 @@ export default function SceneTable({
         <TableToolbar
           numSelected={selected.size}
           onDelete={() => {
-            handleDelete().catch(reportError("Failed to delete scenes"));
+            handleDelete().catch(reportError('Failed to delete scenes'));
           }}
           title="Scenes"
           customActions={[
@@ -240,10 +229,10 @@ export default function SceneTable({
         <Box
           sx={{
             px: { sm: 2 },
-            display: "flex",
-            gap: "1rem",
-            justifyContent: "flex-start",
-            alignItems: "center",
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
           }}
         >
           <TextField
@@ -256,7 +245,7 @@ export default function SceneTable({
             onChange={(e) => {
               debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0, width: "20rem" }}
+            sx={{ mt: 0, width: '20rem' }}
           />
           <TextField
             variant="standard"
@@ -268,7 +257,7 @@ export default function SceneTable({
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0, width: "20rem" }}
+            sx={{ mt: 0, width: '20rem' }}
           />
         </Box>
         <TableContainer>
@@ -324,9 +313,9 @@ export default function SceneTable({
                       <TableCell>
                         <Chip
                           color={stateColor(row.state)}
-                          label={row.state ?? "N/A"}
+                          label={row.state ?? 'N/A'}
                           size="small"
-                          sx={{ fontWeight: 600, textTransform: "uppercase" }}
+                          sx={{ fontWeight: 600, textTransform: 'uppercase' }}
                           variant="outlined"
                         />
                       </TableCell>
@@ -337,15 +326,15 @@ export default function SceneTable({
                           actions={[
                             {
                               disabled: keyLoadingSceneId === row.id,
-                              label: "Generate stream key",
+                              label: 'Generate stream key',
                               onClick: () => handleGetStreamKey(row.id),
                             },
                             {
-                              label: "View scene",
+                              label: 'View scene',
                               onClick: () => handleViewClick(row.id),
                             },
                             {
-                              label: "Edit scene",
+                              label: 'Edit scene',
                               onClick: () => handleEditClick(row),
                             },
                           ]}
@@ -374,7 +363,7 @@ export default function SceneTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null,
+              page != null
             )
           }
           rowsPerPage={pageSize}
@@ -400,7 +389,7 @@ export default function SceneTable({
         open={showMergeScene}
         onClose={() => setShowMergeScene(false)}
         onSceneQueued={() => {
-          setToastMsg("Building merged scene. Check back shortly.");
+          setToastMsg('Building merged scene. Check back shortly.');
           setShowMergeScene(false);
         }}
         scenesToMerge={Array.from(selected)}

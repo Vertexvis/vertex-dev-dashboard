@@ -5,7 +5,7 @@ import {
   LocalLibraryOutlined,
   PendingOutlined,
   VpnKeyOutlined,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 import {
   Drawer,
   List,
@@ -13,23 +13,22 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
-} from "@mui/material";
-import { drawerClasses } from "@mui/material/Drawer";
-import { useRouter } from "next/router";
-import React from "react";
+} from '@mui/material';
+import { drawerClasses } from '@mui/material/Drawer';
+import { useRouter } from 'next/router';
+import React from 'react';
 
-import { reportError } from "../../lib/report-error";
-import { LeftDrawerWidth } from "../shared/Layout";
+import { reportError } from '../../lib/report-error';
+import { LeftDrawerWidth } from '../shared/Layout';
 
-export type Content = "settings" | "instructions" | "parts";
+export type Content = 'settings' | 'instructions' | 'parts';
 
 export function LeftDrawer(): JSX.Element {
   const router = useRouter();
 
   const isSectionActive = React.useCallback(
-    (base: string) =>
-      router.route === base || router.route.startsWith(`${base}/`),
-    [router.route],
+    (base: string) => router.route === base || router.route.startsWith(`${base}/`),
+    [router.route]
   );
 
   return (
@@ -45,14 +44,14 @@ export function LeftDrawer(): JSX.Element {
       <Toolbar variant="dense" />
       <List
         sx={{
-          paddingTop: "15px",
+          paddingTop: '15px',
         }}
       >
         <ListItemButton
           onClick={() => {
-            router.push("/").catch(reportError("Failed to navigate to /"));
+            router.push('/').catch(reportError('Failed to navigate to /'));
           }}
-          selected={router.route === "/" || isSectionActive("/scene-viewer")}
+          selected={router.route === '/' || isSectionActive('/scene-viewer')}
         >
           <ListItemIcon>
             <LocalLibraryOutlined />
@@ -61,11 +60,9 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => {
-            router
-              .push("/files")
-              .catch(reportError("Failed to navigate to /files"));
+            router.push('/files').catch(reportError('Failed to navigate to /files'));
           }}
-          selected={isSectionActive("/files")}
+          selected={isSectionActive('/files')}
         >
           <ListItemIcon>
             <DescriptionOutlined />
@@ -75,10 +72,10 @@ export function LeftDrawer(): JSX.Element {
         <ListItemButton
           onClick={() => {
             router
-              .push("/file-collections")
-              .catch(reportError("Failed to navigate to /file-collections"));
+              .push('/file-collections')
+              .catch(reportError('Failed to navigate to /file-collections'));
           }}
-          selected={isSectionActive("/file-collections")}
+          selected={isSectionActive('/file-collections')}
         >
           <ListItemIcon>
             <CollectionsBookmarkOutlined />
@@ -88,12 +85,10 @@ export function LeftDrawer(): JSX.Element {
         <ListItemButton
           onClick={() => {
             router
-              .push("/property-key-policies")
-              .catch(
-                reportError("Failed to navigate to /property-key-policies"),
-              );
+              .push('/property-key-policies')
+              .catch(reportError('Failed to navigate to /property-key-policies'));
           }}
-          selected={router.route === "/property-key-policies"}
+          selected={router.route === '/property-key-policies'}
         >
           <ListItemIcon>
             <VpnKeyOutlined />
@@ -102,11 +97,9 @@ export function LeftDrawer(): JSX.Element {
         </ListItemButton>
         <ListItemButton
           onClick={() => {
-            router
-              .push("/parts")
-              .catch(reportError("Failed to navigate to /parts"));
+            router.push('/parts').catch(reportError('Failed to navigate to /parts'));
           }}
-          selected={isSectionActive("/parts")}
+          selected={isSectionActive('/parts')}
         >
           <ListItemIcon>
             <DatasetOutlined />
@@ -116,10 +109,10 @@ export function LeftDrawer(): JSX.Element {
         <ListItemButton
           onClick={() => {
             router
-              .push("/translations")
-              .catch(reportError("Failed to navigate to /translations"));
+              .push('/translations')
+              .catch(reportError('Failed to navigate to /translations'));
           }}
-          selected={isSectionActive("/translations")}
+          selected={isSectionActive('/translations')}
         >
           <ListItemIcon>
             <PendingOutlined />

@@ -1,6 +1,6 @@
 export function parsePositiveQueryInt(
   value: string | undefined,
-  defaultValue: number,
+  defaultValue: number
 ): number {
   const trimmed = value?.trim();
   if (trimmed == null || !/^\d+$/.test(trimmed)) return defaultValue;

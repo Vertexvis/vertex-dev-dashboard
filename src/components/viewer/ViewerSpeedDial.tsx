@@ -1,6 +1,6 @@
-import { SpeedDial, SpeedDialAction } from "@mui/material";
+import { SpeedDial, SpeedDialAction } from '@mui/material';
 
-import { Action } from "./Viewer";
+import { Action } from './Viewer';
 
 interface Props {
   readonly actions: Action[];
@@ -8,12 +8,7 @@ interface Props {
 
 export function ViewerSpeedDial({ actions }: Props): JSX.Element {
   return (
-    <SpeedDial
-      ariaLabel="Viewer toolbar"
-      hidden={true}
-      open={true}
-      sx={{ mr: 3, mb: 2 }}
-    >
+    <SpeedDial ariaLabel="Viewer toolbar" hidden={true} open={true} sx={{ mr: 3, mb: 2 }}>
       {actions.map((action) => (
         <SpeedDialAction
           key={action.label}

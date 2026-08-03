@@ -1,13 +1,13 @@
-import { Box } from "@mui/material";
-import { VertexSceneTreeTableCellCustomEvent } from "@vertexvis/viewer";
-import { SceneTreeTableCellEventDetails } from "@vertexvis/viewer/dist/types/components/scene-tree-table-cell/scene-tree-table-cell";
-import { VertexSceneTree } from "@vertexvis/viewer-react";
-import React from "react";
+import { Box } from '@mui/material';
+import { VertexSceneTreeTableCellCustomEvent } from '@vertexvis/viewer';
+import { SceneTreeTableCellEventDetails } from '@vertexvis/viewer/dist/types/components/scene-tree-table-cell/scene-tree-table-cell';
+import { VertexSceneTree } from '@vertexvis/viewer-react';
+import React from 'react';
 
-import { reportError } from "../../lib/report-error";
-import { viewerHasSelection, ViewerState } from "../../lib/viewer";
-import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
-import { SceneTreeContextMenu } from "./SceneTreeContextMenu";
+import { reportError } from '../../lib/report-error';
+import { viewerHasSelection, ViewerState } from '../../lib/viewer';
+import { EnvironmentWithCustom, NetworkConfig } from '../../lib/with-session';
+import { SceneTreeContextMenu } from './SceneTreeContextMenu';
 
 interface Props {
   readonly configEnv: EnvironmentWithCustom;
@@ -37,27 +37,19 @@ export function SceneTree({
     const effectRef = ref.current;
 
     const onSelection = (
-      event: VertexSceneTreeTableCellCustomEvent<SceneTreeTableCellEventDetails>,
+      event: VertexSceneTreeTableCellCustomEvent<SceneTreeTableCellEventDetails>
     ): void => {
       const node = event.detail.node;
       if (node != null && onRowClick) {
-        console.debug(
-          `Selected ${node.suppliedId?.value ?? node.id?.hex},${node.name}`,
-        );
+        console.debug(`Selected ${node.suppliedId?.value ?? node.id?.hex},${node.name}`);
 
-        onRowClick(node.id?.hex || "");
+        onRowClick(node.id?.hex || '');
       }
     };
 
-    effectRef?.addEventListener(
-      "selectionToggled",
-      onSelection as EventListener,
-    );
+    effectRef?.addEventListener('selectionToggled', onSelection as EventListener);
     return () =>
-      effectRef?.removeEventListener(
-        "selectionToggled",
-        onSelection as EventListener,
-      );
+      effectRef?.removeEventListener('selectionToggled', onSelection as EventListener);
   }, [ref, onRowClick]);
 
   React.useEffect(() => {
@@ -65,35 +57,31 @@ export function SceneTree({
     if (selectedItemId) {
       effectRef
         ?.scrollToItem(selectedItemId)
-        .catch(reportError("Failed to scroll to the scene item"));
+        .catch(reportError('Failed to scroll to the scene item'));
     }
   }, [selectedItemId]);
 
   React.useEffect(() => {
     const effectRef = ref.current;
     if (expandAll) {
-      effectRef
-        ?.expandAll()
-        .catch(reportError("Failed to expand the scene tree"));
+      effectRef?.expandAll().catch(reportError('Failed to expand the scene tree'));
     }
   }, [expandAll]);
 
   React.useEffect(() => {
     const effectRef = ref.current;
     if (collapseAll) {
-      effectRef
-        ?.collapseAll()
-        .catch(reportError("Failed to collapse the scene tree"));
+      effectRef?.collapseAll().catch(reportError('Failed to collapse the scene tree'));
     }
   }, [collapseAll]);
 
   return (
-    <Box sx={{ height: "100%" }}>
+    <Box sx={{ height: '100%' }}>
       <VertexSceneTree
-        configEnv={configEnv !== "custom" ? configEnv : undefined}
+        configEnv={configEnv !== 'custom' ? configEnv : undefined}
         id="vertex-scene-tree"
         config={
-          networkConfig != null && configEnv === "custom"
+          networkConfig != null && configEnv === 'custom'
             ? JSON.stringify({
                 network: {
                   ...networkConfig,

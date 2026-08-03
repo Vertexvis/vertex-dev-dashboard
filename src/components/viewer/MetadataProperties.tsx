@@ -7,11 +7,11 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { Metadata } from "../../lib/metadata";
-import { Title } from "../shared/Title";
+import { Metadata } from '../../lib/metadata';
+import { Title } from '../shared/Title';
 
 interface Props {
   readonly metadata?: Metadata;
@@ -27,7 +27,7 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
     <>
       <DrawerTitle />
       <TableContainer sx={{ flexGrow: 1 }}>
-        <Table sx={{ whiteSpace: "nowrap", tableLayout: "fixed" }} size="small">
+        <Table sx={{ whiteSpace: 'nowrap', tableLayout: 'fixed' }} size="small">
           <TableBody>
             {propKeys.map((k) => (
               <TableRow key={k}>
@@ -40,9 +40,9 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
                   >
                     <Typography
                       sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                       variant="body2"
                     >
@@ -65,9 +65,9 @@ function NoData(): JSX.Element {
       <DrawerTitle />
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexGrow: 1,
         }}
       >
@@ -83,7 +83,7 @@ function DrawerTitle(): JSX.Element {
   return (
     <Title
       sx={{
-        borderBottom: "1px solid #ccc",
+        borderBottom: '1px solid #ccc',
       }}
     >
       Properties

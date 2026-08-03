@@ -1,14 +1,8 @@
-import { logError, VertexError } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
+import { logError, VertexError } from '@vertexvis/api-client-node';
+import { NextApiResponse } from 'next';
 
-import {
-  ErrorRes,
-  MethodNotAllowed,
-  Res,
-  ServerError,
-  toErrorRes,
-} from "./api";
-import { NextIronRequest } from "./with-session";
+import { ErrorRes, MethodNotAllowed, Res, ServerError, toErrorRes } from './api';
+import { NextIronRequest } from './with-session';
 
 /**
  * Normalizes a thrown VertexError into our ErrorRes shape. Collapses the
@@ -16,22 +10,19 @@ import { NextIronRequest } from "./with-session";
  */
 export function handleVertexError(error: unknown): ErrorRes {
   const obj = error as Record<string, unknown> | null;
-  const isVertexError =
-    typeof obj === "object" && obj != null && "vertexError" in obj;
+  const isVertexError = typeof obj === 'object' && obj != null && 'vertexError' in obj;
 
   if (isVertexError) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError.res })
-      : ServerError;
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError.res }) : ServerError;
   }
 
   console.error(error);
   return ServerError;
 }
 
-type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** A per-method handler: run the logic and return an API response payload. */
 export type MethodHandler = (req: NextIronRequest) => Promise<Res>;
@@ -51,11 +42,11 @@ export type MethodHandler = (req: NextIronRequest) => Promise<Res>;
 export function methodRouter(handlers: Partial<Record<Method, MethodHandler>>) {
   return async function handle(
     req: NextIronRequest,
-    res: NextApiResponse,
+    res: NextApiResponse
   ): Promise<void> {
     const handler = handlers[req.method as Method];
     if (handler == null) {
-      res.setHeader("Allow", Object.keys(handlers).join(", "));
+      res.setHeader('Allow', Object.keys(handlers).join(', '));
       return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
     }
 
@@ -67,7 +58,7 @@ export function methodRouter(handlers: Partial<Record<Method, MethodHandler>>) {
     }
 
     const status =
-      typeof (payload as { status?: unknown } | null)?.status === "number"
+      typeof (payload as { status?: unknown } | null)?.status === 'number'
         ? (payload as { status: number }).status
         : 200;
     return res.status(status).json(payload);

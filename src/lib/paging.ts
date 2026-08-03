@@ -1,8 +1,8 @@
-import { Cursors, getPage } from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
-import React from "react";
+import { Cursors, getPage } from '@vertexvis/api-client-node';
+import { AxiosResponse } from 'axios';
+import React from 'react';
 
-import { GetRes } from "./api";
+import { GetRes } from './api';
 
 export interface Paged<T> {
   readonly cursors: Cursors | null; // Must use null for proper NextJS serialization
@@ -17,32 +17,28 @@ export interface SwrProps {
 }
 
 type QueryValue = number | string | undefined;
-const QueryParamOrder = ["pageSize", "cursor", "sort", "suppliedId", "name"];
+const QueryParamOrder = ['pageSize', 'cursor', 'sort', 'suppliedId', 'name'];
 
-export function buildQuery(
-  path: string,
-  params: Record<string, QueryValue>,
-): string {
+export function buildQuery(path: string, params: Record<string, QueryValue>): string {
   const query = new URLSearchParams();
   const entries = Object.entries(params).sort(([leftKey], [rightKey]) => {
     const leftIndex = QueryParamOrder.indexOf(leftKey);
     const rightIndex = QueryParamOrder.indexOf(rightKey);
 
-    if (leftIndex === -1 && rightIndex === -1)
-      return leftKey.localeCompare(rightKey);
+    if (leftIndex === -1 && rightIndex === -1) return leftKey.localeCompare(rightKey);
     if (leftIndex === -1) return 1;
     if (rightIndex === -1) return -1;
     return leftIndex - rightIndex;
   });
 
   entries.forEach(([key, value]) => {
-    if (value != null && value !== "") {
+    if (value != null && value !== '') {
       query.set(key, value.toString());
     }
   });
 
   const search = query.toString();
-  return search === "" ? path : `${path}?${search}`;
+  return search === '' ? path : `${path}?${search}`;
 }
 
 export function useCursorPagingState(): {
@@ -51,16 +47,12 @@ export function useCursorPagingState(): {
   readonly cursors?: Cursors;
   readonly handlePageChange: (nextPage: number) => void;
   readonly resetPaging: () => void;
-  readonly setCursors: React.Dispatch<
-    React.SetStateAction<Cursors | undefined>
-  >;
+  readonly setCursors: React.Dispatch<React.SetStateAction<Cursors | undefined>>;
 } {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [cursor, setCursor] = React.useState<string | undefined>();
   const [cursors, setCursors] = React.useState<Cursors | undefined>();
-  const [previous, setPrevious] = React.useState<
-    Record<number, string | undefined>
-  >({});
+  const [previous, setPrevious] = React.useState<Record<number, string | undefined>>({});
 
   const resetPaging = React.useCallback(() => {
     setCurrentPage(0);
@@ -83,7 +75,7 @@ export function useCursorPagingState(): {
 
       setCurrentPage(nextPage);
     },
-    [currentPage, cursors, previous],
+    [currentPage, cursors, previous]
   );
 
   return {
@@ -99,7 +91,7 @@ export function useCursorPagingState(): {
 export function toPage<T extends { attributes: TA; id: string }, TA>({
   cursors,
   data,
-}: GetRes<T>): Paged<TA & Pick<T, "id">> {
+}: GetRes<T>): Paged<TA & Pick<T, 'id'>> {
   return {
     cursors: cursors ?? null,
     items: data.map(({ id, attributes }) => ({ ...attributes, id })),
@@ -116,7 +108,7 @@ interface CursorPage<T> {
 
 /** Fetch every cursor-paginated page using the API client's cursor parser. */
 export async function fetchAllPages<T, TPage extends CursorPage<T>>(
-  fetchPage: (cursor?: string) => Promise<AxiosResponse<TPage>>,
+  fetchPage: (cursor?: string) => Promise<AxiosResponse<TPage>>
 ): Promise<T[]> {
   const items: T[] = [];
   const seenCursors = new Set<string>();
@@ -128,7 +120,7 @@ export async function fetchAllPages<T, TPage extends CursorPage<T>>(
     items.push(...page.data);
 
     if (nextCursor != null && seenCursors.has(nextCursor))
-      throw new Error("Received a repeated pagination cursor.");
+      throw new Error('Received a repeated pagination cursor.');
 
     if (nextCursor != null) seenCursors.add(nextCursor);
     cursor = nextCursor;

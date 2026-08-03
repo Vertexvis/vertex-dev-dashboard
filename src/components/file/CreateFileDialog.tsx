@@ -1,4 +1,4 @@
-import { CloudUploadOutlined } from "@mui/icons-material";
+import { CloudUploadOutlined } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -12,13 +12,13 @@ import {
   FormHelperText,
   LinearProgress,
   TextField,
-} from "@mui/material";
-import { CreateFileRequestDataAttributes } from "@vertexvis/api-client-node";
-import { useRouter } from "next/router";
-import React from "react";
+} from '@mui/material';
+import { CreateFileRequestDataAttributes } from '@vertexvis/api-client-node';
+import { useRouter } from 'next/router';
+import React from 'react';
 
-import { reportError } from "../../lib/report-error";
-import { CreateFileRes } from "../../pages/api/files";
+import { reportError } from '../../lib/report-error';
+import { CreateFileRes } from '../../pages/api/files';
 
 interface CreateFileDialogProps {
   readonly open: boolean;
@@ -54,17 +54,17 @@ export default function CreateFileDialog({
     }
 
     const fileRes: CreateFileRes = await (
-      await fetch("/api/files", {
-        method: "POST",
+      await fetch('/api/files', {
+        method: 'POST',
         body: JSON.stringify(attrs),
       })
     ).json();
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
 
     await fetch(`/api/upload?f=${fileRes.id}`, {
-      method: "POST",
+      method: 'POST',
       body: formData,
     });
 
@@ -103,12 +103,12 @@ export default function CreateFileDialog({
           If uploading a single model file, leave this field blank."
         />
 
-        <Box sx={{ py: 2, display: "flex" }}>
+        <Box sx={{ py: 2, display: 'flex' }}>
           <label htmlFor="btn-upload">
             <input
               id="btn-upload"
               name="btn-upload"
-              style={{ display: "none" }}
+              style={{ display: 'none' }}
               type="file"
               onChange={(e) => {
                 setSubmitDisabled(false);
@@ -122,14 +122,11 @@ export default function CreateFileDialog({
               Choose a file up to 1MB in size to upload.
             </FormHelperText>
           </label>
-          {!!file && <span style={{ marginLeft: "auto" }}>{file?.name}</span>}
+          {!!file && <span style={{ marginLeft: 'auto' }}>{file?.name}</span>}
         </Box>
         <FormControlLabel
           control={
-            <Checkbox
-              defaultChecked
-              onChange={(e) => setCreatePart(e.target.checked)}
-            />
+            <Checkbox defaultChecked onChange={(e) => setCreatePart(e.target.checked)} />
           }
           label="Create Part After Upload"
         />
@@ -137,7 +134,7 @@ export default function CreateFileDialog({
       <Fade
         in={progress}
         style={{
-          transitionDelay: progress ? "300ms" : "0ms",
+          transitionDelay: progress ? '300ms' : '0ms',
         }}
         unmountOnExit
       >
@@ -151,7 +148,7 @@ export default function CreateFileDialog({
           disabled={submitDisabled}
           startIcon={<CloudUploadOutlined />}
           onClick={() => {
-            handleUpload().catch(reportError("Failed to upload the file"));
+            handleUpload().catch(reportError('Failed to upload the file'));
           }}
           color="primary"
           variant="contained"

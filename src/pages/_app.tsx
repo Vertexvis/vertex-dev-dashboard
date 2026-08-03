@@ -1,20 +1,20 @@
-import "@vertexvis/viewer/dist/viewer/viewer.css";
+import '@vertexvis/viewer/dist/viewer/viewer.css';
 
-import createCache from "@emotion/cache";
-import { CacheProvider } from "@emotion/react";
-import CssBaseline from "@mui/material/CssBaseline";
-import Fade from "@mui/material/Fade";
-import LinearProgress from "@mui/material/LinearProgress";
-import { ThemeProvider } from "@mui/material/styles";
-import { AppProps } from "next/app";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import React from "react";
-import { SWRConfig } from "swr";
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import CssBaseline from '@mui/material/CssBaseline';
+import Fade from '@mui/material/Fade';
+import LinearProgress from '@mui/material/LinearProgress';
+import { ThemeProvider } from '@mui/material/styles';
+import { AppProps } from 'next/app';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import React from 'react';
+import { SWRConfig } from 'swr';
 
-import theme from "../lib/theme";
+import theme from '../lib/theme';
 
-const cache = createCache({ key: "css", prepend: true });
+const cache = createCache({ key: 'css', prepend: true });
 cache.compat = true;
 
 const RouteProgressDelayMs = 150;
@@ -32,17 +32,17 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       // @ts-ignore
       if (window.gtag) {
         // @ts-ignore
-        window.gtag("config", process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS, {
-          cookie_flags: "SameSite=None;Secure",
+        window.gtag('config', process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS, {
+          cookie_flags: 'SameSite=None;Secure',
           page_path: url,
         });
       }
       /* eslint-enable @typescript-eslint/ban-ts-comment */
     }
 
-    events.on("routeChangeComplete", handleChange);
+    events.on('routeChangeComplete', handleChange);
     return () => {
-      events.off("routeChangeComplete", handleChange);
+      events.off('routeChangeComplete', handleChange);
     };
   }, [events]);
 
@@ -62,18 +62,18 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       setShowRouteProgress(false);
     }
 
-    events.on("routeChangeStart", handleRouteChangeStart);
-    events.on("routeChangeComplete", handleRouteChangeEnd);
-    events.on("routeChangeError", handleRouteChangeEnd);
+    events.on('routeChangeStart', handleRouteChangeStart);
+    events.on('routeChangeComplete', handleRouteChangeEnd);
+    events.on('routeChangeError', handleRouteChangeEnd);
 
     return () => {
       if (routeProgressTimer.current != null) {
         window.clearTimeout(routeProgressTimer.current);
       }
 
-      events.off("routeChangeStart", handleRouteChangeStart);
-      events.off("routeChangeComplete", handleRouteChangeEnd);
-      events.off("routeChangeError", handleRouteChangeEnd);
+      events.off('routeChangeStart', handleRouteChangeStart);
+      events.off('routeChangeComplete', handleRouteChangeEnd);
+      events.off('routeChangeError', handleRouteChangeEnd);
     };
   }, [events]);
 
@@ -104,16 +104,14 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
             <LinearProgress
               sx={{
                 left: 0,
-                position: "fixed",
+                position: 'fixed',
                 right: 0,
                 top: 0,
                 zIndex: (theme) => theme.zIndex.tooltip,
               }}
             />
           </Fade>
-          <SWRConfig
-            value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}
-          >
+          <SWRConfig value={{ fetcher: (url) => fetch(url).then((res) => res.json()) }}>
             <Component {...pageProps} />
           </SWRConfig>
         </ThemeProvider>

@@ -9,13 +9,13 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@mui/material";
-import React from "react";
-import useSWR, { SWRResponse } from "swr";
+} from '@mui/material';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { toLocaleString } from "../../lib/dates";
-import { QueuedJob, toQueuedJobPage } from "../../lib/queued-jobs";
-import { SkeletonBody } from "../shared/SkeletonBody";
+import { toLocaleString } from '../../lib/dates';
+import { QueuedJob, toQueuedJobPage } from '../../lib/queued-jobs';
+import { SkeletonBody } from '../shared/SkeletonBody';
 
 interface QueuedTranslationsTableProps {
   readonly status: string;
@@ -28,14 +28,11 @@ interface QueuedTranslationsTableProps {
 function useRunningTranslations(
   status: string,
   refreshInterval: number,
-  fetchAll: boolean,
+  fetchAll: boolean
 ): SWRResponse {
-  return useSWR(
-    `/api/queued-translations?status=${status}&fetchAll=${fetchAll}`,
-    {
-      refreshInterval,
-    },
-  );
+  return useSWR(`/api/queued-translations?status=${status}&fetchAll=${fetchAll}`, {
+    refreshInterval,
+  });
 }
 
 export function QueuedTranslationsTable({
@@ -48,18 +45,18 @@ export function QueuedTranslationsTable({
   const { data, isValidating } = useRunningTranslations(
     status,
     refreshInterval || 0,
-    fetchAll ?? false,
+    fetchAll ?? false
   );
   const page = data ? toQueuedJobPage(data) : undefined;
   const items = filter ? page?.items.filter(filter) : page?.items;
 
   return (
-    <TableContainer sx={{ m: 2, overflowY: "auto" }} component={Paper}>
+    <TableContainer sx={{ m: 2, overflowY: 'auto' }} component={Paper}>
       <Box
         sx={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
+          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'space-between',
           p: 2,
         }}
       >
@@ -84,10 +81,7 @@ export function QueuedTranslationsTable({
             />
           ) : items && items.length > 0 ? (
             items.map((row) => (
-              <TableRow
-                key={row.id}
-                sx={{ "&:last-child td": { borderBottom: 0 } }}
-              >
+              <TableRow key={row.id} sx={{ '&:last-child td': { borderBottom: 0 } }}>
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{toLocaleString(row.created)}</TableCell>
               </TableRow>

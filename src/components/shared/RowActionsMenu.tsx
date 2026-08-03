@@ -1,4 +1,4 @@
-import { MoreHoriz } from "@mui/icons-material";
+import { MoreHoriz } from '@mui/icons-material';
 import {
   CircularProgress,
   IconButton,
@@ -6,8 +6,8 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
 export interface RowAction {
   readonly disabled?: boolean;
@@ -44,11 +44,7 @@ export function RowActionsMenu({
         }}
         size="small"
       >
-        {loading ? (
-          <CircularProgress size={18} />
-        ) : (
-          <MoreHoriz fontSize="small" />
-        )}
+        {loading ? <CircularProgress size={18} /> : <MoreHoriz fontSize="small" />}
       </IconButton>
       <Menu
         anchorEl={anchorEl}
@@ -65,7 +61,7 @@ export function RowActionsMenu({
               void action.onClick();
             }}
           >
-            {loading && action.label === "Generate stream key" ? (
+            {loading && action.label === 'Generate stream key' ? (
               <ListItemIcon>
                 <CircularProgress size={16} />
               </ListItemIcon>

@@ -1,5 +1,5 @@
-import { head, logError, VertexError } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
+import { head, logError, VertexError } from '@vertexvis/api-client-node';
+import { NextApiResponse } from 'next';
 
 import {
   ErrorRes,
@@ -7,19 +7,19 @@ import {
   MethodNotAllowed,
   ServerError,
   toErrorRes,
-} from "../../../../lib/api";
+} from '../../../../lib/api';
 import {
   getPropertyKeyPoliciesApi,
   GetPropertyKeyPolicyRes,
-} from "../../../../lib/property-key-policies";
-import { getClientFromSession, makeCall } from "../../../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../../../lib/with-session";
+} from '../../../../lib/property-key-policies';
+import { getClientFromSession, makeCall } from '../../../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../../../lib/with-session';
 
 export async function handlePropertyKeyPolicy(
   req: NextIronRequest,
-  res: NextApiResponse<GetPropertyKeyPolicyRes | ErrorRes>,
+  res: NextApiResponse<GetPropertyKeyPolicyRes | ErrorRes>
 ): Promise<void> {
-  if (req.method === "GET") {
+  if (req.method === 'GET') {
     const r = await get(req);
     return res.status(r.status).json(r);
   }
@@ -29,17 +29,12 @@ export async function handlePropertyKeyPolicy(
 
 export default withSession(handlePropertyKeyPolicy);
 
-async function get(
-  req: NextIronRequest,
-): Promise<ErrorRes | GetPropertyKeyPolicyRes> {
+async function get(req: NextIronRequest): Promise<ErrorRes | GetPropertyKeyPolicyRes> {
   try {
     const id = head(req.query.id);
-    if (id == null)
-      return { message: "Property Key Policy ID required.", status: 400 };
+    if (id == null) return { message: 'Property Key Policy ID required.', status: 400 };
 
-    const c = getPropertyKeyPoliciesApi(
-      await getClientFromSession(req.session),
-    );
+    const c = getPropertyKeyPoliciesApi(await getClientFromSession(req.session));
     const res = await makeCall(() => c.getPropertyKeyPolicy({ id }));
     if (isErrorFailure(res)) return toErrorRes({ failure: res });
 
@@ -47,8 +42,6 @@ async function get(
   } catch (error) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError?.res }) : ServerError;
   }
 }

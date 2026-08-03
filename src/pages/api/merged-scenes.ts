@@ -2,12 +2,12 @@ import {
   CameraFitTypeEnum,
   SceneRelationshipDataTypeEnum,
   UpdateSceneRequestDataAttributesStateEnum,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
-import { ErrorRes, InvalidBody, Res } from "../../lib/api";
-import { methodRouter } from "../../lib/api-handler";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+import { ErrorRes, InvalidBody, Res } from '../../lib/api';
+import { methodRouter } from '../../lib/api-handler';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 export interface MergeSceneReq {
   readonly name?: string;
@@ -31,7 +31,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
   const s = await c.scenes.createScene({
     createSceneRequest: {
       data: {
-        type: "scene",
+        type: 'scene',
         attributes: {
           name,
           suppliedId,
@@ -47,7 +47,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
     id: sceneId,
     createSceneItemRequest: {
       data: {
-        type: "scene-item",
+        type: 'scene-item',
         attributes: {
           name,
           suppliedId: suppliedId,
@@ -63,7 +63,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
         id: sceneId,
         createSceneItemRequest: {
           data: {
-            type: "scene-item",
+            type: 'scene-item',
             attributes: {
               parent: suppliedId,
             },
@@ -78,7 +78,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
           },
         },
       });
-    }),
+    })
   );
 
   await makeCall(() =>
@@ -92,10 +92,10 @@ async function create(req: NextIronRequest): Promise<ErrorRes | MergeSceneRes> {
               type: CameraFitTypeEnum.FitVisibleSceneItems,
             },
           },
-          type: "scene",
+          type: 'scene',
         },
       },
-    }),
+    })
   );
 
   return { status: 200, queuedItemIds: items.map((i) => i.data.data.id) };

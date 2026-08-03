@@ -1,8 +1,8 @@
-import { Box, BoxProps, Tooltip } from "@mui/material";
-import NextLink from "next/link";
-import React from "react";
+import { Box, BoxProps, Tooltip } from '@mui/material';
+import NextLink from 'next/link';
+import React from 'react';
 
-type ResourceLinkProps = Omit<BoxProps<"a">, "component" | "onClick"> & {
+type ResourceLinkProps = Omit<BoxProps<'a'>, 'component' | 'onClick'> & {
   readonly component?: React.ElementType;
   readonly disabled?: boolean;
   readonly href?: string;
@@ -23,13 +23,13 @@ export function ResourceLink({
   sx,
   ...props
 }: ResourceLinkProps): JSX.Element {
-  const linkComponent = disabled ? "a" : component;
+  const linkComponent = disabled ? 'a' : component;
 
   return (
     <Tooltip title={primaryActionLabel}>
       <Box
         component={linkComponent}
-        href={disabled ? undefined : (href ?? "#")}
+        href={disabled ? undefined : (href ?? '#')}
         {...(linkComponent === NextLink ? { prefetch } : {})}
         role="link"
         tabIndex={disabled ? -1 : undefined}
@@ -50,7 +50,7 @@ export function ResourceLink({
         onKeyDown={(event: React.KeyboardEvent<HTMLAnchorElement>) => {
           event.stopPropagation();
           if (disabled || href != null) return;
-          if (event.key !== "Enter" && event.key !== " ") {
+          if (event.key !== 'Enter' && event.key !== ' ') {
             return;
           }
 
@@ -59,22 +59,22 @@ export function ResourceLink({
         }}
         sx={[
           {
-            color: "text.primary",
-            cursor: disabled ? "not-allowed" : "pointer",
-            textDecoration: "underline",
-            textDecorationColor: "currentColor",
-            "&:hover": {
-              textDecorationColor: "currentColor",
+            color: 'text.primary',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            textDecoration: 'underline',
+            textDecorationColor: 'currentColor',
+            '&:hover': {
+              textDecorationColor: 'currentColor',
             },
-            "&:focus-visible": {
-              outline: "auto",
+            '&:focus-visible': {
+              outline: 'auto',
               outlineOffset: 2,
-              textDecorationColor: "currentColor",
+              textDecorationColor: 'currentColor',
             },
             ...(disabled && {
               opacity: 0.7,
-              "&:focus-visible": {
-                outline: "none",
+              '&:focus-visible': {
+                outline: 'none',
               },
             }),
           },

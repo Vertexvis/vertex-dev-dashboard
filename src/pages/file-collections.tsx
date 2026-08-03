@@ -1,17 +1,17 @@
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { FileCollectionDetailsDrawer } from "../components/file-collection/FileCollectionDetailsDrawer";
-import { Layout } from "../components/shared/Layout";
-import { FileCollection } from "../lib/file-collections";
+import { FileCollectionDetailsDrawer } from '../components/file-collection/FileCollectionDetailsDrawer';
+import { Layout } from '../components/shared/Layout';
+import { FileCollection } from '../lib/file-collections';
 
-export { defaultServerSideProps as getServerSideProps } from "../lib/with-session";
+export { defaultServerSideProps as getServerSideProps } from '../lib/with-session';
 
 const FileCollectionsTable = dynamic(
-  () => import("../components/file-collection/FileCollectionTable"),
+  () => import('../components/file-collection/FileCollectionTable'),
   {
     ssr: false,
-  },
+  }
 );
 
 export default function FileCollections(): JSX.Element {

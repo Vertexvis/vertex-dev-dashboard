@@ -2,6 +2,7 @@
   "name": "vertex-dev-dashboard",
   "version": "0.1.0",
   "private": true,
+  "prettier": "@vertexvis/prettier-config-vertexvis",
   "dependencies": {
     "@emotion/cache": "^11.10.8",
     "@emotion/react": "^11.11.4",
@@ -42,6 +43,7 @@
     "@types/react-dom": "^18.2",
     "@types/react-window": "^1.8.8",
     "@vertexvis/eslint-config-vertexvis-typescript": "^0.6.1",
+    "@vertexvis/prettier-config-vertexvis": "^0.1.0",
     "babel-plugin-import": "^1.13",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.22",

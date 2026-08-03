@@ -8,13 +8,13 @@ import {
   OAuth2Token,
   VertexClient,
   VertexError,
-} from "@vertexvis/api-client-node";
-import assert from "assert";
-import { AxiosError, AxiosResponse } from "axios";
-import type { NextApiResponse } from "next";
-import { Session } from "next-iron-session";
+} from '@vertexvis/api-client-node';
+import assert from 'assert';
+import { AxiosError, AxiosResponse } from 'axios';
+import type { NextApiResponse } from 'next';
+import { Session } from 'next-iron-session';
 
-import { ErrorRes, ServerError } from "./api";
+import { ErrorRes, ServerError } from './api';
 import {
   getCreds,
   getEnv,
@@ -22,23 +22,23 @@ import {
   getToken as getSessionToken,
   NetworkConfig,
   setToken,
-} from "./with-session";
+} from './with-session';
 
 const TenMinsInMs = 600_000;
 
 const basePath = (env: string, networkConfig?: NetworkConfig): string => {
-  if (env === "custom" && networkConfig != null) {
+  if (env === 'custom' && networkConfig != null) {
     return networkConfig.apiHost;
   }
 
-  return env === "platprod"
-    ? "https://platform.vertexvis.com"
+  return env === 'platprod'
+    ? 'https://platform.vertexvis.com'
     : `https://platform.${env}.vertexvis.io`;
 };
 
 export async function makeCallRes<T>(
   res: NextApiResponse<T | Failure>,
-  apiCall: () => Promise<AxiosResponse<T>>,
+  apiCall: () => Promise<AxiosResponse<T>>
 ): Promise<void> {
   const result = await makeCall(apiCall);
   return isFailure(result)
@@ -47,7 +47,7 @@ export async function makeCallRes<T>(
 }
 
 export async function makeCall<T>(
-  apiCall: () => Promise<AxiosResponse<T>>,
+  apiCall: () => Promise<AxiosResponse<T>>
 ): Promise<T | Failure> {
   try {
     return (await apiCall()).data;
@@ -63,7 +63,7 @@ export async function getToken(
   id: string,
   secret: string,
   env: string,
-  networkConfig?: NetworkConfig,
+  networkConfig?: NetworkConfig
 ): Promise<OAuth2Token> {
   const auth = new Oauth2Api(
     new Configuration({
@@ -71,10 +71,10 @@ export async function getToken(
       username: id,
       password: secret,
     }),
-    basePath(env, networkConfig),
+    basePath(env, networkConfig)
   );
 
-  return (await auth.createToken({ grantType: "client_credentials" })).data;
+  return (await auth.createToken({ grantType: 'client_credentials' })).data;
 }
 
 export async function getClientWithCreds(
@@ -82,7 +82,7 @@ export async function getClientWithCreds(
   secret: string,
   env: string,
   token: OAuth2Token,
-  networkConfig?: NetworkConfig,
+  networkConfig?: NetworkConfig
 ): Promise<VertexClient> {
   const client = await VertexClient.build({
     basePath: basePath(env, networkConfig),
@@ -96,9 +96,7 @@ export async function getClientWithCreds(
   return client;
 }
 
-export async function getClientFromSession(
-  session: Session,
-): Promise<VertexClient> {
+export async function getClientFromSession(session: Session): Promise<VertexClient> {
   const creds = getCreds(session);
   const env = getEnv(session);
   const networkConfig = getNetworkConfig(session);
@@ -121,7 +119,7 @@ export async function getClientFromSession(
         ...newToken,
         expires_in: newExpiration,
       },
-      networkConfig,
+      networkConfig
     );
   }
 
@@ -133,7 +131,7 @@ export async function getClientFromSession(
       ...token.token,
       expires_in: expiresIn,
     },
-    networkConfig,
+    networkConfig
   );
 }
 

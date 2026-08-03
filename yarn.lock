@@ -2236,6 +2236,11 @@
   dependencies:
     "@vertexvis/utils" "0.24.2"
 
+"@vertexvis/prettier-config-vertexvis@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@vertexvis/prettier-config-vertexvis/-/prettier-config-vertexvis-0.1.0.tgz#f5deff588c3ee30fdbc1ed9dcd5eb8e71d3a0400"
+  integrity sha512-g9yC2wCpoYIK1vfHD3nK685TrwimBOQGuwa3MSXbjwkzKdBENKvU22UCQcJ6SOPGe/pIYqoZXMfyxWz31fFbIw==
+
 "@vertexvis/scene-tree-protos@^0.1.26":
   version "0.1.26"
   resolved "https://registry.yarnpkg.com/@vertexvis/scene-tree-protos/-/scene-tree-protos-0.1.26.tgz#57f8b1af89aadbaf2ab1cef8767155ab5278ebb2"

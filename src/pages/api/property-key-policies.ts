@@ -5,9 +5,9 @@ import {
   logError,
   PropertyKeyPolicyList,
   VertexError,
-} from "@vertexvis/api-client-node";
-import { AxiosResponse } from "axios";
-import { NextApiResponse } from "next";
+} from '@vertexvis/api-client-node';
+import { AxiosResponse } from 'axios';
+import { NextApiResponse } from 'next';
 
 import {
   BodyRequired,
@@ -18,7 +18,7 @@ import {
   MethodNotAllowed,
   ServerError,
   toErrorRes,
-} from "../../lib/api";
+} from '../../lib/api';
 import {
   CreatePropertyKeyPolicyReq,
   CreatePropertyKeyPolicyRes,
@@ -27,11 +27,11 @@ import {
   PartialDeletePropertyKeyPoliciesRes,
   PropertyKeyPolicyMode,
   PropertyKeyPolicyPageRes,
-} from "../../lib/property-key-policies";
-import { setFilterExpression } from "../../lib/query-filters";
-import { parsePositiveQueryInt } from "../../lib/query-params";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+} from '../../lib/property-key-policies';
+import { setFilterExpression } from '../../lib/query-filters';
+import { parsePositiveQueryInt } from '../../lib/query-params';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 export async function handlePropertyKeyPolicies(
   req: NextIronRequest,
@@ -40,19 +40,19 @@ export async function handlePropertyKeyPolicies(
     | CreatePropertyKeyPolicyRes
     | DeletePropertyKeyPoliciesRes
     | ErrorRes
-  >,
+  >
 ): Promise<void> {
-  if (req.method === "GET") {
+  if (req.method === 'GET') {
     const r = await get(req);
     return res.status(r.status).json(r);
   }
 
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     const r = await create(req);
     return res.status(r.status).json(r);
   }
 
-  if (req.method === "DELETE") {
+  if (req.method === 'DELETE') {
     const r = await del(req);
     return res.status(r.status).json(r);
   }
@@ -62,9 +62,7 @@ export async function handlePropertyKeyPolicies(
 
 export default withSession(handlePropertyKeyPolicies);
 
-async function get(
-  req: NextIronRequest,
-): Promise<ErrorRes | PropertyKeyPolicyPageRes> {
+async function get(req: NextIronRequest): Promise<ErrorRes | PropertyKeyPolicyPageRes> {
   try {
     const client = await getClientFromSession(req.session);
     const ps = head(req.query.pageSize);
@@ -72,14 +70,14 @@ async function get(
     const suppliedId = head(req.query.suppliedId);
 
     const query = new URLSearchParams();
-    if (pc != null) query.set("page[cursor]", pc);
-    query.set("page[size]", parsePositiveQueryInt(ps, 10).toString());
+    if (pc != null) query.set('page[cursor]', pc);
+    query.set('page[size]', parsePositiveQueryInt(ps, 10).toString());
     setFilterExpression(
       query,
-      "suppliedId",
+      'suppliedId',
       suppliedId != null
         ? ({ contains: suppliedId } satisfies FilterExpression)
-        : undefined,
+        : undefined
     );
 
     const { cursors, page } = await getPage(
@@ -88,11 +86,11 @@ async function get(
           `${client.config.basePath}/property-key-policies?${query.toString()}`,
           {
             headers: {
-              Accept: "application/vnd.api+json",
+              Accept: 'application/vnd.api+json',
               Authorization: `Bearer ${client.token.access_token}`,
             },
-          },
-        ),
+          }
+        )
     );
     return {
       cursors,
@@ -102,14 +100,12 @@ async function get(
   } catch (error) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError?.res }) : ServerError;
   }
 }
 
 async function create(
-  req: NextIronRequest,
+  req: NextIronRequest
 ): Promise<ErrorRes | CreatePropertyKeyPolicyRes> {
   if (!req.body) return BodyRequired;
 
@@ -124,17 +120,15 @@ async function create(
       c.createPropertyKeyPolicy({
         createPropertyKeyPolicyRequest: {
           data: {
-            type: "property-key-policy",
+            type: 'property-key-policy',
             attributes: {
               name: body.name,
-              ...(body.suppliedId != null
-                ? { suppliedId: body.suppliedId }
-                : {}),
+              ...(body.suppliedId != null ? { suppliedId: body.suppliedId } : {}),
               mode: body.mode,
             },
           },
         },
-      }),
+      })
     );
     if (isErrorFailure(created)) return toErrorRes({ failure: created });
 
@@ -144,17 +138,17 @@ async function create(
     const keys = await makeCall(() =>
       client.axiosInstance.post<void>(
         `${client.config.basePath}/property-key-policies/${encodeURIComponent(
-          created.data.id,
+          created.data.id
         )}/keys`,
         { data: body.keys.map((name) => ({ name })) },
         {
           headers: {
-            Accept: "application/vnd.api+json",
+            Accept: 'application/vnd.api+json',
             Authorization: `Bearer ${client.token.access_token}`,
-            "Content-Type": "application/vnd.api+json",
+            'Content-Type': 'application/vnd.api+json',
           },
-        },
-      ),
+        }
+      )
     );
     if (isErrorFailure(keys)) {
       return {
@@ -168,14 +162,12 @@ async function create(
   } catch (error) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError?.res }) : ServerError;
   }
 }
 
 async function del(
-  req: NextIronRequest,
+  req: NextIronRequest
 ): Promise<
   ErrorRes | DeletePropertyKeyPoliciesRes | PartialDeletePropertyKeyPoliciesRes
 > {
@@ -184,7 +176,7 @@ async function del(
   let ids: unknown;
   try {
     const parsed = (
-      typeof req.body === "string" ? JSON.parse(req.body) : req.body
+      typeof req.body === 'string' ? JSON.parse(req.body) : req.body
     ) as Partial<DeleteReq>;
     ids = parsed?.ids;
   } catch {
@@ -193,20 +185,16 @@ async function del(
   if (
     !Array.isArray(ids) ||
     ids.length === 0 ||
-    !ids.every((id) => typeof id === "string")
+    !ids.every((id) => typeof id === 'string')
   )
     return InvalidBody;
 
   try {
-    const c = getPropertyKeyPoliciesApi(
-      await getClientFromSession(req.session),
-    );
+    const c = getPropertyKeyPoliciesApi(await getClientFromSession(req.session));
     const results = await Promise.all(
-      ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id }))),
+      ids.map((id) => makeCall(() => c.deletePropertyKeyPolicy({ id })))
     );
-    const deletedIds = ids.filter(
-      (_, index) => !isErrorFailure(results[index]),
-    );
+    const deletedIds = ids.filter((_, index) => !isErrorFailure(results[index]));
     const failedIds = ids.filter((_, index) => isErrorFailure(results[index]));
     if (failedIds.length > 0) {
       const failure = results.find(isErrorFailure);
@@ -226,22 +214,20 @@ async function del(
   } catch (error) {
     const e = error as VertexError;
     logError(e);
-    return e.vertexError?.res
-      ? toErrorRes({ failure: e.vertexError?.res })
-      : ServerError;
+    return e.vertexError?.res ? toErrorRes({ failure: e.vertexError?.res }) : ServerError;
   }
 }
 
 function parseCreatePropertyKeyPolicyReq(
-  body: unknown,
+  body: unknown
 ): CreatePropertyKeyPolicyReq | undefined {
   try {
     const parsed = (
-      typeof body === "string" ? JSON.parse(body) : body
+      typeof body === 'string' ? JSON.parse(body) : body
     ) as Partial<CreatePropertyKeyPolicyReq>;
 
     const name = parsed.name;
-    if (typeof name !== "string" || name.trim() === "") return undefined;
+    if (typeof name !== 'string' || name.trim() === '') return undefined;
     const trimmedName = name.trim();
 
     const mode = parsed.mode;
@@ -251,11 +237,11 @@ function parseCreatePropertyKeyPolicyReq(
     if (!Array.isArray(keys) || keys.length === 0) return undefined;
     // Submit keys VERBATIM (case-sensitive, no normalization). Reject only
     // non-string or whitespace-only entries.
-    if (keys.some((key) => typeof key !== "string" || key.trim() === ""))
+    if (keys.some((key) => typeof key !== 'string' || key.trim() === ''))
       return undefined;
 
     const suppliedId =
-      typeof parsed.suppliedId === "string" && parsed.suppliedId.trim() !== ""
+      typeof parsed.suppliedId === 'string' && parsed.suppliedId.trim() !== ''
         ? parsed.suppliedId.trim()
         : undefined;
 
@@ -267,11 +253,8 @@ function parseCreatePropertyKeyPolicyReq(
   }
 }
 
-function isPropertyKeyPolicyMode(
-  value: unknown,
-): value is PropertyKeyPolicyMode {
+function isPropertyKeyPolicyMode(value: unknown): value is PropertyKeyPolicyMode {
   return (
-    value === PropertyKeyPolicyMode.Allowlist ||
-    value === PropertyKeyPolicyMode.Denylist
+    value === PropertyKeyPolicyMode.Allowlist || value === PropertyKeyPolicyMode.Denylist
   );
 }

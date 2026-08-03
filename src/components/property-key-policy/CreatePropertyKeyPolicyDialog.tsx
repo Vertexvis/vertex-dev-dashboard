@@ -1,4 +1,4 @@
-import { Add, Delete } from "@mui/icons-material";
+import { Add, Delete } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -16,15 +16,15 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { isErrorRes } from "../../lib/api";
+import { isErrorRes } from '../../lib/api';
 import {
   CreatePropertyKeyPolicyReq,
   CreatePropertyKeyPolicyRes,
   PropertyKeyPolicyMode,
-} from "../../lib/property-key-policies";
+} from '../../lib/property-key-policies';
 
 interface Props {
   readonly onClose: () => void;
@@ -42,12 +42,12 @@ export default function CreatePropertyKeyPolicyDialog({
   onCreated,
   open,
 }: Props): JSX.Element {
-  const [name, setName] = React.useState("");
-  const [suppliedId, setSuppliedId] = React.useState("");
+  const [name, setName] = React.useState('');
+  const [suppliedId, setSuppliedId] = React.useState('');
   const [mode, setMode] = React.useState<PropertyKeyPolicyMode>(
-    PropertyKeyPolicyMode.Allowlist,
+    PropertyKeyPolicyMode.Allowlist
   );
-  const [keys, setKeys] = React.useState<KeyField[]>([{ id: 0, value: "" }]);
+  const [keys, setKeys] = React.useState<KeyField[]>([{ id: 0, value: '' }]);
   const [submitting, setSubmitting] = React.useState(false);
   const [apiError, setApiError] = React.useState<string>();
   const [entriesWarning, setEntriesWarning] = React.useState<string>();
@@ -62,7 +62,7 @@ export default function CreatePropertyKeyPolicyDialog({
   function newKeyField(): KeyField {
     const id = nextKeyId.current;
     nextKeyId.current += 1;
-    return { id, value: "" };
+    return { id, value: '' };
   }
 
   React.useEffect(() => {
@@ -75,8 +75,8 @@ export default function CreatePropertyKeyPolicyDialog({
   }, [focusIndex, keys]);
 
   function reset(): void {
-    setName("");
-    setSuppliedId("");
+    setName('');
+    setSuppliedId('');
     setMode(PropertyKeyPolicyMode.Allowlist);
     setKeys([newKeyField()]);
     setSubmitting(false);
@@ -99,7 +99,7 @@ export default function CreatePropertyKeyPolicyDialog({
 
   function handleKeyChange(index: number, value: string): void {
     setKeys((current) =>
-      current.map((key, i) => (i === index ? { ...key, value } : key)),
+      current.map((key, i) => (i === index ? { ...key, value } : key))
     );
   }
 
@@ -117,13 +117,13 @@ export default function CreatePropertyKeyPolicyDialog({
   function handleKeyDown(
     e: React.KeyboardEvent<HTMLDivElement>,
     index: number,
-    value: string,
+    value: string
   ): void {
-    if (e.key !== "Enter") return;
+    if (e.key !== 'Enter') return;
     e.preventDefault();
 
     // Ignore Enter on whitespace-only fields; don't add a new field.
-    if (value.trim() === "") return;
+    if (value.trim() === '') return;
 
     // Case-sensitive exact match against the other key values. The field already
     // surfaces the per-field "Duplicate property key." error, so just bail.
@@ -134,9 +134,7 @@ export default function CreatePropertyKeyPolicyDialog({
 
   function handleRemoveKey(index: number): void {
     setKeys((current) =>
-      current.length === 1
-        ? [newKeyField()]
-        : current.filter((_, i) => i !== index),
+      current.length === 1 ? [newKeyField()] : current.filter((_, i) => i !== index)
     );
   }
 
@@ -145,12 +143,12 @@ export default function CreatePropertyKeyPolicyDialog({
   // or verbatim (case-sensitive) duplicate values are invalid.
   function keyFieldError(index: number): string | undefined {
     const value = keys[index].value;
-    if (value === "") return undefined; // empty rows are neutral/ignored
-    if (value.trim() === "") return "Property key cannot be blank."; // whitespace-only = invalid
+    if (value === '') return undefined; // empty rows are neutral/ignored
+    if (value.trim() === '') return 'Property key cannot be blank.'; // whitespace-only = invalid
     // Case-sensitive exact duplicate of another field (verbatim, matching how
     // keys are saved).
     if (keys.some((key, i) => i !== index && key.value === value)) {
-      return "Duplicate property key.";
+      return 'Duplicate property key.';
     }
     return undefined;
   }
@@ -160,14 +158,9 @@ export default function CreatePropertyKeyPolicyDialog({
 
   // Keys are NOT trimmed here to preserve case exactly. We only skip entries
   // that are empty or whitespace-only when deciding what to submit.
-  const nonEmptyKeys = keys
-    .map((key) => key.value)
-    .filter((key) => key.trim() !== "");
+  const nonEmptyKeys = keys.map((key) => key.value).filter((key) => key.trim() !== '');
   const submitDisabled =
-    submitting ||
-    name.trim() === "" ||
-    nonEmptyKeys.length === 0 ||
-    hasKeyErrors;
+    submitting || name.trim() === '' || nonEmptyKeys.length === 0 || hasKeyErrors;
 
   async function handleSubmit(): Promise<void> {
     setApiError(undefined);
@@ -179,28 +172,26 @@ export default function CreatePropertyKeyPolicyDialog({
       keys: nonEmptyKeys,
       mode,
       name: name.trim(),
-      ...(trimmedSuppliedId !== "" ? { suppliedId: trimmedSuppliedId } : {}),
+      ...(trimmedSuppliedId !== '' ? { suppliedId: trimmedSuppliedId } : {}),
     };
 
     setSubmitting(true);
 
-    const res = await fetch("/api/property-key-policies", {
+    const res = await fetch('/api/property-key-policies', {
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     }).catch(() => undefined);
     if (res == null) {
       // True network error — no response was received, so nothing was processed
       // server-side. Safe to retry.
       setSubmitting(false);
-      setApiError("Could not create the property key policy.");
+      setApiError('Could not create the property key policy.');
       return;
     }
 
-    const resBody:
-      CreatePropertyKeyPolicyRes | { message?: string } | undefined = await res
-      .json()
-      .catch(() => undefined);
+    const resBody: CreatePropertyKeyPolicyRes | { message?: string } | undefined =
+      await res.json().catch(() => undefined);
     if (resBody == null) {
       // Response received but body could not be parsed. The server may have
       // already created the policy, so we must not let the user resubmit (duplicate
@@ -217,7 +208,7 @@ export default function CreatePropertyKeyPolicyDialog({
     if (!res.ok || isErrorRes(resBody)) {
       setApiError(
         (isErrorRes(resBody) ? resBody.message : undefined) ??
-          "Could not create the property key policy.",
+          'Could not create the property key policy.'
       );
       return;
     }
@@ -252,8 +243,8 @@ export default function CreatePropertyKeyPolicyDialog({
         )}
         {uncertainOutcome && (
           <Alert severity="warning" sx={{ mb: 1, mt: 1 }}>
-            The request completed but the response could not be read. The policy
-            may have been created — check the list before retrying.
+            The request completed but the response could not be read. The policy may have
+            been created — check the list before retrying.
           </Alert>
         )}
         <TextField
@@ -299,11 +290,11 @@ export default function CreatePropertyKeyPolicyDialog({
         <Box sx={{ mt: 1 }}>
           <Typography variant="subtitle2">Property Keys</Typography>
           <Typography color="text.secondary" variant="body2">
-            Metadata property keys are{" "}
+            Metadata property keys are{' '}
             <Box component="span" fontWeight="fontWeightBold">
               case-sensitive
-            </Box>{" "}
-            and are{" "}
+            </Box>{' '}
+            and are{' '}
             <Box component="span" fontWeight="fontWeightBold">
               saved exactly as typed
             </Box>
@@ -311,15 +302,12 @@ export default function CreatePropertyKeyPolicyDialog({
           </Typography>
           <Stack spacing={1} sx={{ mt: 1 }}>
             {keys.map((key, index) => (
-              <Box
-                key={key.id}
-                sx={{ alignItems: "center", display: "flex", gap: 1 }}
-              >
+              <Box key={key.id} sx={{ alignItems: 'center', display: 'flex', gap: 1 }}>
                 <TextField
                   error={keyErrors[index] != null}
                   fullWidth
                   helperText={keyErrors[index]}
-                  inputProps={{ "aria-label": `Property key ${index + 1}` }}
+                  inputProps={{ 'aria-label': `Property key ${index + 1}` }}
                   inputRef={(el) => {
                     keyInputRefs.current[index] = el;
                   }}
@@ -360,7 +348,7 @@ export default function CreatePropertyKeyPolicyDialog({
               onClick={() => {
                 handleSubmit().catch(() => {
                   setSubmitting(false);
-                  setApiError("Could not create the property key policy.");
+                  setApiError('Could not create the property key policy.');
                 });
               }}
               variant="contained"

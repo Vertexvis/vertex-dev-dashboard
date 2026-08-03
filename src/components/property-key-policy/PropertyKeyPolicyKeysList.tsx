@@ -1,12 +1,6 @@
-import {
-  List,
-  ListItem,
-  ListItemText,
-  Skeleton,
-  Typography,
-} from "@mui/material";
+import { List, ListItem, ListItemText, Skeleton, Typography } from '@mui/material';
 
-import { PropertyKeyPolicyKey } from "../../lib/property-key-policies";
+import { PropertyKeyPolicyKey } from '../../lib/property-key-policies';
 
 interface Props {
   readonly keys?: readonly PropertyKeyPolicyKey[];
@@ -73,8 +67,8 @@ function renderBody({
           <ListItemText
             primary={key.name}
             primaryTypographyProps={{
-              sx: { overflowWrap: "anywhere", whiteSpace: "normal" },
-              variant: "body2",
+              sx: { overflowWrap: 'anywhere', whiteSpace: 'normal' },
+              variant: 'body2',
             }}
           />
         </ListItem>

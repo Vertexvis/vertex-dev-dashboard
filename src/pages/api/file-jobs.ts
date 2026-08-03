@@ -4,21 +4,21 @@ import {
   InvalidBody,
   isErrorFailure,
   toErrorRes,
-} from "../../lib/api";
-import { methodRouter } from "../../lib/api-handler";
+} from '../../lib/api';
+import { methodRouter } from '../../lib/api-handler';
 import {
   fetchAllFileCollectionFiles,
   getFileCollectionExportAvailability,
   getFileCollectionsApi,
-} from "../../lib/file-collections";
+} from '../../lib/file-collections';
 import {
   buildFileArchiveJobRequest,
   FileJobRes,
   getFileJobsApi,
   toFileJobRes,
-} from "../../lib/file-jobs";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+} from '../../lib/file-jobs';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 const DefaultArchiveFileExpirySeconds = 24 * 60 * 60;
 
@@ -46,15 +46,13 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
   const { fileCollectionId } = body;
   const files = await fetchAllFileCollectionFiles(
     getFileCollectionsApi(client),
-    fileCollectionId,
+    fileCollectionId
   );
 
   const exportAvailability = getFileCollectionExportAvailability(files);
   if (!exportAvailability.enabled) {
     return {
-      message:
-        exportAvailability.disabledReason ??
-        "File collection is not exportable.",
+      message: exportAvailability.disabledReason ?? 'File collection is not exportable.',
       status: 400,
     };
   }
@@ -63,7 +61,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
     client.files.createFile({
       createFileRequest: {
         data: {
-          type: "file",
+          type: 'file',
           attributes: {
             expiry: DefaultArchiveFileExpirySeconds,
             metadata: { fileCollectionId },
@@ -71,17 +69,14 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
           },
         },
       },
-    }),
+    })
   );
   if (isErrorFailure(archiveFile)) return toErrorRes({ failure: archiveFile });
 
   const job = await makeCall(() =>
     getFileJobsApi(client).createFileJob({
-      createFileJobRequest: buildFileArchiveJobRequest(
-        files,
-        archiveFile.data.id,
-      ),
-    }),
+      createFileJobRequest: buildFileArchiveJobRequest(files, archiveFile.data.id),
+    })
   );
   if (isErrorFailure(job)) return toErrorRes({ failure: job });
 
@@ -91,16 +86,14 @@ async function create(req: NextIronRequest): Promise<ErrorRes | FileJobRes> {
 function parseCreateFileJobReq(body: unknown): CreateFileJobReq | undefined {
   try {
     const parsed =
-      typeof body === "string"
+      typeof body === 'string'
         ? (JSON.parse(body) as RawCreateFileJobReq)
         : (body as RawCreateFileJobReq);
 
     const fileCollectionId = requireStringParam(parsed.fileCollectionId);
     const archiveName = parseOptionalStringParam(parsed.archiveName);
 
-    return archiveName == null
-      ? { fileCollectionId }
-      : { archiveName, fileCollectionId };
+    return archiveName == null ? { fileCollectionId } : { archiveName, fileCollectionId };
   } catch {
     return undefined;
   }
@@ -111,15 +104,15 @@ function parseOptionalStringParam(value: unknown): string | undefined {
 }
 
 function requireStringParam(value: unknown): string {
-  if (typeof value !== "string") throw new Error("Expected string param.");
+  if (typeof value !== 'string') throw new Error('Expected string param.');
 
   const trimmed = value.trim();
-  if (trimmed === "") throw new Error("Expected non-empty string param.");
+  if (trimmed === '') throw new Error('Expected non-empty string param.');
 
   return trimmed;
 }
 
 function buildDefaultArchiveName(fileCollectionId: string): string {
-  const safeFileCollectionId = fileCollectionId.replace(/[^a-z0-9._-]/gi, "-");
+  const safeFileCollectionId = fileCollectionId.replace(/[^a-z0-9._-]/gi, '-');
   return `file-collection-${safeFileCollectionId}.zip`;
 }

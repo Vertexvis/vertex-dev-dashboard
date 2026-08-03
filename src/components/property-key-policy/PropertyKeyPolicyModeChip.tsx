@@ -1,22 +1,20 @@
-import { Chip } from "@mui/material";
+import { Chip } from '@mui/material';
 
-import { PropertyKeyPolicyMode } from "../../lib/property-key-policies";
-import { toModeLabel } from "./mode";
+import { PropertyKeyPolicyMode } from '../../lib/property-key-policies';
+import { toModeLabel } from './mode';
 
 interface Props {
   readonly mode: PropertyKeyPolicyMode;
 }
 
-function modeColor(
-  mode: PropertyKeyPolicyMode,
-): "default" | "success" | "error" {
+function modeColor(mode: PropertyKeyPolicyMode): 'default' | 'success' | 'error' {
   switch (mode) {
     case PropertyKeyPolicyMode.Allowlist:
-      return "success";
+      return 'success';
     case PropertyKeyPolicyMode.Denylist:
-      return "error";
+      return 'error';
     default:
-      return "default";
+      return 'default';
   }
 }
 
@@ -26,7 +24,7 @@ export function PropertyKeyPolicyModeChip({ mode }: Props): JSX.Element {
       color={modeColor(mode)}
       label={toModeLabel(mode)}
       size="small"
-      sx={{ fontWeight: 600, textTransform: "uppercase" }}
+      sx={{ fontWeight: 600, textTransform: 'uppercase' }}
       variant="outlined"
     />
   );

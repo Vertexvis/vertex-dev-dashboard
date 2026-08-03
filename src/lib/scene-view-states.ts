@@ -1,7 +1,7 @@
 import {
   SceneViewStateData,
   SceneViewStateDataAttributes,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
-export type SceneViewState = Pick<SceneViewStateData, "id"> &
+export type SceneViewState = Pick<SceneViewStateData, 'id'> &
   SceneViewStateDataAttributes;

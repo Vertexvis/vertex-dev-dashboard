@@ -6,12 +6,12 @@ import {
   DialogTitle,
   TextField,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { reportError } from "../../lib/report-error";
-import { MergeSceneReq, MergeSceneRes } from "../../pages/api/merged-scenes";
-import { CreateSceneReq, CreateSceneRes } from "../../pages/api/scenes";
+import { reportError } from '../../lib/report-error';
+import { MergeSceneReq, MergeSceneRes } from '../../pages/api/merged-scenes';
+import { CreateSceneReq, CreateSceneRes } from '../../pages/api/scenes';
 
 interface CreateSceneDialogProps {
   readonly open: boolean;
@@ -43,8 +43,8 @@ export default function CreateSceneDialog({
       };
 
       const sceneRes: CreateSceneRes = await (
-        await fetch("/api/scenes", {
-          method: "POST",
+        await fetch('/api/scenes', {
+          method: 'POST',
           body: JSON.stringify(attrs),
         })
       ).json();
@@ -64,8 +64,8 @@ export default function CreateSceneDialog({
       };
 
       const sceneRes: MergeSceneRes = await (
-        await fetch("/api/merged-scenes", {
-          method: "POST",
+        await fetch('/api/merged-scenes', {
+          method: 'POST',
           body: JSON.stringify(attrs),
         })
       ).json();
@@ -120,7 +120,7 @@ export default function CreateSceneDialog({
         <Button
           disabled={submitDisabled}
           onClick={() => {
-            handleSubmit().catch(reportError("Failed to create the scene"));
+            handleSubmit().catch(reportError('Failed to create the scene'));
           }}
           color="primary"
           variant="contained"

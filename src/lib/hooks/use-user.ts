@@ -1,8 +1,8 @@
-import Router from "next/router";
-import { useEffect } from "react";
-import useSWR from "swr";
+import Router from 'next/router';
+import { useEffect } from 'react';
+import useSWR from 'swr';
 
-import { reportError } from "../report-error";
+import { reportError } from '../report-error';
 
 interface UseUserResponse {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,16 +10,16 @@ interface UseUserResponse {
   readonly mutate: (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: any,
-    shouldRevalidate?: boolean | undefined,
+    shouldRevalidate?: boolean | undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<any>;
 }
 
 export default function useUser({
-  redirectTo = "",
+  redirectTo = '',
   redirectIfFound = false,
 } = {}): UseUserResponse {
-  const { data: user, mutate } = useSWR("/api/user");
+  const { data: user, mutate } = useSWR('/api/user');
 
   useEffect(() => {
     // if no redirect needed, just return (example: already on /dashboard)
@@ -32,7 +32,7 @@ export default function useUser({
       // If redirectIfFound is also set, redirect if the user was found
       (redirectIfFound && user?.isLoggedIn)
     ) {
-      Router.push(redirectTo).catch(reportError("Failed to redirect"));
+      Router.push(redirectTo).catch(reportError('Failed to redirect'));
     }
   }, [user, redirectIfFound, redirectTo]);
 

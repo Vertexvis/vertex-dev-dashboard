@@ -1,17 +1,17 @@
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { PropertyKeyPolicyDetailsDrawer } from "../components/property-key-policy/PropertyKeyPolicyDetailsDrawer";
-import { Layout } from "../components/shared/Layout";
-import { PropertyKeyPolicy } from "../lib/property-key-policies";
+import { PropertyKeyPolicyDetailsDrawer } from '../components/property-key-policy/PropertyKeyPolicyDetailsDrawer';
+import { Layout } from '../components/shared/Layout';
+import { PropertyKeyPolicy } from '../lib/property-key-policies';
 
-export { defaultServerSideProps as getServerSideProps } from "../lib/with-session";
+export { defaultServerSideProps as getServerSideProps } from '../lib/with-session';
 
 const PropertyKeyPolicyTable = dynamic(
-  () => import("../components/property-key-policy/PropertyKeyPolicyTable"),
+  () => import('../components/property-key-policy/PropertyKeyPolicyTable'),
   {
     ssr: false,
-  },
+  }
 );
 
 export default function PropertyKeyPolicies(): JSX.Element {

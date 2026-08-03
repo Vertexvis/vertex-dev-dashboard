@@ -1,26 +1,23 @@
-import { createEvent, fireEvent, render, screen } from "@testing-library/react";
-import React from "react";
+import { createEvent, fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 
-import { ResourceLink } from "../../../components/shared/ResourceLink";
+import { ResourceLink } from '../../../components/shared/ResourceLink';
 
-describe("ResourceLink", () => {
-  it("uses Next Link for resource pages by default", () => {
+describe('ResourceLink', () => {
+  it('uses Next Link for resource pages by default', () => {
     render(
-      <ResourceLink
-        href="/scene-viewer/scene-1"
-        primaryActionLabel="Open Scene"
-      >
+      <ResourceLink href="/scene-viewer/scene-1" primaryActionLabel="Open Scene">
         Scene
-      </ResourceLink>,
+      </ResourceLink>
     );
 
-    expect(screen.getByRole("link", { name: "Open Scene" })).toHaveAttribute(
-      "href",
-      "/scene-viewer/scene-1",
+    expect(screen.getByRole('link', { name: 'Open Scene' })).toHaveAttribute(
+      'href',
+      '/scene-viewer/scene-1'
     );
   });
 
-  it("does not bubble href-backed clicks while preserving default navigation", () => {
+  it('does not bubble href-backed clicks while preserving default navigation', () => {
     const onParentClick = jest.fn();
 
     render(
@@ -28,10 +25,10 @@ describe("ResourceLink", () => {
         <ResourceLink href="#resource" primaryActionLabel="Open Resource">
           Resource
         </ResourceLink>
-      </div>,
+      </div>
     );
 
-    const link = screen.getByRole("link", { name: "Open Resource" });
+    const link = screen.getByRole('link', { name: 'Open Resource' });
     const event = createEvent.click(link);
     fireEvent(link, event);
 
@@ -39,7 +36,7 @@ describe("ResourceLink", () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it("lets disabled link clicks bubble to the resource row", () => {
+  it('lets disabled link clicks bubble to the resource row', () => {
     const onParentClick = jest.fn();
 
     render(
@@ -47,10 +44,10 @@ describe("ResourceLink", () => {
         <ResourceLink disabled primaryActionLabel="Download unavailable">
           Resource
         </ResourceLink>
-      </div>,
+      </div>
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Download unavailable" }));
+    fireEvent.click(screen.getByRole('link', { name: 'Download unavailable' }));
 
     expect(onParentClick).toHaveBeenCalledTimes(1);
   });

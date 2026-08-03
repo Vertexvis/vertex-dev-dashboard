@@ -1,16 +1,16 @@
-import { Close } from "@mui/icons-material";
-import { Box, Drawer, IconButton, Typography } from "@mui/material";
-import React from "react";
-import useSWR from "swr";
+import { Close } from '@mui/icons-material';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
+import React from 'react';
+import useSWR from 'swr';
 
-import { isErrorRes } from "../../lib/api";
+import { isErrorRes } from '../../lib/api';
 import {
   FileCollection,
   GetFileCollectionRes,
   toFileCollection,
-} from "../../lib/file-collections";
-import { RightDrawerWidth } from "../shared/Layout";
-import { FileCollectionMetadataTable } from "./FileCollectionMetadataTable";
+} from '../../lib/file-collections';
+import { RightDrawerWidth } from '../shared/Layout';
+import { FileCollectionMetadataTable } from './FileCollectionMetadataTable';
 
 interface Props {
   readonly fileCollection?: FileCollection;
@@ -26,7 +26,7 @@ export function FileCollectionDetailsDrawer({
   const { data, error } = useSWR<GetFileCollectionRes | undefined>(
     fileCollection == null
       ? null
-      : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`,
+      : `/api/file-collections/${encodeURIComponent(fileCollection.id)}`
   );
   const detailRequestFailed = error != null || isErrorRes(data);
   const fetchedFileCollection =
@@ -52,11 +52,11 @@ export function FileCollectionDetailsDrawer({
       sx={{
         flexShrink: 0,
         width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
+        '& .MuiDrawer-paper': { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
           File Collection Details
         </Typography>
@@ -68,7 +68,7 @@ export function FileCollectionDetailsDrawer({
         <Box sx={{ px: 2 }}>
           <FileCollectionMetadataTable
             fileCollection={fileCollectionDetails}
-            optionalFieldStatus={showOptionalFieldLoading ? "loading" : "ready"}
+            optionalFieldStatus={showOptionalFieldLoading ? 'loading' : 'ready'}
           />
         </Box>
       ) : (

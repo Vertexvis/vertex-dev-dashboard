@@ -1,15 +1,15 @@
-import { head } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
+import { head } from '@vertexvis/api-client-node';
+import { NextApiResponse } from 'next';
 
 import {
   ErrorRes,
   InvalidBody,
   MethodNotAllowed,
   ServerError,
-} from "../../../../lib/api";
-import { handleVertexError } from "../../../../lib/api-handler";
-import { getClientFromSession } from "../../../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../../../lib/with-session";
+} from '../../../../lib/api';
+import { handleVertexError } from '../../../../lib/api-handler';
+import { getClientFromSession } from '../../../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../../../lib/with-session';
 
 const DefaultDownloadExpirySeconds = 30;
 
@@ -17,9 +17,9 @@ export default withSession(handleFileDownload);
 
 export async function handleFileDownload(
   req: NextIronRequest,
-  res: NextApiResponse<ErrorRes>,
+  res: NextApiResponse<ErrorRes>
 ): Promise<void> {
-  if (req.method !== "GET") {
+  if (req.method !== 'GET') {
     return res.status(MethodNotAllowed.status).json(MethodNotAllowed);
   }
 
@@ -32,7 +32,7 @@ export async function handleFileDownload(
       id,
       createDownloadRequest: {
         data: {
-          type: "download-url",
+          type: 'download-url',
           attributes: { expiry: DefaultDownloadExpirySeconds },
         },
       },

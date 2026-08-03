@@ -4,10 +4,10 @@ import {
   TableHead as MuiTableHead,
   TableRow,
   TableSortLabel,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { SortState } from "../../lib/sorting";
+import { SortState } from '../../lib/sorting';
 
 export interface HeadCell {
   readonly beforeCheckbox?: boolean;
@@ -41,7 +41,7 @@ export function TableHead({
         {renderHeadCells(
           headCells.filter((hc) => hc.beforeCheckbox),
           onSortChange,
-          sort,
+          sort
         )}
         <TableCell padding="checkbox">
           <Checkbox
@@ -54,7 +54,7 @@ export function TableHead({
         {renderHeadCells(
           headCells.filter((hc) => !hc.beforeCheckbox),
           onSortChange,
-          sort,
+          sort
         )}
       </TableRow>
     </MuiTableHead>
@@ -63,18 +63,18 @@ export function TableHead({
 function renderHeadCells(
   cells: readonly HeadCell[],
   onSortChange?: (field: string) => void,
-  sort?: SortState,
+  sort?: SortState
 ): JSX.Element[] {
   return cells.map((hc) => (
     <TableCell
       key={hc.id}
-      align={hc.numeric ? "right" : "left"}
-      padding={hc.disablePadding ? "none" : "normal"}
+      align={hc.numeric ? 'right' : 'left'}
+      padding={hc.disablePadding ? 'none' : 'normal'}
     >
       {hc.sortable && onSortChange != null ? (
         <TableSortLabel
           active={sort?.field === hc.id}
-          direction={sort?.field === hc.id ? sort.order : "asc"}
+          direction={sort?.field === hc.id ? sort.order : 'asc'}
           onClick={() => onSortChange(hc.id)}
         >
           {hc.label}

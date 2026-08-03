@@ -1,5 +1,5 @@
-import { IconButton, Tooltip } from "@mui/material";
-import React from "react";
+import { IconButton, Tooltip } from '@mui/material';
+import React from 'react';
 
 export interface Props {
   readonly active?: string;
@@ -28,7 +28,7 @@ export const SidebarIcon = ({
   const button = (
     <IconButton
       onClick={() => toggleSidebar(name)}
-      color={active === name ? "primary" : "default"}
+      color={active === name ? 'primary' : 'default'}
     >
       {children}
     </IconButton>

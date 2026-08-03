@@ -1,11 +1,8 @@
-import { render, RenderResult } from "@testing-library/react";
-import React from "react";
-import { SWRConfig } from "swr";
+import { render, RenderResult } from '@testing-library/react';
+import React from 'react';
+import { SWRConfig } from 'swr';
 
-export function renderWithSWR(ui: React.ReactElement): Omit<
-  RenderResult,
-  "rerender"
-> & {
+export function renderWithSWR(ui: React.ReactElement): Omit<RenderResult, 'rerender'> & {
   rerender: (nextUi: React.ReactElement) => void;
 } {
   function wrap(children: React.ReactElement): React.ReactElement {
@@ -15,7 +12,7 @@ export function renderWithSWR(ui: React.ReactElement): Omit<
           dedupingInterval: 0,
           fetcher: (url: string) =>
             fetch(new URL(url, window.location.origin).toString()).then((res) =>
-              res.json(),
+              res.json()
             ),
           provider: () => new Map(),
         }}

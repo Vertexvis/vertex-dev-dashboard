@@ -1,4 +1,4 @@
-import { nodeMswServer } from "./server";
+import { nodeMswServer } from './server';
 
 export function installNodeMswServer(): void {
   beforeAll(() => {
@@ -6,8 +6,8 @@ export function installNodeMswServer(): void {
       onUnhandledRequest(request, print) {
         const url = new URL(request.url);
         const isLocalApiRequest =
-          (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
-          url.pathname.startsWith("/api/");
+          (url.hostname === '127.0.0.1' || url.hostname === 'localhost') &&
+          url.pathname.startsWith('/api/');
 
         if (isLocalApiRequest) {
           return;
@@ -15,7 +15,7 @@ export function installNodeMswServer(): void {
 
         print.error();
         throw new Error(
-          `Unhandled outbound request: ${request.method} ${url.toString()}`,
+          `Unhandled outbound request: ${request.method} ${url.toString()}`
         );
       },
     });

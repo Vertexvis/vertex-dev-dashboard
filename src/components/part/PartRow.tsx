@@ -1,4 +1,4 @@
-import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import {
   Checkbox,
   Collapse,
@@ -9,16 +9,16 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { toLocaleString } from "../../lib/dates";
-import { Paged } from "../../lib/paging";
-import { PartRevision } from "../../lib/part-revisions";
-import { toPartRevisionPage } from "../../lib/part-revisions";
-import { Part } from "../../lib/parts";
-import { reportError } from "../../lib/report-error";
-import { RowActionsMenu } from "../shared/RowActionsMenu";
+import { toLocaleString } from '../../lib/dates';
+import { Paged } from '../../lib/paging';
+import { PartRevision } from '../../lib/part-revisions';
+import { toPartRevisionPage } from '../../lib/part-revisions';
+import { Part } from '../../lib/parts';
+import { reportError } from '../../lib/report-error';
+import { RowActionsMenu } from '../shared/RowActionsMenu';
 
 interface PartRowProps {
   readonly activeRevisionId?: string;
@@ -40,9 +40,7 @@ export default function PartRow({
   const row = part;
   const [open, setOpen] = React.useState<boolean>(false);
 
-  const [revisions, setRevisions] = React.useState<
-    Paged<PartRevision> | undefined
-  >();
+  const [revisions, setRevisions] = React.useState<Paged<PartRevision> | undefined>();
 
   React.useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -51,7 +49,7 @@ export default function PartRow({
     };
 
     if (open) {
-      fetchData().catch(reportError("Failed to load part revisions"));
+      fetchData().catch(reportError('Failed to load part revisions'));
     }
   }, [part.id, open]);
 
@@ -63,7 +61,7 @@ export default function PartRow({
         tabIndex={-1}
         key={row.id}
         selected={isSelected}
-        sx={{ "& > *": { borderBottom: "unset" } }}
+        sx={{ '& > *': { borderBottom: 'unset' } }}
       >
         <TableCell>
           <IconButton size="small" onClick={() => setOpen(!open)}>
@@ -109,7 +107,7 @@ export default function PartRow({
                       hover
                       onClick={() => onRevisionSelected(r)}
                       selected={activeRevisionId === r.id}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                     >
                       <TableCell>{r.name}</TableCell>
                       <TableCell> {r.id} </TableCell>
@@ -120,7 +118,7 @@ export default function PartRow({
                         <RowActionsMenu
                           actions={[
                             {
-                              label: "New scene",
+                              label: 'New scene',
                               onClick: () => onCreteSceneFromRevision(r.id),
                             },
                           ]}

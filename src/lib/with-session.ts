@@ -1,18 +1,9 @@
-import { OAuth2Token } from "@vertexvis/api-client-node";
-import { Environment } from "@vertexvis/viewer";
-import {
-  GetServerSidePropsResult,
-  NextApiRequest,
-  NextApiResponse,
-} from "next";
-import {
-  Handler,
-  Session,
-  SessionOptions,
-  withIronSession,
-} from "next-iron-session";
+import { OAuth2Token } from '@vertexvis/api-client-node';
+import { Environment } from '@vertexvis/viewer';
+import { GetServerSidePropsResult, NextApiRequest, NextApiResponse } from 'next';
+import { Handler, Session, SessionOptions, withIronSession } from 'next-iron-session';
 
-export type EnvironmentWithCustom = Environment | "custom";
+export type EnvironmentWithCustom = Environment | 'custom';
 
 export interface NetworkConfig {
   apiHost: string;
@@ -38,32 +29,32 @@ export interface OAuthCredentials {
   readonly secret: string;
 }
 
-export const CookieName = "sess";
-export const CredsKey = "creds";
-export const TokenKey = "token";
-export const EnvKey = "env";
-export const NetworkConfig = "networkConfig";
+export const CookieName = 'sess';
+export const CredsKey = 'creds';
+export const TokenKey = 'token';
+export const EnvKey = 'env';
+export const NetworkConfig = 'networkConfig';
 
 export const CookieAttributes: SessionOptions = {
-  password: process.env.COOKIE_SECRET || "",
+  password: process.env.COOKIE_SECRET || '',
   cookieName: CookieName,
   cookieOptions: {
     // Allow session use in non-https environments like localhost
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === 'production',
   },
 };
 
 export type NextIronRequest = NextApiRequest & { readonly session: Session };
 
 export default function withSession(
-  handler: Handler<NextIronRequest, NextApiResponse>,
+  handler: Handler<NextIronRequest, NextApiResponse>
 ): Handler<NextApiRequest, NextApiResponse> {
   return withIronSession(handler, CookieAttributes);
 }
 
 export const defaultServerSideProps = withIronSession(
   serverSidePropsHandler,
-  CookieAttributes,
+  CookieAttributes
 );
 
 export function serverSidePropsHandler({
@@ -74,10 +65,10 @@ export function serverSidePropsHandler({
   const token: SessionToken | undefined = session.get(TokenKey);
   const creds: OAuthCredentials | undefined = session.get(CredsKey);
   const networkConfig: NetworkConfig | undefined = session.get(NetworkConfig);
-  const vertexEnv: Environment = session.get(EnvKey) || "platdev";
+  const vertexEnv: Environment = session.get(EnvKey) || 'platdev';
 
   if (!session || !creds || !token) {
-    return { redirect: { statusCode: 302, destination: "/login" } };
+    return { redirect: { statusCode: 302, destination: '/login' } };
   }
 
   return { props: { clientId: creds.id, vertexEnv, networkConfig } };
@@ -106,7 +97,7 @@ export function setCreds(session: Session, val: OAuthCredentials): void {
 export function setEnv(
   session: Session,
   val: EnvironmentWithCustom,
-  networkConfig?: NetworkConfig,
+  networkConfig?: NetworkConfig
 ): void {
   session.set(EnvKey, val);
 

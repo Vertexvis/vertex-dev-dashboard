@@ -1,4 +1,4 @@
-import { PropertyKeyPolicyMode } from "@vertexvis/api-client-node";
+import { PropertyKeyPolicyMode } from '@vertexvis/api-client-node';
 
 import type {
   GetPropertyKeyPolicyKeysRes,
@@ -6,7 +6,7 @@ import type {
   PropertyKeyPolicyKeyResource,
   PropertyKeyPolicyPageRes,
   PropertyKeyPolicyResource,
-} from "../../../src/lib/property-key-policies";
+} from '../../../src/lib/property-key-policies';
 
 export function propertyKeyPolicy(overrides: {
   readonly createdAt?: string;
@@ -17,18 +17,18 @@ export function propertyKeyPolicy(overrides: {
 }): PropertyKeyPolicyResource {
   return {
     attributes: {
-      createdAt: overrides.createdAt ?? "2026-06-10T15:30:00Z",
+      createdAt: overrides.createdAt ?? '2026-06-10T15:30:00Z',
       mode: overrides.mode ?? PropertyKeyPolicyMode.Allowlist,
       name: overrides.name,
       suppliedId: overrides.suppliedId,
     },
     id: overrides.id,
-    type: "property-key-policy",
+    type: 'property-key-policy',
   };
 }
 
 export function propertyKeyPoliciesPage({
-  cursors = { self: "page-1" },
+  cursors = { self: 'page-1' },
   data,
 }: {
   readonly cursors?: {
@@ -45,7 +45,7 @@ export function propertyKeyPoliciesPage({
 }
 
 export function propertyKeyPolicyRes(
-  policy: PropertyKeyPolicyResource,
+  policy: PropertyKeyPolicyResource
 ): GetPropertyKeyPolicyRes {
   return { data: policy, status: 200 };
 }
@@ -57,7 +57,7 @@ export function propertyKeyPolicyKey(overrides: {
   return {
     attributes: { name: overrides.name },
     id: overrides.id,
-    type: "property-key",
+    type: 'property-key',
   };
 }
 

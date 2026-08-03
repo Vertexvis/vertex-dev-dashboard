@@ -1,4 +1,4 @@
-import { Close, FileCopyOutlined } from "@mui/icons-material";
+import { Close, FileCopyOutlined } from '@mui/icons-material';
 import {
   Box,
   CircularProgress,
@@ -12,19 +12,16 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { toLocaleString } from "../../lib/dates";
-import {
-  FileCollection,
-  toFileCollectionPage,
-} from "../../lib/file-collections";
-import { File } from "../../lib/files";
-import { toDisplayValue, toFileSizeDisplay } from "../../lib/formatting";
-import { reportError } from "../../lib/report-error";
-import { AppLink } from "../shared/AppLink";
-import { DefaultPageSize, RightDrawerWidth } from "../shared/Layout";
+import { toLocaleString } from '../../lib/dates';
+import { FileCollection, toFileCollectionPage } from '../../lib/file-collections';
+import { File } from '../../lib/files';
+import { toDisplayValue, toFileSizeDisplay } from '../../lib/formatting';
+import { reportError } from '../../lib/report-error';
+import { AppLink } from '../shared/AppLink';
+import { DefaultPageSize, RightDrawerWidth } from '../shared/Layout';
 
 interface Props {
   readonly file?: File;
@@ -45,11 +42,11 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
       sx={{
         flexShrink: 0,
         width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
+        '& .MuiDrawer-paper': { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
           File Details
         </Typography>
@@ -59,25 +56,16 @@ export function FileDetailsDrawer({ file, onClose, open }: Props): JSX.Element {
       </Box>
       {file ? (
         <TableContainer>
-          <Table size="small" sx={{ whiteSpace: "nowrap" }}>
+          <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
             <TableBody>
               <DetailsRow label="Name" value={file.name} />
-              <DetailsRow
-                label="Created"
-                value={toLocaleString(file.created)}
-              />
+              <DetailsRow label="Created" value={toLocaleString(file.created)} />
               <DetailsRow label="Status" value={file.status} />
-              <DetailsRow
-                label="Expires"
-                value={toLocaleString(file.expiresAt)}
-              />
+              <DetailsRow label="Expires" value={toLocaleString(file.expiresAt)} />
               <MetadataRow metadata={file.metadata} />
               <DetailsRow label="Root File Name" value={file.rootFileName} />
               <DetailsRow label="Size" value={toFileSizeDisplay(file.size)} />
-              <DetailsRow
-                label="Updated"
-                value={toLocaleString(file.uploaded)}
-              />
+              <DetailsRow label="Updated" value={toLocaleString(file.uploaded)} />
               <FileCollectionIdsRow
                 error={error}
                 fileCollections={fileCollections}
@@ -104,9 +92,7 @@ function useFileCollections({
   readonly fileCollections: FileCollection[];
   readonly loading: boolean;
 } {
-  const [fileCollections, setFileCollections] = React.useState<
-    FileCollection[]
-  >([]);
+  const [fileCollections, setFileCollections] = React.useState<FileCollection[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string>();
 
@@ -126,13 +112,11 @@ function useFileCollections({
       const params = new URLSearchParams({
         pageSize: DefaultPageSize.toString(),
       });
-      if (nextCursor != null) params.set("cursor", nextCursor);
+      if (nextCursor != null) params.set('cursor', nextCursor);
 
       const res = await fetch(
-        `/api/files/${encodeURIComponent(
-          fileId,
-        )}/file-collections?${params.toString()}`,
-        { signal: controller.signal },
+        `/api/files/${encodeURIComponent(fileId)}/file-collections?${params.toString()}`,
+        { signal: controller.signal }
       );
       const body = await res.json();
 
@@ -140,8 +124,7 @@ function useFileCollections({
 
       if (!res.ok) {
         throw new Error(
-          (body as { message?: string }).message ??
-            "Could not load file collections.",
+          (body as { message?: string }).message ?? 'Could not load file collections.'
         );
       }
 
@@ -166,16 +149,14 @@ function useFileCollections({
       } catch (err) {
         if (!controller.signal.aborted) {
           setError(
-            err instanceof Error
-              ? err.message
-              : "Could not load file collections.",
+            err instanceof Error ? err.message : 'Could not load file collections.'
           );
           setLoading(false);
         }
       }
     };
 
-    load().catch(reportError("Failed to load file collections"));
+    load().catch(reportError('Failed to load file collections'));
 
     return () => {
       controller.abort();
@@ -197,7 +178,7 @@ function DetailsRow({
       <TableCell>
         <Typography variant="subtitle2">{label}</Typography>
         <Typography
-          sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+          sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
           variant="body2"
         >
           {toDisplayValue(value)}
@@ -219,14 +200,14 @@ function MetadataRow({
       <TableCell>
         <Typography variant="subtitle2">Metadata</Typography>
         {entries.length > 0 ? (
-          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
+          <Table size="small" sx={{ mt: 1, tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
                 <TableCell
                   sx={{
                     px: 0,
                     py: 0.5,
-                    width: "40%",
+                    width: '40%',
                     pr: 1,
                   }}
                 >
@@ -244,22 +225,20 @@ function MetadataRow({
                     sx={{
                       px: 0,
                       py: 0.5,
-                      verticalAlign: "top",
+                      verticalAlign: 'top',
                       pr: 1,
                     }}
                   >
                     <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                      sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
                       variant="body2"
                     >
                       {toDisplayValue(key)}
                     </Typography>
                   </TableCell>
-                  <TableCell
-                    sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: "top" }}
-                  >
+                  <TableCell sx={{ px: 0, py: 0.5, pl: 1, verticalAlign: 'top' }}>
                     <Typography
-                      sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                      sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
                       variant="body2"
                     >
                       {toDisplayValue(value)}
@@ -271,7 +250,7 @@ function MetadataRow({
           </Table>
         ) : (
           <Typography
-            sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             N/A
@@ -300,31 +279,29 @@ function FileCollectionIdsRow({
       <TableCell>
         <Typography variant="subtitle2">File Collections</Typography>
         {loading ? (
-          <Box sx={{ alignItems: "center", display: "flex", gap: 1, mt: 1 }}>
+          <Box sx={{ alignItems: 'center', display: 'flex', gap: 1, mt: 1 }}>
             <CircularProgress size={16} />
             <Typography variant="body2">Loading collections...</Typography>
           </Box>
         ) : error != null ? (
           <Typography
-            sx={{ mt: 1, overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ mt: 1, overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             {error}
           </Typography>
         ) : fileCollections.length > 0 ? (
-          <Table size="small" sx={{ mt: 1, tableLayout: "fixed" }}>
+          <Table size="small" sx={{ mt: 1, tableLayout: 'fixed' }}>
             <TableBody>
               {fileCollections.map((collection) => (
                 <TableRow key={collection.id}>
-                  <TableCell sx={{ px: 0, py: 0.75, verticalAlign: "top" }}>
+                  <TableCell sx={{ px: 0, py: 0.75, verticalAlign: 'top' }}>
                     <AppLink
-                      href={`/file-collections/${encodeURIComponent(
-                        collection.id,
-                      )}`}
+                      href={`/file-collections/${encodeURIComponent(collection.id)}`}
                       underline="hover"
                     >
                       <Typography
-                        sx={{ overflowWrap: "anywhere", whiteSpace: "normal" }}
+                        sx={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}
                         variant="body2"
                       >
                         {toDisplayValue(collection.name ?? collection.id)}
@@ -332,29 +309,27 @@ function FileCollectionIdsRow({
                     </AppLink>
                     <Box
                       sx={{
-                        alignItems: "center",
-                        display: "flex",
+                        alignItems: 'center',
+                        display: 'flex',
                         gap: 1,
-                        justifyContent: "space-between",
+                        justifyContent: 'space-between',
                         mt: 0.5,
                       }}
                     >
                       <AppLink
-                        href={`/file-collections/${encodeURIComponent(
-                          collection.id,
-                        )}`}
+                        href={`/file-collections/${encodeURIComponent(collection.id)}`}
                         underline="hover"
                         sx={{ minWidth: 0 }}
                       >
                         <Typography
                           sx={{
-                            color: "text.secondary",
-                            fontFamily: "monospace",
-                            fontSize: "0.7rem",
-                            letterSpacing: "-0.02em",
+                            color: 'text.secondary',
+                            fontFamily: 'monospace',
+                            fontSize: '0.7rem',
+                            letterSpacing: '-0.02em',
                             lineHeight: 1.4,
-                            overflowWrap: "anywhere",
-                            whiteSpace: "normal",
+                            overflowWrap: 'anywhere',
+                            whiteSpace: 'normal',
                           }}
                           variant="body2"
                         >
@@ -366,7 +341,7 @@ function FileCollectionIdsRow({
                           aria-label={`Copy ${collection.id}`}
                           onClick={() => {
                             copyId(collection.id).catch(
-                              reportError("Failed to copy file collection ID"),
+                              reportError('Failed to copy file collection ID')
                             );
                           }}
                           size="small"
@@ -383,7 +358,7 @@ function FileCollectionIdsRow({
           </Table>
         ) : (
           <Typography
-            sx={{ mt: 1, overflowWrap: "anywhere", whiteSpace: "normal" }}
+            sx={{ mt: 1, overflowWrap: 'anywhere', whiteSpace: 'normal' }}
             variant="body2"
           >
             N/A

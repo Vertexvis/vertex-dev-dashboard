@@ -1,12 +1,12 @@
-import dynamic from "next/dynamic";
-import React, { useCallback } from "react";
+import dynamic from 'next/dynamic';
+import React, { useCallback } from 'react';
 
-import { SceneDrawer } from "../components/scene/SceneDrawer";
-import { Layout } from "../components/shared/Layout";
-import { Scene } from "../lib/scenes";
-import { defaultServerSideProps } from "../lib/with-session";
+import { SceneDrawer } from '../components/scene/SceneDrawer';
+import { Layout } from '../components/shared/Layout';
+import { Scene } from '../lib/scenes';
+import { defaultServerSideProps } from '../lib/with-session';
 
-const SceneTable = dynamic(() => import("../components/scene/SceneTable"), {
+const SceneTable = dynamic(() => import('../components/scene/SceneTable'), {
   ssr: false,
 });
 

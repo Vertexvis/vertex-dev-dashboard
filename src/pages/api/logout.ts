@@ -1,11 +1,8 @@
-import { NextApiResponse } from "next";
+import { NextApiResponse } from 'next';
 
-import withSession, { NextIronRequest } from "../../lib/with-session";
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
-export default withSession(function (
-  req: NextIronRequest,
-  res: NextApiResponse,
-) {
+export default withSession(function (req: NextIronRequest, res: NextApiResponse) {
   req.session.destroy();
   const r = { status: 200 };
   return res.status(r.status).json(r);

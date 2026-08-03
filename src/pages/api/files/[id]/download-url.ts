@@ -1,18 +1,16 @@
-import { head } from "@vertexvis/api-client-node";
+import { head } from '@vertexvis/api-client-node';
 
-import { ErrorRes, InvalidBody, ServerError } from "../../../../lib/api";
-import { methodRouter } from "../../../../lib/api-handler";
-import { FileDownloadUrlRes } from "../../../../lib/files";
-import { getClientFromSession } from "../../../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../../../lib/with-session";
+import { ErrorRes, InvalidBody, ServerError } from '../../../../lib/api';
+import { methodRouter } from '../../../../lib/api-handler';
+import { FileDownloadUrlRes } from '../../../../lib/files';
+import { getClientFromSession } from '../../../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../../../lib/with-session';
 
 const DefaultDownloadExpirySeconds = 30;
 
 export default withSession(methodRouter({ POST: create }));
 
-async function create(
-  req: NextIronRequest,
-): Promise<FileDownloadUrlRes | ErrorRes> {
+async function create(req: NextIronRequest): Promise<FileDownloadUrlRes | ErrorRes> {
   const id = head(req.query.id);
   if (id == null) return InvalidBody;
 
@@ -21,7 +19,7 @@ async function create(
     id,
     createDownloadRequest: {
       data: {
-        type: "download-url",
+        type: 'download-url',
         attributes: { expiry: DefaultDownloadExpirySeconds },
       },
     },

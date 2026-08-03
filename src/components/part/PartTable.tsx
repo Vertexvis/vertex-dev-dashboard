@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -12,48 +12,47 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@mui/material";
-import debounce from "lodash.debounce";
-import { useRouter } from "next/router";
-import React from "react";
-import useSWR, { SWRResponse } from "swr";
+} from '@mui/material';
+import debounce from 'lodash.debounce';
+import { useRouter } from 'next/router';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
-import { PartRevision } from "../../lib/part-revisions";
-import { toPartPage } from "../../lib/parts";
-import { reportError } from "../../lib/report-error";
-import CreateSceneDialog from "../shared/CreateSceneDialog";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
-import { TableToolbar } from "../shared/TableToolbar";
-import CreatePartDialog from "./CreatePartDialog";
-import PartRow from "./PartRow";
+import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
+import { PartRevision } from '../../lib/part-revisions';
+import { toPartPage } from '../../lib/parts';
+import { reportError } from '../../lib/report-error';
+import CreateSceneDialog from '../shared/CreateSceneDialog';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { HeadCell, TableHead } from '../shared/TableHead';
+import { TableToolbar } from '../shared/TableToolbar';
+import CreatePartDialog from './CreatePartDialog';
+import PartRow from './PartRow';
 
 const headCells: readonly HeadCell[] = [
-  { id: "expand", label: "", beforeCheckbox: true },
-  { id: "name", label: "Name" },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "id", label: "ID" },
-  { id: "created", label: "Created" },
+  { id: 'expand', label: '', beforeCheckbox: true },
+  { id: 'name', label: 'Name' },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'id', label: 'ID' },
+  { id: 'created', label: 'Created' },
 ];
 
 function useParts({ cursor, pageSize, suppliedId }: SwrProps): SWRResponse {
   return useSWR(
-    buildQuery("/api/parts", {
+    buildQuery('/api/parts', {
       cursor,
       pageSize,
       suppliedId,
     }),
-    { refreshInterval: 30000 },
+    { refreshInterval: 30000 }
   );
 }
 
-const maybeQueryParam = (
-  target: string | string[] | undefined,
-): string | undefined => (Array.isArray(target) ? target[0] : target);
+const maybeQueryParam = (target: string | string[] | undefined): string | undefined =>
+  Array.isArray(target) ? target[0] : target;
 
 interface Props {
   readonly activeRevisionId?: string;
@@ -66,26 +65,16 @@ export default function PartTable({
 }: Props): JSX.Element {
   const router = useRouter();
   const pageSize = DefaultPageSize;
-  const {
-    currentPage,
-    cursor,
-    cursors,
-    handlePageChange,
-    resetPaging,
-    setCursors,
-  } = useCursorPagingState();
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showCreatePartDialog, setShowCreatePartDialog] = React.useState(
-    !!router.query.create,
+    !!router.query.create
   );
-  const [targetRevisionId, setTargetRevisionId] = React.useState<
-    string | undefined
-  >();
+  const [targetRevisionId, setTargetRevisionId] = React.useState<string | undefined>();
 
-  const [suppliedId, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
 
   const { data, mutate, error } = useParts({ cursor, pageSize, suppliedId });
   const page = data ? toPartPage(data) : undefined;
@@ -99,7 +88,7 @@ export default function PartTable({
         resetPaging();
         setSuppliedIdFilter(value);
       }, 300),
-    [resetPaging],
+    [resetPaging]
   );
 
   React.useEffect(() => {
@@ -126,16 +115,16 @@ export default function PartTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number,
+    num: number
   ): void {
     handlePageChange(num);
   }
 
   async function handleDelete(): Promise<void> {
     setSelected(new Set());
-    await fetch("/api/parts", {
+    await fetch('/api/parts', {
       body: JSON.stringify({ ids: [...selected] }),
-      method: "DELETE",
+      method: 'DELETE',
     });
     await mutate();
   }
@@ -146,16 +135,16 @@ export default function PartTable({
         <TableToolbar
           numSelected={selected.size}
           onDelete={() => {
-            handleDelete().catch(reportError("Failed to delete parts"));
+            handleDelete().catch(reportError('Failed to delete parts'));
           }}
           title="Parts"
         />
         <Box
           sx={{
             px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <TextField
@@ -168,7 +157,7 @@ export default function PartTable({
             onChange={(e) => {
               debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
             }}
-            sx={{ mt: 0, width: "20rem" }}
+            sx={{ mt: 0, width: '20rem' }}
           />
           <Button
             variant="contained"
@@ -228,7 +217,7 @@ export default function PartTable({
               displayedRows,
               cursors?.next != null,
               pageLength,
-              page != null,
+              page != null
             )
           }
           rowsPerPage={pageSize}

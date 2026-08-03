@@ -1,4 +1,4 @@
-import { Close, FileCopyOutlined } from "@mui/icons-material";
+import { Close, FileCopyOutlined } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -11,22 +11,22 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from "@mui/material";
+} from '@mui/material';
 import {
   OrthographicCamera,
   PerspectiveCamera,
   SceneData,
-} from "@vertexvis/api-client-node";
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+} from '@vertexvis/api-client-node';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-import { toLocaleString } from "../../lib/dates";
-import { reportError } from "../../lib/report-error";
-import { Scene } from "../../lib/scenes";
-import { UpdateSceneReq } from "../../pages/api/scenes";
-import { Input } from "../shared/Input";
-import { RightDrawerWidth } from "../shared/Layout";
-import { VectorTable } from "../shared/VectorTable";
+import { toLocaleString } from '../../lib/dates';
+import { reportError } from '../../lib/report-error';
+import { Scene } from '../../lib/scenes';
+import { UpdateSceneReq } from '../../pages/api/scenes';
+import { Input } from '../shared/Input';
+import { RightDrawerWidth } from '../shared/Layout';
+import { VectorTable } from '../shared/VectorTable';
 
 interface Props {
   readonly editing: boolean;
@@ -35,27 +35,18 @@ interface Props {
   readonly onClose: () => void;
 }
 
-type FormData = Omit<UpdateSceneReq, "id">;
+type FormData = Omit<UpdateSceneReq, 'id'>;
 
-export function SceneDrawer({
-  editing,
-  onClose,
-  open,
-  scene,
-}: Props): JSX.Element {
+export function SceneDrawer({ editing, onClose, open, scene }: Props): JSX.Element {
   const defaultValues = scene;
 
   const { control, handleSubmit, reset } = useForm<FormData>({
     defaultValues,
   });
 
-  const [editableMetadata, setMetadata] = useState<string | undefined>(
-    undefined,
-  );
+  const [editableMetadata, setMetadata] = useState<string | undefined>(undefined);
 
-  const [sceneDetails, setSceneDetails] = useState<SceneData | undefined>(
-    undefined,
-  );
+  const [sceneDetails, setSceneDetails] = useState<SceneData | undefined>(undefined);
 
   React.useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -64,7 +55,7 @@ export function SceneDrawer({
     };
 
     if (scene != null && open) {
-      fetchData().catch(reportError("Failed to load scene details"));
+      fetchData().catch(reportError('Failed to load scene details'));
     }
   }, [scene, open]);
 
@@ -86,9 +77,9 @@ export function SceneDrawer({
     // https://vertexvis.atlassian.net/browse/PLAT-3630
     const updateData = { ...data, metadata, camera: undefined };
 
-    await fetch("/api/scenes", {
+    await fetch('/api/scenes', {
       body: JSON.stringify({ id: scene?.id, ...updateData }),
-      method: "PATCH",
+      method: 'PATCH',
     });
     onClose();
   }
@@ -98,11 +89,11 @@ export function SceneDrawer({
         [key: string]: string;
       }
     | undefined {
-    if (metadata != null && typeof metadata === "string") {
+    if (metadata != null && typeof metadata === 'string') {
       try {
         return JSON.parse(metadata);
       } catch (e) {
-        console.error("Invalid Metadata: ", e);
+        console.error('Invalid Metadata: ', e);
         return undefined;
       }
     }
@@ -113,7 +104,7 @@ export function SceneDrawer({
   function copyCamera(): void {
     navigator.clipboard
       .writeText(JSON.stringify(scene?.camera))
-      .catch(reportError("Failed to copy camera JSON to clipboard"));
+      .catch(reportError('Failed to copy camera JSON to clipboard'));
   }
 
   React.useEffect(() => {
@@ -121,15 +112,15 @@ export function SceneDrawer({
   }, [defaultValues, reset]);
 
   function isOrthographic(
-    camera: OrthographicCamera | PerspectiveCamera,
+    camera: OrthographicCamera | PerspectiveCamera
   ): camera is OrthographicCamera {
-    return camera.type === "orthographic";
+    return camera.type === 'orthographic';
   }
 
   function isPerspective(
-    camera: OrthographicCamera | PerspectiveCamera,
+    camera: OrthographicCamera | PerspectiveCamera
   ): camera is PerspectiveCamera {
-    return camera.type === "perspective";
+    return camera.type === 'perspective';
   }
 
   return (
@@ -139,13 +130,13 @@ export function SceneDrawer({
       sx={{
         flexShrink: 0,
         width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
+        '& .MuiDrawer-paper': { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
-          {editing ? "Edit Scene" : "Scene Details"}
+          {editing ? 'Edit Scene' : 'Scene Details'}
         </Typography>
         <IconButton onClick={onClose} sx={{ mr: 2 }}>
           <Close />
@@ -155,17 +146,11 @@ export function SceneDrawer({
         <Box sx={{ mx: 2, mb: 2 }}>
           <form
             onSubmit={(e) => {
-              handleSubmit(onSubmit)(e).catch(
-                reportError("Failed to update the scene"),
-              );
+              handleSubmit(onSubmit)(e).catch(reportError('Failed to update the scene'));
             }}
           >
             <Input<FormData> control={control} label="Name" name="name" />
-            <Input<FormData>
-              control={control}
-              label="Supplied ID"
-              name="suppliedId"
-            />
+            <Input<FormData> control={control} label="Supplied ID" name="suppliedId" />
             <Input<FormData>
               control={control}
               placeholder={`{"KEY": "VALUE"}`}
@@ -178,8 +163,8 @@ export function SceneDrawer({
             />
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                justifyContent: 'flex-end',
                 my: 2,
               }}
             >
@@ -234,21 +219,19 @@ export function SceneDrawer({
       ) : scene ? (
         <>
           <TableContainer>
-            <Table size="small" style={{ whiteSpace: "nowrap" }}>
+            <Table size="small" style={{ whiteSpace: 'nowrap' }}>
               <TableBody>
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">ID</Typography>
-                    <Typography variant="body2">
-                      {sceneDetails?.id ?? ""}
-                    </Typography>
+                    <Typography variant="body2">{sceneDetails?.id ?? ''}</Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <Typography variant="subtitle2">Supplied ID</Typography>
                     <Typography variant="body2">
-                      {sceneDetails?.attributes.suppliedId ?? ""}
+                      {sceneDetails?.attributes.suppliedId ?? ''}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -256,7 +239,7 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Name</Typography>
                     <Typography variant="body2">
-                      {sceneDetails?.attributes.name ?? ""}
+                      {sceneDetails?.attributes.name ?? ''}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -271,19 +254,15 @@ export function SceneDrawer({
                   <TableCell>
                     <Typography variant="subtitle2">Tree Enabled</Typography>
                     <Typography variant="body2">
-                      {(
-                        sceneDetails?.attributes.treeEnabled ?? false
-                      ).toString()}
+                      {(sceneDetails?.attributes.treeEnabled ?? false).toString()}
                     </Typography>
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
-                    <Typography variant="subtitle2">
-                      State (deprecated)
-                    </Typography>
+                    <Typography variant="subtitle2">State (deprecated)</Typography>
                     <Typography variant="body2">
-                      {sceneDetails?.attributes.state ?? ""}
+                      {sceneDetails?.attributes.state ?? ''}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -307,9 +286,7 @@ export function SceneDrawer({
                 {sceneDetails?.attributes.sceneItemCount && (
                   <TableRow>
                     <TableCell>
-                      <Typography variant="subtitle2">
-                        Scene Item Count
-                      </Typography>
+                      <Typography variant="subtitle2">Scene Item Count</Typography>
                       <Typography variant="body2">
                         {sceneDetails?.attributes.sceneItemCount}
                       </Typography>
@@ -321,9 +298,9 @@ export function SceneDrawer({
                     <TableCell>
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
                       >
                         <Typography variant="subtitle2">Camera</Typography>
@@ -338,25 +315,17 @@ export function SceneDrawer({
                           <TableBody>
                             <TableRow>
                               <TableCell>
-                                <Typography variant="subtitle2">
-                                  Position
-                                </Typography>
+                                <Typography variant="subtitle2">Position</Typography>
                                 <VectorTable
-                                  vector={
-                                    sceneDetails?.attributes.camera.position
-                                  }
+                                  vector={sceneDetails?.attributes.camera.position}
                                 />
                               </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell>
-                                <Typography variant="subtitle2">
-                                  Look at
-                                </Typography>
+                                <Typography variant="subtitle2">Look at</Typography>
                                 <VectorTable
-                                  vector={
-                                    sceneDetails?.attributes.camera.lookAt
-                                  }
+                                  vector={sceneDetails?.attributes.camera.lookAt}
                                 />
                               </TableCell>
                             </TableRow>
@@ -375,25 +344,17 @@ export function SceneDrawer({
                           <TableBody>
                             <TableRow>
                               <TableCell>
-                                <Typography variant="subtitle2">
-                                  View Vector
-                                </Typography>
+                                <Typography variant="subtitle2">View Vector</Typography>
                                 <VectorTable
-                                  vector={
-                                    sceneDetails?.attributes.camera.viewVector
-                                  }
+                                  vector={sceneDetails?.attributes.camera.viewVector}
                                 />
                               </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell>
-                                <Typography variant="subtitle2">
-                                  Look at
-                                </Typography>
+                                <Typography variant="subtitle2">Look at</Typography>
                                 <VectorTable
-                                  vector={
-                                    sceneDetails?.attributes.camera.lookAt
-                                  }
+                                  vector={sceneDetails?.attributes.camera.lookAt}
                                 />
                               </TableCell>
                             </TableRow>
@@ -408,9 +369,7 @@ export function SceneDrawer({
 
                             <TableRow>
                               <TableCell sx={{ border: 0 }}>
-                                <Typography variant="subtitle2">
-                                  Fov Height
-                                </Typography>
+                                <Typography variant="subtitle2">Fov Height</Typography>
                                 <Typography>
                                   {sceneDetails?.attributes.camera.fovHeight}
                                 </Typography>
@@ -425,19 +384,14 @@ export function SceneDrawer({
                 {sceneDetails?.attributes.worldOrientation && (
                   <TableRow>
                     <TableCell>
-                      <Typography variant="subtitle2">
-                        World Orientation
-                      </Typography>
+                      <Typography variant="subtitle2">World Orientation</Typography>
                       <Table size="small">
                         <TableBody>
                           <TableRow>
                             <TableCell>
                               <Typography variant="subtitle2">Front</Typography>
                               <VectorTable
-                                vector={
-                                  sceneDetails?.attributes.worldOrientation
-                                    .front
-                                }
+                                vector={sceneDetails?.attributes.worldOrientation.front}
                               />
                             </TableCell>
                           </TableRow>
@@ -445,9 +399,7 @@ export function SceneDrawer({
                             <TableCell sx={{ border: 0 }}>
                               <Typography variant="subtitle2">Up</Typography>
                               <VectorTable
-                                vector={
-                                  sceneDetails?.attributes.worldOrientation.up
-                                }
+                                vector={sceneDetails?.attributes.worldOrientation.up}
                               />
                             </TableCell>
                           </TableRow>

@@ -3,11 +3,11 @@ import {
   ModelViewListResponse,
   PmiAnnotation,
   PmiAnnotationListResponse,
-} from "@vertexvis/viewer";
-import React from "react";
+} from '@vertexvis/viewer';
+import React from 'react';
 
-import { reportError } from "./report-error";
-import { ViewerState } from "./viewer";
+import { reportError } from './report-error';
+import { ViewerState } from './viewer';
 
 export interface UseModelViewsProps {
   readonly itemId?: string;
@@ -69,15 +69,11 @@ export function useModelViews({
   }, [itemId]);
 
   React.useEffect(() => {
-    if (
-      itemId != null &&
-      modelViewResponses.length === 0 &&
-      modelViewCursor == null
-    ) {
+    if (itemId != null && modelViewResponses.length === 0 && modelViewCursor == null) {
       setLoadedSceneItemId(itemId);
       actions
         .fetchNextModelViews(itemId)
-        .catch(reportError("Failed to load model views"));
+        .catch(reportError('Failed to load model views'));
     }
   }, [actions, itemId, modelViewResponses, modelViewCursor]);
 
@@ -94,18 +90,18 @@ export function useModelViews({
     ) {
       actions
         .fetchNextAnnotations(loadedModelViewId)
-        .catch(reportError("Failed to load PMI annotations"));
+        .catch(reportError('Failed to load PMI annotations'));
     }
   }, [actions, loadedModelViewId, annotationResponses, annotationCursor]);
 
   return {
     modelViewList: modelViewResponses.reduce(
       (modelViews, r) => [...modelViews, ...r.modelViews],
-      [] as ModelView[],
+      [] as ModelView[]
     ),
     annotationList: annotationResponses.reduce(
       (annotations, r) => [...annotations, ...r.annotations],
-      [] as PmiAnnotation[],
+      [] as PmiAnnotation[]
     ),
     loadedModelViewId,
     loadedSceneItemId,
@@ -123,9 +119,7 @@ interface UseModelViewActionsProps {
   readonly setLoadedModelViewId: (id?: string) => void;
   readonly setLoadedSceneItemId: (id?: string) => void;
   readonly updateLoadedModelViews: (response: ModelViewListResponse) => void;
-  readonly updateLoadedAnnotations: (
-    response: PmiAnnotationListResponse,
-  ) => void;
+  readonly updateLoadedAnnotations: (response: PmiAnnotationListResponse) => void;
 }
 
 interface UseModelViewActions {
@@ -149,18 +143,14 @@ function useModelViewActions({
 }: UseModelViewActionsProps): UseModelViewActions {
   return {
     fetchNextModelViews: async (sceneItemId) => {
-      const hasMore =
-        modelViewCursor != null || modelViewResponses.length === 0;
+      const hasMore = modelViewCursor != null || modelViewResponses.length === 0;
 
       if (hasMore && viewerState.ref.current?.modelViews != null) {
-        const resp = await viewerState.ref.current.modelViews.listByItem(
-          sceneItemId,
-          {
-            hasAnnotations: true,
-            size: 100,
-            cursor: modelViewCursor,
-          },
-        );
+        const resp = await viewerState.ref.current.modelViews.listByItem(sceneItemId, {
+          hasAnnotations: true,
+          size: 100,
+          cursor: modelViewCursor,
+        });
 
         updateLoadedModelViews(resp);
       }
@@ -177,8 +167,7 @@ function useModelViewActions({
       setLoadedModelViewId(undefined);
     },
     fetchNextAnnotations: async (modelViewId) => {
-      const hasMore =
-        annotationCursor != null || annotationResponses.length === 0;
+      const hasMore = annotationCursor != null || annotationResponses.length === 0;
 
       if (hasMore && viewerState.ref.current?.pmi != null) {
         const resp = await viewerState.ref.current.pmi.listAnnotations({

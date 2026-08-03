@@ -1,10 +1,10 @@
-import createCache from "@emotion/cache";
-import { CacheProvider } from "@emotion/react";
-import createEmotionServer from "@emotion/server/create-instance";
-import Document, { Head, Html, Main, NextScript } from "next/document";
-import React from "react";
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
+import Document, { Head, Html, Main, NextScript } from 'next/document';
+import React from 'react';
 
-import theme from "../lib/theme";
+import theme from '../lib/theme';
 
 export default class MyDocument extends Document {
   public render(): JSX.Element {
@@ -45,7 +45,7 @@ export default class MyDocument extends Document {
 
 MyDocument.getInitialProps = async (ctx) => {
   const originalRenderPage = ctx.renderPage;
-  const cache = createCache({ key: "css", prepend: true });
+  const cache = createCache({ key: 'css', prepend: true });
   cache.compat = true;
   const { extractCriticalToChunks } = createEmotionServer(cache);
 
@@ -66,7 +66,7 @@ MyDocument.getInitialProps = async (ctx) => {
       ...React.Children.toArray(initialProps.styles),
       ...extractCriticalToChunks(initialProps.html).styles.map((style) => (
         <style
-          data-emotion={`${style.key} ${style.ids.join(" ")}`}
+          data-emotion={`${style.key} ${style.ids.join(' ')}`}
           key={style.key}
           dangerouslySetInnerHTML={{ __html: style.css }}
         />

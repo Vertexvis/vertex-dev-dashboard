@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -14,45 +14,45 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@mui/material";
-import debounce from "lodash.debounce";
-import React from "react";
-import useSWR, { SWRResponse } from "swr";
+} from '@mui/material';
+import debounce from 'lodash.debounce';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { isErrorRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
+import { isErrorRes } from '../../lib/api';
+import { toLocaleString } from '../../lib/dates';
 import {
   File,
   FileStatusComplete,
   isCompleteFileStatus,
   normalizeFileStatus,
   toFilePage,
-} from "../../lib/files";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
-import { reportError } from "../../lib/report-error";
-import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+} from '../../lib/files';
+import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
+import { reportError } from '../../lib/report-error';
+import { SortState, toggleSort, toSortParam } from '../../lib/sorting';
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
-} from "../shared/CreatedAtDateRangeFilter";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { ResourceLink } from "../shared/ResourceLink";
-import { RowActionsMenu } from "../shared/RowActionsMenu";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
-import { TableToolbar } from "../shared/TableToolbar";
-import CreateFileDialog from "./CreateFileDialog";
+} from '../shared/CreatedAtDateRangeFilter';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { ResourceLink } from '../shared/ResourceLink';
+import { RowActionsMenu } from '../shared/RowActionsMenu';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { HeadCell, TableHead } from '../shared/TableHead';
+import { TableToolbar } from '../shared/TableToolbar';
+import CreateFileDialog from './CreateFileDialog';
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name", sortable: true },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "status", label: "Status" },
-  { id: "id", label: "ID" },
-  { id: "created", label: "Created", sortable: true },
-  { id: "uploaded", label: "Uploaded" },
-  { id: "actions", label: "Actions" },
+  { id: 'name', disablePadding: true, label: 'Name', sortable: true },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'status', label: 'Status' },
+  { id: 'id', label: 'ID' },
+  { id: 'created', label: 'Created', sortable: true },
+  { id: 'uploaded', label: 'Uploaded' },
+  { id: 'actions', label: 'Actions' },
 ];
 
 interface UseFilesProps extends SwrProps {
@@ -75,7 +75,7 @@ function useFiles({
   suppliedId,
 }: UseFilesProps): SWRResponse {
   return useSWR(
-    buildQuery("/api/files", {
+    buildQuery('/api/files', {
       createdAtEnd,
       createdAtStart,
       cursor,
@@ -84,7 +84,7 @@ function useFiles({
       pageSize,
       sort: sort != null ? toSortParam(sort) : undefined,
       suppliedId,
-    }),
+    })
   );
 }
 
@@ -93,22 +93,20 @@ function isFileAvailable(file: File): boolean {
 }
 
 function statusLabel(status?: string): string {
-  return status ?? "N/A";
+  return status ?? 'N/A';
 }
 
-function statusColor(
-  status?: string,
-): "default" | "success" | "warning" | "error" {
+function statusColor(status?: string): 'default' | 'success' | 'warning' | 'error' {
   switch (normalizeFileStatus(status)) {
     case FileStatusComplete:
-      return "success";
-    case "pending":
-      return "warning";
-    case "error":
-    case "failed":
-      return "error";
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'error':
+    case 'failed':
+      return 'error';
     default:
-      return "default";
+      return 'default';
   }
 }
 
@@ -117,49 +115,35 @@ interface Props {
   readonly onFileSelected: (file: File) => void;
 }
 
-type SetOptionalString = React.Dispatch<
-  React.SetStateAction<string | undefined>
->;
+type SetOptionalString = React.Dispatch<React.SetStateAction<string | undefined>>;
 function useDebouncedFilter(
   setFilter: SetOptionalString,
-  resetPaging: () => void,
+  resetPaging: () => void
 ): (value: string) => void {
   return React.useMemo(
     () =>
       debounce((value: string) => {
         resetPaging();
-        setFilter(value === "" ? undefined : value);
+        setFilter(value === '' ? undefined : value);
       }, 300),
-    [resetPaging, setFilter],
+    [resetPaging, setFilter]
   );
 }
 
-export default function FileTable({
-  activeFileId,
-  onFileSelected,
-}: Props): JSX.Element {
+export default function FileTable({ activeFileId, onFileSelected }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
   const [sort, setSort] = React.useState<SortState>({
-    field: "created",
-    order: "desc",
+    field: 'created',
+    order: 'desc',
   });
-  const {
-    currentPage,
-    cursor,
-    cursors,
-    handlePageChange,
-    resetPaging,
-    setCursors,
-  } = useCursorPagingState();
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = React.useState(false);
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [fileIdFilter, setFileIdFilter] = React.useState<string | undefined>();
-  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<
-    string | undefined
-  >();
-  const [createdAtFilters, setCreatedAtFilters] =
-    React.useState<CreatedAtDateRange>({});
+  const [suppliedIdFilter, setSuppliedIdFilter] = React.useState<string | undefined>();
+  const [createdAtFilters, setCreatedAtFilters] = React.useState<CreatedAtDateRange>({});
   const [showToast, setShowToast] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState<string>();
 
@@ -184,13 +168,10 @@ export default function FileTable({
       : pageSize - pageLength;
 
   const debouncedSetNameFilter = useDebouncedFilter(setNameFilter, resetPaging);
-  const debouncedSetFileIdFilter = useDebouncedFilter(
-    setFileIdFilter,
-    resetPaging,
-  );
+  const debouncedSetFileIdFilter = useDebouncedFilter(setFileIdFilter, resetPaging);
   const debouncedSetSuppliedIdFilter = useDebouncedFilter(
     setSuppliedIdFilter,
-    resetPaging,
+    resetPaging
   );
 
   React.useEffect(() => {
@@ -217,7 +198,7 @@ export default function FileTable({
 
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number,
+    num: number
   ): void {
     handlePageChange(num);
   }
@@ -234,9 +215,9 @@ export default function FileTable({
 
   async function handleDelete(): Promise<void> {
     setSelected(new Set());
-    await fetch("/api/files", {
+    await fetch('/api/files', {
       body: JSON.stringify({ ids: [...selected] }),
-      method: "DELETE",
+      method: 'DELETE',
     });
     await mutate();
   }
@@ -244,22 +225,17 @@ export default function FileTable({
   async function handleDownload(id: string): Promise<void> {
     setDownloadError(undefined);
 
-    const res = await fetch(
-      `/api/files/${encodeURIComponent(id)}/download-url`,
-      {
-        method: "POST",
-      },
-    );
+    const res = await fetch(`/api/files/${encodeURIComponent(id)}/download-url`, {
+      method: 'POST',
+    });
 
     const body = await res.json();
     if (!res.ok || body.url == null) {
-      setDownloadError(
-        body.message ?? "Could not create a download URL for this file.",
-      );
+      setDownloadError(body.message ?? 'Could not create a download URL for this file.');
       return;
     }
 
-    const opened = window.open(body.url as string, "_blank", "noopener");
+    const opened = window.open(body.url as string, '_blank', 'noopener');
     if (opened == null) {
       window.location.assign(body.url as string);
     }
@@ -306,7 +282,7 @@ export default function FileTable({
               color="primary"
               checked={isSel}
               inputProps={{
-                "aria-label": `Select ${row.name ?? row.id}`,
+                'aria-label': `Select ${row.name ?? row.id}`,
               }}
             />
           </TableCell>
@@ -330,7 +306,7 @@ export default function FileTable({
               color={statusColor(row.status)}
               label={statusLabel(row.status)}
               size="small"
-              sx={{ fontWeight: 600, textTransform: "uppercase" }}
+              sx={{ fontWeight: 600, textTransform: 'uppercase' }}
               variant="outlined"
             />
           </TableCell>
@@ -346,7 +322,7 @@ export default function FileTable({
               actions={[
                 {
                   disabled: !isAvailable,
-                  label: "Download file",
+                  label: 'Download file',
                   onClick: () => handleDownload(row.id),
                 },
               ]}
@@ -371,7 +347,7 @@ export default function FileTable({
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => setShowDialog(true)}
-                sx={{ whiteSpace: "nowrap" }}
+                sx={{ whiteSpace: 'nowrap' }}
               >
                 Add File
               </Button>
@@ -379,21 +355,21 @@ export default function FileTable({
           }
           numSelected={selected.size}
           onDelete={() => {
-            handleDelete().catch(reportError("Failed to delete files"));
+            handleDelete().catch(reportError('Failed to delete files'));
           }}
           title="Files"
         />
         <Box
           sx={{
             px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             gap: 2,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flex: 1 }}>
             <TextField
               variant="standard"
               size="small"
@@ -402,9 +378,9 @@ export default function FileTable({
               label="Name"
               type="text"
               onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+                debouncedSetNameFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
             <TextField
               variant="standard"
@@ -414,9 +390,9 @@ export default function FileTable({
               label="File ID"
               type="text"
               onChange={(e) => {
-                debouncedSetFileIdFilter(e.target.value?.trim() ?? "");
+                debouncedSetFileIdFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
             <TextField
               variant="standard"
@@ -426,9 +402,9 @@ export default function FileTable({
               label="Supplied ID"
               type="text"
               onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
           </Box>
         </Box>
@@ -462,7 +438,7 @@ export default function FileTable({
               displayedRows,
               paginationCursors?.next != null,
               pageLength,
-              visiblePage != null,
+              visiblePage != null
             )
           }
           rowsPerPage={pageSize}
@@ -481,7 +457,7 @@ export default function FileTable({
         onFileCreated={() => {
           setShowDialog(false);
           setShowToast(true);
-          mutate().catch(reportError("Failed to refresh files"));
+          mutate().catch(reportError('Failed to refresh files'));
         }}
       />
       <Snackbar

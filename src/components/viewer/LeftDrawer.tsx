@@ -1,12 +1,12 @@
-import { Drawer } from "@mui/material";
-import { drawerClasses } from "@mui/material/Drawer";
-import React from "react";
+import { Drawer } from '@mui/material';
+import { drawerClasses } from '@mui/material/Drawer';
+import React from 'react';
 
-import { ViewerState } from "../../lib/viewer";
-import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
-import { Title } from "../shared/Title";
-import { LeftDrawerWidth } from "./Layout";
-import { SceneTreePanel } from "./SceneTreePanel";
+import { ViewerState } from '../../lib/viewer';
+import { EnvironmentWithCustom, NetworkConfig } from '../../lib/with-session';
+import { Title } from '../shared/Title';
+import { LeftDrawerWidth } from './Layout';
+import { SceneTreePanel } from './SceneTreePanel';
 
 interface Props {
   readonly active?: string;
@@ -30,16 +30,16 @@ export function LeftDrawer({
 }: Props): JSX.Element {
   const getDisplayedHeader = (): string => {
     switch (active) {
-      case "scene-tree":
-        return "Assembly";
+      case 'scene-tree':
+        return 'Assembly';
       default:
-        return "";
+        return '';
     }
   };
 
   const getActiveContent = (): JSX.Element => {
     switch (active) {
-      case "scene-tree":
+      case 'scene-tree':
         return (
           <SceneTreePanel
             configEnv={configEnv}
@@ -59,21 +59,21 @@ export function LeftDrawer({
     <Drawer
       anchor="left"
       sx={{
-        display: { sm: "block", xs: "none" },
-        position: "relative",
+        display: { sm: 'block', xs: 'none' },
+        position: 'relative',
         width: LeftDrawerWidth,
         [`& .${drawerClasses.paper}`]: { width: LeftDrawerWidth },
       }}
       PaperProps={{
         sx: {
-          position: "relative",
+          position: 'relative',
         },
       }}
       variant="permanent"
     >
       <Title
         sx={{
-          borderBottom: "1px solid #ccc",
+          borderBottom: '1px solid #ccc',
         }}
       >
         {getDisplayedHeader()}

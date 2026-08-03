@@ -1,9 +1,9 @@
-import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { SceneViewStateData } from "@vertexvis/api-client-node";
-import React from "react";
+import { Box, List, ListItem, ListItemText, Typography } from '@mui/material';
+import { SceneViewStateData } from '@vertexvis/api-client-node';
+import React from 'react';
 
-import { toLocaleString } from "../../lib/dates";
-import { Title } from "../shared/Title";
+import { toLocaleString } from '../../lib/dates';
+import { Title } from '../shared/Title';
 
 interface Props {
   readonly sceneViewStates?: SceneViewStateData[];
@@ -26,7 +26,7 @@ export function SceneViewStateList({
   return (
     <>
       <DrawerTitle />
-      <List sx={{ flexGrow: 1, overflow: "auto" }}>
+      <List sx={{ flexGrow: 1, overflow: 'auto' }}>
         {sceneViewStates.map((s, i) => {
           return (
             <ListItem
@@ -37,13 +37,13 @@ export function SceneViewStateList({
               <ListItemText
                 primary={s.attributes.name || s.id}
                 secondary={
-                  "ID: " +
+                  'ID: ' +
                   s.id +
-                  "\n" +
+                  '\n' +
                   (s.attributes.suppliedId
                     ? `SUPPLIED-ID: ${s.attributes.suppliedId}\n`
-                    : "") +
-                  "CREATED: " +
+                    : '') +
+                  'CREATED: ' +
                   toLocaleString(s.attributes.created)
                 }
               />
@@ -61,9 +61,9 @@ function NoData(): JSX.Element {
       <DrawerTitle />
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexGrow: 1,
         }}
       >
@@ -79,7 +79,7 @@ function DrawerTitle(): JSX.Element {
   return (
     <Title
       sx={{
-        borderBottom: "1px solid #ccc",
+        borderBottom: '1px solid #ccc',
       }}
     >
       Scene View States
