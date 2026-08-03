@@ -1,11 +1,6 @@
-import {
-  Failure,
-  head,
-  logError,
-  VertexError,
-} from "@vertexvis/api-client-node";
-import { AxiosError } from "axios";
-import { NextApiResponse } from "next";
+import { Failure, head, logError, VertexError } from '@vertexvis/api-client-node';
+import { AxiosError } from 'axios';
+import { NextApiResponse } from 'next';
 
 import {
   BodyRequired,
@@ -14,8 +9,8 @@ import {
   MethodNotAllowed,
   ServerError,
   toErrorRes,
-} from "../../../../lib/api";
-import { fetchAllPages } from "../../../../lib/paging";
+} from '../../../../lib/api';
+import { fetchAllPages } from '../../../../lib/paging';
 import {
   AddPropertyKeyPolicyKeysReq,
   AddPropertyKeyPolicyKeysRes,
@@ -23,9 +18,9 @@ import {
   DeletePropertyKeyPolicyKeysRes,
   GetPropertyKeyPolicyKeysRes,
   PropertyKeyPolicyKeyResource,
-} from "../../../../lib/property-key-policies";
-import { getClientFromSession } from "../../../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../../../lib/with-session";
+} from '../../../../lib/property-key-policies';
+import { getClientFromSession } from '../../../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../../../lib/with-session';
 
 const KeysPageSize = 200;
 
@@ -46,17 +41,17 @@ export async function handlePropertyKeyPolicyKeys(
     | ErrorRes
   >
 ): Promise<void> {
-  if (req.method === "GET") {
+  if (req.method === 'GET') {
     const r = await get(req);
     return res.status(r.status).json(r);
   }
 
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     const r = await add(req);
     return res.status(r.status).json(r);
   }
 
-  if (req.method === "DELETE") {
+  if (req.method === 'DELETE') {
     const r = await del(req);
     return res.status(r.status).json(r);
   }
@@ -68,25 +63,22 @@ async function add(
   req: NextIronRequest
 ): Promise<ErrorRes | AddPropertyKeyPolicyKeysRes> {
   const id = head(req.query.id);
-  if (id == null)
-    return { message: "Property Key Policy ID required.", status: 400 };
+  if (id == null) return { message: 'Property Key Policy ID required.', status: 400 };
   if (!req.body) return BodyRequired;
 
-  const keys = parseKeys(req.body, "keys");
+  const keys = parseKeys(req.body, 'keys');
   if (keys == null) return InvalidBody;
 
   try {
     const client = await getClientFromSession(req.session);
     await client.axiosInstance.post(
-      `${client.config.basePath}/property-key-policies/${encodeURIComponent(
-        id
-      )}/keys`,
+      `${client.config.basePath}/property-key-policies/${encodeURIComponent(id)}/keys`,
       { data: keys.map((name) => ({ name })) },
       {
         headers: {
-          Accept: "application/vnd.api+json",
+          Accept: 'application/vnd.api+json',
           Authorization: `Bearer ${client.token.access_token}`,
-          "Content-Type": "application/vnd.api+json",
+          'Content-Type': 'application/vnd.api+json',
         },
       }
     );
@@ -100,25 +92,22 @@ async function del(
   req: NextIronRequest
 ): Promise<ErrorRes | DeletePropertyKeyPolicyKeysRes> {
   const id = head(req.query.id);
-  if (id == null)
-    return { message: "Property Key Policy ID required.", status: 400 };
+  if (id == null) return { message: 'Property Key Policy ID required.', status: 400 };
   if (!req.body) return BodyRequired;
 
-  const ids = parseKeys(req.body, "ids");
+  const ids = parseKeys(req.body, 'ids');
   if (ids == null) return InvalidBody;
 
   try {
     const client = await getClientFromSession(req.session);
     await client.axiosInstance.delete(
-      `${client.config.basePath}/property-key-policies/${encodeURIComponent(
-        id
-      )}/keys`,
+      `${client.config.basePath}/property-key-policies/${encodeURIComponent(id)}/keys`,
       {
         headers: {
-          Accept: "application/vnd.api+json",
+          Accept: 'application/vnd.api+json',
           Authorization: `Bearer ${client.token.access_token}`,
         },
-        params: { "filter[id]": ids.join(",") },
+        params: { 'filter[id]': ids.join(',') },
       }
     );
     return { status: 200 };
@@ -127,19 +116,15 @@ async function del(
   }
 }
 
-function parseKeys(
-  body: unknown,
-  property: "ids" | "keys"
-): string[] | undefined {
+function parseKeys(body: unknown, property: 'ids' | 'keys'): string[] | undefined {
   try {
-    const parsed = (typeof body === "string" ? JSON.parse(body) : body) as
-      | Partial<AddPropertyKeyPolicyKeysReq>
-      | Partial<DeletePropertyKeyPolicyKeysReq>;
+    const parsed = (typeof body === 'string' ? JSON.parse(body) : body) as
+      Partial<AddPropertyKeyPolicyKeysReq> | Partial<DeletePropertyKeyPolicyKeysReq>;
     const values = (parsed as Record<string, unknown>)[property];
     if (
       !Array.isArray(values) ||
       values.length === 0 ||
-      values.some((value) => typeof value !== "string" || value.trim() === "")
+      values.some((value) => typeof value !== 'string' || value.trim() === '')
     )
       return undefined;
     return values;
@@ -155,8 +140,8 @@ function errorRes(error: unknown): ErrorRes {
   return e.vertexError?.res
     ? toErrorRes({ failure: e.vertexError.res })
     : ae.response?.data != null
-    ? toErrorRes({ failure: ae.response.data })
-    : ServerError;
+      ? toErrorRes({ failure: ae.response.data })
+      : ServerError;
 }
 
 export default withSession(handlePropertyKeyPolicyKeys);
@@ -166,8 +151,7 @@ async function get(
 ): Promise<ErrorRes | GetPropertyKeyPolicyKeysRes> {
   try {
     const id = head(req.query.id);
-    if (id == null)
-      return { message: "Property Key Policy ID required.", status: 400 };
+    if (id == null) return { message: 'Property Key Policy ID required.', status: 400 };
 
     const client = await getClientFromSession(req.session);
     const path = `${
@@ -179,12 +163,12 @@ async function get(
     >((pageCursor) =>
       client.axiosInstance.get<PropertyKeyPolicyKeyList>(path, {
         headers: {
-          Accept: "application/vnd.api+json",
+          Accept: 'application/vnd.api+json',
           Authorization: `Bearer ${client.token.access_token}`,
         },
         params: {
-          ...(pageCursor != null ? { "page[cursor]": pageCursor } : {}),
-          "page[size]": KeysPageSize,
+          ...(pageCursor != null ? { 'page[cursor]': pageCursor } : {}),
+          'page[size]': KeysPageSize,
         },
       })
     );
@@ -197,7 +181,7 @@ async function get(
     return e.vertexError?.res
       ? toErrorRes({ failure: e.vertexError.res })
       : ae.response?.data != null
-      ? toErrorRes({ failure: ae.response.data })
-      : ServerError;
+        ? toErrorRes({ failure: ae.response.data })
+        : ServerError;
   }
 }

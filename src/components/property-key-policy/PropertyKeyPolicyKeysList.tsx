@@ -1,4 +1,4 @@
-import { Add, Delete } from "@mui/icons-material";
+import { Add, Delete } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -11,15 +11,15 @@ import {
   Skeleton,
   Snackbar,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { isErrorRes } from "../../lib/api";
+import { isErrorRes } from '../../lib/api';
 import {
   DeletePropertyKeyPolicyKeysReq,
   PropertyKeyPolicyKey,
-} from "../../lib/property-key-policies";
-import AddPropertyKeyPolicyEntryDialog from "./AddPropertyKeyPolicyEntryDialog";
+} from '../../lib/property-key-policies';
+import AddPropertyKeyPolicyEntryDialog from './AddPropertyKeyPolicyEntryDialog';
 
 interface Props {
   readonly keys?: readonly PropertyKeyPolicyKey[];
@@ -47,7 +47,7 @@ export function PropertyKeyPolicyKeysList({
 
   const resolvedEntries = keys ?? [];
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     setSelected((current) => {
       const upd = new Set(current);
       if (upd.has(id)) upd.delete(id);
@@ -56,7 +56,7 @@ export function PropertyKeyPolicyKeysList({
     });
   }
 
-  async function handleDelete(ids: string[]) {
+  async function handleDelete(ids: string[]): Promise<void> {
     if (!editable || deleting || ids.length === 0) return;
 
     setDeleteError(undefined);
@@ -68,13 +68,13 @@ export function PropertyKeyPolicyKeysList({
       `/api/property-key-policies/${encodeURIComponent(policyId)}/keys`,
       {
         body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-        method: "DELETE",
+        headers: { 'Content-Type': 'application/json' },
+        method: 'DELETE',
       }
     ).catch(() => undefined);
     if (res == null) {
       setDeleting(false);
-      setDeleteError("Could not delete the selected property keys.");
+      setDeleteError('Could not delete the selected property keys.');
       return;
     }
 
@@ -82,7 +82,7 @@ export function PropertyKeyPolicyKeysList({
       const errBody = await res.json().catch(() => undefined);
       const message = isErrorRes(errBody) ? errBody.message : undefined;
       setDeleting(false);
-      setDeleteError(message ?? "Could not delete the selected property keys.");
+      setDeleteError(message ?? 'Could not delete the selected property keys.');
       return;
     }
 
@@ -99,20 +99,20 @@ export function PropertyKeyPolicyKeysList({
     <>
       <Box
         sx={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
+          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'space-between',
           mt: 2,
         }}
       >
         <Typography variant="subtitle2">Property Keys</Typography>
         {editable && (
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             {selected.size > 0 && (
               <Button
                 color="error"
                 disabled={deleting}
-                onClick={() => handleDelete([...selected])}
+                onClick={() => void handleDelete([...selected])}
                 size="small"
                 startIcon={<Delete />}
               >
@@ -140,7 +140,7 @@ export function PropertyKeyPolicyKeysList({
         error,
         loading,
         onCheck: handleCheck,
-        onDeleteOne: (id) => handleDelete([id]),
+        onDeleteOne: (id) => void handleDelete([id]),
         selected,
       })}
       {editable && (
@@ -235,15 +235,15 @@ function renderBody({
               color="primary"
               disabled={deleting}
               edge="start"
-              inputProps={{ "aria-label": `Select ${entry.name}` }}
+              inputProps={{ 'aria-label': `Select ${entry.name}` }}
               onChange={() => onCheck(entry.id)}
             />
           )}
           <ListItemText
             primary={entry.name}
             primaryTypographyProps={{
-              sx: { overflowWrap: "anywhere", whiteSpace: "normal" },
-              variant: "body2",
+              sx: { overflowWrap: 'anywhere', whiteSpace: 'normal' },
+              variant: 'body2',
             }}
           />
         </ListItem>
