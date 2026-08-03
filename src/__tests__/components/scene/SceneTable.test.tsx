@@ -1,6 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
+import { NuqsTestingAdapter, UrlUpdateEvent } from "nuqs/adapters/testing";
 import React from "react";
 
 import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
@@ -140,6 +141,85 @@ describe("SceneTable", () => {
       "/scene-viewer/scene-1"
     );
   });
+
+  it("loads transferable table state from the URL", async () => {
+    const requests: string[] = [];
+
+    server.use(
+      http.get("*/api/scenes", ({ request }) => {
+        requests.push(request.url);
+        return HttpResponse.json(page);
+      })
+    );
+
+    renderTable(undefined, undefined, {
+      searchParams:
+        "?sceneName=alpha&sceneSuppliedId=supplied-scene-1" +
+        "&sceneCursor=cursor-2&scenePage=2",
+    });
+
+    expect(await screen.findByText("Scene One")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name Filter")).toHaveValue("alpha");
+    expect(screen.getByLabelText("Supplied ID Filter")).toHaveValue(
+      "supplied-scene-1"
+    );
+    expect(screen.getByLabelText("Go to previous page")).toBeDisabled();
+
+    const request = new URL(requests[0]);
+    expect(request.searchParams.get("cursor")).toBe("cursor-2");
+    expect(request.searchParams.get("name")).toBe("alpha");
+    expect(request.searchParams.get("suppliedId")).toBe("supplied-scene-1");
+  });
+
+  it("updates a filter and resets paging as one URL update", async () => {
+    const events: UrlUpdateEvent[] = [];
+
+    server.use(http.get("*/api/scenes", () => HttpResponse.json(page)));
+
+    renderTable(undefined, undefined, {
+      onUrlUpdate: (event) => events.push(event),
+      searchParams: "?sceneCursor=cursor-2&scenePage=2",
+    });
+
+    expect(await screen.findByText("Scene One")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Name Filter"), "alpha");
+
+    await waitFor(() => {
+      const last = events[events.length - 1];
+      expect(last?.searchParams.get("sceneName")).toBe("alpha");
+    });
+
+    const last = events[events.length - 1];
+    expect(last.options.history).toBe("replace");
+    expect(last.searchParams.has("sceneCursor")).toBe(false);
+    expect(last.searchParams.has("scenePage")).toBe(false);
+    expect(screen.getByLabelText("Name Filter")).toHaveValue("alpha");
+  });
+
+  it("moves forward with the API cursor using push history", async () => {
+    const events: UrlUpdateEvent[] = [];
+
+    server.use(
+      http.get("*/api/scenes", () =>
+        HttpResponse.json({
+          ...page,
+          cursors: { self: "page-1", next: "page-2" },
+        })
+      )
+    );
+
+    renderTable(undefined, undefined, {
+      onUrlUpdate: (event) => events.push(event),
+    });
+
+    expect(await screen.findByText("Scene One")).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Go to next page"));
+
+    await waitFor(() => expect(events.length).toBe(1));
+    expect(events[0].options.history).toBe("push");
+    expect(events[0].searchParams.get("sceneCursor")).toBe("page-2");
+    expect(events[0].searchParams.get("scenePage")).toBe("1");
+  });
 });
 
 function getSceneRow(name = "Scene One"): HTMLTableRowElement {
@@ -149,24 +229,37 @@ function getSceneRow(name = "Scene One"): HTMLTableRowElement {
   return row;
 }
 
+interface AdapterProps {
+  readonly onUrlUpdate?: (event: UrlUpdateEvent) => void;
+  readonly searchParams?: string;
+}
+
 function renderTable(
   scene?: Scene,
-  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {},
+  adapterProps: AdapterProps = {}
 ) {
-  return renderWithSWR(renderTableElement(scene, props));
+  return renderWithSWR(renderTableElement(scene, props, adapterProps));
 }
 
 function renderTableElement(
   scene?: Scene,
-  props: Partial<React.ComponentProps<typeof SceneTable>> = {}
+  props: Partial<React.ComponentProps<typeof SceneTable>> = {},
+  adapterProps: AdapterProps = {}
 ): JSX.Element {
   return (
-    <SceneTable
-      invalidationCount={0}
-      onClick={jest.fn()}
-      onEditClick={jest.fn()}
-      scene={scene}
-      {...props}
-    />
+    <NuqsTestingAdapter
+      hasMemory={true}
+      onUrlUpdate={adapterProps.onUrlUpdate}
+      searchParams={adapterProps.searchParams}
+    >
+      <SceneTable
+        invalidationCount={0}
+        onClick={jest.fn()}
+        onEditClick={jest.fn()}
+        scene={scene}
+        {...props}
+      />
+    </NuqsTestingAdapter>
   );
 }
