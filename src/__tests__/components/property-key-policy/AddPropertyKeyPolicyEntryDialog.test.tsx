@@ -14,11 +14,40 @@ describe('AddPropertyKeyPolicyEntryDialog', () => {
   it('shows the case-sensitivity helper text', () => {
     renderDialog();
 
+    // The sentence is split across elements to emphasize key phrases, so assert
+    // the emphasized fragments render rather than the full sentence.
+    expect(screen.getByText('case-sensitive')).toBeInTheDocument();
+    expect(screen.getByText('saved exactly as typed')).toBeInTheDocument();
+  });
+
+  it('pressing Enter in a property key field adds and focuses a new field', async () => {
+    renderDialog();
+
+    await userEvent.type(screen.getByLabelText('Property key 1'), 'Alpha{Enter}');
+
+    const secondField = screen.getByLabelText('Property key 2');
+    expect(secondField).toBeInTheDocument();
+    expect(secondField).toHaveFocus();
+    expect(screen.getByLabelText('Property key 1')).toHaveValue('Alpha');
+  });
+
+  it('flags a key that already exists on the policy and disables Add', async () => {
+    renderDialog({ existingKeys: ['ExistingKey'] });
+
+    await userEvent.type(screen.getByLabelText('Property key 1'), 'ExistingKey');
+
     expect(
-      screen.getByText(
-        'Metadata property keys are case-sensitive and are saved exactly as typed.'
-      )
+      screen.getByText('Property key already exists on this policy.')
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+
+    // Case-sensitive: a different case is not a duplicate.
+    await userEvent.clear(screen.getByLabelText('Property key 1'));
+    await userEvent.type(screen.getByLabelText('Property key 1'), 'existingkey');
+    expect(
+      screen.queryByText('Property key already exists on this policy.')
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
   });
 
   it('submits multiple keys verbatim (case preserved) and calls onAdded', async () => {
@@ -99,10 +128,12 @@ function renderDialog(
     readonly onAdded?: () => void;
     readonly onClose?: () => void;
     readonly policyId?: string;
+    readonly existingKeys?: readonly string[];
   } = {}
 ): void {
   renderWithSWR(
     <AddPropertyKeyPolicyEntryDialog
+      existingKeys={props.existingKeys}
       onAdded={props.onAdded ?? jest.fn()}
       onClose={props.onClose ?? jest.fn()}
       open

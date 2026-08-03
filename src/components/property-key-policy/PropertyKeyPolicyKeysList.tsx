@@ -146,6 +146,7 @@ export function PropertyKeyPolicyKeysList({
       {editable && (
         <>
           <AddPropertyKeyPolicyEntryDialog
+            existingKeys={resolvedEntries.map((entry) => entry.name)}
             onAdded={() => onMutate()}
             onClose={() => setAddOpen(false)}
             open={addOpen}
