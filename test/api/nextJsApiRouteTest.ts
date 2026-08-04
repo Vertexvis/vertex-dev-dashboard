@@ -1,5 +1,5 @@
-import type { NextApiResponse } from "next";
-import type { Session } from "next-iron-session";
+import type { NextApiResponse } from 'next';
+import type { Session } from 'next-iron-session';
 
 import {
   CredsKey,
@@ -7,7 +7,7 @@ import {
   NetworkConfig as NetworkConfigKey,
   type NextIronRequest,
   TokenKey,
-} from "../../src/lib/with-session";
+} from '../../src/lib/with-session';
 
 type NextJsApiRouteHandler = (
   req: NextIronRequest,
@@ -35,20 +35,18 @@ export async function invokeNextJsApiRouteHandler(
   return response;
 }
 
-export function createAuthenticatedVertexApiTestSession(
-  apiHost: string
-): Session {
+export function createAuthenticatedVertexApiTestSession(apiHost: string): Session {
   const values = new Map<string, unknown>([
-    [CredsKey, { id: "client-id", secret: "client-secret" }],
-    [EnvKey, "custom"],
+    [CredsKey, { id: 'client-id', secret: 'client-secret' }],
+    [EnvKey, 'custom'],
     [
       NetworkConfigKey,
       {
         apiHost,
-        name: "test",
-        renderingHost: "https://example.test",
-        sceneTreeHost: "https://example.test",
-        sceneViewHost: "https://example.test",
+        name: 'test',
+        renderingHost: 'https://example.test',
+        sceneTreeHost: 'https://example.test',
+        sceneViewHost: 'https://example.test',
       },
     ],
     [
@@ -56,11 +54,11 @@ export function createAuthenticatedVertexApiTestSession(
       {
         expiration: Date.now() + 60 * 60 * 1000,
         token: {
-          access_token: "test-access-token",
-          account_id: "account-id",
+          access_token: 'test-access-token',
+          account_id: 'account-id',
           expires_in: 60 * 60,
           scopes: [],
-          token_type: "Bearer",
+          token_type: 'Bearer',
         },
       },
     ],

@@ -1,13 +1,13 @@
-import createCache from "@emotion/cache";
-import { CacheProvider } from "@emotion/react";
-import createEmotionServer from "@emotion/server/create-instance";
-import Document, { Head, Html, Main, NextScript } from "next/document";
-import React from "react";
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
+import Document, { Head, Html, Main, NextScript } from 'next/document';
+import React from 'react';
 
-import theme from "../lib/theme";
+import theme from '../lib/theme';
 
 export default class MyDocument extends Document {
-  render(): JSX.Element {
+  public render(): JSX.Element {
     return (
       <Html lang="en">
         <Head>
@@ -45,19 +45,18 @@ export default class MyDocument extends Document {
 
 MyDocument.getInitialProps = async (ctx) => {
   const originalRenderPage = ctx.renderPage;
-  const cache = createCache({ key: "css", prepend: true });
+  const cache = createCache({ key: 'css', prepend: true });
   cache.compat = true;
   const { extractCriticalToChunks } = createEmotionServer(cache);
 
   ctx.renderPage = () =>
     originalRenderPage({
       // eslint-disable-next-line react/display-name
-      enhanceComponent: (Component) => (props) =>
-        (
-          <CacheProvider value={cache}>
-            <Component {...props} />
-          </CacheProvider>
-        ),
+      enhanceComponent: (Component) => (props) => (
+        <CacheProvider value={cache}>
+          <Component {...props} />
+        </CacheProvider>
+      ),
     });
 
   const initialProps = await Document.getInitialProps(ctx);
@@ -67,7 +66,7 @@ MyDocument.getInitialProps = async (ctx) => {
       ...React.Children.toArray(initialProps.styles),
       ...extractCriticalToChunks(initialProps.html).styles.map((style) => (
         <style
-          data-emotion={`${style.key} ${style.ids.join(" ")}`}
+          data-emotion={`${style.key} ${style.ids.join(' ')}`}
           key={style.key}
           dangerouslySetInnerHTML={{ __html: style.css }}
         />

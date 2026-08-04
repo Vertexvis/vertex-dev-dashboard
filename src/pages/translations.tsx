@@ -1,11 +1,11 @@
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { Layout } from "../components/shared/Layout";
-import { defaultServerSideProps } from "../lib/with-session";
+import { Layout } from '../components/shared/Layout';
+import { defaultServerSideProps } from '../lib/with-session';
 
 const TranslationTables = dynamic(
-  () => import("../components/translation/TranslationTables"),
+  () => import('../components/translation/TranslationTables'),
   {
     ssr: false,
   }

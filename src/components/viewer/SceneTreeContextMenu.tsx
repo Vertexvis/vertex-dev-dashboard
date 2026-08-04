@@ -1,10 +1,11 @@
-import { Divider } from "@mui/material";
-import { Row } from "@vertexvis/viewer/dist/types/components/scene-tree/lib/row";
-import * as React from "react";
+import { Divider } from '@mui/material';
+import { Row } from '@vertexvis/viewer/dist/types/components/scene-tree/lib/row';
+import * as React from 'react';
 
-import { ViewerActions } from "../../lib/viewer";
-import { ContextMenuItem } from "../shared/ContextMenuItem";
-import { ContextMenu } from "./ContextMenu";
+import { reportError } from '../../lib/report-error';
+import { ViewerActions } from '../../lib/viewer';
+import { ContextMenuItem } from '../shared/ContextMenuItem';
+import { ContextMenu } from './ContextMenu';
 
 export interface Props {
   readonly sceneTree: React.MutableRefObject<HTMLVertexSceneTreeElement | null>;
@@ -23,12 +24,13 @@ export const SceneTreeContextMenu = ({
   return (
     <ContextMenu
       predicate={(target) =>
-        target instanceof HTMLElement &&
-        target.tagName.includes("VERTEX-SCENE-TREE")
+        target instanceof HTMLElement && target.tagName.includes('VERTEX-SCENE-TREE')
       }
-      onOpen={async (event) =>
-        setItem(await sceneTree.current?.getRowForEvent(event))
-      }
+      onOpen={(event) => {
+        Promise.resolve(sceneTree.current?.getRowForEvent(event))
+          .then(setItem)
+          .catch(reportError('Failed to load scene tree row'));
+      }}
     >
       <ContextMenuItem
         iconName="eye-half"
@@ -37,7 +39,9 @@ export const SceneTreeContextMenu = ({
         disabled={!hasSelection}
         onClick={() => {
           if (item?.node.id?.hex != null) {
-            actions.setVisibilitySelected(false);
+            actions
+              .setVisibilitySelected(false)
+              .catch(reportError('Failed to hide selected items'));
           }
         }}
       />
@@ -46,7 +50,7 @@ export const SceneTreeContextMenu = ({
         iconSize="sm"
         label="Hide All Parts"
         onClick={() => {
-          actions.setVisibilityAll(false);
+          actions.setVisibilityAll(false).catch(reportError('Failed to hide all parts'));
         }}
       />
       <ContextMenuItem
@@ -56,7 +60,9 @@ export const SceneTreeContextMenu = ({
         disabled={item == null}
         onClick={() => {
           if (item?.node.id?.hex != null) {
-            actions.showOnly(item.node.id.hex);
+            actions
+              .showOnly(item.node.id.hex)
+              .catch(reportError('Failed to show only part'));
           }
         }}
       />
@@ -66,7 +72,9 @@ export const SceneTreeContextMenu = ({
         label="Show Only Selected"
         disabled={!hasSelection}
         onClick={() => {
-          actions.showOnlySelected();
+          actions
+            .showOnlySelected()
+            .catch(reportError('Failed to show only selected items'));
         }}
       />
       <ContextMenuItem
@@ -74,7 +82,7 @@ export const SceneTreeContextMenu = ({
         iconSize="sm"
         label="Show All Parts"
         onClick={() => {
-          actions.setVisibilityAll(true);
+          actions.setVisibilityAll(true).catch(reportError('Failed to show all parts'));
         }}
       />
       <Divider />
@@ -85,7 +93,7 @@ export const SceneTreeContextMenu = ({
         disabled={item == null || !item.node.visible}
         onClick={() => {
           if (item?.node.id?.hex != null) {
-            actions.fit(item.node.id.hex);
+            actions.fit(item.node.id.hex).catch(reportError('Failed to fly to part'));
           }
         }}
       />
@@ -95,7 +103,7 @@ export const SceneTreeContextMenu = ({
         label="Fit Selected"
         disabled={!hasSelection}
         onClick={() => {
-          actions.fitSelected();
+          actions.fitSelected().catch(reportError('Failed to fit selected items'));
         }}
       />
     </ContextMenu>

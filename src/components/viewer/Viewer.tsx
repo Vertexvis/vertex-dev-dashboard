@@ -1,11 +1,11 @@
-/* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
+/* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from '@emotion/react';
 import {
   CameraAltOutlined,
   FileCopyOutlined,
   RestartAltOutlined,
   SystemUpdateAltOutlined,
   ZoomOutMapOutlined,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 import {
   Alert,
   Autocomplete,
@@ -16,30 +16,31 @@ import {
   ListItemText,
   Snackbar,
   TextField,
-} from "@mui/material";
-import { vertexvis } from "@vertexvis/frame-streaming-protos";
+} from '@mui/material';
+import { vertexvis } from '@vertexvis/frame-streaming-protos';
 import {
   JSX as ViewerJSX,
   TapEventDetails,
   VertexViewerCustomEvent,
-} from "@vertexvis/viewer";
+} from '@vertexvis/viewer';
 import {
   VertexViewer,
   VertexViewerToolbar,
   VertexViewerViewCube,
-} from "@vertexvis/viewer-react";
-import { useRouter } from "next/router";
-import React from "react";
-import { useHotkeys } from "react-hotkeys-hook";
+} from '@vertexvis/viewer-react';
+import { useRouter } from 'next/router';
+import React from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
 
-import { StreamCredentials } from "../../lib/config";
-import { copySceneViewCamera, fitAll, getCamera } from "../../lib/scene-items";
-import { viewerHasSelection, ViewerState } from "../../lib/viewer";
-import { NetworkConfig } from "../../lib/with-session";
-import { UpdateSceneReq } from "../../pages/api/scenes";
-import CreateSceneViewStateDialog from "./CreateSceneViewStateDialog";
-import { ViewerContextMenu } from "./ViewerContextMenu";
-import { ViewerSpeedDial } from "./ViewerSpeedDial";
+import { StreamCredentials } from '../../lib/config';
+import { reportError } from '../../lib/report-error';
+import { copySceneViewCamera, fitAll, getCamera } from '../../lib/scene-items';
+import { viewerHasSelection, ViewerState } from '../../lib/viewer';
+import { NetworkConfig } from '../../lib/with-session';
+import { UpdateSceneReq } from '../../pages/api/scenes';
+import CreateSceneViewStateDialog from './CreateSceneViewStateDialog';
+import { ViewerContextMenu } from './ViewerContextMenu';
+import { ViewerSpeedDial } from './ViewerSpeedDial';
 
 interface ViewerProps extends ViewerJSX.VertexViewer {
   readonly credentials: StreamCredentials;
@@ -88,21 +89,21 @@ function UnwrappedViewer({
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const router = useRouter();
 
-  useHotkeys("s", () => handleShortcutS(), { keyup: true });
-
-  function handleShortcutS() {
+  function handleShortcutS(): void {
     if (ref?.current == null) return;
 
     ref.current.focus();
   }
 
-  function handleClose() {
+  useHotkeys('s', () => handleShortcutS(), { keyup: true });
+
+  function handleClose(): void {
     setKey(Date.now());
   }
 
-  async function handleUpdateBaseCamera() {
+  async function handleUpdateBaseCamera(): Promise<void> {
     const { sceneId } = router.query;
-    const parsedSceneId = Array.isArray(sceneId) ? sceneId[0] : sceneId || "";
+    const parsedSceneId = Array.isArray(sceneId) ? sceneId[0] : sceneId || '';
     const camera = await getCamera({ viewer: viewer.current });
 
     if (camera) {
@@ -115,41 +116,49 @@ function UnwrappedViewer({
         },
       };
 
-      await fetch("/api/scenes", {
+      await fetch('/api/scenes', {
         body: JSON.stringify(req),
-        method: "PATCH",
+        method: 'PATCH',
       });
 
-      setToastMsg("Base scene camera updated.");
+      setToastMsg('Base scene camera updated.');
     }
   }
 
   const actions: Action[] = [
     {
       icon: <ZoomOutMapOutlined fontSize="small" />,
-      label: "Fit All",
-      onSelect: () => fitAll({ viewer: viewer.current }),
+      label: 'Fit All',
+      onSelect: () => {
+        fitAll({ viewer: viewer.current }).catch(reportError('Failed to fit all'));
+      },
     },
     {
       icon: <FileCopyOutlined fontSize="small" />,
-      label: "Copy camera",
-      onSelect: () => copySceneViewCamera({ viewer: viewer.current }),
+      label: 'Copy camera',
+      onSelect: () => {
+        copySceneViewCamera({ viewer: viewer.current }).catch(
+          reportError('Failed to copy scene view camera')
+        );
+      },
     },
     {
       icon: <CameraAltOutlined fontSize="small" />,
-      label: "Create View State",
+      label: 'Create View State',
       onSelect: () => setCreateViewState(true),
     },
     {
       icon: <SystemUpdateAltOutlined fontSize="small" />,
-      label: "Update base scene with current camera",
-      onSelect: handleUpdateBaseCamera,
+      label: 'Update base scene with current camera',
+      onSelect: () => {
+        handleUpdateBaseCamera().catch(reportError('Failed to update base scene camera'));
+      },
     },
     {
       icon: <RestartAltOutlined fontSize="small" />,
-      label: "Reset View",
+      label: 'Reset View',
       onSelect: () => {
-        viewerState.actions.reset();
+        viewerState.actions.reset().catch(reportError('Failed to reset the view'));
         onViewReset?.();
       },
     },
@@ -163,15 +172,13 @@ function UnwrappedViewer({
 
   return (
     <VertexViewer
-      configEnv={
-        credentials.vertexEnv !== "custom" ? credentials.vertexEnv : undefined
-      }
+      configEnv={credentials.vertexEnv !== 'custom' ? credentials.vertexEnv : undefined}
       config={
-        credentials.vertexEnv === "custom" && networkConfig != null
+        credentials.vertexEnv === 'custom' && networkConfig != null
           ? stringConfig
           : undefined
       }
-      css={{ height: "100%", width: "100%" }}
+      css={{ height: '100%', width: '100%' }}
       clientId={credentials.clientId}
       depthBuffers="final"
       featureLines={{
@@ -190,25 +197,18 @@ function UnwrappedViewer({
             onChange={(e, v) => {
               if (v == null) return;
 
-              if (
-                e.type === "keydown" &&
-                (e as React.KeyboardEvent).key === "Enter"
-              ) {
+              if (e.type === 'keydown' && (e as React.KeyboardEvent).key === 'Enter') {
                 handleClose();
                 v.onSelect();
               }
             }}
             onClose={(_, reason: AutocompleteCloseReason) => {
-              if (reason === "escape") handleClose();
+              if (reason === 'escape') handleClose();
             }}
             options={actions}
             size="small"
             renderInput={(params) => (
-              <TextField
-                inputRef={ref}
-                label="Search Viewer controls"
-                {...params}
-              />
+              <TextField inputRef={ref} label="Search Viewer controls" {...params} />
             )}
             renderOption={(props, option) => (
               <ListItem
@@ -260,14 +260,10 @@ function UnwrappedViewer({
 function onTap<P extends ViewerProps>(
   WrappedViewer: ViewerComponentType
 ): React.FunctionComponent<P & OnSelectProps> {
-  return function Component({
-    viewerState,
-    onSelect,
-    ...props
-  }: P & OnSelectProps) {
+  return function Component({ viewerState, onSelect, ...props }: P & OnSelectProps) {
     const [hit, setHit] = React.useState<vertexvis.protobuf.stream.IHit>();
 
-    async function handleTap(e: VertexViewerCustomEvent<TapEventDetails>) {
+    async function handleTap(e: VertexViewerCustomEvent<TapEventDetails>): Promise<void> {
       if (props.onTap) props.onTap(e);
 
       if (!e.defaultPrevented) {
@@ -286,7 +282,13 @@ function onTap<P extends ViewerProps>(
 
     return (
       <>
-        <WrappedViewer viewerState={viewerState} {...props} onTap={handleTap} />
+        <WrappedViewer
+          viewerState={viewerState}
+          {...props}
+          onTap={(e) => {
+            handleTap(e).catch(reportError('Failed to handle viewer tap'));
+          }}
+        />
         <ViewerContextMenu
           hit={hit}
           hasSelection={viewerHasSelection(viewerState.ref)}

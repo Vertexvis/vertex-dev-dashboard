@@ -1,14 +1,14 @@
-import { Box, Drawer } from "@mui/material";
-import { drawerClasses } from "@mui/material/Drawer";
-import { SceneViewStateData } from "@vertexvis/api-client-node";
-import React from "react";
+import { Box, Drawer } from '@mui/material';
+import { drawerClasses } from '@mui/material/Drawer';
+import { SceneViewStateData } from '@vertexvis/api-client-node';
+import React from 'react';
 
-import { Metadata } from "../../lib/metadata";
-import { ModelViewsState } from "../../lib/model-views";
-import { RightDrawerWidth } from "./Layout";
-import { MetadataProperties } from "./MetadataProperties";
-import { ModelViews } from "./ModelViews";
-import { SceneViewStateList } from "./SceneViewStateList";
+import { Metadata } from '../../lib/metadata';
+import { ModelViewsState } from '../../lib/model-views';
+import { RightDrawerWidth } from './Layout';
+import { MetadataProperties } from './MetadataProperties';
+import { ModelViews } from './ModelViews';
+import { SceneViewStateList } from './SceneViewStateList';
 
 interface Props {
   readonly active?: string;
@@ -20,11 +20,11 @@ interface Props {
 
 const MinWidth = 280;
 const MinViewerWidth = 280;
-const StorageKey = "viewer.rightDrawerWidth";
+const StorageKey = 'viewer.rightDrawerWidth';
 const KeyboardStep = 20;
 
 function fallbackMaxWidth(): number {
-  if (typeof window === "undefined") return 800;
+  if (typeof window === 'undefined') return 800;
   return Math.min(800, Math.round(window.innerWidth * 0.7));
 }
 
@@ -33,7 +33,7 @@ function clampWidth(width: number, maximum: number): number {
 }
 
 function readStoredWidth(): number {
-  if (typeof window === "undefined") return RightDrawerWidth;
+  if (typeof window === 'undefined') return RightDrawerWidth;
   const raw = window.localStorage.getItem(StorageKey);
   const parsed = raw != null ? Number.parseInt(raw, 10) : Number.NaN;
   return Number.isFinite(parsed)
@@ -63,7 +63,7 @@ export function RightDrawer({
     return fallbackMaxWidth();
   }, []);
 
-  function setAndPersistWidth(nextWidth: number) {
+  function setAndPersistWidth(nextWidth: number): void {
     setWidth((currentWidth) => {
       const clampedWidth = clampWidth(nextWidth, maxWidth(currentWidth));
       window.localStorage.setItem(StorageKey, String(clampedWidth));
@@ -72,81 +72,75 @@ export function RightDrawer({
   }
 
   React.useEffect(() => {
-    setWidth((currentWidth) =>
-      clampWidth(readStoredWidth(), maxWidth(currentWidth))
-    );
+    setWidth((currentWidth) => clampWidth(readStoredWidth(), maxWidth(currentWidth)));
   }, [maxWidth]);
 
   React.useEffect(() => {
-    function stopDragging() {
+    function stopDragging(): void {
       if (!draggingRef.current) return;
       draggingRef.current = false;
-      document.body.style.userSelect = "";
+      document.body.style.userSelect = '';
       setWidth((current) => {
         window.localStorage.setItem(StorageKey, String(current));
         return current;
       });
     }
 
-    function onMouseMove(event: MouseEvent) {
+    function onMouseMove(event: MouseEvent): void {
       if (!draggingRef.current) return;
       const { clientX, width: startWidth } = dragStartRef.current;
-      setWidth(
-        clampWidth(startWidth + clientX - event.clientX, maxWidth(startWidth))
-      );
+      setWidth(clampWidth(startWidth + clientX - event.clientX, maxWidth(startWidth)));
     }
 
-    function onResize() {
-      setWidth((currentWidth) =>
-        clampWidth(currentWidth, maxWidth(currentWidth))
-      );
+    function onResize(): void {
+      setWidth((currentWidth) => clampWidth(currentWidth, maxWidth(currentWidth)));
     }
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", stopDragging);
-    window.addEventListener("blur", stopDragging);
-    window.addEventListener("resize", onResize);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', stopDragging);
+    window.addEventListener('blur', stopDragging);
+    window.addEventListener('resize', onResize);
     return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", stopDragging);
-      window.removeEventListener("blur", stopDragging);
-      window.removeEventListener("resize", onResize);
-      document.body.style.userSelect = "";
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', stopDragging);
+      window.removeEventListener('blur', stopDragging);
+      window.removeEventListener('resize', onResize);
+      document.body.style.userSelect = '';
     };
   }, [maxWidth]);
 
-  function handleMouseDown(event: React.MouseEvent) {
+  function handleMouseDown(event: React.MouseEvent): void {
     if (event.button !== 0) return;
     event.preventDefault();
     draggingRef.current = true;
     dragStartRef.current = { clientX: event.clientX, width };
-    document.body.style.userSelect = "none";
+    document.body.style.userSelect = 'none';
   }
 
-  function handleDoubleClick() {
+  function handleDoubleClick(): void {
     setAndPersistWidth(RightDrawerWidth);
   }
 
-  function handleKeyDown(event: React.KeyboardEvent) {
+  function handleKeyDown(event: React.KeyboardEvent): void {
     switch (event.key) {
-      case "ArrowLeft":
+      case 'ArrowLeft':
         event.preventDefault();
         setAndPersistWidth(width + KeyboardStep);
         break;
-      case "ArrowRight":
+      case 'ArrowRight':
         event.preventDefault();
         setAndPersistWidth(width - KeyboardStep);
         break;
-      case "Home":
+      case 'Home':
         event.preventDefault();
         setAndPersistWidth(MinWidth);
         break;
-      case "End":
+      case 'End':
         event.preventDefault();
         setAndPersistWidth(maxWidth(width));
         break;
-      case "Enter":
-      case " ":
+      case 'Enter':
+      case ' ':
         event.preventDefault();
         handleDoubleClick();
         break;
@@ -155,18 +149,18 @@ export function RightDrawer({
     }
   }
 
-  const getDisplayedContent = () => {
+  const getDisplayedContent = (): JSX.Element => {
     switch (active) {
-      case "properties":
+      case 'properties':
         return <MetadataProperties metadata={metadata} />;
-      case "scene-view-states":
+      case 'scene-view-states':
         return (
           <SceneViewStateList
             sceneViewStates={sceneViewStates}
             onViewStateSelected={onViewStateSelected}
           />
         );
-      case "model-views":
+      case 'model-views':
         return <ModelViews modelViews={modelViews} metadata={metadata} />;
       default:
         return <></>;
@@ -178,15 +172,15 @@ export function RightDrawer({
       anchor="right"
       ref={drawerRef}
       sx={{
-        display: { sm: "block", xs: "none" },
-        position: "relative",
+        display: { sm: 'block', xs: 'none' },
+        position: 'relative',
         width,
         [`& .${drawerClasses.paper}`]: { width },
       }}
       PaperProps={{
         style: { width },
         sx: {
-          position: "relative",
+          position: 'relative',
         },
       }}
       variant="permanent"
@@ -203,14 +197,14 @@ export function RightDrawer({
         role="separator"
         tabIndex={0}
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 0,
           left: 0,
           bottom: 0,
-          width: "6px",
-          cursor: "col-resize",
+          width: '6px',
+          cursor: 'col-resize',
           zIndex: 1,
-          "&:hover": { backgroundColor: "action.hover" },
+          '&:hover': { backgroundColor: 'action.hover' },
         }}
       />
       {getDisplayedContent()}

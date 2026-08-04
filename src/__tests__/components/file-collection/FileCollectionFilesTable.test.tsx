@@ -1,45 +1,45 @@
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
-import React from "react";
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import React from 'react';
 
-import { installJsdomMockServer } from "../../../../test/msw/installJsdomMockServer";
-import { server } from "../../../../test/msw/server";
-import { renderWithSWR } from "../../../../test/render/renderWithSWR";
-import FileCollectionFilesTable from "../../../components/file-collection/FileCollectionFilesTable";
-import { DefaultPageSize } from "../../../components/shared/Layout";
+import { installJsdomMockServer } from '../../../../test/msw/installJsdomMockServer';
+import { server } from '../../../../test/msw/server';
+import { renderWithSWR } from '../../../../test/render/renderWithSWR';
+import FileCollectionFilesTable from '../../../components/file-collection/FileCollectionFilesTable';
+import { DefaultPageSize } from '../../../components/shared/Layout';
 
-const collectionFilesApiPath = "/api/file-collections/collection-1/files";
+const collectionFilesApiPath = '/api/file-collections/collection-1/files';
 const downloadUrlById = {
-  "file-1": "https://example.test/download/file-1",
+  'file-1': 'https://example.test/download/file-1',
 } as const;
 
-describe("FileCollectionFilesTable", () => {
+describe('FileCollectionFilesTable', () => {
   installJsdomMockServer();
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it("loads collection files while keeping row interactions", async () => {
+  it('loads collection files while keeping row interactions', async () => {
     const listCollectionFiles = jest.fn(({ request }) => {
       const url = new URL(request.url);
 
       expect(request.url).toBe(
         `http://localhost${collectionFilesApiPath}?pageSize=${DefaultPageSize}`
       );
-      expect(url.searchParams.get("pageSize")).toBe(DefaultPageSize.toString());
-      expect(url.searchParams.get("cursor")).toBeNull();
+      expect(url.searchParams.get('pageSize')).toBe(DefaultPageSize.toString());
+      expect(url.searchParams.get('cursor')).toBeNull();
 
       return HttpResponse.json(
         filePage([
           fileResource({
-            id: "file-1",
-            name: "File One",
-            status: "complete",
-            suppliedId: "supplied-file-1",
-            created: "2026-06-12T15:30:00Z",
-            uploaded: "2026-06-12T15:31:00Z",
+            id: 'file-1',
+            name: 'File One',
+            status: 'complete',
+            suppliedId: 'supplied-file-1',
+            created: '2026-06-12T15:30:00Z',
+            uploaded: '2026-06-12T15:31:00Z',
           }),
         ])
       );
@@ -50,7 +50,7 @@ describe("FileCollectionFilesTable", () => {
       });
     });
     const onFileSelected = jest.fn();
-    jest.spyOn(window, "open").mockReturnValue({} as Window);
+    jest.spyOn(window, 'open').mockReturnValue({} as Window);
 
     mockFileCollectionFilesApi({
       createDownloadUrl,
@@ -59,167 +59,153 @@ describe("FileCollectionFilesTable", () => {
 
     renderTable(onFileSelected);
 
-    expect(await screen.findByText("File One")).toBeInTheDocument();
-    const statusLabel = screen.getByText("complete");
-    expect(statusLabel.closest(".MuiChip-root")).toHaveStyle({
-      textTransform: "uppercase",
+    expect(await screen.findByText('File One')).toBeInTheDocument();
+    const statusLabel = screen.getByText('complete');
+    expect(statusLabel.closest('.MuiChip-root')).toHaveStyle({
+      textTransform: 'uppercase',
     });
     expect(listCollectionFiles).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Name")).not.toHaveAttribute("role", "button");
-    expect(
-      screen.queryByLabelText("Supplied ID Filter (exact)")
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "New" })
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Select File One")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Delete")).not.toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Name" })).not.toHaveClass(
-      "MuiTableCell-paddingNone"
+    expect(screen.getByText('Name')).not.toHaveAttribute('role', 'button');
+    expect(screen.queryByLabelText('Supplied ID Filter (exact)')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Select File One')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Name' })).not.toHaveClass(
+      'MuiTableCell-paddingNone'
     );
-    expect(screen.getByText("File One").closest("th")).not.toHaveClass(
-      "MuiTableCell-paddingNone"
+    expect(screen.getByText('File One').closest('th')).not.toHaveClass(
+      'MuiTableCell-paddingNone'
     );
 
-    const name = screen.getByLabelText("Download File One");
+    const name = screen.getByLabelText('Download File One');
     await userEvent.hover(name);
 
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Download File One"
-    );
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Download File One');
 
-    expect(name).toHaveAttribute("href", "/api/files/file-1/download");
+    expect(name).toHaveAttribute('href', '/api/files/file-1/download');
     expect(onFileSelected).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByText("supplied-file-1"));
+    await userEvent.click(screen.getByText('supplied-file-1'));
 
     expect(onFileSelected).toHaveBeenCalledWith({
-      id: "file-1",
-      name: "File One",
-      status: "complete",
-      suppliedId: "supplied-file-1",
-      created: "2026-06-12T15:30:00Z",
-      uploaded: "2026-06-12T15:31:00Z",
+      id: 'file-1',
+      name: 'File One',
+      status: 'complete',
+      suppliedId: 'supplied-file-1',
+      created: '2026-06-12T15:30:00Z',
+      uploaded: '2026-06-12T15:31:00Z',
     });
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
-    );
-    await userEvent.click(
-      screen.getByRole("menuitem", { name: "Download file" })
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for File One' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Download file' }));
 
     await waitFor(() => {
       expect(createDownloadUrl).toHaveBeenCalledTimes(1);
     });
     expect(window.open).toHaveBeenLastCalledWith(
-      downloadUrlById["file-1"],
-      "_blank",
-      "noopener"
+      downloadUrlById['file-1'],
+      '_blank',
+      'noopener'
     );
   });
 
-  it("disables download for files that are not complete", async () => {
+  it('disables download for files that are not complete', async () => {
     const createDownloadUrl = jest.fn();
 
     mockFileCollectionFilesApi({
       createDownloadUrl,
       files: [
         fileResource({
-          id: "file-1",
-          name: "File One",
-          status: "pending",
-          suppliedId: "supplied-file-1",
-          created: "2026-06-12T15:30:00Z",
-          uploaded: "2026-06-12T15:31:00Z",
+          id: 'file-1',
+          name: 'File One',
+          status: 'pending',
+          suppliedId: 'supplied-file-1',
+          created: '2026-06-12T15:30:00Z',
+          uploaded: '2026-06-12T15:31:00Z',
         }),
       ],
     });
 
     renderTable();
 
-    expect(await screen.findByText("File One")).toBeInTheDocument();
-    expect(screen.getByText("pending")).toBeInTheDocument();
+    expect(await screen.findByText('File One')).toBeInTheDocument();
+    expect(screen.getByText('pending')).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for File One' }));
+    expect(screen.getByRole('menuitem', { name: 'Download file' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
     );
-    expect(
-      screen.getByRole("menuitem", { name: "Download file" })
-    ).toHaveAttribute("aria-disabled", "true");
     expect(createDownloadUrl).not.toHaveBeenCalled();
   });
 
-  it("does not style ready file statuses as success", async () => {
+  it('does not style ready file statuses as success', async () => {
     mockFileCollectionFilesApi({
       files: [
         fileResource({
-          id: "file-1",
-          name: "File One",
-          status: "ready",
-          suppliedId: "supplied-file-1",
-          created: "2026-06-12T15:30:00Z",
-          uploaded: "2026-06-12T15:31:00Z",
+          id: 'file-1',
+          name: 'File One',
+          status: 'ready',
+          suppliedId: 'supplied-file-1',
+          created: '2026-06-12T15:30:00Z',
+          uploaded: '2026-06-12T15:31:00Z',
         }),
       ],
     });
 
     renderTable();
 
-    const statusLabel = await screen.findByText("ready");
-    expect(statusLabel.closest(".MuiChip-root")).toHaveClass(
-      "MuiChip-colorDefault"
-    );
+    const statusLabel = await screen.findByText('ready');
+    expect(statusLabel.closest('.MuiChip-root')).toHaveClass('MuiChip-colorDefault');
   });
 
-  it("does not treat completed as an available file state", async () => {
+  it('does not treat completed as an available file state', async () => {
     const createDownloadUrl = jest.fn();
-    jest.spyOn(window, "open").mockReturnValue({} as Window);
+    jest.spyOn(window, 'open').mockReturnValue({} as Window);
 
     mockFileCollectionFilesApi({
       createDownloadUrl,
       files: [
         fileResource({
-          id: "file-1",
-          name: "File One",
-          status: "completed",
-          suppliedId: "supplied-file-1",
-          created: "2026-06-12T15:30:00Z",
-          uploaded: "2026-06-12T15:31:00Z",
+          id: 'file-1',
+          name: 'File One',
+          status: 'completed',
+          suppliedId: 'supplied-file-1',
+          created: '2026-06-12T15:30:00Z',
+          uploaded: '2026-06-12T15:31:00Z',
         }),
       ],
     });
 
     renderTable();
 
-    expect(await screen.findByText("completed")).toBeInTheDocument();
+    expect(await screen.findByText('completed')).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for File One" })
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for File One' }));
+    expect(screen.getByRole('menuitem', { name: 'Download file' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
     );
-    expect(
-      screen.getByRole("menuitem", { name: "Download file" })
-    ).toHaveAttribute("aria-disabled", "true");
     expect(createDownloadUrl).not.toHaveBeenCalled();
     expect(window.open).not.toHaveBeenCalled();
   });
 
-  it("renders an empty files table for an empty collection", async () => {
+  it('renders an empty files table for an empty collection', async () => {
     mockFileCollectionFilesApi({ files: [] });
 
     renderTable();
 
-    expect(await screen.findByText("Files")).toBeInTheDocument();
-    expect(screen.queryByText("File One")).not.toBeInTheDocument();
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(await screen.findByText('Files')).toBeInTheDocument();
+    expect(screen.queryByText('File One')).not.toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it("renders load errors with an error indicator", async () => {
+  it('renders load errors with an error indicator', async () => {
     mockFileCollectionFilesApi({
       listResponse: HttpResponse.json(
         {
-          message: "Could not load collection files.",
+          message: 'Could not load collection files.',
           status: 500,
         },
         { status: 500 }
@@ -228,9 +214,7 @@ describe("FileCollectionFilesTable", () => {
 
     renderTable();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Error loading data."
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Error loading data.');
   });
 });
 
@@ -258,24 +242,24 @@ function mockFileCollectionFilesApi({
   ),
   files = [
     fileResource({
-      id: "file-1",
-      name: "File One",
-      status: "complete",
-      suppliedId: "supplied-file-1",
-      created: "2026-06-12T15:30:00Z",
-      uploaded: "2026-06-12T15:31:00Z",
+      id: 'file-1',
+      name: 'File One',
+      status: 'complete',
+      suppliedId: 'supplied-file-1',
+      created: '2026-06-12T15:30:00Z',
+      uploaded: '2026-06-12T15:31:00Z',
     }),
   ],
   listCollectionFiles = jest.fn(() => HttpResponse.json(filePage(files))),
   listResponse,
 }: MockFileCollectionFilesApiOptions = {}): void {
   server.use(
-    http.get("*/api/file-collections/collection-1/files", (info) => {
+    http.get('*/api/file-collections/collection-1/files', (info) => {
       if (listResponse != null) return listResponse;
 
       return listCollectionFiles(info);
     }),
-    http.post("*/api/files/:id/download-url", (info) => createDownloadUrl(info))
+    http.post('*/api/files/:id/download-url', (info) => createDownloadUrl(info))
   );
 }
 
@@ -285,19 +269,19 @@ function filePage(data: ReturnType<typeof fileResource>[]): {
   status: number;
 } {
   return {
-    cursors: { self: "page-1" },
+    cursors: { self: 'page-1' },
     data,
     status: 200,
   };
 }
 
 function fileResource({
-  created = "2026-06-12T15:30:00Z",
+  created = '2026-06-12T15:30:00Z',
   id,
   name,
   status,
   suppliedId,
-  uploaded = "2026-06-12T15:31:00Z",
+  uploaded = '2026-06-12T15:31:00Z',
 }: {
   readonly created?: string;
   readonly id: string;
@@ -305,9 +289,19 @@ function fileResource({
   readonly status: string;
   readonly suppliedId: string;
   readonly uploaded?: string;
-}) {
+}): {
+  readonly type: string;
+  readonly id: string;
+  readonly attributes: {
+    readonly created: string;
+    readonly name: string;
+    readonly status: string;
+    readonly suppliedId: string;
+    readonly uploaded: string;
+  };
+} {
   return {
-    type: "file",
+    type: 'file',
     id,
     attributes: {
       created,
