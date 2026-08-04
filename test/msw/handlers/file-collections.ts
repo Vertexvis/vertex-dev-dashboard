@@ -1,7 +1,7 @@
 import type {
   FileCollectionPageRes,
   FileCollectionResource,
-} from "../../../src/lib/file-collections";
+} from '../../../src/lib/file-collections';
 
 export function fileCollection(overrides: {
   readonly created?: string;
@@ -11,17 +11,17 @@ export function fileCollection(overrides: {
 }): FileCollectionResource {
   return {
     attributes: {
-      created: overrides.created ?? "2026-06-10T15:30:00Z",
+      created: overrides.created ?? '2026-06-10T15:30:00Z',
       name: overrides.name,
       suppliedId: overrides.suppliedId,
     },
     id: overrides.id,
-    type: "file-collection",
+    type: 'file-collection',
   };
 }
 
 export function fileCollectionsPage({
-  cursors = { self: "page-1" },
+  cursors = { self: 'page-1' },
   data,
 }: {
   readonly cursors?: {

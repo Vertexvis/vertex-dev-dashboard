@@ -1,12 +1,12 @@
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { FileDetailsDrawer } from "../components/file/FileDetailsDrawer";
-import { Layout } from "../components/shared/Layout";
-import { File } from "../lib/files";
-import { defaultServerSideProps } from "../lib/with-session";
+import { FileDetailsDrawer } from '../components/file/FileDetailsDrawer';
+import { Layout } from '../components/shared/Layout';
+import { File } from '../lib/files';
+import { defaultServerSideProps } from '../lib/with-session';
 
-const FileTable = dynamic(() => import("../components/file/FileTable"), {
+const FileTable = dynamic(() => import('../components/file/FileTable'), {
   ssr: false,
 });
 

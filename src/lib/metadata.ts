@@ -1,6 +1,6 @@
-import { MetadataStringType, SceneItemData } from "@vertexvis/api-client-node";
-import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { DomainPropertyEntry, DomainPropertyValue } from "@vertexvis/viewer";
+import { MetadataStringType, SceneItemData } from '@vertexvis/api-client-node';
+import { vertexvis } from '@vertexvis/frame-streaming-protos';
+import { DomainPropertyEntry, DomainPropertyValue } from '@vertexvis/viewer';
 
 export interface Metadata {
   readonly partName?: string;
@@ -11,11 +11,11 @@ interface Properties {
   [key: string]: string | undefined;
 }
 
-export const ItemIdKey = "VERTEX_SCENE_ITEM_ID";
-export const ItemSuppliedIdKey = "VERTEX_SCENE_ITEM_SUPPLIED_ID";
-export const PartIdKey = "VERTEX_PART_ID";
-export const PartRevIdKey = "VERTEX_PART_REVISION_ID";
-export const PartRevSuppliedId = "VERTEX_PART_REVISION_SUPPLIED_ID";
+export const ItemIdKey = 'VERTEX_SCENE_ITEM_ID';
+export const ItemSuppliedIdKey = 'VERTEX_SCENE_ITEM_SUPPLIED_ID';
+export const PartIdKey = 'VERTEX_PART_ID';
+export const PartRevIdKey = 'VERTEX_PART_REVISION_ID';
+export const PartRevSuppliedId = 'VERTEX_PART_REVISION_SUPPLIED_ID';
 
 // Structural synthetic identifier keys. They are not policy-governed, so the
 // comparison view must never flag them as removed/changed by a policy.
@@ -75,14 +75,14 @@ export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
     const itemMD = Object.entries(md).reduce((n, current) => {
       return {
         ...n,
-        [current[0]]: (current[1] as MetadataStringType).value || "",
+        [current[0]]: (current[1] as MetadataStringType).value || '',
       };
     }, ps);
 
-    return { partName: "", properties: alphabetize(itemMD) };
+    return { partName: '', properties: alphabetize(itemMD) };
   }
 
-  return { partName: "", properties: alphabetize(ps) };
+  return { partName: '', properties: alphabetize(ps) };
 }
 
 export interface DomainMetadataIdentifiers {
@@ -105,8 +105,7 @@ export function toMetadataFromDomainEntries(
   if (identifiers?.id) ps[ItemIdKey] = identifiers.id;
   if (identifiers?.suppliedId) ps[ItemSuppliedIdKey] = identifiers.suppliedId;
   if (identifiers?.partId) ps[PartIdKey] = identifiers.partId;
-  if (identifiers?.partRevisionId)
-    ps[PartRevIdKey] = identifiers.partRevisionId;
+  if (identifiers?.partRevisionId) ps[PartRevIdKey] = identifiers.partRevisionId;
   if (identifiers?.partRevisionSuppliedId)
     ps[PartRevSuppliedId] = identifiers.partRevisionSuppliedId;
 
@@ -126,12 +125,12 @@ function toDomainValue(value?: DomainPropertyValue | null): string | undefined {
   if (value == null) return undefined;
 
   switch (value.type) {
-    case "string":
+    case 'string':
       return value.value;
-    case "long":
-    case "double":
+    case 'long':
+    case 'double':
       return value.value.toString();
-    case "timestamp": {
+    case 'timestamp': {
       const seconds = value.value?.seconds ?? 0;
       const nanos = value.value?.nanos ?? 0;
       return new Date(seconds * 1000 + Math.floor(nanos / 1e6)).toISOString();
@@ -153,9 +152,12 @@ function alphabetize<T extends Record<string, unknown>>(obj: T): T {
 function toValue(
   property: vertexvis.protobuf.stream.IMetadataProperty
 ): string | undefined {
-  if (property.asString) return property.asString;
-  if (property.asFloat) return property.asFloat.toString();
-  if (property.asLong) return property.asLong.toString();
-  if (property.asDate) return property.asDate.iso ?? undefined;
+  // `MetadataProperty` value is a protobuf oneof, so unset fields are null.
+  // Test for null/undefined (not truthiness) to preserve a numeric 0, which
+  // would otherwise be dropped and render as a false difference vs "0".
+  if (property.asString != null) return property.asString;
+  if (property.asFloat != null) return property.asFloat.toString();
+  if (property.asLong != null) return property.asLong.toString();
+  if (property.asDate != null) return property.asDate.iso ?? undefined;
   return undefined;
 }

@@ -1,3 +1,3 @@
-import { installNodeMswServer } from "./installNodeMswServer";
+import { installNodeMswServer } from './installNodeMswServer';
 
 installNodeMswServer();

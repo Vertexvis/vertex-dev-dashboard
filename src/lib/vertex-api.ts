@@ -8,13 +8,13 @@ import {
   OAuth2Token,
   VertexClient,
   VertexError,
-} from "@vertexvis/api-client-node";
-import assert from "assert";
-import { AxiosError, AxiosResponse } from "axios";
-import type { NextApiResponse } from "next";
-import { Session } from "next-iron-session";
+} from '@vertexvis/api-client-node';
+import assert from 'assert';
+import { AxiosError, AxiosResponse } from 'axios';
+import type { NextApiResponse } from 'next';
+import { Session } from 'next-iron-session';
 
-import { ErrorRes, ServerError } from "./api";
+import { ErrorRes, ServerError } from './api';
 import {
   getCreds,
   getEnv,
@@ -22,17 +22,17 @@ import {
   getToken as getSessionToken,
   NetworkConfig,
   setToken,
-} from "./with-session";
+} from './with-session';
 
 const TenMinsInMs = 600_000;
 
-const basePath = (env: string, networkConfig?: NetworkConfig) => {
-  if (env === "custom" && networkConfig != null) {
+const basePath = (env: string, networkConfig?: NetworkConfig): string => {
+  if (env === 'custom' && networkConfig != null) {
     return networkConfig.apiHost;
   }
 
-  return env === "platprod"
-    ? "https://platform.vertexvis.com"
+  return env === 'platprod'
+    ? 'https://platform.vertexvis.com'
     : `https://platform.${env}.vertexvis.io`;
 };
 
@@ -74,7 +74,7 @@ export async function getToken(
     basePath(env, networkConfig)
   );
 
-  return (await auth.createToken({ grantType: "client_credentials" })).data;
+  return (await auth.createToken({ grantType: 'client_credentials' })).data;
 }
 
 export async function getClientWithCreds(
@@ -96,9 +96,7 @@ export async function getClientWithCreds(
   return client;
 }
 
-export async function getClientFromSession(
-  session: Session
-): Promise<VertexClient> {
+export async function getClientFromSession(session: Session): Promise<VertexClient> {
   const creds = getCreds(session);
   const env = getEnv(session);
   const networkConfig = getNetworkConfig(session);

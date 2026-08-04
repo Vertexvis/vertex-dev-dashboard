@@ -1,5 +1,5 @@
-import { Alert, TableCell, TableRow } from "@mui/material";
-import React from "react";
+import { Alert, TableCell, TableRow } from '@mui/material';
+import React from 'react';
 
 interface NewType {
   readonly colSpan: number;

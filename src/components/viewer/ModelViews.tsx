@@ -1,19 +1,14 @@
-import { CloseOutlined } from "@mui/icons-material";
-import {
-  Box,
-  IconButton,
-  ListItemButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import * as React from "react";
-import AutoSizer, { Size } from "react-virtualized-auto-sizer";
-import { FixedSizeList } from "react-window";
+import { CloseOutlined } from '@mui/icons-material';
+import { Box, IconButton, ListItemButton, Tooltip, Typography } from '@mui/material';
+import * as React from 'react';
+import AutoSizer, { Size } from 'react-virtualized-auto-sizer';
+import { FixedSizeList } from 'react-window';
 
-import { Metadata } from "../../lib/metadata";
-import { ModelViewsState } from "../../lib/model-views";
-import { Title } from "../shared/Title";
-import { PmiAnnotations } from "./PmiAnnotations";
+import { Metadata } from '../../lib/metadata';
+import { ModelViewsState } from '../../lib/model-views';
+import { reportError } from '../../lib/report-error';
+import { Title } from '../shared/Title';
+import { PmiAnnotations } from './PmiAnnotations';
 
 export interface Props {
   readonly metadata?: Metadata;
@@ -23,18 +18,20 @@ export interface Props {
 export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
   const { modelViewList, loadedModelViewId, loadedSceneItemId } = modelViews;
 
-  if (
-    loadedSceneItemId == null ||
-    metadata == null ||
-    modelViewList.length === 0
-  ) {
+  if (loadedSceneItemId == null || metadata == null || modelViewList.length === 0) {
     return <NoData />;
   }
 
   return (
     <>
-      <DrawerTitle onClear={() => modelViews.actions.unloadModelView()} />
-      <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+      <DrawerTitle
+        onClear={() => {
+          modelViews.actions
+            .unloadModelView()
+            .catch(reportError('Failed to unload the model view'));
+        }}
+      />
+      <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
         <AutoSizer>
           {({ height, width }: Size) => {
             return (
@@ -44,11 +41,10 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
                 itemSize={38}
                 itemCount={modelViewList.length}
                 onItemsRendered={(renderState) => {
-                  if (
-                    renderState.visibleStopIndex ===
-                    modelViewList.length - 1
-                  ) {
-                    modelViews.actions.fetchNextModelViews(loadedSceneItemId);
+                  if (renderState.visibleStopIndex === modelViewList.length - 1) {
+                    modelViews.actions
+                      .fetchNextModelViews(loadedSceneItemId)
+                      .catch(reportError('Failed to load model views'));
                   }
                 }}
               >
@@ -60,17 +56,14 @@ export function ModelViews({ metadata, modelViews }: Props): JSX.Element {
                       key={index}
                       style={style}
                       onClick={() => {
-                        modelViews.actions.loadModelView(
-                          loadedSceneItemId,
-                          modelView.id
-                        );
+                        modelViews.actions
+                          .loadModelView(loadedSceneItemId, modelView.id)
+                          .catch(reportError('Failed to load the model view'));
                       }}
                       alignItems="flex-start"
                       selected={loadedModelViewId === modelView.id}
                     >
-                      <Typography variant="subtitle2">
-                        {modelView.displayName}
-                      </Typography>
+                      <Typography variant="subtitle2">{modelView.displayName}</Typography>
                     </ListItemButton>
                   );
                 }}
@@ -90,9 +83,9 @@ function NoData(): JSX.Element {
       <DrawerTitle />
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexGrow: 1,
         }}
       >
@@ -104,18 +97,18 @@ function NoData(): JSX.Element {
   );
 }
 
-function DrawerTitle({ onClear }: { onClear?: VoidFunction }) {
+function DrawerTitle({ onClear }: { onClear?: VoidFunction }): JSX.Element {
   return (
     <Title
       sx={{
-        display: "flex",
-        alignItems: "center",
-        borderBottom: "1px solid #ccc",
+        display: 'flex',
+        alignItems: 'center',
+        borderBottom: '1px solid #ccc',
       }}
     >
       Model Views
       <Tooltip title="Clear Model View">
-        <IconButton sx={{ marginLeft: "auto" }} size="small" onClick={onClear}>
+        <IconButton sx={{ marginLeft: 'auto' }} size="small" onClick={onClear}>
           <CloseOutlined fontSize="small" />
         </IconButton>
       </Tooltip>

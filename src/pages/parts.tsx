@@ -1,12 +1,12 @@
-import dynamic from "next/dynamic";
-import React from "react";
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { PartRevisionDetailsDrawer } from "../components/part/PartRevisionDetailsDrawer";
-import { Layout } from "../components/shared/Layout";
-import { PartRevision } from "../lib/part-revisions";
-import { defaultServerSideProps } from "../lib/with-session";
+import { PartRevisionDetailsDrawer } from '../components/part/PartRevisionDetailsDrawer';
+import { Layout } from '../components/shared/Layout';
+import { PartRevision } from '../lib/part-revisions';
+import { defaultServerSideProps } from '../lib/with-session';
 
-const PartTable = dynamic(() => import("../components/part/PartTable"), {
+const PartTable = dynamic(() => import('../components/part/PartTable'), {
   ssr: false,
 });
 
@@ -17,10 +17,7 @@ export default function Parts(): JSX.Element {
   return (
     <Layout
       main={
-        <PartTable
-          activeRevisionId={revision?.id}
-          onRevisionSelected={setRevision}
-        />
+        <PartTable activeRevisionId={revision?.id} onRevisionSelected={setRevision} />
       }
       rightDrawer={
         <PartRevisionDetailsDrawer

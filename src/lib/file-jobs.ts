@@ -7,14 +7,14 @@ import {
   QueuedJob,
   SelectFileByIdTypeEnum,
   VertexClient,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
-import { Res } from "./api";
+import { Res } from './api';
 
 export interface FileJobRes extends Res {
   readonly archiveFileId?: string;
-  readonly data: QueuedJob["data"];
-  readonly links?: NonNullable<QueuedJob["links"]>;
+  readonly data: QueuedJob['data'];
+  readonly links?: NonNullable<QueuedJob['links']>;
 }
 
 export function getFileJobsApi(client: VertexClient): FileJobsApi {

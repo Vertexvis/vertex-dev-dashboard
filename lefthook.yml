@@ -7,7 +7,7 @@ quality-checks:
   parallel: true
   commands:
     format:
-      glob: "*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}"
+      glob: '*.{js,jsx,ts,tsx,json,yml,yaml,md,mdx,html,css}'
       run: corepack yarn format:staged:check
     lint:
       run: corepack yarn lint
