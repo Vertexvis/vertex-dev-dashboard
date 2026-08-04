@@ -92,6 +92,10 @@ interface Props {
   // Unrestricted = the full metadata from the server-side REST path that
   // IGNORES the property key policy (`/api/scene-items/{id}`).
   readonly unrestricted?: Metadata;
+  // True when the unrestricted-baseline fetch failed. Without the baseline the
+  // comparison cannot tell what a policy removed, so it must warn rather than
+  // let the summary imply "no differences".
+  readonly unrestrictedError?: boolean;
   // Restricted = the policy-aware metadata from the Web SDK endpoint
   // (`viewer.sceneItems.listSceneItemMetadata`) — what the policy exposes.
   readonly restricted?: Metadata;
@@ -220,6 +224,33 @@ export function buildCompareRows({
   });
 }
 
+// Human-readable summary of the comparison. When both policy columns are
+// visible, keys the policy stripped are the headline case, but keys that exist
+// in every visible column with DIFFERING values must still be surfaced rather
+// than reported as "No differences" (removed/differs are disjoint per row).
+function summarizeComparison({
+  comparingPolicy,
+  removedCount,
+  differsCount,
+}: {
+  comparingPolicy: boolean;
+  removedCount: number;
+  differsCount: number;
+}): string {
+  const parts: string[] = [];
+  if (comparingPolicy && removedCount > 0) {
+    parts.push(
+      removedCount === 1
+        ? '1 property removed by policy'
+        : `${removedCount} properties removed by policy`
+    );
+  }
+  if (differsCount > 0) {
+    parts.push(differsCount === 1 ? '1 difference' : `${differsCount} differences`);
+  }
+  return parts.length === 0 ? 'No differences' : parts.join(', ');
+}
+
 function readStoredColumns(): SourceId[] {
   if (typeof window === 'undefined') return [...DefaultColumns];
   const raw = window.localStorage.getItem(ColumnsStorageKey);
@@ -238,6 +269,7 @@ function readStoredColumns(): SourceId[] {
 
 export function MetadataCompare({
   unrestricted,
+  unrestrictedError,
   restricted,
   stream,
   status = 'ready',
@@ -296,6 +328,10 @@ export function MetadataCompare({
     columns.includes('unrestricted') && columns.includes('restricted');
   const streamVisible = columns.includes('stream');
   const streamAvailable = stream != null;
+  // When the unrestricted column is shown but its baseline failed to load, the
+  // comparison has no ground truth for what a policy removed — warn instead of
+  // reporting a (misleading) difference summary.
+  const baselineMissing = columns.includes('unrestricted') && Boolean(unrestrictedError);
 
   if (rows.length === 0) {
     // With no rows we still show the toggle + any stream note so the user can
@@ -314,17 +350,11 @@ export function MetadataCompare({
   const removedCount = rows.filter((r) => r.state === 'removed').length;
   const differsCount = rows.filter((r) => r.state === 'differs').length;
 
-  const summary = comparingPolicy
-    ? removedCount === 0
-      ? 'No differences'
-      : removedCount === 1
-        ? '1 property removed by policy'
-        : `${removedCount} properties removed by policy`
-    : differsCount === 0
-      ? 'No differences'
-      : differsCount === 1
-        ? '1 difference'
-        : `${differsCount} differences`;
+  const summary = summarizeComparison({
+    comparingPolicy,
+    removedCount,
+    differsCount,
+  });
 
   return (
     <>
@@ -340,13 +370,23 @@ export function MetadataCompare({
         </Typography>
       ) : null}
       {streamVisible && !streamAvailable ? <StreamNote /> : null}
-      <Typography
-        role="status"
-        sx={{ color: 'text.secondary', display: 'block', mx: 2, my: 1 }}
-        variant="caption"
-      >
-        {summary}
-      </Typography>
+      {baselineMissing ? (
+        <Typography
+          role="status"
+          sx={{ color: 'warning.main', display: 'block', mx: 2, my: 1 }}
+          variant="caption"
+        >
+          Unrestricted baseline unavailable — cannot determine what the policy removed.
+        </Typography>
+      ) : (
+        <Typography
+          role="status"
+          sx={{ color: 'text.secondary', display: 'block', mx: 2, my: 1 }}
+          variant="caption"
+        >
+          {summary}
+        </Typography>
+      )}
       <TableContainer sx={{ flexGrow: 1 }}>
         <Table sx={{ whiteSpace: 'nowrap', tableLayout: 'fixed' }} size="small">
           <TableHead>

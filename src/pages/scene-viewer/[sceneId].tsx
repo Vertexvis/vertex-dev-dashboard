@@ -1,3 +1,4 @@
+import { Alert, Snackbar } from '@mui/material';
 import { SceneItemData, SceneViewStateData } from '@vertexvis/api-client-node';
 import { vertexvis } from '@vertexvis/frame-streaming-protos';
 import {
@@ -21,7 +22,7 @@ import { PolicySelect } from '../../components/viewer/PolicySelect';
 import { RightDrawer } from '../../components/viewer/RightDrawer';
 import { RightSidebar } from '../../components/viewer/RightSidebar';
 import { Viewer } from '../../components/viewer/Viewer';
-import { ErrorRes, GetRes } from '../../lib/api';
+import { ErrorRes, GetRes, jsonFetcher } from '../../lib/api';
 import { head, StreamCredentials } from '../../lib/config';
 import {
   Metadata,
@@ -62,7 +63,13 @@ function useSceneItem({
 }: {
   itemId?: string;
 }): SWRResponse<SceneItemData, ErrorRes> {
-  return useSWR<SceneItemData, ErrorRes>(itemId ? `/api/scene-items/${itemId}` : null);
+  // Throwing fetcher so an HTTP failure populates `error` (rather than landing an
+  // ErrorRes in `data`, which would both mask the failure and crash
+  // `toMetadataFromItem`); its state feeds the comparison's baseline warning.
+  return useSWR<SceneItemData, ErrorRes>(
+    itemId ? `/api/scene-items/${itemId}` : null,
+    jsonFetcher
+  );
 }
 
 export default function SceneViewer({
@@ -90,6 +97,9 @@ export default function SceneViewer({
   const [viewId, setViewId] = React.useState<string | undefined>();
   const [policyId, setPolicyId] = React.useState<string | undefined>();
   const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
+  // Non-fatal error for a failed in-viewer policy switch. Unlike streamKeyError
+  // (which replaces the whole page), this keeps the working viewer mounted.
+  const [policySwitchError, setPolicySwitchError] = React.useState<string>();
   const { data, mutate } = useSceneViewStates({ viewId });
   // Unrestricted metadata for the selected item, fetched through the policy-
   // ignoring REST path purely to feed the comparison's "Unrestricted" column.
@@ -98,6 +108,9 @@ export default function SceneViewer({
     () => (selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined),
     [selectedItem.data]
   );
+  // Surface a failed unrestricted-baseline fetch so a missing baseline is not
+  // silently read as "no differences" in the comparison.
+  const unrestrictedError = selectedItemId != null && selectedItem.error != null;
   const modelViews = useModelViews({
     itemId: selectedItemId,
     viewerState,
@@ -190,8 +203,12 @@ export default function SceneViewer({
     const ve = credentials?.vertexEnv ?? vertexEnv;
     if (!sceneId || !cId || !ve) return;
 
+    // Remember the current view so a failed switch can restore the still-working
+    // viewer instead of tearing it down.
+    const previousViewId = viewId;
+
     setSwitchingPolicy(true);
-    setStreamKeyError(undefined);
+    setPolicySwitchError(undefined);
     // Show loading (not stale/empty) in the metadata panel until the new scene
     // view is ready and the retained item's metadata is refetched.
     setViewId(undefined);
@@ -215,7 +232,13 @@ export default function SceneViewer({
       // auto-refetches under the new policy after the viewer reconnects.
       await router.replace(url, undefined, { shallow: true });
     } catch {
-      setStreamKeyError('Unable to create a stream key for this scene.');
+      // Keep the existing viewer usable: restore the prior scene view (which
+      // re-runs the metadata effect for the retained item) and surface a
+      // non-fatal error instead of replacing the page with a fatal alert.
+      setViewId(previousViewId);
+      setPolicySwitchError(
+        'Unable to switch the property key policy. The previous policy is still active.'
+      );
     } finally {
       setSwitchingPolicy(false);
     }
@@ -284,83 +307,100 @@ export default function SceneViewer({
   }
 
   return router.isReady && credentials ? (
-    <Layout
-      header={
-        <Header
-          actions={
-            <PolicySelect
-              policyId={policyId}
-              onChange={(newPolicyId) => {
-                handlePolicyChange(newPolicyId).catch(
-                  reportError('Failed to switch the property key policy')
-                );
-              }}
-              disabled={switchingPolicy}
-            />
-          }
-        />
-      }
-      leftSidebar={
-        <LeftSidebar active={openedLeftPanel} onSelectSidebar={setOpenedLeftPanel} />
-      }
-      leftDrawer={
-        <LeftDrawer
-          active={openedLeftPanel}
-          configEnv={credentials.vertexEnv}
-          networkConfig={networkConfig}
-          viewerId={ViewerId}
-          selectedItemId={selectedItemId}
-          viewerState={viewerState}
-          onItemSelected={handleTreeItemSelected}
-        />
-      }
-      leftDrawerOpen={openedLeftPanel != null}
-      main={
-        viewerState.isReady && (
-          <Viewer
-            key={credentials.streamKey}
-            credentials={credentials}
-            onSelect={handleSelect}
-            viewerState={viewerState}
-            viewerId={ViewerId}
-            onViewStateCreated={() => {
-              mutate().catch(reportError('Failed to refresh scene view states'));
-            }}
-            networkConfig={networkConfig}
-            featureLines={featureLines}
-            rotateAroundTapPoint={true}
-            onSceneReady={() => {
-              handleSceneReady().catch(reportError('Failed to prepare the scene view'));
-            }}
-            onViewReset={() => {
-              setSelectedItemId(undefined);
-              setStreamMetadata(undefined);
-              modelViews.actions
-                .unloadModelView()
-                .catch(reportError('Failed to unload the model view'));
-            }}
+    <>
+      <Layout
+        header={
+          <Header
+            actions={
+              <PolicySelect
+                policyId={policyId}
+                onChange={(newPolicyId) => {
+                  handlePolicyChange(newPolicyId).catch(
+                    reportError('Failed to switch the property key policy')
+                  );
+                }}
+                disabled={switchingPolicy}
+              />
+            }
           />
-        )
-      }
-      rightSidebar={
-        <RightSidebar active={openedRightPanel} onSelectSidebar={setOpenedRightPanel} />
-      }
-      rightDrawer={
-        <RightDrawer
-          active={openedRightPanel}
-          metadata={metadata}
-          unrestrictedMetadata={unrestrictedMetadata}
-          streamMetadata={streamMetadata}
-          metadataStatus={metadataStatus}
-          metadataError={metadataError}
-          metadataDiagnostic={metadataDiagnostic}
-          modelViews={modelViews}
-          sceneViewStates={data?.data}
-          onViewStateSelected={handleViewStateSelected}
-        />
-      }
-      rightDrawerOpen={openedRightPanel != null}
-    />
+        }
+        leftSidebar={
+          <LeftSidebar active={openedLeftPanel} onSelectSidebar={setOpenedLeftPanel} />
+        }
+        leftDrawer={
+          <LeftDrawer
+            active={openedLeftPanel}
+            configEnv={credentials.vertexEnv}
+            networkConfig={networkConfig}
+            viewerId={ViewerId}
+            selectedItemId={selectedItemId}
+            viewerState={viewerState}
+            onItemSelected={handleTreeItemSelected}
+          />
+        }
+        leftDrawerOpen={openedLeftPanel != null}
+        main={
+          viewerState.isReady && (
+            <Viewer
+              key={credentials.streamKey}
+              credentials={credentials}
+              onSelect={handleSelect}
+              viewerState={viewerState}
+              viewerId={ViewerId}
+              onViewStateCreated={() => {
+                mutate().catch(reportError('Failed to refresh scene view states'));
+              }}
+              networkConfig={networkConfig}
+              featureLines={featureLines}
+              rotateAroundTapPoint={true}
+              onSceneReady={() => {
+                handleSceneReady().catch(reportError('Failed to prepare the scene view'));
+              }}
+              onViewReset={() => {
+                setSelectedItemId(undefined);
+                setStreamMetadata(undefined);
+                modelViews.actions
+                  .unloadModelView()
+                  .catch(reportError('Failed to unload the model view'));
+              }}
+            />
+          )
+        }
+        rightSidebar={
+          <RightSidebar active={openedRightPanel} onSelectSidebar={setOpenedRightPanel} />
+        }
+        rightDrawer={
+          <RightDrawer
+            active={openedRightPanel}
+            metadata={metadata}
+            unrestrictedMetadata={unrestrictedMetadata}
+            unrestrictedError={unrestrictedError}
+            streamMetadata={streamMetadata}
+            metadataStatus={metadataStatus}
+            metadataError={metadataError}
+            metadataDiagnostic={metadataDiagnostic}
+            modelViews={modelViews}
+            sceneViewStates={data?.data}
+            onViewStateSelected={handleViewStateSelected}
+          />
+        }
+        rightDrawerOpen={openedRightPanel != null}
+      />
+      <Snackbar
+        open={policySwitchError != null}
+        autoHideDuration={6000}
+        onClose={() => setPolicySwitchError(undefined)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setPolicySwitchError(undefined)}
+          sx={{ width: '100%' }}
+        >
+          {policySwitchError}
+        </Alert>
+      </Snackbar>
+    </>
   ) : (
     <></>
   );
@@ -387,22 +427,29 @@ export function toHitIdentifiers(hit: vertexvis.protobuf.stream.IHit): HitIdenti
 }
 
 // Page through every metadata entry for the item via the policy-aware Web SDK.
-// Recurses on the paging cursor so the accumulation stays immutable (no `let`).
+// Cursor pagination is inherently sequential (each request needs the prior
+// page's cursor), so the awaits run in series while entries accumulate into a
+// single array — avoiding the repeated copying and unbounded call stack a
+// spread-based recursion would incur. A `const` holder keeps the paging cursor
+// mutable without a `let` (banned in production .tsx).
 async function fetchAllItemMetadataEntries(
   controller: SceneItemController,
-  itemId: string,
-  cursor?: string,
-  acc: DomainPropertyEntry[] = []
+  itemId: string
 ): Promise<DomainPropertyEntry[]> {
-  const res: SceneItemMetadataResponse = await controller.listSceneItemMetadata(itemId, {
-    size: 100,
-    cursor,
-  });
-  const collected = [...acc, ...res.entries];
-  const next = res.paging?.next ?? undefined;
-  return next != null
-    ? fetchAllItemMetadataEntries(controller, itemId, next, collected)
-    : collected;
+  const entries: DomainPropertyEntry[] = [];
+  const paging: { cursor?: string; done: boolean } = { done: false };
+  while (!paging.done) {
+    const res: SceneItemMetadataResponse =
+      // eslint-disable-next-line no-await-in-loop
+      await controller.listSceneItemMetadata(itemId, {
+        size: 100,
+        cursor: paging.cursor,
+      });
+    entries.push(...res.entries);
+    paging.cursor = res.paging?.next ?? undefined;
+    paging.done = paging.cursor == null;
+  }
+  return entries;
 }
 
 // Fetch metadata for the selected item through the policy-aware Web SDK,

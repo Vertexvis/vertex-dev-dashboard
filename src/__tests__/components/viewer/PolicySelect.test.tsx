@@ -129,6 +129,26 @@ describe('PolicySelect', () => {
     );
   });
 
+  it('shows the error caption on a non-OK HTTP response with a JSON body', async () => {
+    // A 500 that still returns a JSON body must be treated as an error (the
+    // throwing fetcher), not resolved into data where it would crash the mapper.
+    server.use(
+      http.get('*/api/property-key-policies', () =>
+        HttpResponse.json({ message: 'Upstream failure', status: 500 }, { status: 500 })
+      )
+    );
+
+    renderWithSWR(<PolicySelect onChange={jest.fn()} />);
+
+    await waitFor(() =>
+      expect(screen.getByText('Could not load policies')).toBeInTheDocument()
+    );
+    expect(screen.getByLabelText('Property Key Policy')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+  });
+
   it('respects the disabled prop', async () => {
     usePolicies();
 

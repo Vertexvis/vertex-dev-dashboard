@@ -81,7 +81,7 @@ function UnwrappedViewer({
   onViewReset,
   networkConfig,
   ...props
-}: ViewerProps): JSX.Element {
+}: Readonly<ViewerProps>): JSX.Element {
   const ref = React.useRef<HTMLElement>(null);
   const viewer = viewerState.ref;
   const [key, setKey] = React.useState(Date.now());

@@ -249,6 +249,23 @@ describe('toMetadata (stream hit)', () => {
     expect(md?.properties.VERTEX_PART_REVISION_SUPPLIED_ID).toBe('rev-supplied-1');
   });
 
+  it('preserves numeric zero values (not dropped as falsy)', () => {
+    const hit = {
+      itemId: { hex: 'item-uuid' },
+      metadataProperties: [
+        { key: 'Count', asLong: 0 },
+        { key: 'Ratio', asFloat: 0 },
+      ],
+    } as unknown as vertexvis.protobuf.stream.IHit;
+
+    const md = toMetadata({ hit });
+
+    // A zero value is a real value; it must render as "0", not be omitted (which
+    // would show an em-dash and a false difference against a restricted "0").
+    expect(md?.properties.Count).toBe('0');
+    expect(md?.properties.Ratio).toBe('0');
+  });
+
   it('reflects exactly the stream properties returned (no injected keys)', () => {
     const hit = {
       itemId: { hex: 'item-uuid' },

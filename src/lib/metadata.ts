@@ -152,9 +152,12 @@ function alphabetize<T extends Record<string, unknown>>(obj: T): T {
 function toValue(
   property: vertexvis.protobuf.stream.IMetadataProperty
 ): string | undefined {
-  if (property.asString) return property.asString;
-  if (property.asFloat) return property.asFloat.toString();
-  if (property.asLong) return property.asLong.toString();
-  if (property.asDate) return property.asDate.iso ?? undefined;
+  // `MetadataProperty` value is a protobuf oneof, so unset fields are null.
+  // Test for null/undefined (not truthiness) to preserve a numeric 0, which
+  // would otherwise be dropped and render as a false difference vs "0".
+  if (property.asString != null) return property.asString;
+  if (property.asFloat != null) return property.asFloat.toString();
+  if (property.asLong != null) return property.asLong.toString();
+  if (property.asDate != null) return property.asDate.iso ?? undefined;
   return undefined;
 }
