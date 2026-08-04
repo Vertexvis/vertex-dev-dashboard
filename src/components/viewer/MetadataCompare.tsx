@@ -1,4 +1,4 @@
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
   Button,
   Dialog,
@@ -16,19 +16,14 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
-import { IdentifierKeys, Metadata } from "../../lib/metadata";
-import {
-  DrawerTitle,
-  MetadataStatus,
-  NoData,
-  StateMessage,
-} from "./MetadataStates";
+import { IdentifierKeys, Metadata } from '../../lib/metadata';
+import { DrawerTitle, MetadataStatus, NoData, StateMessage } from './MetadataStates';
 
 // The three metadata sources the comparison can show, in fixed display order.
-export type SourceId = "unrestricted" | "restricted" | "stream";
+export type SourceId = 'unrestricted' | 'restricted' | 'stream';
 
 interface SourceConfig {
   readonly id: SourceId;
@@ -37,9 +32,9 @@ interface SourceConfig {
 
 // Fixed left-to-right order for both the toggle and the table columns.
 const Sources: readonly SourceConfig[] = [
-  { id: "unrestricted", label: "Unrestricted" },
-  { id: "restricted", label: "Restricted" },
-  { id: "stream", label: "Stream" },
+  { id: 'unrestricted', label: 'Unrestricted' },
+  { id: 'restricted', label: 'Restricted' },
+  { id: 'stream', label: 'Stream' },
 ];
 
 interface ColumnInfo {
@@ -50,53 +45,48 @@ interface ColumnInfo {
 // Descriptive content shown in the per-column help dialog.
 const ColumnInfoMap: Record<SourceId, ColumnInfo> = {
   unrestricted: {
-    title: "Unrestricted metadata",
+    title: 'Unrestricted metadata',
     body: (
       <>
-        The complete, policy-agnostic metadata for the item. Fetched server-side
-        from the Vertex REST API via{" "}
-        <code>GET /api/scene-items/&#123;id&#125;</code> (
-        <code>sceneItems.getSceneItem</code>) using the dashboard session&apos;s
-        OAuth credentials. This path does not apply any property key policy, so
-        it shows every property the item has — use it as the baseline to see
-        what a policy removes.
+        The complete, policy-agnostic metadata for the item. Fetched server-side from the
+        Vertex REST API via <code>GET /api/scene-items/&#123;id&#125;</code> (
+        <code>sceneItems.getSceneItem</code>) using the dashboard session&apos;s OAuth
+        credentials. This path does not apply any property key policy, so it shows every
+        property the item has — use it as the baseline to see what a policy removes.
       </>
     ),
   },
   restricted: {
-    title: "Restricted metadata",
+    title: 'Restricted metadata',
     body: (
       <>
-        The policy-aware view — what the restricted stream actually exposes.
-        Queried through the Web SDK,{" "}
-        <code>viewer.sceneItems.listSceneItemMetadata(itemId)</code>, against
-        the scene view created from the current stream key (which has the
-        selected property key policy applied). This is the source the metadata
-        panel uses; keys the policy denies do not appear here.
+        The policy-aware view — what the restricted stream actually exposes. Queried
+        through the Web SDK, <code>viewer.sceneItems.listSceneItemMetadata(itemId)</code>,
+        against the scene view created from the current stream key (which has the selected
+        property key policy applied). This is the source the metadata panel uses; keys the
+        policy denies do not appear here.
       </>
     ),
   },
   stream: {
-    title: "Stream metadata",
+    title: 'Stream metadata',
     body: (
       <>
-        Metadata delivered inline with the render stream. When you click
-        (raycast) an item in the viewer, the hit response carries{" "}
-        <code>hit.metadataProperties</code>, mapped via{" "}
-        <code>toMetadata(&#123; hit &#125;)</code>. It is scoped to the same
-        policy-applied stream key, but arrives as part of the pick/hit over the
-        streaming connection rather than a separate query — and is only
-        available for items selected by clicking in the viewer (not the scene
-        tree).
+        Metadata delivered inline with the render stream. When you click (raycast) an item
+        in the viewer, the hit response carries <code>hit.metadataProperties</code>,
+        mapped via <code>toMetadata(&#123; hit &#125;)</code>. It is scoped to the same
+        policy-applied stream key, but arrives as part of the pick/hit over the streaming
+        connection rather than a separate query — and is only available for items selected
+        by clicking in the viewer (not the scene tree).
       </>
     ),
   },
 };
 
 // Default column selection: the current two policy-comparison columns.
-const DefaultColumns: readonly SourceId[] = ["unrestricted", "restricted"];
+const DefaultColumns: readonly SourceId[] = ['unrestricted', 'restricted'];
 
-const ColumnsStorageKey = "viewer.metadataColumns";
+const ColumnsStorageKey = 'viewer.metadataColumns';
 
 interface Props {
   // Unrestricted = the full metadata from the server-side REST path that
@@ -116,7 +106,7 @@ interface Props {
 // A row's classification given the currently VISIBLE source columns. "removed"
 // is the prominent case (the policy stripped a key that the unrestricted source
 // still exposes) and only applies when both those columns are visible.
-export type CompareState = "same" | "differs" | "removed";
+export type CompareState = 'same' | 'differs' | 'removed';
 
 export interface CompareRow {
   readonly key: string;
@@ -129,19 +119,19 @@ export interface CompareRow {
 
 // Accessible, non-color-only label for each highlighted row state.
 const StateLabel: Record<CompareState, string> = {
-  same: "Same",
-  differs: "Differs",
-  removed: "Removed by policy",
+  same: 'Same',
+  differs: 'Differs',
+  removed: 'Removed by policy',
 };
 
 // MUI palette cues per state. `same` stays neutral; `removed` is the prominent
 // error case since the policy stripped the key, `differs` uses a subtler tint.
 function stateBackground(state: CompareState): string | undefined {
   switch (state) {
-    case "removed":
-      return "error.light";
-    case "differs":
-      return "warning.light";
+    case 'removed':
+      return 'error.light';
+    case 'differs':
+      return 'warning.light';
     default:
       return undefined;
   }
@@ -149,7 +139,7 @@ function stateBackground(state: CompareState): string | undefined {
 
 // A value is "present" when the key exists and its value is a non-empty string.
 function isPresent(value?: string): boolean {
-  return value != null && value !== "";
+  return value != null && value !== '';
 }
 
 function sourceMetadata(
@@ -157,11 +147,11 @@ function sourceMetadata(
   sources: { unrestricted?: Metadata; restricted?: Metadata; stream?: Metadata }
 ): Metadata | undefined {
   switch (id) {
-    case "unrestricted":
+    case 'unrestricted':
       return sources.unrestricted;
-    case "restricted":
+    case 'restricted':
       return sources.restricted;
-    case "stream":
+    case 'stream':
       return sources.stream;
   }
 }
@@ -191,8 +181,8 @@ export function buildCompareRows({
     new Set(propsByColumn.flatMap(({ props }) => Object.keys(props)))
   ).sort((a, b) => a.localeCompare(b));
 
-  const unrestrictedVisible = columns.includes("unrestricted");
-  const restrictedVisible = columns.includes("restricted");
+  const unrestrictedVisible = columns.includes('unrestricted');
+  const restrictedVisible = columns.includes('restricted');
 
   return keys.map((key) => {
     const values: Partial<Record<SourceId, string | undefined>> = {};
@@ -202,7 +192,7 @@ export function buildCompareRows({
     const identifier = IdentifierKeys.has(key);
 
     if (identifier) {
-      return { key, values, state: "same", identifier };
+      return { key, values, state: 'same', identifier };
     }
 
     // Prominent case: both policy-comparison columns visible and the key is
@@ -213,7 +203,7 @@ export function buildCompareRows({
       isPresent(values.unrestricted) &&
       !isPresent(values.restricted)
     ) {
-      return { key, values, state: "removed", identifier };
+      return { key, values, state: 'removed', identifier };
     }
 
     // Otherwise flag when the values across the visible columns are not all
@@ -224,22 +214,20 @@ export function buildCompareRows({
     return {
       key,
       values,
-      state: allEqual ? "same" : "differs",
+      state: allEqual ? 'same' : 'differs',
       identifier,
     };
   });
 }
 
 function readStoredColumns(): SourceId[] {
-  if (typeof window === "undefined") return [...DefaultColumns];
+  if (typeof window === 'undefined') return [...DefaultColumns];
   const raw = window.localStorage.getItem(ColumnsStorageKey);
   if (raw == null) return [...DefaultColumns];
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (Array.isArray(parsed)) {
-      const valid = Sources.map((s) => s.id).filter((id) =>
-        parsed.includes(id)
-      );
+      const valid = Sources.map((s) => s.id).filter((id) => parsed.includes(id));
       if (valid.length > 0) return valid;
     }
   } catch {
@@ -252,7 +240,7 @@ export function MetadataCompare({
   unrestricted,
   restricted,
   stream,
-  status = "ready",
+  status = 'ready',
   error,
   diagnostic,
 }: Props): JSX.Element {
@@ -268,13 +256,13 @@ export function MetadataCompare({
   function handleColumnsChange(
     _event: React.MouseEvent<HTMLElement>,
     next: SourceId[]
-  ) {
+  ): void {
     // Never allow zero source columns; block deselecting the last one.
     if (next.length === 0) return;
     // Keep the fixed source order regardless of toggle interaction order.
     const ordered = Sources.map((s) => s.id).filter((id) => next.includes(id));
     setColumns(ordered);
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.localStorage.setItem(ColumnsStorageKey, JSON.stringify(ordered));
     }
   }
@@ -289,25 +277,24 @@ export function MetadataCompare({
       value={columns}
     >
       {Sources.map((s) => (
-        <ToggleButton key={s.id} value={s.id} sx={{ textTransform: "none" }}>
+        <ToggleButton key={s.id} value={s.id} sx={{ textTransform: 'none' }}>
           {s.label}
         </ToggleButton>
       ))}
     </ToggleButtonGroup>
   );
 
-  if (status === "loading")
-    return <StateMessage message="Loading metadata..." />;
-  if (status === "error") {
-    return <StateMessage message={error ?? "Failed to load metadata."} error />;
+  if (status === 'loading') return <StateMessage message="Loading metadata..." />;
+  if (status === 'error') {
+    return <StateMessage message={error ?? 'Failed to load metadata.'} error />;
   }
 
   const visibleSources = Sources.filter((s) => columns.includes(s.id));
   const rows = buildCompareRows({ columns, unrestricted, restricted, stream });
 
   const comparingPolicy =
-    columns.includes("unrestricted") && columns.includes("restricted");
-  const streamVisible = columns.includes("stream");
+    columns.includes('unrestricted') && columns.includes('restricted');
+  const streamVisible = columns.includes('stream');
   const streamAvailable = stream != null;
 
   if (rows.length === 0) {
@@ -324,20 +311,20 @@ export function MetadataCompare({
     );
   }
 
-  const removedCount = rows.filter((r) => r.state === "removed").length;
-  const differsCount = rows.filter((r) => r.state === "differs").length;
+  const removedCount = rows.filter((r) => r.state === 'removed').length;
+  const differsCount = rows.filter((r) => r.state === 'differs').length;
 
   const summary = comparingPolicy
     ? removedCount === 0
-      ? "No differences"
+      ? 'No differences'
       : removedCount === 1
-      ? "1 property removed by policy"
-      : `${removedCount} properties removed by policy`
+        ? '1 property removed by policy'
+        : `${removedCount} properties removed by policy`
     : differsCount === 0
-    ? "No differences"
-    : differsCount === 1
-    ? "1 difference"
-    : `${differsCount} differences`;
+      ? 'No differences'
+      : differsCount === 1
+        ? '1 difference'
+        : `${differsCount} differences`;
 
   return (
     <>
@@ -346,7 +333,7 @@ export function MetadataCompare({
       {diagnostic ? (
         <Typography
           role="status"
-          sx={{ color: "warning.main", mx: 2, my: 1 }}
+          sx={{ color: 'warning.main', mx: 2, my: 1 }}
           variant="caption"
         >
           {diagnostic}
@@ -355,13 +342,13 @@ export function MetadataCompare({
       {streamVisible && !streamAvailable ? <StreamNote /> : null}
       <Typography
         role="status"
-        sx={{ color: "text.secondary", display: "block", mx: 2, my: 1 }}
+        sx={{ color: 'text.secondary', display: 'block', mx: 2, my: 1 }}
         variant="caption"
       >
         {summary}
       </Typography>
       <TableContainer sx={{ flexGrow: 1 }}>
-        <Table sx={{ whiteSpace: "nowrap", tableLayout: "fixed" }} size="small">
+        <Table sx={{ whiteSpace: 'nowrap', tableLayout: 'fixed' }} size="small">
           <TableHead>
             <TableRow>
               <TableCell>
@@ -372,7 +359,7 @@ export function MetadataCompare({
                   <Typography
                     variant="subtitle2"
                     component="span"
-                    sx={{ verticalAlign: "middle" }}
+                    sx={{ verticalAlign: 'middle' }}
                   >
                     {s.label}
                   </Typography>
@@ -380,7 +367,7 @@ export function MetadataCompare({
                     aria-label={`About the ${s.label} column`}
                     onClick={() => setInfoColumn(s.id)}
                     size="small"
-                    sx={{ ml: 0.5, verticalAlign: "middle" }}
+                    sx={{ ml: 0.5, verticalAlign: 'middle' }}
                   >
                     <HelpOutlineIcon fontSize="inherit" />
                   </IconButton>
@@ -395,10 +382,7 @@ export function MetadataCompare({
           </TableBody>
         </Table>
       </TableContainer>
-      <ColumnInfoDialog
-        column={infoColumn}
-        onClose={() => setInfoColumn(null)}
-      />
+      <ColumnInfoDialog column={infoColumn} onClose={() => setInfoColumn(null)} />
     </>
   );
 }
@@ -414,7 +398,7 @@ function ColumnInfoDialog({
   const info = column != null ? ColumnInfoMap[column] : null;
   return (
     <Dialog open={column != null} onClose={onClose}>
-      <DialogTitle>{info?.title ?? ""}</DialogTitle>
+      <DialogTitle>{info?.title ?? ''}</DialogTitle>
       <DialogContent>
         <Typography variant="body2">{info?.body}</Typography>
       </DialogContent>
@@ -431,7 +415,7 @@ function StreamNote(): JSX.Element {
   return (
     <Typography
       role="status"
-      sx={{ color: "text.secondary", display: "block", mx: 2, my: 1 }}
+      sx={{ color: 'text.secondary', display: 'block', mx: 2, my: 1 }}
       variant="caption"
     >
       Stream metadata appears only when clicking an item in the viewer.
@@ -447,21 +431,21 @@ function CompareTableRow({
   readonly columns: readonly SourceId[];
 }): JSX.Element {
   // Identifier keys are informational; never highlight them.
-  const highlighted = !row.identifier && row.state !== "same";
+  const highlighted = !row.identifier && row.state !== 'same';
   const bg = highlighted ? stateBackground(row.state) : undefined;
 
   return (
     <TableRow
       data-state={row.state}
-      data-identifier={row.identifier ? "true" : undefined}
+      data-identifier={row.identifier ? 'true' : undefined}
       sx={bg ? { backgroundColor: bg } : undefined}
     >
       <TableCell>
         <Typography
           sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
           variant="subtitle2"
         >
@@ -470,7 +454,7 @@ function CompareTableRow({
         {highlighted ? (
           // Accessible marker so state is not conveyed by color alone.
           <Typography
-            sx={{ color: "text.secondary", display: "block" }}
+            sx={{ color: 'text.secondary', display: 'block' }}
             variant="caption"
           >
             {StateLabel[row.state]}
@@ -485,15 +469,15 @@ function CompareTableRow({
 }
 
 function ValueCell({ value }: { readonly value?: string }): JSX.Element {
-  const display = value != null && value !== "" ? value : "—";
+  const display = value != null && value !== '' ? value : '—';
   return (
     <TableCell>
-      <Tooltip title={value ?? ""} placement="left" enterDelay={500}>
+      <Tooltip title={value ?? ''} placement="left" enterDelay={500}>
         <Typography
           sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
           variant="body2"
         >

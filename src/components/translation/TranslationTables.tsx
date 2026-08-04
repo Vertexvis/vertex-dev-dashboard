@@ -1,13 +1,13 @@
-import { Box } from "@mui/material";
-import React from "react";
+import { Box } from '@mui/material';
+import React from 'react';
 
-import { dateDiffInDays } from "../../lib/dates";
-import { QueuedTranslationsTable } from "../translation/QueuedTranslationsTable";
+import { dateDiffInDays } from '../../lib/dates';
+import { QueuedTranslationsTable } from '../translation/QueuedTranslationsTable';
 
 export default function TranslationTables(): JSX.Element {
   return (
     <>
-      <Box sx={{ display: "flex" }}>
+      <Box sx={{ display: 'flex' }}>
         <QueuedTranslationsTable
           title="Running Translations"
           refreshInterval={10000}

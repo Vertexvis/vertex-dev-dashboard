@@ -1,45 +1,42 @@
-import {
-  toFileCollection,
-  toFileCollectionPage,
-} from "../../lib/file-collections";
+import { toFileCollection, toFileCollectionPage } from '../../lib/file-collections';
 
-describe("file collection paging", () => {
-  it("maps file collection metadata into a dashboard detail model", () => {
+describe('file collection paging', () => {
+  it('maps file collection metadata into a dashboard detail model', () => {
     const collection = toFileCollection({
-      type: "file-collection",
-      id: "collection-id",
+      type: 'file-collection',
+      id: 'collection-id',
       attributes: {
-        name: "Assembly",
-        suppliedId: "plm-123",
-        created: "2026-06-10T15:30:00Z",
-        expiresAt: "2026-07-10T15:30:00Z",
-        metadata: { source: "unit-test" },
+        name: 'Assembly',
+        suppliedId: 'plm-123',
+        created: '2026-06-10T15:30:00Z',
+        expiresAt: '2026-07-10T15:30:00Z',
+        metadata: { source: 'unit-test' },
       },
     });
 
     expect(collection).toEqual({
-      id: "collection-id",
-      name: "Assembly",
-      suppliedId: "plm-123",
-      created: "2026-06-10T15:30:00Z",
-      expiresAt: "2026-07-10T15:30:00Z",
-      metadata: { source: "unit-test" },
+      id: 'collection-id',
+      name: 'Assembly',
+      suppliedId: 'plm-123',
+      created: '2026-06-10T15:30:00Z',
+      expiresAt: '2026-07-10T15:30:00Z',
+      metadata: { source: 'unit-test' },
     });
   });
 
-  it("maps file collection metadata into dashboard rows", () => {
+  it('maps file collection metadata into dashboard rows', () => {
     const page = toFileCollectionPage({
-      cursors: { self: "self", next: "next" },
+      cursors: { self: 'self', next: 'next' },
       data: [
         {
-          type: "file-collection",
-          id: "collection-id",
+          type: 'file-collection',
+          id: 'collection-id',
           attributes: {
-            name: "Assembly",
-            suppliedId: "plm-123",
-            created: "2026-06-10T15:30:00Z",
-            expiresAt: "2026-07-10T15:30:00Z",
-            metadata: { source: "unit-test" },
+            name: 'Assembly',
+            suppliedId: 'plm-123',
+            created: '2026-06-10T15:30:00Z',
+            expiresAt: '2026-07-10T15:30:00Z',
+            metadata: { source: 'unit-test' },
           },
         },
       ],
@@ -47,15 +44,15 @@ describe("file collection paging", () => {
     });
 
     expect(page).toEqual({
-      cursors: { self: "self", next: "next" },
+      cursors: { self: 'self', next: 'next' },
       items: [
         {
-          id: "collection-id",
-          name: "Assembly",
-          suppliedId: "plm-123",
-          created: "2026-06-10T15:30:00Z",
-          expiresAt: "2026-07-10T15:30:00Z",
-          metadata: { source: "unit-test" },
+          id: 'collection-id',
+          name: 'Assembly',
+          suppliedId: 'plm-123',
+          created: '2026-06-10T15:30:00Z',
+          expiresAt: '2026-07-10T15:30:00Z',
+          metadata: { source: 'unit-test' },
         },
       ],
     });

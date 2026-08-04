@@ -4,21 +4,21 @@ import {
   FileCollectionsApi,
   FileMetadataData,
   VertexClient,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
-import { GetRes, Res } from "./api";
-import { isCompleteFileStatus } from "./files";
-import { fetchAllPages, Paged, toPage } from "./paging";
+import { GetRes, Res } from './api';
+import { isCompleteFileStatus } from './files';
+import { fetchAllPages, Paged, toPage } from './paging';
 
-export type FileCollectionResource = FileCollectionList["data"][number];
-export type FileCollectionAttributes = FileCollectionResource["attributes"];
+export type FileCollectionResource = FileCollectionList['data'][number];
+export type FileCollectionAttributes = FileCollectionResource['attributes'];
 export type FileCollectionPageRes = GetRes<FileCollectionResource>;
 export type FileCollectionDetailRes = Res & {
   readonly data: FileCollectionResource;
 };
 
 export type FileCollection = FileCollectionAttributes &
-  Pick<FileCollectionResource, "id">;
+  Pick<FileCollectionResource, 'id'>;
 
 export interface FileCollectionExportAvailability {
   readonly disabledReason?: string;
@@ -31,12 +31,12 @@ export type GetFileCollectionRes = Res & {
   readonly export?: FileCollectionExportAvailability;
 };
 
-const FileCollectionSortFields = ["created", "name"] as const;
+const FileCollectionSortFields = ['created', 'name'] as const;
 type FileCollectionSortField = (typeof FileCollectionSortFields)[number];
 
 interface FileCollectionSort {
   readonly field: FileCollectionSortField;
-  readonly order: "asc" | "desc";
+  readonly order: 'asc' | 'desc';
 }
 
 /**
@@ -46,54 +46,44 @@ interface FileCollectionSort {
  * sorts here until the service honors the new query parameter.
  */
 export function sortFileCollections(
-  fileCollections: FileCollectionList["data"],
+  fileCollections: FileCollectionList['data'],
   sort?: string
-): FileCollectionList["data"] {
+): FileCollectionList['data'] {
   const parsedSort = parseFileCollectionSort(sort);
   if (parsedSort == null) return fileCollections;
 
   return [...fileCollections].sort((left, right) => {
-    const comparison = (left.attributes[parsedSort.field] ?? "").localeCompare(
-      right.attributes[parsedSort.field] ?? ""
+    const comparison = (left.attributes[parsedSort.field] ?? '').localeCompare(
+      right.attributes[parsedSort.field] ?? ''
     );
 
-    return parsedSort.order === "asc" ? comparison : -comparison;
+    return parsedSort.order === 'asc' ? comparison : -comparison;
   });
 }
 
-function parseFileCollectionSort(
-  sort?: string
-): FileCollectionSort | undefined {
+function parseFileCollectionSort(sort?: string): FileCollectionSort | undefined {
   if (sort == null) return undefined;
 
-  const order = sort.startsWith("-") ? "desc" : "asc";
-  const field = order === "desc" ? sort.slice(1) : sort;
+  const order = sort.startsWith('-') ? 'desc' : 'asc';
+  const field = order === 'desc' ? sort.slice(1) : sort;
   if (!isFileCollectionSortField(field)) return undefined;
 
   return { field, order };
 }
 
-function isFileCollectionSortField(
-  field: string
-): field is FileCollectionSortField {
+function isFileCollectionSortField(field: string): field is FileCollectionSortField {
   return FileCollectionSortFields.includes(field as FileCollectionSortField);
 }
 
-export function toFileCollection(
-  data: FileCollectionMetadataData
-): FileCollection {
+export function toFileCollection(data: FileCollectionMetadataData): FileCollection {
   return { ...data.attributes, id: data.id };
 }
 
-export function toFileCollectionPage(
-  res: FileCollectionPageRes
-): Paged<FileCollection> {
+export function toFileCollectionPage(res: FileCollectionPageRes): Paged<FileCollection> {
   return toPage<FileCollectionResource, FileCollectionAttributes>(res);
 }
 
-export function getFileCollectionsApi(
-  client: VertexClient
-): FileCollectionsApi {
+export function getFileCollectionsApi(client: VertexClient): FileCollectionsApi {
   return new FileCollectionsApi(client.config, undefined, client.axiosInstance);
 }
 
@@ -111,7 +101,7 @@ export function getFileCollectionExportAvailability(
 ): FileCollectionExportAvailability {
   if (files.length === 0) {
     return {
-      disabledReason: "File collection has no files to export.",
+      disabledReason: 'File collection has no files to export.',
       enabled: false,
       fileCount: 0,
     };
@@ -123,8 +113,7 @@ export function getFileCollectionExportAvailability(
 
   if (hasIncompleteFiles) {
     return {
-      disabledReason:
-        "File collection contains files that are not ready to export.",
+      disabledReason: 'File collection contains files that are not ready to export.',
       enabled: false,
       fileCount: files.length,
     };

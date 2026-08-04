@@ -3,21 +3,21 @@ import {
   PropertyKeyPolicyList,
   PropertyKeyPolicyMode,
   VertexClient,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
-import { GetRes, Res } from "./api";
-import { Paged, toPage } from "./paging";
+import { GetRes, Res } from './api';
+import { Paged, toPage } from './paging';
 
 // Re-export for convenience so backend routes and the create dialog can share
 // the mode contract. `PropertyKeyPolicyMode` is both a type and a runtime const
 // (`{ Allowlist: "allowlist", Denylist: "denylist" }`).
 export { PropertyKeyPolicyMode };
 
-export type PropertyKeyPolicyResource = PropertyKeyPolicyList["data"][number];
+export type PropertyKeyPolicyResource = PropertyKeyPolicyList['data'][number];
 export type PropertyKeyPolicyPageRes = GetRes<PropertyKeyPolicyResource>;
 
-export type PropertyKeyPolicy = PropertyKeyPolicyResource["attributes"] &
-  Pick<PropertyKeyPolicyResource, "id">;
+export type PropertyKeyPolicy = PropertyKeyPolicyResource['attributes'] &
+  Pick<PropertyKeyPolicyResource, 'id'>;
 
 /** A property key returned directly by the policy `/keys` API. */
 export interface PropertyKeyPolicyKeyResource {
@@ -25,7 +25,7 @@ export interface PropertyKeyPolicyKeyResource {
     readonly name: string;
   };
   readonly id: string;
-  readonly type: "property-key";
+  readonly type: 'property-key';
 }
 
 /**
@@ -46,6 +46,18 @@ export type GetPropertyKeyPolicyRes = Res & {
 export type GetPropertyKeyPolicyKeysRes = Res & {
   readonly data: PropertyKeyPolicyKeyResource[];
 };
+
+export interface AddPropertyKeyPolicyKeysReq {
+  readonly keys: string[];
+}
+
+export type AddPropertyKeyPolicyKeysRes = Res;
+
+export interface DeletePropertyKeyPolicyKeysReq {
+  readonly ids: string[];
+}
+
+export type DeletePropertyKeyPolicyKeysRes = Res;
 
 /**
  * Create request body shared by the POST API route and the create dialog.
@@ -77,25 +89,19 @@ export type DeletePropertyKeyPoliciesRes = Res & {
   readonly deletedIds: string[];
 };
 
-export type PartialDeletePropertyKeyPoliciesRes =
-  DeletePropertyKeyPoliciesRes & {
-    readonly failedIds: string[];
-    readonly message: string;
-  };
+export type PartialDeletePropertyKeyPoliciesRes = DeletePropertyKeyPoliciesRes & {
+  readonly failedIds: string[];
+  readonly message: string;
+};
 
-export function toPropertyKeyPolicy(
-  data: PropertyKeyPolicyResource
-): PropertyKeyPolicy {
+export function toPropertyKeyPolicy(data: PropertyKeyPolicyResource): PropertyKeyPolicy {
   return { ...data.attributes, id: data.id };
 }
 
 export function toPropertyKeyPolicyPage(
   res: PropertyKeyPolicyPageRes
 ): Paged<PropertyKeyPolicy> {
-  return toPage<
-    PropertyKeyPolicyResource,
-    PropertyKeyPolicyResource["attributes"]
-  >(res);
+  return toPage<PropertyKeyPolicyResource, PropertyKeyPolicyResource['attributes']>(res);
 }
 
 export function toPropertyKeyPolicyKey(
@@ -104,14 +110,8 @@ export function toPropertyKeyPolicyKey(
   return { id: data.id, name: data.attributes.name };
 }
 
-export function getPropertyKeyPoliciesApi(
-  client: VertexClient
-): PropertyKeyPoliciesApi {
-  return new PropertyKeyPoliciesApi(
-    client.config,
-    undefined,
-    client.axiosInstance
-  );
+export function getPropertyKeyPoliciesApi(client: VertexClient): PropertyKeyPoliciesApi {
+  return new PropertyKeyPoliciesApi(client.config, undefined, client.axiosInstance);
 }
 
 /**
@@ -119,8 +119,6 @@ export function getPropertyKeyPoliciesApi(
  * as `GetRes<PropertyKeyPolicyData>`. Structurally identical to
  * `toPropertyKeyPolicyPage`; kept as a named alias for those call sites.
  */
-export function toPolicyPage(
-  res: PropertyKeyPolicyPageRes
-): Paged<PropertyKeyPolicy> {
+export function toPolicyPage(res: PropertyKeyPolicyPageRes): Paged<PropertyKeyPolicy> {
   return toPropertyKeyPolicyPage(res);
 }

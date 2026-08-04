@@ -12,12 +12,13 @@ import {
   RadioGroup,
   TextField,
   Typography,
-} from "@mui/material";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { toFilePage } from "../../lib/files";
-import { CreatePartReq, CreatePartRes } from "../../pages/api/parts";
+import { toFilePage } from '../../lib/files';
+import { reportError } from '../../lib/report-error';
+import { CreatePartReq, CreatePartRes } from '../../pages/api/parts';
 
 interface CreatePartDialogProps {
   readonly open: boolean;
@@ -27,7 +28,7 @@ interface CreatePartDialogProps {
   readonly targetFileName?: string;
 }
 
-function useFiles() {
+function useFiles(): SWRResponse {
   return useSWR(`/api/files?pageSize=25`);
 }
 
@@ -55,7 +56,7 @@ export default function CreatePartDialog({
     setSubmitDisabled(!file || !suppliedId || !suppliedRevisionId);
   }, [file, suppliedId, suppliedRevisionId]);
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (!file || !suppliedId || !suppliedRevisionId) {
       return;
     }
@@ -71,8 +72,8 @@ export default function CreatePartDialog({
     };
 
     const partRes: CreatePartRes = await (
-      await fetch("/api/parts", {
-        method: "POST",
+      await fetch('/api/parts', {
+        method: 'POST',
         body: JSON.stringify(attrs),
       })
     ).json();
@@ -96,7 +97,7 @@ export default function CreatePartDialog({
         {!targetFileId && (
           <FormControl
             component="fieldset"
-            sx={{ height: 300, width: "100%", overflow: "auto" }}
+            sx={{ height: 300, width: '100%', overflow: 'auto' }}
           >
             <FormLabel htmlFor="files-list" component="legend">
               Recent Files
@@ -161,7 +162,9 @@ export default function CreatePartDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           disabled={submitDisabled}
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit().catch(reportError('Failed to create the part'));
+          }}
           color="primary"
           variant="contained"
         >

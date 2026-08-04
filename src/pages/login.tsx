@@ -1,5 +1,5 @@
-import EditIcon from "@mui/icons-material/Edit";
-import ResetIcon from "@mui/icons-material/RestartAlt";
+import EditIcon from '@mui/icons-material/Edit';
+import ResetIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
   Button,
@@ -14,15 +14,15 @@ import {
   Select,
   TextField,
   Typography,
-} from "@mui/material";
-import { GetServerSidePropsResult } from "next";
-import dynamic from "next/dynamic";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import React from "react";
+} from '@mui/material';
+import { GetServerSidePropsResult } from 'next';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import React from 'react';
 
-import { isValidHttpUrl, isValidHttpUrlNullable } from "../lib/config";
-import { NetworkConfig } from "../lib/with-session";
+import { isValidHttpUrl, isValidHttpUrlNullable } from '../lib/config';
+import { NetworkConfig } from '../lib/with-session';
 
 const IdLength = 64;
 const SecretLength = 26;
@@ -40,39 +40,37 @@ interface Props {
 
 const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   const [id, setId] = React.useState<string | undefined>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("vertexvis.client.id") || undefined;
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('vertexvis.client.id') || undefined;
     }
     return undefined;
   });
   const [secret, setSecret] = React.useState<string | undefined>();
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
+  const [error, setError] = React.useState('');
   const [env, setEnv] = React.useState(() => {
     if (serverProvidedNetworkConfig != null) {
-      return "custom";
-    } else if (typeof window !== "undefined") {
-      return localStorage.getItem("vertexvis.env") || "platprod";
+      return 'custom';
+    } else if (typeof window !== 'undefined') {
+      return localStorage.getItem('vertexvis.env') || 'platprod';
     }
 
-    return "platprod";
+    return 'platprod';
   });
-  const [networkConfig, setNetworkConfig] = React.useState<NetworkConfigInput>(
-    () => {
-      if (serverProvidedNetworkConfig != null) {
-        return serverProvidedNetworkConfig;
-      } else if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("vertexvis.network.config");
-        try {
-          return saved != null ? (JSON.parse(saved) as NetworkConfigInput) : {};
-        } catch (e) {
-          console.error("failed to get network config from local storage", e);
-        }
+  const [networkConfig, setNetworkConfig] = React.useState<NetworkConfigInput>(() => {
+    if (serverProvidedNetworkConfig != null) {
+      return serverProvidedNetworkConfig;
+    } else if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vertexvis.network.config');
+      try {
+        return saved != null ? (JSON.parse(saved) as NetworkConfigInput) : {};
+      } catch (e) {
+        console.error('failed to get network config from local storage', e);
       }
-
-      return {};
     }
-  );
+
+    return {};
+  });
 
   const router = useRouter();
 
@@ -80,54 +78,45 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   const invalidSecret = secret?.length !== SecretLength;
   const invalidApiHost = !isValidHttpUrl(networkConfig.apiHost);
   const invalidRenderingHost = !isValidHttpUrl(networkConfig.renderingHost);
-  const invalidSceneTreeHost = !isValidHttpUrlNullable(
-    networkConfig.sceneTreeHost
-  );
-  const invalidSceneViewHost = !isValidHttpUrlNullable(
-    networkConfig.sceneViewHost
-  );
+  const invalidSceneTreeHost = !isValidHttpUrlNullable(networkConfig.sceneTreeHost);
+  const invalidSceneViewHost = !isValidHttpUrlNullable(networkConfig.sceneViewHost);
   const customConfigurationValidated =
     !invalidApiHost &&
     !invalidRenderingHost &&
     !invalidSceneTreeHost &&
     !invalidSceneViewHost;
 
-  function setLocalStorageItems() {
+  function setLocalStorageItems(): void {
     if (networkConfig != null) {
-      localStorage.setItem(
-        "vertexvis.network.config",
-        JSON.stringify(networkConfig)
-      );
+      localStorage.setItem('vertexvis.network.config', JSON.stringify(networkConfig));
     }
-    localStorage.setItem("vertexvis.env", env);
+    localStorage.setItem('vertexvis.env', env);
     if (id != null) {
-      localStorage.setItem("vertexvis.client.id", id);
+      localStorage.setItem('vertexvis.client.id', id);
     }
   }
-  async function handleSubmit() {
+
+  async function handleSubmit(): Promise<void> {
     if (!id || !secret) return;
     setLoading(true);
     setLocalStorageItems();
     const res = await (
-      await fetch("/api/login", {
+      await fetch('/api/login', {
         body: JSON.stringify({ id, secret, env, networkConfig }),
-        method: "POST",
+        method: 'POST',
       })
     ).json();
 
     if (res.status === 401) {
-      setError("Invalid credentials.");
+      setError('Invalid credentials.');
       setLoading(false);
-    } else if (res.status === 200) router.push("/");
+    } else if (res.status === 200) await router.push('/');
   }
 
   const predefinedEnv =
     serverProvidedNetworkConfig != null
-      ? ` for ${
-          serverProvidedNetworkConfig?.name ??
-          serverProvidedNetworkConfig.apiHost
-        }`
-      : "";
+      ? ` for ${serverProvidedNetworkConfig?.name ?? serverProvidedNetworkConfig.apiHost}`
+      : '';
 
   const [editableFields, setEditableFields] = React.useState<{
     apiHost: boolean;
@@ -141,15 +130,15 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     sceneViewHost: false,
   });
 
-  const createEditButton = (field: keyof typeof editableFields) => (
+  const createEditButton = (field: keyof typeof editableFields): JSX.Element => (
     <InputAdornment position="end">
       <IconButton
         size="small"
         sx={{
-          "& > .MuiSvgIcon-root": {
+          '& > .MuiSvgIcon-root': {
             fontSize: 16,
           },
-          position: "absolute",
+          position: 'absolute',
           right: 5,
         }}
         onClick={() =>
@@ -164,7 +153,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
     </InputAdornment>
   );
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setEditableFields({
       apiHost: true,
       renderingHost: true,
@@ -175,20 +164,20 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", justifyContent: "center" }}>
+    <Box sx={{ display: 'flex', height: '100vh', justifyContent: 'center' }}>
       <Paper
         sx={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "center",
-          flexDirection: "column",
+          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          flexDirection: 'column',
           maxHeight:
             serverProvidedNetworkConfig != null
-              ? "800px"
-              : env === "custom"
-              ? "800px"
-              : "500px",
-          minWidth: "30%",
+              ? '800px'
+              : env === 'custom'
+                ? '800px'
+                : '500px',
+          minWidth: '30%',
           mx: 2,
           my: 4,
           p: 4,
@@ -203,9 +192,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
         <TextField
           error={invalidId}
           fullWidth
-          helperText={
-            invalidId ? `${IdLength}-character client ID required.` : undefined
-          }
+          helperText={invalidId ? `${IdLength}-character client ID required.` : undefined}
           value={id}
           label="Client ID"
           margin="normal"
@@ -245,7 +232,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
                 <MenuItem value="custom">custom</MenuItem>
               </Select>
             </FormControl>
-            {env === "custom" && (
+            {env === 'custom' && (
               <>
                 <TextField
                   error={invalidApiHost}
@@ -355,7 +342,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               type="text"
               disabled={!editableFields.apiHost}
               InputProps={{
-                endAdornment: createEditButton("apiHost"),
+                endAdornment: createEditButton('apiHost'),
               }}
             />
             <TextField
@@ -380,7 +367,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               type="text"
               disabled={!editableFields.renderingHost}
               InputProps={{
-                endAdornment: createEditButton("renderingHost"),
+                endAdornment: createEditButton('renderingHost'),
               }}
             />
 
@@ -406,7 +393,7 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               type="text"
               disabled={!editableFields.sceneTreeHost}
               InputProps={{
-                endAdornment: createEditButton("sceneTreeHost"),
+                endAdornment: createEditButton('sceneTreeHost'),
               }}
             />
             <TextField
@@ -431,10 +418,10 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               type="text"
               disabled={!editableFields.sceneViewHost}
               InputProps={{
-                endAdornment: createEditButton("sceneViewHost"),
+                endAdornment: createEditButton('sceneViewHost'),
               }}
             />
-            <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
               <Button
                 title="Reset Url"
                 sx={{ mt: 2 }}
@@ -446,10 +433,13 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
               <Button
                 sx={{ mt: 2 }}
                 variant="outlined"
-                onClick={handleSubmit}
-                disabled={
-                  loading || (env === "custom" && !customConfigurationValidated)
-                }
+                onClick={() => {
+                  handleSubmit().catch(() => {
+                    setError('Could not sign in.');
+                    setLoading(false);
+                  });
+                }}
+                disabled={loading || (env === 'custom' && !customConfigurationValidated)}
               >
                 {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
                 <Box>Sign In</Box>
@@ -461,10 +451,13 @@ const LoginPage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
           <Button
             sx={{ mt: 2 }}
             variant="outlined"
-            onClick={handleSubmit}
-            disabled={
-              loading || (env === "custom" && !customConfigurationValidated)
-            }
+            onClick={() => {
+              handleSubmit().catch(() => {
+                setError('Could not sign in.');
+                setLoading(false);
+              });
+            }}
+            disabled={loading || (env === 'custom' && !customConfigurationValidated)}
           >
             {loading && <CircularProgress sx={{ mr: 1 }} size={16} />}
             <Box>Sign In</Box>
@@ -506,17 +499,12 @@ function getNetworkConfigFromEnvironmentVariables(): NetworkConfig | null {
 }
 
 export const getServerSideProps = (): GetServerSidePropsResult<Props> => {
-  const serverProvidedNetworkConfig =
-    getNetworkConfigFromEnvironmentVariables();
+  const serverProvidedNetworkConfig = getNetworkConfigFromEnvironmentVariables();
   return { props: { serverProvidedNetworkConfig } };
 };
 
-const ServerSidePage = ({
-  serverProvidedNetworkConfig,
-}: Props): JSX.Element => {
-  return (
-    <DynamicPage serverProvidedNetworkConfig={serverProvidedNetworkConfig} />
-  );
+const ServerSidePage = ({ serverProvidedNetworkConfig }: Props): JSX.Element => {
+  return <DynamicPage serverProvidedNetworkConfig={serverProvidedNetworkConfig} />;
 };
 
 export default ServerSidePage;

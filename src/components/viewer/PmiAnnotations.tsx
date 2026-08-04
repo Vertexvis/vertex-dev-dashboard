@@ -1,11 +1,12 @@
-import { Box, ListItemButton, Typography } from "@mui/material";
-import * as React from "react";
-import AutoSizer, { Size } from "react-virtualized-auto-sizer";
-import { FixedSizeList } from "react-window";
+import { Box, ListItemButton, Typography } from '@mui/material';
+import * as React from 'react';
+import AutoSizer, { Size } from 'react-virtualized-auto-sizer';
+import { FixedSizeList } from 'react-window';
 
-import { Metadata } from "../../lib/metadata";
-import { ModelViewsState } from "../../lib/model-views";
-import { Title } from "../shared/Title";
+import { Metadata } from '../../lib/metadata';
+import { ModelViewsState } from '../../lib/model-views';
+import { reportError } from '../../lib/report-error';
+import { Title } from '../shared/Title';
 
 export interface Props {
   readonly metadata?: Metadata;
@@ -28,21 +29,21 @@ export function PmiAnnotations({ metadata, modelViews }: Props): JSX.Element {
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         flexGrow: 1,
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       <Title
         sx={{
-          borderTop: "1px solid #ccc",
-          borderBottom: "1px solid #ccc",
+          borderTop: '1px solid #ccc',
+          borderBottom: '1px solid #ccc',
         }}
       >
         PMI Annotations
       </Title>
-      <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+      <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
         <AutoSizer>
           {({ height, width }: Size) => {
             return (
@@ -56,7 +57,9 @@ export function PmiAnnotations({ metadata, modelViews }: Props): JSX.Element {
                     loadedModelViewId != null &&
                     renderState.visibleStopIndex === annotationList.length - 1
                   ) {
-                    modelViews.actions.fetchNextAnnotations(loadedModelViewId);
+                    modelViews.actions
+                      .fetchNextAnnotations(loadedModelViewId)
+                      .catch(reportError('Failed to load PMI annotations'));
                   }
                 }}
               >
@@ -64,11 +67,7 @@ export function PmiAnnotations({ metadata, modelViews }: Props): JSX.Element {
                   const annotation = annotationList[index];
 
                   return (
-                    <ListItemButton
-                      key={index}
-                      style={style}
-                      alignItems="flex-start"
-                    >
+                    <ListItemButton key={index} style={style} alignItems="flex-start">
                       <Typography variant="subtitle2">
                         {annotation.displayName}
                       </Typography>

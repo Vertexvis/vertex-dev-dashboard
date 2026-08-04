@@ -5,7 +5,7 @@ import {
   head,
   PartData,
   QueuedJobData,
-} from "@vertexvis/api-client-node";
+} from '@vertexvis/api-client-node';
 
 import {
   BodyRequired,
@@ -14,24 +14,22 @@ import {
   GetRes,
   InvalidBody,
   Res,
-} from "../../lib/api";
-import { methodRouter } from "../../lib/api-handler";
-import { parsePositiveQueryInt } from "../../lib/query-params";
-import { getClientFromSession, makeCall } from "../../lib/vertex-api";
-import withSession, { NextIronRequest } from "../../lib/with-session";
+} from '../../lib/api';
+import { methodRouter } from '../../lib/api-handler';
+import { parsePositiveQueryInt } from '../../lib/query-params';
+import { getClientFromSession, makeCall } from '../../lib/vertex-api';
+import withSession, { NextIronRequest } from '../../lib/with-session';
 
 export type CreatePartReq = Pick<
   CreatePartRequestDataAttributes,
-  "suppliedId" | "suppliedRevisionId" | "suppliedIterationId" | "indexMetadata"
+  'suppliedId' | 'suppliedRevisionId' | 'suppliedIterationId' | 'indexMetadata'
 > & {
   readonly fileId: string;
 };
 
-export type CreatePartRes = Pick<QueuedJobData, "id"> & Res;
+export type CreatePartRes = Pick<QueuedJobData, 'id'> & Res;
 
-export default withSession(
-  methodRouter({ GET: get, DELETE: del, POST: create })
-);
+export default withSession(methodRouter({ GET: get, DELETE: del, POST: create }));
 
 async function get(req: NextIronRequest): Promise<ErrorRes | GetRes<PartData>> {
   const c = await getClientFromSession(req.session);
@@ -56,9 +54,7 @@ async function del(req: NextIronRequest): Promise<ErrorRes | Res> {
   if (!b.ids) return InvalidBody;
 
   const c = await getClientFromSession(req.session);
-  await Promise.all(
-    b.ids.map((id) => makeCall(() => c.parts.deletePart({ id })))
-  );
+  await Promise.all(b.ids.map((id) => makeCall(() => c.parts.deletePart({ id }))));
   return { status: 200 };
 }
 
@@ -71,7 +67,7 @@ async function create(req: NextIronRequest): Promise<ErrorRes | CreatePartRes> {
   const res = await c.parts.createPart({
     createPartRequest: {
       data: {
-        type: "part",
+        type: 'part',
         attributes: {
           suppliedId: b.suppliedId,
           suppliedRevisionId: b.suppliedRevisionId,

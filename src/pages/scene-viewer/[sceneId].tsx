@@ -1,48 +1,53 @@
-import { SceneItemData, SceneViewStateData } from "@vertexvis/api-client-node";
-import { vertexvis } from "@vertexvis/frame-streaming-protos";
+import { SceneItemData, SceneViewStateData } from '@vertexvis/api-client-node';
+import { vertexvis } from '@vertexvis/frame-streaming-protos';
 import {
   DomainPropertyEntry,
   Environment,
   SceneItemMetadataResponse,
   TapEventDetails,
-} from "@vertexvis/viewer";
-import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import { useRouter } from "next/router";
-import { withIronSession } from "next-iron-session";
-import React from "react";
-import useSWR from "swr";
+} from '@vertexvis/viewer';
+import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import { useRouter } from 'next/router';
+import { withIronSession } from 'next-iron-session';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { Header } from "../../components/shared/Header";
-import { Layout } from "../../components/viewer/Layout";
-import { LeftDrawer } from "../../components/viewer/LeftDrawer";
-import { LeftSidebar } from "../../components/viewer/LeftSidebar";
-import { MetadataStatus } from "../../components/viewer/MetadataStates";
-import { PolicySelect } from "../../components/viewer/PolicySelect";
-import { RightDrawer } from "../../components/viewer/RightDrawer";
-import { RightSidebar } from "../../components/viewer/RightSidebar";
-import { Viewer } from "../../components/viewer/Viewer";
-import { ErrorRes, GetRes } from "../../lib/api";
-import { head, StreamCredentials } from "../../lib/config";
+import { Header } from '../../components/shared/Header';
+import { Layout } from '../../components/viewer/Layout';
+import { LeftDrawer } from '../../components/viewer/LeftDrawer';
+import { LeftSidebar } from '../../components/viewer/LeftSidebar';
+import { MetadataStatus } from '../../components/viewer/MetadataStates';
+import { PolicySelect } from '../../components/viewer/PolicySelect';
+import { RightDrawer } from '../../components/viewer/RightDrawer';
+import { RightSidebar } from '../../components/viewer/RightSidebar';
+import { Viewer } from '../../components/viewer/Viewer';
+import { ErrorRes, GetRes } from '../../lib/api';
+import { head, StreamCredentials } from '../../lib/config';
 import {
   Metadata,
   toMetadata,
   toMetadataFromDomainEntries,
   toMetadataFromItem,
-} from "../../lib/metadata";
-import { useModelViews } from "../../lib/model-views";
-import { applySceneViewState, selectByHit } from "../../lib/scene-items";
-import { useViewer } from "../../lib/viewer";
+} from '../../lib/metadata';
+import { useModelViews } from '../../lib/model-views';
+import { reportError } from '../../lib/report-error';
+import { applySceneViewState, selectByHit } from '../../lib/scene-items';
+import { useViewer } from '../../lib/viewer';
 import {
   CommonProps,
   CookieAttributes,
   EnvironmentWithCustom,
   NextIronRequest,
   serverSidePropsHandler as commonServerSidePropsHandler,
-} from "../../lib/with-session";
+} from '../../lib/with-session';
 
-const ViewerId = "vertex-viewer-id";
+const ViewerId = 'vertex-viewer-id';
 
-function useSceneViewStates({ viewId }: { viewId?: string }) {
+function useSceneViewStates({
+  viewId,
+}: {
+  viewId?: string;
+}): SWRResponse<GetRes<SceneViewStateData>, ErrorRes> {
   return useSWR<GetRes<SceneViewStateData>, ErrorRes>(
     viewId ? `/api/scene-view-states?view=${viewId}` : null
   );
@@ -52,10 +57,12 @@ function useSceneViewStates({ viewId }: { viewId?: string }) {
 // policy. Used solely to populate the "Unrestricted" comparison column so the
 // keys stripped by the policy are visible. The policy-aware Web SDK endpoint
 // remains the sole source for the RESTRICTED (displayed) metadata.
-function useSceneItem({ itemId }: { itemId?: string }) {
-  return useSWR<SceneItemData, ErrorRes>(
-    itemId ? `/api/scene-items/${itemId}` : null
-  );
+function useSceneItem({
+  itemId,
+}: {
+  itemId?: string;
+}): SWRResponse<SceneItemData, ErrorRes> {
+  return useSWR<SceneItemData, ErrorRes>(itemId ? `/api/scene-items/${itemId}` : null);
 }
 
 export default function SceneViewer({
@@ -65,27 +72,19 @@ export default function SceneViewer({
 }: CommonProps): JSX.Element {
   const router = useRouter();
   const viewerState = useViewer();
-  const [credentials, setCredentials] = React.useState<
-    StreamCredentials | undefined
-  >();
+  const [credentials, setCredentials] = React.useState<StreamCredentials | undefined>();
   const [streamKeyError, setStreamKeyError] = React.useState<string>();
   const requestedStreamKeyForScene = React.useRef<string>();
-  const [selectedItemId, setSelectedItemId] = React.useState<
-    string | undefined
-  >();
-  const [selectedIdentifiers, setSelectedIdentifiers] =
-    React.useState<HitIdentifiers>();
+  const [selectedItemId, setSelectedItemId] = React.useState<string | undefined>();
+  const [selectedIdentifiers, setSelectedIdentifiers] = React.useState<HitIdentifiers>();
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   // Raw render-frame metadata from the raycaster hit (Stream comparison column).
   // Captured on left-click; cleared on tree-select, policy switch, and when the
   // selection is cleared, since it is only meaningful for a viewer-clicked item.
-  const [streamMetadata, setStreamMetadata] = React.useState<
-    Metadata | undefined
-  >();
-  const [metadataStatus, setMetadataStatus] =
-    React.useState<MetadataStatus>("ready");
+  const [streamMetadata, setStreamMetadata] = React.useState<Metadata | undefined>();
+  const [metadataStatus, setMetadataStatus] = React.useState<MetadataStatus>('ready');
   const [metadataError, setMetadataError] = React.useState<string>();
   const [metadataDiagnostic, setMetadataDiagnostic] = React.useState<string>();
   const [viewId, setViewId] = React.useState<string | undefined>();
@@ -96,8 +95,7 @@ export default function SceneViewer({
   // ignoring REST path purely to feed the comparison's "Unrestricted" column.
   const selectedItem = useSceneItem({ itemId: selectedItemId });
   const unrestrictedMetadata = React.useMemo(
-    () =>
-      selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined,
+    () => (selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined),
     [selectedItem.data]
   );
   const modelViews = useModelViews({
@@ -142,15 +140,13 @@ export default function SceneViewer({
           { shallow: true }
         )
       )
-      .catch(() =>
-        setStreamKeyError("Unable to create a stream key for this scene.")
-      );
+      .catch(() => setStreamKeyError('Unable to create a stream key for this scene.'));
   }, [clientId, router, vertexEnv]);
 
   async function handleSelect(
     detail: TapEventDetails,
     hit?: vertexvis.protobuf.stream.IHit
-  ) {
+  ): Promise<void> {
     if (detail.buttons !== 2) {
       setSelectedItemId(hit?.itemId?.hex ?? undefined);
       // Capture the structural identifiers the raycaster hit carries so the
@@ -164,22 +160,29 @@ export default function SceneViewer({
     }
   }
 
-  function handleTreeItemSelected(itemId: string) {
+  function handleTreeItemSelected(itemId: string): void {
     setSelectedItemId(itemId);
     setSelectedIdentifiers(undefined);
     // Tree selection has no render-frame hit, so there is no stream sample.
     setStreamMetadata(undefined);
   }
 
-  function handleViewStateSelected(id: string) {
-    applySceneViewState({ id, viewer: viewerState.ref.current });
+  function handleViewStateSelected(id: string): void {
+    applySceneViewState({ id, viewer: viewerState.ref.current }).catch(
+      reportError('Failed to apply the scene view state')
+    );
+  }
+
+  async function handleSceneReady(): Promise<void> {
+    const scene = await viewerState.ref.current?.scene();
+    if (scene) setViewId(scene.sceneViewId);
   }
 
   // Switch the applied property key policy while viewing the scene. This
   // recreates the stream key with the new policy, reconnects the viewer, and
   // lets the metadata effect reload the currently-selected item under the new
   // policy once the new scene view is ready.
-  async function handlePolicyChange(newPolicyId?: string) {
+  async function handlePolicyChange(newPolicyId?: string): Promise<void> {
     if (newPolicyId === policyId) return;
 
     const sceneId = head(router.query.sceneId);
@@ -195,7 +198,7 @@ export default function SceneViewer({
     // The captured stream sample is from the pre-switch stream, so drop it; a
     // fresh sample only arrives when the user re-clicks after reconnecting.
     setStreamMetadata(undefined);
-    if (selectedItemId != null) setMetadataStatus("loading");
+    if (selectedItemId != null) setMetadataStatus('loading');
 
     try {
       const { credentials: nextCredentials, url } = await createPolicySwitch({
@@ -212,7 +215,7 @@ export default function SceneViewer({
       // auto-refetches under the new policy after the viewer reconnects.
       await router.replace(url, undefined, { shallow: true });
     } catch {
-      setStreamKeyError("Unable to create a stream key for this scene.");
+      setStreamKeyError('Unable to create a stream key for this scene.');
     } finally {
       setSwitchingPolicy(false);
     }
@@ -227,11 +230,11 @@ export default function SceneViewer({
       // state rather than clearing to stale/empty data — the retained item
       // refetches once the new viewId is set.
       if (selectedItemId != null) {
-        setMetadataStatus("loading");
+        setMetadataStatus('loading');
         return;
       }
       setMetadata(undefined);
-      setMetadataStatus("ready");
+      setMetadataStatus('ready');
       setMetadataError(undefined);
       setMetadataDiagnostic(undefined);
       return;
@@ -240,8 +243,8 @@ export default function SceneViewer({
     const controller = viewerState.ref.current?.sceneItems;
     if (controller == null) return;
 
-    let cancelled = false;
-    setMetadataStatus("loading");
+    const cancelled = { current: false };
+    setMetadataStatus('loading');
     setMetadataError(undefined);
     setMetadataDiagnostic(undefined);
 
@@ -253,28 +256,28 @@ export default function SceneViewer({
           viewId,
           identifiers: selectedIdentifiers,
         });
-        if (cancelled) return;
+        if (cancelled.current) return;
 
         setMetadata(md);
-        setMetadataStatus("ready");
+        setMetadataStatus('ready');
         // Bonus diagnostic (non-blocking): base "no metadata returned" on the
         // count of real (non-synthetic) entries the endpoint returned, since
         // identifier keys are always merged in and would mask an empty result.
         setMetadataDiagnostic(diagnosePolicy({ policyId, entryCount }));
       } catch {
-        if (cancelled) return;
+        if (cancelled.current) return;
         setMetadata(undefined);
-        setMetadataStatus("error");
-        setMetadataError("Unable to load metadata for this item.");
+        setMetadataStatus('error');
+        setMetadataError('Unable to load metadata for this item.');
       }
     })();
 
     return () => {
-      cancelled = true;
+      cancelled.current = true;
     };
   }, [selectedItemId, viewId, policyId, selectedIdentifiers, viewerState.ref]);
 
-  const featureLines = { width: 0.5, color: "#444444" };
+  const featureLines = { width: 0.5, color: '#444444' };
 
   if (streamKeyError) {
     return <p role="alert">{streamKeyError}</p>;
@@ -287,17 +290,18 @@ export default function SceneViewer({
           actions={
             <PolicySelect
               policyId={policyId}
-              onChange={handlePolicyChange}
+              onChange={(newPolicyId) => {
+                handlePolicyChange(newPolicyId).catch(
+                  reportError('Failed to switch the property key policy')
+                );
+              }}
               disabled={switchingPolicy}
             />
           }
         />
       }
       leftSidebar={
-        <LeftSidebar
-          active={openedLeftPanel}
-          onSelectSidebar={setOpenedLeftPanel}
-        />
+        <LeftSidebar active={openedLeftPanel} onSelectSidebar={setOpenedLeftPanel} />
       }
       leftDrawer={
         <LeftDrawer
@@ -319,27 +323,27 @@ export default function SceneViewer({
             onSelect={handleSelect}
             viewerState={viewerState}
             viewerId={ViewerId}
-            onViewStateCreated={mutate}
+            onViewStateCreated={() => {
+              mutate().catch(reportError('Failed to refresh scene view states'));
+            }}
             networkConfig={networkConfig}
             featureLines={featureLines}
             rotateAroundTapPoint={true}
-            onSceneReady={async () => {
-              const scene = await viewerState.ref.current?.scene();
-              if (scene) setViewId(scene.sceneViewId);
+            onSceneReady={() => {
+              handleSceneReady().catch(reportError('Failed to prepare the scene view'));
             }}
             onViewReset={() => {
               setSelectedItemId(undefined);
               setStreamMetadata(undefined);
-              modelViews.actions.unloadModelView();
+              modelViews.actions
+                .unloadModelView()
+                .catch(reportError('Failed to unload the model view'));
             }}
           />
         )
       }
       rightSidebar={
-        <RightSidebar
-          active={openedRightPanel}
-          onSelectSidebar={setOpenedRightPanel}
-        />
+        <RightSidebar active={openedRightPanel} onSelectSidebar={setOpenedRightPanel} />
       }
       rightDrawer={
         <RightDrawer
@@ -362,7 +366,7 @@ export default function SceneViewer({
   );
 }
 
-type SceneItemController = NonNullable<HTMLVertexViewerElement["sceneItems"]>;
+type SceneItemController = NonNullable<HTMLVertexViewerElement['sceneItems']>;
 
 // Structural identifiers the raycaster hit carries client-side. These are not
 // policy-restricted metadata, so they are surfaced as synthetic keys for parity.
@@ -373,15 +377,32 @@ export interface HitIdentifiers {
   readonly partRevisionSuppliedId?: string;
 }
 
-export function toHitIdentifiers(
-  hit: vertexvis.protobuf.stream.IHit
-): HitIdentifiers {
+export function toHitIdentifiers(hit: vertexvis.protobuf.stream.IHit): HitIdentifiers {
   return {
     suppliedId: hit.itemSuppliedId?.value ?? undefined,
     partId: hit.partId?.hex ?? undefined,
     partRevisionId: hit.partRevisionId?.hex ?? undefined,
     partRevisionSuppliedId: hit.suppliedPartRevisionId?.value ?? undefined,
   };
+}
+
+// Page through every metadata entry for the item via the policy-aware Web SDK.
+// Recurses on the paging cursor so the accumulation stays immutable (no `let`).
+async function fetchAllItemMetadataEntries(
+  controller: SceneItemController,
+  itemId: string,
+  cursor?: string,
+  acc: DomainPropertyEntry[] = []
+): Promise<DomainPropertyEntry[]> {
+  const res: SceneItemMetadataResponse = await controller.listSceneItemMetadata(itemId, {
+    size: 100,
+    cursor,
+  });
+  const collected = [...acc, ...res.entries];
+  const next = res.paging?.next ?? undefined;
+  return next != null
+    ? fetchAllItemMetadataEntries(controller, itemId, next, collected)
+    : collected;
 }
 
 // Fetch metadata for the selected item through the policy-aware Web SDK,
@@ -399,15 +420,7 @@ export async function loadItemMetadata({
   viewId: string;
   identifiers?: HitIdentifiers;
 }): Promise<{ metadata: Metadata; entryCount: number }> {
-  const entries: DomainPropertyEntry[] = [];
-  let cursor: string | undefined = undefined;
-  do {
-    const res: SceneItemMetadataResponse =
-      // eslint-disable-next-line no-await-in-loop
-      await controller.listSceneItemMetadata(itemId, { size: 100, cursor });
-    entries.push(...res.entries);
-    cursor = res.paging?.next ?? undefined;
-  } while (cursor != null);
+  const entries = await fetchAllItemMetadataEntries(controller, itemId);
 
   const item = await controller
     .getSceneViewItem(itemId, viewId, {})
@@ -429,17 +442,17 @@ export async function createStreamKey(
   sceneId: string,
   policyId?: string
 ): Promise<string> {
-  const response = await fetch("/api/stream-keys", {
+  const response = await fetch('/api/stream-keys', {
     body: JSON.stringify({
       id: sceneId,
       ...(policyId ? { propertyKeyPolicyId: policyId } : {}),
     }),
-    method: "POST",
+    method: 'POST',
   });
-  if (!response.ok) throw new Error("Stream-key creation failed.");
+  if (!response.ok) throw new Error('Stream-key creation failed.');
 
   const { key } = (await response.json()) as { key?: string };
-  if (!key) throw new Error("Created scene stream key was empty.");
+  if (!key) throw new Error('Created scene stream key was empty.');
   return key;
 }
 
@@ -486,7 +499,7 @@ export function diagnosePolicy({
 }): string | undefined {
   if (!policyId) return undefined;
   return entryCount === 0
-    ? "Policy applied, but no metadata was returned for this item."
+    ? 'Policy applied, but no metadata was returned for this item.'
     : undefined;
 }
 
@@ -503,22 +516,22 @@ export function encodeCreds({
   sceneId?: string;
   policyId?: string;
 }): string {
-  const path = `/scene-viewer/${encodeURIComponent(sceneId ?? "unknown")}`;
+  const path = `/scene-viewer/${encodeURIComponent(sceneId ?? 'unknown')}`;
   const cId = `clientId=${encodeURIComponent(clientId)}`;
   const sk = `streamKey=${encodeURIComponent(streamKey)}`;
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
-  const pId = policyId ? `&policyId=${encodeURIComponent(policyId)}` : "";
+  const pId = policyId ? `&policyId=${encodeURIComponent(policyId)}` : '';
   return `${path}/?${cId}&${sk}&${ve}${pId}`;
 }
 
 export function serverSidePropsHandler({
   query,
   req,
-}: Pick<GetServerSidePropsContext, "query"> & {
+}: Pick<GetServerSidePropsContext, 'query'> & {
   readonly req: NextIronRequest;
 }): GetServerSidePropsResult<CommonProps> {
   const authResult = commonServerSidePropsHandler({ req });
-  if (!("props" in authResult)) return authResult;
+  if (!('props' in authResult)) return authResult;
 
   const sceneId = head(query.sceneId);
   if (sceneId == null) return { notFound: true };

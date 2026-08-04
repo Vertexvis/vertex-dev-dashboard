@@ -1,10 +1,10 @@
-import { Box, Divider, IconButton, Tooltip } from "@mui/material";
-import React from "react";
+import { Box, Divider, IconButton, Tooltip } from '@mui/material';
+import React from 'react';
 
-import { ViewerState } from "../../lib/viewer";
-import { EnvironmentWithCustom, NetworkConfig } from "../../lib/with-session";
-import { Icon } from "../shared/Icon";
-import { SceneTree } from "./SceneTree";
+import { ViewerState } from '../../lib/viewer';
+import { EnvironmentWithCustom, NetworkConfig } from '../../lib/with-session';
+import { Icon } from '../shared/Icon';
+import { SceneTree } from './SceneTree';
 
 interface Props {
   readonly configEnv: EnvironmentWithCustom;
@@ -31,9 +31,9 @@ export const SceneTreePanel = ({
     <>
       <Box
         sx={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
+          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'space-between',
           py: 0.5,
         }}
       >

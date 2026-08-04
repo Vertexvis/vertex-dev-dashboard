@@ -1,25 +1,25 @@
 /**
  * @jest-environment node
  */
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from 'msw';
 
 import {
   type ApiRouteRequest,
   type ApiRouteResponse,
   createAuthenticatedVertexApiTestSession,
   invokeNextJsApiRouteHandler,
-} from "../../../../test/api/nextJsApiRouteTest";
-import { nodeMswServer } from "../../../../test/msw/server";
-import { handleFiles } from "../../../pages/api/files";
+} from '../../../../test/api/nextJsApiRouteTest';
+import { nodeMswServer } from '../../../../test/msw/server';
+import { handleFiles } from '../../../pages/api/files';
 
-const vertexApiOrigin = "https://vertex-api.test";
+const vertexApiOrigin = 'https://vertex-api.test';
 
-describe("files API route", () => {
-  it("lists files with sort query parameters", async () => {
+describe('files API route', () => {
+  it('lists files with sort query parameters', async () => {
     nodeMswServer.use(
       stubListFiles(
         {
-          data: [fileData("file-1")],
+          data: [fileData('file-1')],
           links: {
             next: {
               href: `${vertexApiOrigin}/files?page[cursor]=next-page`,
@@ -30,22 +30,22 @@ describe("files API route", () => {
           },
         },
         ({ searchParams }) => {
-          expect(searchParams.get("page[cursor]")).toBe("cursor-1");
-          expect(searchParams.get("page[size]")).toBe("50");
-          expect(searchParams.get("sort")).toBe("-created");
+          expect(searchParams.get('page[cursor]')).toBe('cursor-1');
+          expect(searchParams.get('page[size]')).toBe('50');
+          expect(searchParams.get('sort')).toBe('-created');
         }
       )
     );
 
     const response = await callFiles({
-      method: "GET",
-      query: { cursor: "cursor-1", pageSize: "50", sort: "-created" },
+      method: 'GET',
+      query: { cursor: 'cursor-1', pageSize: '50', sort: '-created' },
     });
 
     expect(response.statusCode()).toBe(200);
     expect(response.body()).toEqual({
-      cursors: { next: "next-page", self: "self-page" },
-      data: [fileData("file-1")],
+      cursors: { next: 'next-page', self: 'self-page' },
+      data: [fileData('file-1')],
       status: 200,
     });
   });
@@ -67,28 +67,38 @@ function stubListFiles(
     };
   },
   assertRequest: (request: URL) => void
-) {
+): ReturnType<typeof http.get> {
   return http.get(`${vertexApiOrigin}/files`, ({ request }) => {
     assertRequest(new URL(request.url));
 
     return HttpResponse.json(body, {
       headers: {
-        "content-type": "application/vnd.api+json",
+        'content-type': 'application/vnd.api+json',
       },
     });
   });
 }
 
-function fileData(id: string) {
+function fileData(id: string): {
+  attributes: {
+    created: string;
+    name: string;
+    status: string;
+    suppliedId: string;
+    uploaded: string;
+  };
+  id: string;
+  type: string;
+} {
   return {
     attributes: {
-      created: "2026-06-10T15:30:00Z",
-      name: "alpha.jt",
-      status: "completed",
-      suppliedId: "supplied-1",
-      uploaded: "2026-06-10T15:45:00Z",
+      created: '2026-06-10T15:30:00Z',
+      name: 'alpha.jt',
+      status: 'completed',
+      suppliedId: 'supplied-1',
+      uploaded: '2026-06-10T15:45:00Z',
     },
     id,
-    type: "file",
+    type: 'file',
   };
 }

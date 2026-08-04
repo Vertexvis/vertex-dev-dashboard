@@ -1,18 +1,18 @@
-import { Close } from "@mui/icons-material";
-import { Box, Drawer, IconButton, Typography } from "@mui/material";
-import React from "react";
-import useSWR from "swr";
+import { Close } from '@mui/icons-material';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
+import React from 'react';
+import useSWR from 'swr';
 
-import { isErrorRes } from "../../lib/api";
+import { isErrorRes } from '../../lib/api';
 import {
   GetPropertyKeyPolicyKeysRes,
   PropertyKeyPolicy,
   toPropertyKeyPolicyKey,
-} from "../../lib/property-key-policies";
-import { AppLink } from "../shared/AppLink";
-import { RightDrawerWidth } from "../shared/Layout";
-import { PropertyKeyPolicyKeysList } from "./PropertyKeyPolicyKeysList";
-import { PropertyKeyPolicyMetadataTable } from "./PropertyKeyPolicyMetadataTable";
+} from '../../lib/property-key-policies';
+import { AppLink } from '../shared/AppLink';
+import { RightDrawerWidth } from '../shared/Layout';
+import { PropertyKeyPolicyKeysList } from './PropertyKeyPolicyKeysList';
+import { PropertyKeyPolicyMetadataTable } from './PropertyKeyPolicyMetadataTable';
 
 interface Props {
   readonly onClose: () => void;
@@ -31,11 +31,7 @@ export function PropertyKeyPolicyDetailsDrawer({
   // GET (and its misleading error state) by rendering attributes from the prop.
   const { data: keysData, error: keysError } = useSWR<
     GetPropertyKeyPolicyKeysRes | undefined
-  >(
-    id == null
-      ? null
-      : `/api/property-key-policies/${encodeURIComponent(id)}/keys`
-  );
+  >(id == null ? null : `/api/property-key-policies/${encodeURIComponent(id)}/keys`);
 
   const details = propertyKeyPolicy;
 
@@ -53,11 +49,11 @@ export function PropertyKeyPolicyDetailsDrawer({
       sx={{
         flexShrink: 0,
         width: RightDrawerWidth,
-        "& .MuiDrawer-paper": { width: RightDrawerWidth },
+        '& .MuiDrawer-paper': { width: RightDrawerWidth },
       }}
       variant="persistent"
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography sx={{ my: 2, mx: 2 }} variant="h5">
           Property Key Policy
         </Typography>
