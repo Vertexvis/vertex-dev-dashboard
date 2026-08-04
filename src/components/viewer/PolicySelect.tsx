@@ -10,7 +10,7 @@ import { PropertyKeyPolicyData } from '@vertexvis/api-client-node';
 import React from 'react';
 import useSWR from 'swr';
 
-import { GetRes } from '../../lib/api';
+import { GetRes, jsonFetcher } from '../../lib/api';
 import { PropertyKeyPolicy, toPolicyPage } from '../../lib/property-key-policies';
 
 interface Props {
@@ -28,7 +28,8 @@ export function PolicySelect({
   disabled = false,
 }: Props): JSX.Element {
   const { data, error } = useSWR<GetRes<PropertyKeyPolicyData>>(
-    '/api/property-key-policies'
+    '/api/property-key-policies',
+    jsonFetcher
   );
   const loading = !data && !error;
   const policies: PropertyKeyPolicy[] = data ? toPolicyPage(data).items : [];

@@ -27,7 +27,7 @@ import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import useSWR, { SWRResponse } from 'swr';
 
-import { ErrorRes, GetRes } from '../../lib/api';
+import { ErrorRes, GetRes, jsonFetcher } from '../../lib/api';
 import { toLocaleString } from '../../lib/dates';
 import { SwrProps } from '../../lib/paging';
 import { PropertyKeyPolicy, toPolicyPage } from '../../lib/property-key-policies';
@@ -65,10 +65,13 @@ function useScenes({
   suppliedId,
   name,
 }: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
+  const cursorParam = cursor ? `&cursor=${cursor}` : '';
+  const suppliedIdParam = suppliedId
+    ? `&suppliedId=${encodeURIComponent(suppliedId)}`
+    : '';
+  const nameParam = name ? `&name=${encodeURIComponent(name)}` : '';
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ''}${
-      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ''
-    }${name ? `&name=${encodeURIComponent(name)}` : ''}`
+    `/api/scenes?pageSize=${pageSize}${cursorParam}${suppliedIdParam}${nameParam}`
   );
 }
 
@@ -105,14 +108,14 @@ export default function SceneTable({
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selectedPolicyId, setSelectedPolicyId] = React.useState<string | undefined>();
 
   const { data: policiesData, error: policiesError } = useSWR<
     GetRes<PropertyKeyPolicyData>
-  >('/api/property-key-policies');
+  >('/api/property-key-policies', jsonFetcher);
   const policiesLoading = !policiesData && !policiesError;
   const policies: PropertyKeyPolicy[] = policiesData
     ? toPolicyPage(policiesData).items
@@ -136,7 +139,7 @@ export default function SceneTable({
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
+    () => debounce(setSuppliedId, 300),
     []
   );
 

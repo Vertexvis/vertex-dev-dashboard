@@ -23,6 +23,7 @@ const emptyModelViews: ModelViewsState = {
 function renderCompare(props: {
   metadata?: Metadata;
   unrestrictedMetadata?: Metadata;
+  unrestrictedError?: boolean;
   streamMetadata?: Metadata;
   metadataStatus?: MetadataStatus;
   metadataError?: string;
@@ -227,8 +228,27 @@ describe('MetadataCompare diff highlighting', () => {
     const row = rowForKey('Material');
     expect(row).toHaveAttribute('data-state', 'differs');
     expect(within(row).getByText('Differs')).toBeInTheDocument();
-    // Differing values are not policy-removed, so the policy summary is zero.
-    expect(screen.getByText('No differences')).toBeInTheDocument();
+    // A differing value (present in both columns) is not "removed by policy",
+    // but it IS a difference — the summary must surface it, not report none.
+    expect(screen.getByText('1 difference')).toBeInTheDocument();
+  });
+
+  it('reports both removed and differing keys in the policy summary', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      unrestrictedMetadata: {
+        partName: '',
+        properties: { Material: 'Steel', Cost: '100' },
+      },
+      // Cost stripped by policy (removed); Material present but changed (differs).
+      metadata: { partName: '', properties: { Material: 'Aluminum' } },
+    });
+
+    expect(rowForKey('Cost')).toHaveAttribute('data-state', 'removed');
+    expect(rowForKey('Material')).toHaveAttribute('data-state', 'differs');
+    expect(
+      screen.getByText('1 property removed by policy, 1 difference')
+    ).toBeInTheDocument();
   });
 
   it('counts and pluralizes multiple removed keys', () => {
@@ -561,6 +581,19 @@ describe('MetadataCompare states', () => {
     ).toBeInTheDocument();
     // Comparison still renders alongside the diagnostic.
     expect(rowForKey('Material')).toHaveAttribute('data-state', 'same');
+  });
+
+  it('warns instead of reporting no differences when the baseline fails', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      // Unrestricted baseline failed to load; only restricted metadata is present.
+      unrestrictedError: true,
+      metadata: { partName: '', properties: { Material: 'Steel' } },
+    });
+
+    expect(screen.getByText(/Unrestricted baseline unavailable/)).toBeInTheDocument();
+    // The (misleading) difference summary must not be shown in its place.
+    expect(screen.queryByText('No differences')).not.toBeInTheDocument();
   });
 });
 
