@@ -1,20 +1,20 @@
 /**
  * @jest-environment node
  */
-import { getPage } from "@vertexvis/api-client-node";
-import type { NextApiResponse } from "next";
-import type { Session } from "next-iron-session";
+import { getPage } from '@vertexvis/api-client-node';
+import type { NextApiResponse } from 'next';
+import type { Session } from 'next-iron-session';
 
-import type { NextIronRequest } from "../../../lib/with-session";
-import { handleFileCollectionFiles } from "../../../pages/api/file-collections/[id]/files";
+import type { NextIronRequest } from '../../../lib/with-session';
+import { handleFileCollectionFiles } from '../../../pages/api/file-collections/[id]/files';
 
 const mockGetClientFromSession = jest.fn();
 const mockGetFileCollectionsApi = jest.fn();
 const mockListFileCollectionFiles = jest.fn();
 const mockGetPage = getPage as jest.Mock;
 
-jest.mock("@vertexvis/api-client-node", () => {
-  const actual = jest.requireActual("@vertexvis/api-client-node");
+jest.mock('@vertexvis/api-client-node', () => {
+  const actual = jest.requireActual('@vertexvis/api-client-node');
   return {
     ...actual,
     getPage: jest.fn(),
@@ -22,35 +22,32 @@ jest.mock("@vertexvis/api-client-node", () => {
   };
 });
 
-jest.mock("../../../lib/vertex-api", () => {
-  const actual = jest.requireActual("../../../lib/vertex-api");
+jest.mock('../../../lib/vertex-api', () => {
+  const actual = jest.requireActual('../../../lib/vertex-api');
   return {
     ...actual,
-    getClientFromSession: (...args: unknown[]) =>
-      mockGetClientFromSession(...args),
+    getClientFromSession: (...args: unknown[]) => mockGetClientFromSession(...args),
   };
 });
 
-jest.mock("../../../lib/file-collections", () => {
-  const actual = jest.requireActual("../../../lib/file-collections");
+jest.mock('../../../lib/file-collections', () => {
+  const actual = jest.requireActual('../../../lib/file-collections');
   return {
     ...actual,
-    getFileCollectionsApi: (...args: unknown[]) =>
-      mockGetFileCollectionsApi(...args),
+    getFileCollectionsApi: (...args: unknown[]) => mockGetFileCollectionsApi(...args),
   };
 });
 
-type TestReq = Pick<NextIronRequest, "body" | "method" | "query" | "session">;
+type TestReq = Pick<NextIronRequest, 'body' | 'method' | 'query' | 'session'>;
 
-interface TestRes
-  extends Pick<NextApiResponse, "json" | "setHeader" | "status"> {
+interface TestRes extends Pick<NextApiResponse, 'json' | 'setHeader' | 'status'> {
   readonly body: () => unknown;
   readonly statusCode: () => number | undefined;
 }
 
-describe("file collection files API route", () => {
+describe('file collection files API route', () => {
   beforeEach(() => {
-    mockGetClientFromSession.mockResolvedValue({ client: "test-client" });
+    mockGetClientFromSession.mockResolvedValue({ client: 'test-client' });
     mockGetFileCollectionsApi.mockReturnValue({
       listFileCollectionFiles: mockListFileCollectionFiles,
     });
@@ -58,8 +55,8 @@ describe("file collection files API route", () => {
     mockGetPage.mockImplementation(async (apiCall) => {
       await apiCall();
       return {
-        cursors: { next: "next-page", self: "self-page" },
-        page: { data: [fileData("file-1")] },
+        cursors: { next: 'next-page', self: 'self-page' },
+        page: { data: [fileData('file-1')] },
       };
     });
   });
@@ -68,79 +65,79 @@ describe("file collection files API route", () => {
     jest.clearAllMocks();
   });
 
-  it("proxies collection file list requests with supported paging parameters", async () => {
+  it('proxies collection file list requests with supported paging parameters', async () => {
     const res = await callFileCollectionFiles({
-      method: "GET",
+      method: 'GET',
       query: {
-        id: "collection-1",
-        cursor: "cursor-1",
-        pageSize: "50",
+        id: 'collection-1',
+        cursor: 'cursor-1',
+        pageSize: '50',
       },
     });
 
     expect(mockGetClientFromSession).toHaveBeenCalled();
     expect(mockGetFileCollectionsApi).toHaveBeenCalledWith({
-      client: "test-client",
+      client: 'test-client',
     });
     expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
-      pageCursor: "cursor-1",
+      id: 'collection-1',
+      pageCursor: 'cursor-1',
       pageSize: 50,
     });
     expect(res.statusCode()).toBe(200);
     expect(res.body()).toEqual({
-      cursors: { next: "next-page", self: "self-page" },
-      data: [fileData("file-1")],
+      cursors: { next: 'next-page', self: 'self-page' },
+      data: [fileData('file-1')],
       status: 200,
     });
   });
 
-  it("uses the default page size when one is not supplied", async () => {
+  it('uses the default page size when one is not supplied', async () => {
     const res = await callFileCollectionFiles({
-      method: "GET",
-      query: { id: "collection-1" },
+      method: 'GET',
+      query: { id: 'collection-1' },
     });
 
     expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
+      id: 'collection-1',
       pageCursor: undefined,
       pageSize: 10,
     });
     expect(res.statusCode()).toBe(200);
   });
 
-  it("uses the default page size when an invalid page size is supplied", async () => {
+  it('uses the default page size when an invalid page size is supplied', async () => {
     const res = await callFileCollectionFiles({
-      method: "GET",
-      query: { id: "collection-1", pageSize: "not-a-number" },
+      method: 'GET',
+      query: { id: 'collection-1', pageSize: 'not-a-number' },
     });
 
     expect(mockListFileCollectionFiles).toHaveBeenCalledWith({
-      id: "collection-1",
+      id: 'collection-1',
       pageCursor: undefined,
       pageSize: 10,
     });
     expect(res.statusCode()).toBe(200);
   });
 
-  it("validates requests before calling Vertex", async () => {
+  it('validates requests before calling Vertex', async () => {
     const missingId = await callFileCollectionFiles({
-      method: "GET",
+      method: 'GET',
       query: {},
     });
     const unsupportedMethod = await callFileCollectionFiles({
-      method: "DELETE",
-      query: { id: "collection-1" },
+      method: 'DELETE',
+      query: { id: 'collection-1' },
     });
 
     expect(missingId.statusCode()).toBe(400);
     expect(missingId.body()).toEqual({
-      message: "File Collection ID required.",
+      message: 'File Collection ID required.',
       status: 400,
     });
     expect(unsupportedMethod.statusCode()).toBe(405);
     expect(unsupportedMethod.body()).toEqual({
-      message: "Method not allowed.",
+      message: 'Method not allowed.',
       status: 405,
     });
     expect(mockGetClientFromSession).not.toHaveBeenCalled();
@@ -152,10 +149,7 @@ async function callFileCollectionFiles(req: {
   readonly query?: Record<string, string | string[]>;
 }): Promise<TestRes> {
   const res = createRes();
-  await handleFileCollectionFiles(
-    createReq(req),
-    res as unknown as NextApiResponse
-  );
+  await handleFileCollectionFiles(createReq(req), res as unknown as NextApiResponse);
   return res;
 }
 
@@ -195,13 +189,13 @@ function createRes(): TestRes {
 function fileData(id: string): unknown {
   return {
     attributes: {
-      created: "2026-06-12T15:30:00Z",
-      name: "File One",
-      status: "uploaded",
-      suppliedId: "file-supplied-1",
-      uploaded: "2026-06-12T15:31:00Z",
+      created: '2026-06-12T15:30:00Z',
+      name: 'File One',
+      status: 'uploaded',
+      suppliedId: 'file-supplied-1',
+      uploaded: '2026-06-12T15:31:00Z',
     },
     id,
-    type: "file",
+    type: 'file',
   };
 }

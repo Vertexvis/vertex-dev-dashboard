@@ -1,12 +1,9 @@
-import { server } from "./server";
+import { server } from './server';
 
 function createRelativeUrlFetch(nativeFetch: typeof fetch): typeof fetch {
   return ((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    if (typeof input === "string" || input instanceof URL) {
-      return nativeFetch(
-        new URL(input.toString(), "http://localhost").toString(),
-        init
-      );
+    if (typeof input === 'string' || input instanceof URL) {
+      return nativeFetch(new URL(input.toString(), 'http://localhost').toString(), init);
     }
 
     return nativeFetch(input, init);
@@ -21,7 +18,7 @@ export function installJsdomMockServer(): void {
 
   beforeAll(() => {
     global.fetch = jsdomFetch;
-    server.listen({ onUnhandledRequest: "error" });
+    server.listen({ onUnhandledRequest: 'error' });
   });
 
   afterEach(() => {

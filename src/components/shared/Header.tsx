@@ -1,10 +1,11 @@
-/* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from "@emotion/react";
-import { Box, Button } from "@mui/material";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import React from "react";
+/* @jsx jsx */ /** @jsxRuntime classic */ import { jsx } from '@emotion/react';
+import { Box, Button } from '@mui/material';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import React from 'react';
 
-import { AppLink } from "./AppLink";
+import { reportError } from '../../lib/report-error';
+import { AppLink } from './AppLink';
 
 interface Props {
   readonly actions?: React.ReactNode;
@@ -13,30 +14,36 @@ interface Props {
 export function Header({ actions }: Props): JSX.Element {
   const router = useRouter();
 
-  async function handleSignOut() {
-    await fetch("/api/logout");
-    router.push("/login");
+  async function handleSignOut(): Promise<void> {
+    await fetch('/api/logout');
+    await router.push('/login');
   }
 
   return (
     <Box
       sx={{
-        alignItems: "center",
-        display: "flex",
-        justifyContent: "space-between",
-        width: "100%",
-        height: "56px",
+        alignItems: 'center',
+        display: 'flex',
+        justifyContent: 'space-between',
+        width: '100%',
+        height: '56px',
       }}
     >
-      <Box sx={{ alignItems: "center", display: "flex" }}>
-        <AppLink href="/" paddingRight={"16px"}>
+      <Box sx={{ alignItems: 'center', display: 'flex' }}>
+        <AppLink href="/" paddingRight={'16px'}>
           <Image src="/vertex-logo.svg" alt="Vertex" width="29" height="28" />
         </AppLink>
         <p>Vertex Developer Dashboard</p>
       </Box>
-      <Box sx={{ alignItems: "center", display: "flex", gap: 2, ml: "auto" }}>
+      <Box sx={{ alignItems: 'center', display: 'flex', gap: 2, ml: 'auto' }}>
         {actions}
-        <Button onClick={handleSignOut}>Sign Out</Button>
+        <Button
+          onClick={() => {
+            handleSignOut().catch(reportError('Failed to sign out'));
+          }}
+        >
+          Sign Out
+        </Button>
       </Box>
     </Box>
   );

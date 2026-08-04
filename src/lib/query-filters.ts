@@ -1,15 +1,15 @@
-import { FilterExpression } from "@vertexvis/api-client-node";
+import { FilterExpression } from '@vertexvis/api-client-node';
 
 type FilterOperation = keyof FilterExpression;
 
 const FilterOperations: FilterOperation[] = [
-  "eq",
-  "neq",
-  "gt",
-  "gte",
-  "lt",
-  "lte",
-  "contains",
+  'eq',
+  'neq',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'contains',
 ];
 
 export function setFilterExpression(

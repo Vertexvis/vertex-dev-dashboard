@@ -10,27 +10,27 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-} from "@mui/material";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { isErrorRes } from "../../lib/api";
-import { toLocaleString } from "../../lib/dates";
+import { isErrorRes } from '../../lib/api';
+import { toLocaleString } from '../../lib/dates';
 import {
   File,
   FileStatusComplete,
   isCompleteFileStatus,
   normalizeFileStatus,
   toFilePage,
-} from "../../lib/files";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { ResourceLink } from "../shared/ResourceLink";
-import { RowActionsMenu } from "../shared/RowActionsMenu";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { TableToolbar } from "../shared/TableToolbar";
+} from '../../lib/files';
+import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { ResourceLink } from '../shared/ResourceLink';
+import { RowActionsMenu } from '../shared/RowActionsMenu';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { TableToolbar } from '../shared/TableToolbar';
 
 interface Props {
   readonly activeFileId?: string;
@@ -43,20 +43,20 @@ interface UseCollectionFilesProps extends SwrProps {
 }
 
 const headCells = [
-  { id: "name", label: "Name" },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "status", label: "Status" },
-  { id: "id", label: "ID" },
-  { id: "created", label: "Created" },
-  { id: "uploaded", label: "Uploaded" },
-  { id: "actions", label: "Actions" },
+  { id: 'name', label: 'Name' },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'status', label: 'Status' },
+  { id: 'id', label: 'ID' },
+  { id: 'created', label: 'Created' },
+  { id: 'uploaded', label: 'Uploaded' },
+  { id: 'actions', label: 'Actions' },
 ] as const;
 
 function useCollectionFiles({
   apiPath,
   cursor,
   pageSize,
-}: UseCollectionFilesProps) {
+}: UseCollectionFilesProps): SWRResponse {
   return useSWR(
     buildQuery(apiPath, {
       cursor,
@@ -70,22 +70,20 @@ function isFileAvailable(file: File): boolean {
 }
 
 function statusLabel(status?: string): string {
-  return status ?? "N/A";
+  return status ?? 'N/A';
 }
 
-function statusColor(
-  status?: string
-): "default" | "success" | "warning" | "error" {
+function statusColor(status?: string): 'default' | 'success' | 'warning' | 'error' {
   switch (normalizeFileStatus(status)) {
     case FileStatusComplete:
-      return "success";
-    case "pending":
-      return "warning";
-    case "error":
-    case "failed":
-      return "error";
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'error':
+    case 'failed':
+      return 'error';
     default:
-      return "default";
+      return 'default';
   }
 }
 
@@ -122,48 +120,46 @@ export default function FileCollectionFilesTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  async function handleDownload(id: string) {
+  async function handleDownload(id: string): Promise<void> {
     setDownloadError(undefined);
 
-    const res = await fetch(
-      `/api/files/${encodeURIComponent(id)}/download-url`,
-      {
-        method: "POST",
-      }
-    );
+    const res = await fetch(`/api/files/${encodeURIComponent(id)}/download-url`, {
+      method: 'POST',
+    });
 
     const body = await res.json();
     if (!res.ok || body.url == null) {
-      setDownloadError(
-        body.message ?? "Could not create a download URL for this file."
-      );
+      setDownloadError(body.message ?? 'Could not create a download URL for this file.');
       return;
     }
 
-    const opened = window.open(body.url as string, "_blank", "noopener");
+    const opened = window.open(body.url as string, '_blank', 'noopener');
     if (opened == null) {
       window.location.assign(body.url as string);
     }
   }
 
-  let tableRows: React.ReactNode;
-  if (loadError) {
-    tableRows = <DataLoadError colSpan={headCells.length} />;
-  } else if (!page) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={false}
-        numCellsPerRow={headCells.length}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = page.items.map((row) => {
+  function renderTableRows(): React.ReactNode {
+    if (loadError) {
+      return <DataLoadError colSpan={headCells.length} />;
+    }
+
+    if (!page) {
+      return (
+        <SkeletonBody
+          includeCheckbox={false}
+          numCellsPerRow={headCells.length}
+          numRows={pageSize - pageLength}
+          rowHeight={DefaultRowHeight}
+        />
+      );
+    }
+
+    return page.items.map((row) => {
       const isActive = activeFileId === row.id;
       const isAvailable = isFileAvailable(row);
 
@@ -195,7 +191,7 @@ export default function FileCollectionFilesTable({
               color={statusColor(row.status)}
               label={statusLabel(row.status)}
               size="small"
-              sx={{ fontWeight: 600, textTransform: "uppercase" }}
+              sx={{ fontWeight: 600, textTransform: 'uppercase' }}
               variant="outlined"
             />
           </TableCell>
@@ -211,7 +207,7 @@ export default function FileCollectionFilesTable({
               actions={[
                 {
                   disabled: !isAvailable,
-                  label: "Download file",
+                  label: 'Download file',
                   onClick: () => handleDownload(row.id),
                 },
               ]}
@@ -222,6 +218,8 @@ export default function FileCollectionFilesTable({
       );
     });
   }
+
+  const tableRows = renderTableRows();
 
   return (
     <>

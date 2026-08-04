@@ -1,6 +1,6 @@
-import { AppBar as MuiAppBar, Box, Toolbar } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import React from "react";
+import { AppBar as MuiAppBar, Box, Toolbar } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import React from 'react';
 
 export const HeaderHeight = 56;
 export const BottomDrawerHeight = 240;
@@ -29,34 +29,32 @@ interface DrawerProps {
 
 function shouldForwardProp(prop: PropertyKey): boolean {
   return (
-    prop !== "bottomDrawerHeight" &&
-    prop !== "leftDrawerWidth" &&
-    prop !== "rightDrawerWidth" &&
-    prop !== "toolbarHeight"
+    prop !== 'bottomDrawerHeight' &&
+    prop !== 'leftDrawerWidth' &&
+    prop !== 'rightDrawerWidth' &&
+    prop !== 'toolbarHeight'
   );
 }
 
-const AppBar = styled(MuiAppBar, { shouldForwardProp })<DrawerProps>(
-  ({ theme }) => {
-    return {
+const AppBar = styled(MuiAppBar, { shouldForwardProp })<DrawerProps>(({ theme }) => {
+  return {
+    width: `100%`,
+    zIndex: theme.zIndex.drawer + 1,
+    [theme.breakpoints.down('sm')]: {
+      margin: 0,
       width: `100%`,
-      zIndex: theme.zIndex.drawer + 1,
-      [theme.breakpoints.down("sm")]: {
-        margin: 0,
-        width: `100%`,
-      },
-    };
-  }
-);
+    },
+  };
+});
 
-const Main = styled("main", { shouldForwardProp })<{
+const Main = styled('main', { shouldForwardProp })<{
   bottomDrawerHeight: number;
 }>(({ bottomDrawerHeight }) => {
   return {
-    position: "relative",
+    position: 'relative',
     flexGrow: 1,
     height: `calc(100% - ${bottomDrawerHeight}px)`,
-    width: "100%",
+    width: '100%',
   };
 });
 
@@ -78,7 +76,7 @@ export function Layout({
   const rdw = rightDrawerOpen ? RightDrawerWidth : 0;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {header && (
         <AppBar
           color="default"
@@ -92,7 +90,7 @@ export function Layout({
       )}
       <Main
         sx={{
-          display: "flex",
+          display: 'flex',
           height: `calc(100% - ${HeaderHeight}px)`,
         }}
         bottomDrawerHeight={bdh}

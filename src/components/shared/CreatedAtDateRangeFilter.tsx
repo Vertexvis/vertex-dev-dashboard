@@ -1,7 +1,7 @@
-import { Box, TextField } from "@mui/material";
-import React from "react";
+import { Box, TextField } from '@mui/material';
+import React from 'react';
 
-import { toLocalDayBoundaryIso } from "../../lib/dates";
+import { toLocalDayBoundaryIso } from '../../lib/dates';
 
 export interface CreatedAtDateRange {
   readonly createdAtEnd?: string;
@@ -17,41 +17,35 @@ function isAfter(left: string, right: string): boolean {
 }
 
 export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
-  const [createdAtStartDate, setCreatedAtStartDate] = React.useState("");
-  const [createdAtEndDate, setCreatedAtEndDate] = React.useState("");
+  const [createdAtStartDate, setCreatedAtStartDate] = React.useState('');
+  const [createdAtEndDate, setCreatedAtEndDate] = React.useState('');
 
-  function handleCreatedAtStartChange(value: string) {
+  function handleCreatedAtStartChange(value: string): void {
     const nextEndDate =
-      value !== "" &&
-      createdAtEndDate !== "" &&
-      isAfter(value, createdAtEndDate)
-        ? ""
+      value !== '' && createdAtEndDate !== '' && isAfter(value, createdAtEndDate)
+        ? ''
         : createdAtEndDate;
 
     setCreatedAtStartDate(value);
     setCreatedAtEndDate(nextEndDate);
     onChange({
-      createdAtEnd: nextEndDate
-        ? toLocalDayBoundaryIso(nextEndDate, "end")
-        : undefined,
-      createdAtStart: value ? toLocalDayBoundaryIso(value, "start") : undefined,
+      createdAtEnd: nextEndDate ? toLocalDayBoundaryIso(nextEndDate, 'end') : undefined,
+      createdAtStart: value ? toLocalDayBoundaryIso(value, 'start') : undefined,
     });
   }
 
-  function handleCreatedAtEndChange(value: string) {
+  function handleCreatedAtEndChange(value: string): void {
     const nextStartDate =
-      value !== "" &&
-      createdAtStartDate !== "" &&
-      isAfter(createdAtStartDate, value)
-        ? ""
+      value !== '' && createdAtStartDate !== '' && isAfter(createdAtStartDate, value)
+        ? ''
         : createdAtStartDate;
 
     setCreatedAtStartDate(nextStartDate);
     setCreatedAtEndDate(value);
     onChange({
-      createdAtEnd: value ? toLocalDayBoundaryIso(value, "end") : undefined,
+      createdAtEnd: value ? toLocalDayBoundaryIso(value, 'end') : undefined,
       createdAtStart: nextStartDate
-        ? toLocalDayBoundaryIso(nextStartDate, "start")
+        ? toLocalDayBoundaryIso(nextStartDate, 'start')
         : undefined,
     });
   }
@@ -61,12 +55,12 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
       sx={{
         px: { sm: 2 },
         pb: 2,
-        display: "flex",
+        display: 'flex',
         gap: 2,
-        flexWrap: "wrap",
+        flexWrap: 'wrap',
         // Safari displays today's date as a placeholder for empty native date
         // inputs. Hide that placeholder without hiding dates the user selects.
-        "& .emptyDateInput::-webkit-datetime-edit-day-field, & .emptyDateInput::-webkit-datetime-edit-month-field, & .emptyDateInput::-webkit-datetime-edit-year-field, & .emptyDateInput::-webkit-datetime-edit-text":
+        '& .emptyDateInput::-webkit-datetime-edit-day-field, & .emptyDateInput::-webkit-datetime-edit-month-field, & .emptyDateInput::-webkit-datetime-edit-year-field, & .emptyDateInput::-webkit-datetime-edit-text':
           {
             opacity: 0,
           },
@@ -81,12 +75,12 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         type="date"
         InputLabelProps={{ shrink: true }}
         inputProps={{
-          className: createdAtStartDate === "" ? "emptyDateInput" : undefined,
+          className: createdAtStartDate === '' ? 'emptyDateInput' : undefined,
           max: createdAtEndDate || undefined,
         }}
         value={createdAtStartDate}
         onChange={(e) => handleCreatedAtStartChange(e.target.value)}
-        sx={{ mt: 0, width: "16rem" }}
+        sx={{ mt: 0, width: '16rem' }}
       />
       <TextField
         variant="standard"
@@ -97,12 +91,12 @@ export function CreatedAtDateRangeFilter({ onChange }: Props): JSX.Element {
         type="date"
         InputLabelProps={{ shrink: true }}
         inputProps={{
-          className: createdAtEndDate === "" ? "emptyDateInput" : undefined,
+          className: createdAtEndDate === '' ? 'emptyDateInput' : undefined,
           min: createdAtStartDate || undefined,
         }}
         value={createdAtEndDate}
         onChange={(e) => handleCreatedAtEndChange(e.target.value)}
-        sx={{ mt: 0, width: "16rem" }}
+        sx={{ mt: 0, width: '16rem' }}
       />
     </Box>
   );

@@ -11,35 +11,33 @@ import {
   TablePagination,
   TableRow,
   TextField,
-} from "@mui/material";
-import debounce from "lodash.debounce";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import debounce from 'lodash.debounce';
+import React from 'react';
+import useSWR, { SWRResponse } from 'swr';
 
-import { toLocaleString } from "../../lib/dates";
-import {
-  FileCollection,
-  toFileCollectionPage,
-} from "../../lib/file-collections";
-import { buildQuery, SwrProps, useCursorPagingState } from "../../lib/paging";
-import { SortState, toggleSort, toSortParam } from "../../lib/sorting";
+import { toLocaleString } from '../../lib/dates';
+import { FileCollection, toFileCollectionPage } from '../../lib/file-collections';
+import { buildQuery, SwrProps, useCursorPagingState } from '../../lib/paging';
+import { reportError } from '../../lib/report-error';
+import { SortState, toggleSort, toSortParam } from '../../lib/sorting';
 import {
   CreatedAtDateRange,
   CreatedAtDateRangeFilter,
-} from "../shared/CreatedAtDateRangeFilter";
-import { formatCursorPaginationLabel } from "../shared/cursor-pagination";
-import { DataLoadError } from "../shared/DataLoadError";
-import { DefaultPageSize, DefaultRowHeight } from "../shared/Layout";
-import { ResourceLink } from "../shared/ResourceLink";
-import { SkeletonBody } from "../shared/SkeletonBody";
-import { HeadCell, TableHead } from "../shared/TableHead";
-import { TableToolbar } from "../shared/TableToolbar";
+} from '../shared/CreatedAtDateRangeFilter';
+import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
+import { DataLoadError } from '../shared/DataLoadError';
+import { DefaultPageSize, DefaultRowHeight } from '../shared/Layout';
+import { ResourceLink } from '../shared/ResourceLink';
+import { SkeletonBody } from '../shared/SkeletonBody';
+import { HeadCell, TableHead } from '../shared/TableHead';
+import { TableToolbar } from '../shared/TableToolbar';
 
 export const headCells: readonly HeadCell[] = [
-  { id: "name", disablePadding: true, label: "Name", sortable: true },
-  { id: "id", label: "ID" },
-  { id: "supplied-id", label: "Supplied ID" },
-  { id: "created", label: "Created At", sortable: true },
+  { id: 'name', disablePadding: true, label: 'Name', sortable: true },
+  { id: 'id', label: 'ID' },
+  { id: 'supplied-id', label: 'Supplied ID' },
+  { id: 'created', label: 'Created At', sortable: true },
 ];
 
 interface UseFileCollectionsProps extends SwrProps {
@@ -48,7 +46,7 @@ interface UseFileCollectionsProps extends SwrProps {
   readonly sort?: SortState<FileCollectionSortField>;
 }
 
-type FileCollectionSortField = "created" | "name";
+type FileCollectionSortField = 'created' | 'name';
 
 function useFileCollections({
   createdAtEnd,
@@ -58,9 +56,9 @@ function useFileCollections({
   pageSize,
   sort,
   suppliedId,
-}: UseFileCollectionsProps) {
+}: UseFileCollectionsProps): SWRResponse {
   return useSWR(
-    buildQuery("/api/file-collections", {
+    buildQuery('/api/file-collections', {
       createdAtEnd,
       createdAtStart,
       cursor,
@@ -82,22 +80,15 @@ export default function FileCollectionTable({
   onFileCollectionSelected,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const {
-    currentPage,
-    cursor,
-    cursors,
-    handlePageChange,
-    resetPaging,
-    setCursors,
-  } = useCursorPagingState();
+  const { currentPage, cursor, cursors, handlePageChange, resetPaging, setCursors } =
+    useCursorPagingState();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [name, setName] = React.useState<string | undefined>();
   const [sort, setSort] = React.useState<
     SortState<FileCollectionSortField> | undefined
   >();
   const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
-  const [createdAtFilters, setCreatedAtFilters] =
-    React.useState<CreatedAtDateRange>({});
+  const [createdAtFilters, setCreatedAtFilters] = React.useState<CreatedAtDateRange>({});
   const [deleteError, setDeleteError] = React.useState<string>();
 
   const { data, error, mutate } = useFileCollections({
@@ -118,7 +109,7 @@ export default function FileCollectionTable({
     () =>
       debounce((value: string) => {
         resetPaging();
-        setName(value === "" ? undefined : value);
+        setName(value === '' ? undefined : value);
       }, 300),
     [resetPaging]
   );
@@ -127,7 +118,7 @@ export default function FileCollectionTable({
     () =>
       debounce((value: string) => {
         resetPaging();
-        setSuppliedId(value === "" ? undefined : value);
+        setSuppliedId(value === '' ? undefined : value);
       }, 300),
     [resetPaging]
   );
@@ -138,21 +129,21 @@ export default function FileCollectionTable({
     setCursors(page.cursors ?? undefined);
   }, [page, setCursors]);
 
-  function handleCreatedAtChange(filters: CreatedAtDateRange) {
+  function handleCreatedAtChange(filters: CreatedAtDateRange): void {
     resetPaging();
     setCreatedAtFilters(filters);
   }
 
-  function handleSortChange(field: string) {
-    if (field !== "created" && field !== "name") return;
+  function handleSortChange(field: string): void {
+    if (field !== 'created' && field !== 'name') return;
 
     setSort((current) =>
-      current == null ? { field, order: "asc" } : toggleSort(current, field)
+      current == null ? { field, order: 'asc' } : toggleSort(current, field)
     );
     resetPaging();
   }
 
-  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleSelectAll(e: React.ChangeEvent<HTMLInputElement>): void {
     if (page == null) return;
 
     const upd = new Set<string>();
@@ -160,7 +151,7 @@ export default function FileCollectionTable({
     setSelected(upd);
   }
 
-  function handleCheck(id: string) {
+  function handleCheck(id: string): void {
     const upd = new Set(selected);
     if (selected.has(id)) upd.delete(id);
     else upd.add(id);
@@ -171,46 +162,47 @@ export default function FileCollectionTable({
   function handleChangePage(
     _: React.MouseEvent<HTMLButtonElement> | null,
     num: number
-  ) {
+  ): void {
     handlePageChange(num);
   }
 
-  async function handleDelete() {
+  async function handleDelete(): Promise<void> {
     setDeleteError(undefined);
     const ids = [...selected];
     setSelected(new Set());
 
-    const res = await fetch("/api/file-collections", {
+    const res = await fetch('/api/file-collections', {
       body: JSON.stringify({ ids }),
-      method: "DELETE",
+      method: 'DELETE',
     });
 
     if (!res.ok) {
       const body = await res.json();
-      setDeleteError(
-        body.message ?? "Could not delete the selected file collections."
-      );
+      setDeleteError(body.message ?? 'Could not delete the selected file collections.');
       setSelected(new Set(ids));
       return;
     }
 
-    mutate();
+    mutate().catch(reportError('Failed to refresh file collections'));
   }
 
-  let tableRows: React.ReactNode;
-  if (error) {
-    tableRows = <DataLoadError colSpan={headCells.length + 1} />;
-  } else if (!page) {
-    tableRows = (
-      <SkeletonBody
-        includeCheckbox={true}
-        numCellsPerRow={headCells.length}
-        numRows={pageSize - pageLength}
-        rowHeight={DefaultRowHeight}
-      />
-    );
-  } else {
-    tableRows = page.items.map((row) => {
+  function renderTableRows(): React.ReactNode {
+    if (error) {
+      return <DataLoadError colSpan={headCells.length + 1} />;
+    }
+
+    if (!page) {
+      return (
+        <SkeletonBody
+          includeCheckbox={true}
+          numCellsPerRow={headCells.length}
+          numRows={pageSize - pageLength}
+          rowHeight={DefaultRowHeight}
+        />
+      );
+    }
+
+    return page.items.map((row) => {
       const isSel = selected.has(row.id);
       const isActive = activeFileCollectionId === row.id;
 
@@ -225,7 +217,7 @@ export default function FileCollectionTable({
         >
           <TableCell
             padding="checkbox"
-            style={{ cursor: "default" }}
+            style={{ cursor: 'default' }}
             onClick={(e) => {
               e.stopPropagation();
               handleCheck(row.id);
@@ -235,7 +227,7 @@ export default function FileCollectionTable({
               color="primary"
               checked={isSel}
               inputProps={{
-                "aria-label": `Select ${row.name ?? row.id}`,
+                'aria-label': `Select ${row.name ?? row.id}`,
               }}
             />
           </TableCell>
@@ -255,25 +247,31 @@ export default function FileCollectionTable({
     });
   }
 
+  const tableRows = renderTableRows();
+
   return (
     <>
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={handleDelete}
+          onDelete={() => {
+            handleDelete().catch(() => {
+              setDeleteError('Could not delete the selected file collections.');
+            });
+          }}
           title="File Collections"
         />
         <Box
           sx={{
             px: { sm: 2 },
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             gap: 2,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flex: 1 }}>
             <TextField
               variant="standard"
               size="small"
@@ -282,9 +280,9 @@ export default function FileCollectionTable({
               label="Name"
               type="text"
               onChange={(e) => {
-                debouncedSetNameFilter(e.target.value?.trim() ?? "");
+                debouncedSetNameFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
             <TextField
               variant="standard"
@@ -294,9 +292,9 @@ export default function FileCollectionTable({
               label="Supplied ID"
               type="text"
               onChange={(e) => {
-                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? "");
+                debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? '');
               }}
-              sx={{ mt: 0, width: "16rem" }}
+              sx={{ mt: 0, width: '16rem' }}
             />
           </Box>
         </Box>

@@ -1,8 +1,8 @@
-import { Vector3 } from "@vertexvis/api-client-node";
-import { vertexvis } from "@vertexvis/frame-streaming-protos";
-import { Components } from "@vertexvis/viewer";
+import { Vector3 } from '@vertexvis/api-client-node';
+import { vertexvis } from '@vertexvis/frame-streaming-protos';
+import { Components } from '@vertexvis/viewer';
 
-import { AnimationDurationMs } from "../components/viewer/Viewer";
+import { AnimationDurationMs } from '../components/viewer/Viewer';
 
 interface Req {
   readonly viewer: Components.VertexViewer | null;
@@ -28,9 +28,7 @@ export async function copySceneViewCamera({ viewer }: Req): Promise<void> {
 
 export async function getCamera({
   viewer,
-}: Req): Promise<
-  { lookAt: Vector3; position: Vector3; up: Vector3 } | undefined
-> {
+}: Req): Promise<{ lookAt: Vector3; position: Vector3; up: Vector3 } | undefined> {
   if (viewer == null) return;
 
   const scene = await viewer.scene();
@@ -51,10 +49,7 @@ export async function fitAll({ viewer }: Req): Promise<void> {
     .render({ animation: { milliseconds: AnimationDurationMs } });
 }
 
-export async function selectByHit({
-  hit,
-  viewer,
-}: SelectByHitReq): Promise<void> {
+export async function selectByHit({ hit, viewer }: SelectByHitReq): Promise<void> {
   if (viewer == null) return;
 
   const scene = await viewer.scene();

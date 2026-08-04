@@ -5,13 +5,14 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-} from "@mui/material";
-import React from "react";
+} from '@mui/material';
+import React from 'react';
 
+import { reportError } from '../../lib/report-error';
 import {
   CreateViewStateReq,
   CreateViewStateRes,
-} from "../../pages/api/scene-view-states";
+} from '../../pages/api/scene-view-states';
 
 interface CreateViewStateDialogProps {
   readonly open: boolean;
@@ -29,7 +30,7 @@ export default function CreatePartDialog({
   const [name, setName] = React.useState<string | undefined>();
   const [submitDisabled, setSubmitDisabled] = React.useState(false);
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (viewer.current) {
       setSubmitDisabled(true);
 
@@ -40,8 +41,8 @@ export default function CreatePartDialog({
       };
 
       const res: CreateViewStateRes = await (
-        await fetch("/api/scene-view-states", {
-          method: "POST",
+        await fetch('/api/scene-view-states', {
+          method: 'POST',
           body: JSON.stringify(attrs),
         })
       ).json();
@@ -69,7 +70,9 @@ export default function CreatePartDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           disabled={submitDisabled}
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit().catch(reportError('Failed to create the view state'));
+          }}
           color="primary"
           variant="contained"
         >

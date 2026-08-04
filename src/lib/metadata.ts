@@ -1,5 +1,5 @@
-import { MetadataStringType, SceneItemData } from "@vertexvis/api-client-node";
-import { vertexvis } from "@vertexvis/frame-streaming-protos";
+import { MetadataStringType, SceneItemData } from '@vertexvis/api-client-node';
+import { vertexvis } from '@vertexvis/frame-streaming-protos';
 
 export interface Metadata {
   readonly partName?: string;
@@ -10,11 +10,11 @@ interface Properties {
   [key: string]: string | undefined;
 }
 
-const ItemIdKey = "VERTEX_SCENE_ITEM_ID";
-const ItemSuppliedIdKey = "VERTEX_SCENE_ITEM_SUPPLIED_ID";
-const PartIdKey = "VERTEX_PART_ID";
-const PartRevIdKey = "VERTEX_PART_REVISION_ID";
-const PartRevSuppliedId = "VERTEX_PART_REVISION_SUPPLIED_ID";
+const ItemIdKey = 'VERTEX_SCENE_ITEM_ID';
+const ItemSuppliedIdKey = 'VERTEX_SCENE_ITEM_SUPPLIED_ID';
+const PartIdKey = 'VERTEX_PART_ID';
+const PartRevIdKey = 'VERTEX_PART_REVISION_ID';
+const PartRevSuppliedId = 'VERTEX_PART_REVISION_SUPPLIED_ID';
 
 export function toMetadata({
   hit,
@@ -63,14 +63,14 @@ export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
     const itemMD = Object.entries(md).reduce((n, current) => {
       return {
         ...n,
-        [current[0]]: (current[1] as MetadataStringType).value || "",
+        [current[0]]: (current[1] as MetadataStringType).value || '',
       };
     }, ps);
 
-    return { partName: "", properties: alphabetize(itemMD) };
+    return { partName: '', properties: alphabetize(itemMD) };
   }
 
-  return { partName: "", properties: alphabetize(ps) };
+  return { partName: '', properties: alphabetize(ps) };
 }
 
 function alphabetize<T extends Record<string, unknown>>(obj: T): T {

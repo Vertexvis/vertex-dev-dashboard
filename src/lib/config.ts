@@ -1,6 +1,6 @@
-import { Environment } from "@vertexvis/viewer";
+import { Environment } from '@vertexvis/viewer';
 
-import { EnvironmentWithCustom } from "./with-session";
+import { EnvironmentWithCustom } from './with-session';
 
 export interface AccountCredentials {
   readonly clientId: string;
@@ -15,7 +15,7 @@ export interface StreamCredentials {
 }
 
 export function head<T>(items?: T | T[]): T | undefined {
-  return Array.isArray(items) ? items[0] : items ?? undefined;
+  return Array.isArray(items) ? items[0] : (items ?? undefined);
 }
 
 export function isValidHttpUrl(givenUrl?: string): boolean {
@@ -27,18 +27,18 @@ export function isValidHttpUrl(givenUrl?: string): boolean {
     const url = new URL(givenUrl);
 
     return (
-      url.protocol === "http:" ||
-      url.protocol === "https:" ||
-      url.protocol === "ws:" ||
-      url.protocol === "wss:"
+      url.protocol === 'http:' ||
+      url.protocol === 'https:' ||
+      url.protocol === 'ws:' ||
+      url.protocol === 'wss:'
     );
-  } catch (_) {
+  } catch {
     return false;
   }
 }
 
 export function isValidHttpUrlNullable(givenUrl?: string): boolean {
-  if (givenUrl == null || givenUrl.trim() === "") {
+  if (givenUrl == null || givenUrl.trim() === '') {
     return true;
   }
   return isValidHttpUrl(givenUrl);

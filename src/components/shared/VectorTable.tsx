@@ -1,20 +1,10 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import { Vector3 } from "@vertexvis/geometry";
-import React from "react";
+import { Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { Vector3 } from '@vertexvis/geometry';
+import React from 'react';
 
-export function VectorTable({
-  vector,
-}: {
-  vector: Vector3.Vector3;
-}): JSX.Element {
+export function VectorTable({ vector }: { vector: Vector3.Vector3 }): JSX.Element {
   return (
-    <Table size="small" sx={{ "&:last-child td": { border: 0 } }}>
+    <Table size="small" sx={{ '&:last-child td': { border: 0 } }}>
       <TableBody>
         <TableRow>
           <TableCell>

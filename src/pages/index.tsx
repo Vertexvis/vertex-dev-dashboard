@@ -1,12 +1,12 @@
-import dynamic from "next/dynamic";
-import React, { useCallback } from "react";
+import dynamic from 'next/dynamic';
+import React, { useCallback } from 'react';
 
-import { SceneDrawer } from "../components/scene/SceneDrawer";
-import { Layout } from "../components/shared/Layout";
-import { Scene } from "../lib/scenes";
-import { defaultServerSideProps } from "../lib/with-session";
+import { SceneDrawer } from '../components/scene/SceneDrawer';
+import { Layout } from '../components/shared/Layout';
+import { Scene } from '../lib/scenes';
+import { defaultServerSideProps } from '../lib/with-session';
 
-const SceneTable = dynamic(() => import("../components/scene/SceneTable"), {
+const SceneTable = dynamic(() => import('../components/scene/SceneTable'), {
   ssr: false,
 });
 
@@ -16,12 +16,12 @@ export default function Home(): JSX.Element {
   const drawerOpen = Boolean(scene);
   const [invalidationCount, setInvalidationCount] = React.useState(0);
 
-  function handleClick(s: Scene) {
+  function handleClick(s: Scene): void {
     setScene(s);
     setEditing(false);
   }
 
-  function handleEditClick(s: Scene) {
+  function handleEditClick(s: Scene): void {
     setScene(s);
     setEditing(true);
   }

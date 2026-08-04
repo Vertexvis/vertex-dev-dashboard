@@ -1,8 +1,8 @@
-import { OAuth2Token } from "@vertexvis/api-client-node";
-import { NextApiResponse } from "next";
+import { OAuth2Token } from '@vertexvis/api-client-node';
+import { NextApiResponse } from 'next';
 
-import { ErrorRes, MethodNotAllowed, Res } from "../../lib/api";
-import { getToken } from "../../lib/vertex-api";
+import { ErrorRes, MethodNotAllowed, Res } from '../../lib/api';
+import { getToken } from '../../lib/vertex-api';
 import withSession, {
   EnvironmentWithCustom,
   NetworkConfig,
@@ -12,7 +12,7 @@ import withSession, {
   setCreds,
   setEnv,
   setToken,
-} from "../../lib/with-session";
+} from '../../lib/with-session';
 
 export interface LoginReq {
   readonly id: string;
@@ -25,14 +25,14 @@ export async function handleLogin(
   req: NextIronRequest,
   res: NextApiResponse<Res | ErrorRes>
 ): Promise<void> {
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     const b: LoginReq = JSON.parse(req.body);
 
     let token: OAuth2Token | undefined;
     try {
       token = await getToken(b.id, b.secret, b.env, b.networkConfig);
     } catch {
-      return res.status(401).json({ status: 401, message: "Unauthorized" });
+      return res.status(401).json({ status: 401, message: 'Unauthorized' });
     }
 
     const creds: OAuthCredentials = { id: b.id, secret: b.secret };
