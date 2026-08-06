@@ -6,13 +6,29 @@ import React from 'react';
 import { Metadata } from '../../lib/metadata';
 import { ModelViewsState } from '../../lib/model-views';
 import { RightDrawerWidth } from './Layout';
-import { MetadataProperties } from './MetadataProperties';
+import { MetadataCompare } from './MetadataCompare';
+import { MetadataStatus } from './MetadataStates';
 import { ModelViews } from './ModelViews';
 import { SceneViewStateList } from './SceneViewStateList';
 
 interface Props {
   readonly active?: string;
+  // Policy-aware metadata (Web SDK `listSceneItemMetadata`) — what the policy
+  // exposes. This is the RESTRICTED column of the comparison.
   readonly metadata?: Metadata;
+  // Full metadata from the server-side REST path that ignores the policy — the
+  // UNRESTRICTED column of the comparison.
+  readonly unrestrictedMetadata?: Metadata;
+  // True when the unrestricted-baseline fetch failed, so the comparison can warn
+  // rather than imply the policy removed nothing.
+  readonly unrestrictedError?: boolean;
+  // Raw render-frame metadata delivered inline with the raycaster hit
+  // (`toMetadata({ hit })`) — the STREAM column of the comparison. Only present
+  // after clicking an item in the viewer.
+  readonly streamMetadata?: Metadata;
+  readonly metadataStatus?: MetadataStatus;
+  readonly metadataError?: string;
+  readonly metadataDiagnostic?: string;
   readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
@@ -44,6 +60,12 @@ function readStoredWidth(): number {
 export function RightDrawer({
   active,
   metadata,
+  unrestrictedMetadata,
+  unrestrictedError,
+  streamMetadata,
+  metadataStatus,
+  metadataError,
+  metadataDiagnostic,
   modelViews,
   sceneViewStates,
   onViewStateSelected,
@@ -152,7 +174,17 @@ export function RightDrawer({
   const getDisplayedContent = (): JSX.Element => {
     switch (active) {
       case 'properties':
-        return <MetadataProperties metadata={metadata} />;
+        return (
+          <MetadataCompare
+            unrestricted={unrestrictedMetadata}
+            unrestrictedError={unrestrictedError}
+            restricted={metadata}
+            stream={streamMetadata}
+            status={metadataStatus}
+            error={metadataError}
+            diagnostic={metadataDiagnostic}
+          />
+        );
       case 'scene-view-states':
         return (
           <SceneViewStateList
