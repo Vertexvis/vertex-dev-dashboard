@@ -11,6 +11,14 @@ const coverageConfig = {
   coverageReporters: ['text', 'lcov'],
 };
 
+// Ignore common in-tree worktree locations that would otherwise pollute Jest test discovery.
+const nestedCheckoutIgnorePatterns = [
+  '/node_modules/',
+  '<rootDir>/.worktrees/',
+  '<rootDir>/.claude/',
+  '<rootDir>/.codex[^/]*/',
+];
+
 const projectConfig = {
   preset: 'ts-jest',
   transform: {
@@ -19,6 +27,7 @@ const projectConfig = {
   transformIgnorePatterns: [
     '/node_modules/(?!(@mswjs|@open-draft|msw|rettime|until-async|headers-polyfill|is-node-process|outvariant|strict-event-emitter|path-to-regexp)/)',
   ],
+  testPathIgnorePatterns: nestedCheckoutIgnorePatterns,
 };
 
 module.exports = {
@@ -37,7 +46,10 @@ module.exports = {
         '**/?(*.)+(test).ts',
         '!**/src/__tests__/pages/api/**/*.test.ts',
       ],
-      testPathIgnorePatterns: ['/src/__tests__/pages/api/'],
+      testPathIgnorePatterns: [
+        ...nestedCheckoutIgnorePatterns,
+        '/src/__tests__/pages/api/',
+      ],
     },
     {
       ...projectConfig,
