@@ -12,9 +12,12 @@ export interface CreateStreamKeyRes extends Res {
   readonly key: string;
 }
 
-type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, 'id'>;
+type CreateStreamKeyReq = Pick<StreamKeysApiCreateSceneStreamKeyRequest, 'id'> & {
+  readonly propertyKeyPolicyId?: string;
+};
 
-export default withSession(methodRouter({ POST: create }));
+export const handleStreamKeys = methodRouter({ POST: create });
+export default withSession(handleStreamKeys);
 
 async function create(req: NextIronRequest): Promise<ErrorRes | CreateStreamKeyRes> {
   if (!req.body) return BodyRequired;
@@ -27,7 +30,15 @@ async function create(req: NextIronRequest): Promise<ErrorRes | CreateStreamKeyR
     c.streamKeys.createSceneStreamKey({
       id: b.id,
       createStreamKeyRequest: {
-        data: { type: 'stream-key', attributes: { expiry: 86400 } },
+        data: {
+          type: 'stream-key',
+          attributes: {
+            expiry: 86400,
+            ...(b.propertyKeyPolicyId != null
+              ? { propertyKeyPolicyId: b.propertyKeyPolicyId }
+              : {}),
+          },
+        },
       },
     })
   );
