@@ -1,3 +1,4 @@
+import { Alert, Snackbar } from '@mui/material';
 import { SceneItemData, SceneViewStateData } from '@vertexvis/api-client-node';
 import { vertexvis } from '@vertexvis/frame-streaming-protos';
 import { Environment, TapEventDetails } from '@vertexvis/viewer';
@@ -11,6 +12,7 @@ import { Header } from '../../components/shared/Header';
 import { Layout } from '../../components/viewer/Layout';
 import { LeftDrawer } from '../../components/viewer/LeftDrawer';
 import { LeftSidebar } from '../../components/viewer/LeftSidebar';
+import { PolicySelect } from '../../components/viewer/PolicySelect';
 import { RightDrawer } from '../../components/viewer/RightDrawer';
 import { RightSidebar } from '../../components/viewer/RightSidebar';
 import { Viewer } from '../../components/viewer/Viewer';
@@ -24,6 +26,7 @@ import { useViewer } from '../../lib/viewer';
 import {
   CommonProps,
   CookieAttributes,
+  EnvironmentWithCustom,
   NextIronRequest,
   serverSidePropsHandler as commonServerSidePropsHandler,
 } from '../../lib/with-session';
@@ -63,6 +66,11 @@ export default function SceneViewer({
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
   const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
+  const [policyId, setPolicyId] = React.useState<string | undefined>();
+  const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
+  // Non-fatal error for a failed in-viewer policy switch. Unlike streamKeyError
+  // (which replaces the whole page), this keeps the working viewer mounted.
+  const [policySwitchError, setPolicySwitchError] = React.useState<string>();
   const { data, mutate } = useSceneViewStates({ viewId });
   const selectedItem = useSceneItem({ itemId: selectedItemId });
   const modelViews = useModelViews({
@@ -79,6 +87,9 @@ export default function SceneViewer({
     const sk = head(router.query.streamKey);
     const ve = (head(router.query.vertexEnv) as Environment) ?? vertexEnv;
     const sceneId = head(router.query.sceneId);
+    const pId = head(router.query.policyId);
+
+    setPolicyId(pId);
 
     if (cId && sk && ve) {
       setCredentials({ clientId: cId, streamKey: sk, vertexEnv: ve });
@@ -90,10 +101,16 @@ export default function SceneViewer({
 
     requestedStreamKeyForScene.current = sceneId;
     setStreamKeyError(undefined);
-    void createStreamKey(sceneId)
+    void createStreamKey(sceneId, pId)
       .then((streamKey) =>
         router.replace(
-          encodeCreds({ clientId: cId, sceneId, streamKey, vertexEnv: ve }),
+          encodeCreds({
+            clientId: cId,
+            sceneId,
+            streamKey,
+            vertexEnv: ve,
+            policyId: pId,
+          }),
           undefined,
           { shallow: true }
         )
@@ -133,6 +150,38 @@ export default function SceneViewer({
     if (scene) setViewId(scene.sceneViewId);
   }
 
+  async function handlePolicyChange(newPolicyId?: string): Promise<void> {
+    if (newPolicyId === policyId) return;
+
+    const sceneId = head(router.query.sceneId);
+    const cId = credentials?.clientId ?? clientId;
+    const ve = credentials?.vertexEnv ?? vertexEnv;
+    if (!sceneId || !cId || !ve) return;
+
+    setSwitchingPolicy(true);
+    setPolicySwitchError(undefined);
+    try {
+      const { credentials: nextCredentials, url } = await createPolicySwitch({
+        sceneId,
+        clientId: cId,
+        vertexEnv: ve,
+        policyId: newPolicyId,
+      });
+      requestedStreamKeyForScene.current = sceneId;
+      setPolicyId(newPolicyId);
+      setCredentials(nextCredentials);
+      await router.replace(url, undefined, { shallow: true });
+    } catch {
+      // Keep the existing viewer usable: surface a non-fatal error instead of
+      // the fatal streamKeyError that would replace the page with an alert.
+      setPolicySwitchError(
+        'Unable to switch the property key policy. The previous policy is still active.'
+      );
+    } finally {
+      setSwitchingPolicy(false);
+    }
+  }
+
   React.useEffect(() => {
     if (selectedItem.data) {
       setMetadata(toMetadataFromItem(selectedItem.data));
@@ -146,70 +195,107 @@ export default function SceneViewer({
   }
 
   return router.isReady && credentials ? (
-    <Layout
-      header={<Header />}
-      leftSidebar={
-        <LeftSidebar active={openedLeftPanel} onSelectSidebar={setOpenedLeftPanel} />
-      }
-      leftDrawer={
-        <LeftDrawer
-          active={openedLeftPanel}
-          configEnv={credentials.vertexEnv}
-          networkConfig={networkConfig}
-          viewerId={ViewerId}
-          selectedItemId={selectedItemId}
-          viewerState={viewerState}
-          onItemSelected={handleTreeItemSelected}
-        />
-      }
-      leftDrawerOpen={openedLeftPanel != null}
-      main={
-        viewerState.isReady && (
-          <Viewer
-            credentials={credentials}
-            onSelect={handleSelect}
-            viewerState={viewerState}
-            viewerId={ViewerId}
-            onViewStateCreated={() => {
-              mutate().catch(reportError('Failed to refresh scene view states'));
-            }}
-            networkConfig={networkConfig}
-            featureLines={featureLines}
-            rotateAroundTapPoint={true}
-            onSceneReady={() => {
-              handleSceneReady().catch(reportError('Failed to prepare the scene view'));
-            }}
-            onViewReset={() => {
-              setSelectedItemId(undefined);
-              modelViews.actions
-                .unloadModelView()
-                .catch(reportError('Failed to unload the model view'));
-            }}
+    <>
+      <Layout
+        header={
+          <Header
+            actions={
+              <PolicySelect
+                policyId={policyId}
+                onChange={(newPolicyId) => {
+                  handlePolicyChange(newPolicyId).catch(
+                    reportError('Failed to switch the property key policy')
+                  );
+                }}
+                disabled={switchingPolicy}
+              />
+            }
           />
-        )
-      }
-      rightSidebar={
-        <RightSidebar active={openedRightPanel} onSelectSidebar={setOpenedRightPanel} />
-      }
-      rightDrawer={
-        <RightDrawer
-          active={openedRightPanel}
-          metadata={metadata}
-          modelViews={modelViews}
-          sceneViewStates={data?.data}
-          onViewStateSelected={handleViewStateSelected}
-        />
-      }
-      rightDrawerOpen={openedRightPanel != null}
-    />
+        }
+        leftSidebar={
+          <LeftSidebar active={openedLeftPanel} onSelectSidebar={setOpenedLeftPanel} />
+        }
+        leftDrawer={
+          <LeftDrawer
+            active={openedLeftPanel}
+            configEnv={credentials.vertexEnv}
+            networkConfig={networkConfig}
+            viewerId={ViewerId}
+            selectedItemId={selectedItemId}
+            viewerState={viewerState}
+            onItemSelected={handleTreeItemSelected}
+          />
+        }
+        leftDrawerOpen={openedLeftPanel != null}
+        main={
+          viewerState.isReady && (
+            <Viewer
+              key={credentials.streamKey}
+              credentials={credentials}
+              onSelect={handleSelect}
+              viewerState={viewerState}
+              viewerId={ViewerId}
+              onViewStateCreated={() => {
+                mutate().catch(reportError('Failed to refresh scene view states'));
+              }}
+              networkConfig={networkConfig}
+              featureLines={featureLines}
+              rotateAroundTapPoint={true}
+              onSceneReady={() => {
+                handleSceneReady().catch(reportError('Failed to prepare the scene view'));
+              }}
+              onViewReset={() => {
+                setSelectedItemId(undefined);
+                modelViews.actions
+                  .unloadModelView()
+                  .catch(reportError('Failed to unload the model view'));
+              }}
+            />
+          )
+        }
+        rightSidebar={
+          <RightSidebar active={openedRightPanel} onSelectSidebar={setOpenedRightPanel} />
+        }
+        rightDrawer={
+          <RightDrawer
+            active={openedRightPanel}
+            metadata={metadata}
+            modelViews={modelViews}
+            sceneViewStates={data?.data}
+            onViewStateSelected={handleViewStateSelected}
+          />
+        }
+        rightDrawerOpen={openedRightPanel != null}
+      />
+      <Snackbar
+        open={policySwitchError != null}
+        autoHideDuration={6000}
+        onClose={() => setPolicySwitchError(undefined)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setPolicySwitchError(undefined)}
+          sx={{ width: '100%' }}
+        >
+          {policySwitchError}
+        </Alert>
+      </Snackbar>
+    </>
   ) : (
     <></>
   );
 }
 
-async function createStreamKey(sceneId: string): Promise<string> {
+export async function createStreamKey(
+  sceneId: string,
+  policyId?: string
+): Promise<string> {
   const response = await fetch('/api/stream-keys', {
-    body: JSON.stringify({ id: sceneId }),
+    body: JSON.stringify({
+      id: sceneId,
+      ...(policyId ? { propertyKeyPolicyId: policyId } : {}),
+    }),
     method: 'POST',
   });
   if (!response.ok) throw new Error('Stream-key creation failed.');
@@ -219,22 +305,48 @@ async function createStreamKey(sceneId: string): Promise<string> {
   return key;
 }
 
+export async function createPolicySwitch({
+  sceneId,
+  clientId,
+  vertexEnv,
+  policyId,
+}: {
+  sceneId: string;
+  clientId: string;
+  vertexEnv: EnvironmentWithCustom;
+  policyId?: string;
+}): Promise<{
+  streamKey: string;
+  credentials: StreamCredentials;
+  url: string;
+}> {
+  const streamKey = await createStreamKey(sceneId, policyId);
+  return {
+    streamKey,
+    credentials: { clientId, streamKey, vertexEnv },
+    url: encodeCreds({ clientId, sceneId, streamKey, vertexEnv, policyId }),
+  };
+}
+
 export function encodeCreds({
   clientId,
   streamKey,
   vertexEnv,
   sceneId,
+  policyId,
 }: {
   clientId: string;
   streamKey: string;
-  vertexEnv: Environment;
+  vertexEnv: EnvironmentWithCustom;
   sceneId?: string;
+  policyId?: string;
 }): string {
   const path = `/scene-viewer/${encodeURIComponent(sceneId ?? 'unknown')}`;
   const cId = `clientId=${encodeURIComponent(clientId)}`;
   const sk = `streamKey=${encodeURIComponent(streamKey)}`;
   const ve = `vertexEnv=${encodeURIComponent(vertexEnv)}`;
-  return `${path}/?${cId}&${sk}&${ve}`;
+  const pId = policyId ? `&policyId=${encodeURIComponent(policyId)}` : '';
+  return `${path}/?${cId}&${sk}&${ve}${pId}`;
 }
 
 export function serverSidePropsHandler({
