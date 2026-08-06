@@ -81,7 +81,7 @@ function UnwrappedViewer({
   onViewReset,
   networkConfig,
   ...props
-}: ViewerProps): JSX.Element {
+}: Readonly<ViewerProps>): JSX.Element {
   const ref = React.useRef<HTMLElement>(null);
   const viewer = viewerState.ref;
   const [key, setKey] = React.useState(Date.now());
@@ -271,9 +271,10 @@ function onTap<P extends ViewerProps>(
         const raycaster = scene?.raycaster();
 
         if (raycaster != null) {
-          const res = await raycaster.hitItems(e.detail.position);
+          const res = await raycaster.hitItems(e.detail.position, {
+            includeMetadata: true,
+          });
           const hit = (res?.hits ?? [])[0];
-          console.debug(hit);
           setHit(hit);
           await onSelect(e.detail, hit);
         }
