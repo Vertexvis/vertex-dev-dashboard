@@ -1,5 +1,6 @@
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -20,7 +21,7 @@ import {
 import React from 'react';
 
 import { IdentifierKeys, Metadata } from '../../lib/metadata';
-import { DrawerTitle, MetadataStatus, NoData, StateMessage } from './MetadataStates';
+import { DrawerTitle, MetadataStatus, StateMessage } from './MetadataStates';
 
 // The three metadata sources the comparison can show, in fixed display order.
 export type SourceId = 'unrestricted' | 'restricted' | 'stream';
@@ -128,6 +129,33 @@ const StateLabel: Record<CompareState, string> = {
   removed: 'Removed by policy',
 };
 
+interface LegendEntry {
+  readonly state: CompareState;
+  readonly label: string;
+  readonly description: string;
+}
+
+// Keep the compact panel legend and the detailed dialog legend sourced from
+// the same state descriptions so their color meanings cannot drift apart.
+const LegendEntries: readonly LegendEntry[] = [
+  {
+    state: 'same',
+    label: 'Same (no highlight)',
+    description: 'Values match across selected columns, or the row is an identifier.',
+  },
+  {
+    state: 'differs',
+    label: 'Differs (orange)',
+    description: 'Values differ across selected columns.',
+  },
+  {
+    state: 'removed',
+    label: 'Removed by policy (red)',
+    description:
+      'With Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.',
+  },
+];
+
 // MUI palette cues per state. `same` stays neutral; `removed` is the prominent
 // error case since the policy stripped the key, `differs` uses a subtler tint.
 function stateBackground(state: CompareState): string | undefined {
@@ -212,7 +240,12 @@ export function buildCompareRows({
 
     // Otherwise flag when the values across the visible columns are not all
     // equal (present/absent/value mismatch).
-    const visibleValues = columns.map((id) => values[id]);
+    // Missing and empty values both render as an em dash, so normalize them for
+    // the generic comparison. The removed-by-policy check above intentionally
+    // keeps its stronger Unrestricted-present/Restricted-empty precedence.
+    const visibleValues = columns.map((id) =>
+      isPresent(values[id]) ? values[id] : undefined
+    );
     const allEqual = visibleValues.every((v) => v === visibleValues[0]);
 
     return {
@@ -280,6 +313,7 @@ export function MetadataCompare({
   // the persisted selection is restored after mount.
   const [columns, setColumns] = React.useState<SourceId[]>([...DefaultColumns]);
   const [infoColumn, setInfoColumn] = React.useState<SourceId | null>(null);
+  const [columnsInfoOpen, setColumnsInfoOpen] = React.useState(false);
 
   React.useEffect(() => {
     setColumns(readStoredColumns());
@@ -299,21 +333,37 @@ export function MetadataCompare({
     }
   }
 
-  const toggle = (
-    <ToggleButtonGroup
-      aria-label="Metadata source columns"
-      color="primary"
-      onChange={handleColumnsChange}
-      size="small"
-      sx={{ mx: 2, my: 1 }}
-      value={columns}
-    >
-      {Sources.map((s) => (
-        <ToggleButton key={s.id} value={s.id} sx={{ textTransform: 'none' }}>
-          {s.label}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
+  const controls = (
+    <>
+      <Box sx={{ alignItems: 'center', display: 'flex', mx: 1.5, my: 1 }}>
+        <ToggleButtonGroup
+          aria-label="Metadata source columns"
+          color="primary"
+          onChange={handleColumnsChange}
+          size="small"
+          value={columns}
+        >
+          {Sources.map((s) => (
+            <ToggleButton
+              key={s.id}
+              value={s.id}
+              sx={{ px: 0.75, textTransform: 'none' }}
+            >
+              {s.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <IconButton
+          aria-label="About properties column selection"
+          onClick={() => setColumnsInfoOpen(true)}
+          size="small"
+          sx={{ ml: 0.5 }}
+        >
+          <HelpOutlineIcon fontSize="inherit" />
+        </IconButton>
+      </Box>
+      <RowColorLegend />
+    </>
   );
 
   if (status === 'loading') return <StateMessage message="Loading metadata..." />;
@@ -334,15 +384,18 @@ export function MetadataCompare({
   const baselineMissing = columns.includes('unrestricted') && Boolean(unrestrictedError);
 
   if (rows.length === 0) {
-    // With no rows we still show the toggle + any stream note so the user can
-    // adjust columns; a fully empty ready state falls back to NoData.
-    if (!streamVisible || streamAvailable) return <NoData />;
+    // Keep the controls and their help available even when the selected sources
+    // have no rows to display.
     return (
       <>
         <DrawerTitle />
-        {toggle}
-        <StreamNote />
-        <NoData />
+        {controls}
+        {streamVisible && !streamAvailable ? <StreamNote /> : null}
+        <EmptyMetadataState />
+        <PropertiesColumnsInfoDialog
+          open={columnsInfoOpen}
+          onClose={() => setColumnsInfoOpen(false)}
+        />
       </>
     );
   }
@@ -359,7 +412,7 @@ export function MetadataCompare({
   return (
     <>
       <DrawerTitle />
-      {toggle}
+      {controls}
       {diagnostic ? (
         <Typography
           role="status"
@@ -423,7 +476,117 @@ export function MetadataCompare({
         </Table>
       </TableContainer>
       <ColumnInfoDialog column={infoColumn} onClose={() => setInfoColumn(null)} />
+      <PropertiesColumnsInfoDialog
+        open={columnsInfoOpen}
+        onClose={() => setColumnsInfoOpen(false)}
+      />
     </>
+  );
+}
+
+function EmptyMetadataState(): JSX.Element {
+  return (
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flexGrow: 1,
+        justifyContent: 'center',
+      }}
+    >
+      <Typography sx={{ mx: 2, mb: 2 }} variant="body2">
+        No data
+      </Typography>
+    </Box>
+  );
+}
+
+function RowColorLegend({
+  detailed = false,
+}: {
+  readonly detailed?: boolean;
+}): JSX.Element {
+  return (
+    <Box
+      aria-label="Row color legend"
+      role="group"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.5,
+        mx: detailed ? 0 : 2,
+        my: 1,
+      }}
+    >
+      {LegendEntries.map(({ state, label, description }) => (
+        <Box key={state} sx={{ alignItems: 'flex-start', display: 'flex', gap: 0.75 }}>
+          <Box
+            aria-hidden="true"
+            data-legend-state={state}
+            sx={{
+              backgroundColor: stateBackground(state) ?? 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              flex: '0 0 auto',
+              height: 12,
+              mt: 0.25,
+              width: 12,
+            }}
+          />
+          <Typography variant="caption">
+            <Box component="span" sx={{ fontWeight: 'fontWeightMedium' }}>
+              {label}
+            </Box>
+            {detailed ? ` — ${description}` : null}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function PropertiesColumnsInfoDialog({
+  open,
+  onClose,
+}: {
+  readonly open: boolean;
+  readonly onClose: () => void;
+}): JSX.Element {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Properties column selection</DialogTitle>
+      <DialogContent>
+        <Typography paragraph variant="body2">
+          Choose which metadata sources to compare. The table shows one row for every
+          property key found in at least one selected source, and each selected column
+          shows that source&apos;s value.
+        </Typography>
+        <Box component="ul" sx={{ mt: 0, pl: 2.5 }}>
+          <Typography component="li" variant="body2">
+            <strong>Unrestricted:</strong> Complete metadata without a property key
+            policy.
+          </Typography>
+          <Typography component="li" variant="body2">
+            <strong>Restricted:</strong> Metadata exposed through the currently selected
+            property key policy.
+          </Typography>
+          <Typography component="li" variant="body2">
+            <strong>Stream:</strong> Metadata returned with a viewer click; it is
+            unavailable for scene-tree selections.
+          </Typography>
+        </Box>
+        <Typography paragraph variant="body2">
+          An em dash (—) means the source has no value for that key or the value is empty.
+          At least one column remains selected, and your selection is saved in this
+          browser.
+        </Typography>
+        <Typography variant="subtitle2">Row colors</Typography>
+        <RowColorLegend detailed />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

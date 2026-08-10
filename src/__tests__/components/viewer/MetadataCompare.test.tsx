@@ -215,6 +215,118 @@ describe('MetadataCompare persistence', () => {
   });
 });
 
+describe('MetadataCompare selector help and row legend', () => {
+  it('shows an accessible help button beside the column selector and a text legend', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      unrestrictedMetadata: {
+        partName: '',
+        properties: { Material: 'Steel', Cost: '100' },
+      },
+      metadata: { partName: '', properties: { Material: 'Aluminum' } },
+    });
+
+    const selector = screen.getByLabelText('Metadata source columns');
+    const help = screen.getByRole('button', {
+      name: 'About properties column selection',
+    });
+    expect(selector).not.toContainElement(help);
+    expect(selector.parentElement).toContainElement(help);
+
+    const legend = screen.getByRole('group', { name: 'Row color legend' });
+    expect(within(legend).getByText('Same (no highlight)')).toBeInTheDocument();
+    expect(within(legend).getByText('Differs (orange)')).toBeInTheDocument();
+    expect(within(legend).getByText('Removed by policy (red)')).toBeInTheDocument();
+    expect(legend.querySelector('[data-legend-state="same"]')).toBeInTheDocument();
+    expect(legend.querySelector('[data-legend-state="differs"]')).toBeInTheDocument();
+    expect(legend.querySelector('[data-legend-state="removed"]')).toBeInTheDocument();
+  });
+
+  it('explains the selected-source union, sources, missing values, persistence, and colors', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      unrestrictedMetadata: {
+        partName: '',
+        properties: { Material: 'Steel' },
+      },
+      metadata: { partName: '', properties: { Material: 'Steel' } },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'About properties column selection' })
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByRole('heading', { name: 'Properties column selection' })
+    ).toBeInTheDocument();
+    expect(dialog).toHaveTextContent(
+      'one row for every property key found in at least one selected source'
+    );
+    expect(dialog).toHaveTextContent(
+      'Unrestricted: Complete metadata without a property key policy.'
+    );
+    expect(dialog).toHaveTextContent(
+      'Restricted: Metadata exposed through the currently selected property key policy.'
+    );
+    expect(dialog).toHaveTextContent(
+      'Stream: Metadata returned with a viewer click; it is unavailable for scene-tree selections.'
+    );
+    expect(dialog).toHaveTextContent(
+      'An em dash (—) means the source has no value for that key or the value is empty.'
+    );
+    expect(dialog).toHaveTextContent('your selection is saved in this browser');
+
+    const legend = within(dialog).getByRole('group', { name: 'Row color legend' });
+    expect(legend).toHaveTextContent(
+      'Same (no highlight) — Values match across selected columns, or the row is an identifier.'
+    );
+    expect(legend).toHaveTextContent(
+      'Differs (orange) — Values differ across selected columns.'
+    );
+    expect(legend).toHaveTextContent(
+      'Removed by policy (red) — With Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.'
+    );
+  });
+
+  it('closes the properties column selection dialog', async () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      unrestrictedMetadata: { partName: '', properties: { Material: 'Steel' } },
+      metadata: { partName: '', properties: { Material: 'Steel' } },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'About properties column selection' })
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Properties column selection' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('heading', { name: 'Properties column selection' })
+      ).not.toBeInTheDocument()
+    );
+  });
+
+  it('keeps selector help and the legend available when ready metadata has no rows', () => {
+    renderCompare({ metadataStatus: 'ready' });
+
+    expect(screen.getByText('No data')).toBeInTheDocument();
+    expect(screen.getAllByText('Properties')).toHaveLength(1);
+    expect(screen.getByRole('group', { name: 'Row color legend' })).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'About properties column selection' })
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Properties column selection' })
+    ).toBeInTheDocument();
+  });
+});
+
 describe('MetadataCompare diff highlighting', () => {
   it('classifies an equal key as same and does not flag it', () => {
     renderCompare({
@@ -280,6 +392,23 @@ describe('MetadataCompare diff highlighting', () => {
     // A differing value (present in both columns) is not "removed by policy",
     // but it IS a difference — the summary must surface it, not report none.
     expect(screen.getByText('1 difference')).toBeInTheDocument();
+  });
+
+  it('treats empty and missing values as the same rendered value', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      unrestrictedMetadata: {
+        partName: '',
+        properties: { Optional: '' },
+      },
+      metadata: { partName: '', properties: {} },
+    });
+
+    const row = rowForKey('Optional');
+    expect(row).toHaveAttribute('data-state', 'same');
+    expect(within(row).getAllByText('—')).toHaveLength(2);
+    expect(within(row).queryByText('Differs')).not.toBeInTheDocument();
+    expect(screen.getByText('No differences')).toBeInTheDocument();
   });
 
   it('reports both removed and differing keys in the policy summary', () => {
