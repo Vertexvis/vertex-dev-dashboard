@@ -1,7 +1,11 @@
 import { Alert, Snackbar } from '@mui/material';
 import { SceneItemData, SceneViewStateData } from '@vertexvis/api-client-node';
 import { vertexvis } from '@vertexvis/frame-streaming-protos';
-import { TapEventDetails } from '@vertexvis/viewer';
+import {
+  DomainPropertyEntry,
+  SceneItemMetadataResponse,
+  TapEventDetails,
+} from '@vertexvis/viewer';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import { useRouter } from 'next/router';
 import { withIronSession } from 'next-iron-session';
@@ -12,13 +16,19 @@ import { Header } from '../../components/shared/Header';
 import { Layout } from '../../components/viewer/Layout';
 import { LeftDrawer } from '../../components/viewer/LeftDrawer';
 import { LeftSidebar } from '../../components/viewer/LeftSidebar';
+import { MetadataStatus } from '../../components/viewer/MetadataStates';
 import { PolicySelect } from '../../components/viewer/PolicySelect';
 import { RightDrawer } from '../../components/viewer/RightDrawer';
 import { RightSidebar } from '../../components/viewer/RightSidebar';
 import { Viewer } from '../../components/viewer/Viewer';
-import { ErrorRes, GetRes } from '../../lib/api';
+import { ErrorRes, GetRes, jsonFetcher } from '../../lib/api';
 import { head, StreamCredentials } from '../../lib/config';
-import { Metadata, toMetadataFromItem } from '../../lib/metadata';
+import {
+  Metadata,
+  toMetadata,
+  toMetadataFromDomainEntries,
+  toMetadataFromItem,
+} from '../../lib/metadata';
 import { useModelViews } from '../../lib/model-views';
 import { reportError } from '../../lib/report-error';
 import { applySceneViewState, selectByHit } from '../../lib/scene-items';
@@ -48,12 +58,203 @@ function useSceneViewStates({
   );
 }
 
+// UNRESTRICTED metadata: the server-side REST path that IGNORES the property key
+// policy. Used solely to populate the "Unrestricted" comparison column so the
+// keys stripped by the policy are visible. The policy-aware Web SDK endpoint
+// remains the sole source for the RESTRICTED (displayed) metadata.
 function useSceneItem({
   itemId,
 }: {
   itemId?: string;
 }): SWRResponse<SceneItemData, ErrorRes> {
-  return useSWR<SceneItemData, ErrorRes>(itemId ? `/api/scene-items/${itemId}` : null);
+  // Throwing fetcher so an HTTP failure populates `error` (rather than landing an
+  // ErrorRes in `data`, which would both mask the failure and crash
+  // `toMetadataFromItem`); its state feeds the comparison's baseline warning.
+  return useSWR<SceneItemData, ErrorRes>(
+    itemId ? `/api/scene-items/${itemId}` : null,
+    jsonFetcher
+  );
+}
+
+interface MetadataRequest {
+  readonly key: string;
+  readonly itemId: string;
+  readonly viewId: string;
+  readonly identifiers?: HitIdentifiers;
+}
+
+interface RestrictedMetadataState {
+  readonly requestKey?: string;
+  readonly metadata?: Metadata;
+  readonly status: MetadataStatus;
+  readonly error?: string;
+}
+
+export interface MetadataPanelData {
+  readonly metadata?: Metadata;
+  readonly unrestrictedMetadata?: Metadata;
+  readonly unrestrictedError: boolean;
+  readonly status: MetadataStatus;
+  readonly error?: string;
+}
+
+function useMetadataRequest({
+  selectedItemId,
+  selectedIdentifiers,
+  viewId,
+  policyId,
+}: {
+  readonly selectedItemId?: string;
+  readonly selectedIdentifiers?: HitIdentifiers;
+  readonly viewId?: string;
+  readonly policyId?: string;
+}): MetadataRequest | undefined {
+  const suppliedId = selectedIdentifiers?.suppliedId;
+  const partId = selectedIdentifiers?.partId;
+  const partRevisionId = selectedIdentifiers?.partRevisionId;
+  const partRevisionSuppliedId = selectedIdentifiers?.partRevisionSuppliedId;
+
+  return React.useMemo(() => {
+    if (selectedItemId == null || viewId == null) return undefined;
+
+    const identifiers =
+      suppliedId != null ||
+      partId != null ||
+      partRevisionId != null ||
+      partRevisionSuppliedId != null
+        ? { suppliedId, partId, partRevisionId, partRevisionSuppliedId }
+        : undefined;
+
+    return {
+      key: JSON.stringify({ selectedItemId, viewId, policyId, identifiers }),
+      itemId: selectedItemId,
+      viewId,
+      identifiers,
+    };
+  }, [
+    selectedItemId,
+    viewId,
+    policyId,
+    suppliedId,
+    partId,
+    partRevisionId,
+    partRevisionSuppliedId,
+  ]);
+}
+
+// Coordinate the two asynchronous metadata sources as one panel result. The
+// restricted state is tagged with its full request identity so a selection
+// change cannot render the previous item's result before the effect starts.
+// The unrestricted SWR source is considered settled when it has either data or
+// an error; `isValidating` is deliberately not used so background revalidation
+// does not blank an already-complete comparison.
+export function useMetadataPanelData({
+  selectedItemId,
+  selectedIdentifiers,
+  viewId,
+  policyId,
+  controller,
+}: {
+  readonly selectedItemId?: string;
+  readonly selectedIdentifiers?: HitIdentifiers;
+  readonly viewId?: string;
+  readonly policyId?: string;
+  readonly controller?: SceneItemController;
+}): MetadataPanelData {
+  const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const unrestrictedMetadata = React.useMemo(
+    () => (selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined),
+    [selectedItem.data]
+  );
+  const unrestrictedError = selectedItemId != null && selectedItem.error != null;
+  const unrestrictedSettled =
+    selectedItemId == null || selectedItem.data != null || unrestrictedError;
+  const request = useMetadataRequest({
+    selectedItemId,
+    selectedIdentifiers,
+    viewId,
+    policyId,
+  });
+  const [restricted, setRestricted] = React.useState<RestrictedMetadataState>({
+    status: 'ready',
+  });
+
+  React.useEffect(() => {
+    if (selectedItemId == null) {
+      setRestricted({ status: 'ready' });
+      return;
+    }
+    if (request == null || controller == null) return;
+
+    const cancelled = { current: false };
+    setRestricted({ requestKey: request.key, status: 'loading' });
+
+    void (async () => {
+      try {
+        const metadata = await loadItemMetadata({
+          controller,
+          itemId: request.itemId,
+          viewId: request.viewId,
+          identifiers: request.identifiers,
+        });
+        if (cancelled.current) return;
+
+        setRestricted({
+          requestKey: request.key,
+          metadata,
+          status: 'ready',
+        });
+      } catch {
+        if (cancelled.current) return;
+        setRestricted({
+          requestKey: request.key,
+          status: 'error',
+          error: 'Unable to load metadata for this item.',
+        });
+      }
+    })();
+
+    return () => {
+      cancelled.current = true;
+    };
+  }, [controller, request, selectedItemId]);
+
+  if (selectedItemId == null) {
+    return {
+      unrestrictedError: false,
+      status: 'ready',
+    };
+  }
+
+  const restrictedIsCurrent = request != null && restricted.requestKey === request.key;
+  if (restrictedIsCurrent && restricted.status === 'error') {
+    return {
+      unrestrictedMetadata,
+      unrestrictedError,
+      status: 'error',
+      error: restricted.error,
+    };
+  }
+  if (
+    request == null ||
+    !restrictedIsCurrent ||
+    restricted.status === 'loading' ||
+    !unrestrictedSettled
+  ) {
+    return {
+      metadata: restrictedIsCurrent ? restricted.metadata : undefined,
+      unrestrictedMetadata,
+      unrestrictedError,
+      status: 'loading',
+    };
+  }
+
+  return {
+    metadata: restricted.metadata,
+    unrestrictedMetadata,
+    unrestrictedError,
+    status: 'ready',
+  };
 }
 
 export default function SceneViewer({
@@ -67,9 +268,13 @@ export default function SceneViewer({
   const [streamKeyError, setStreamKeyError] = React.useState<string>();
   const requestedStreamKeyForScene = React.useRef<string>();
   const [selectedItemId, setSelectedItemId] = React.useState<string | undefined>();
+  const [selectedIdentifiers, setSelectedIdentifiers] = React.useState<HitIdentifiers>();
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
-  const [metadata, setMetadata] = React.useState<Metadata | undefined>();
+  // Raw render-frame metadata from the raycaster hit (Stream comparison column).
+  // Captured on left-click; cleared on tree-select, policy switch, and when the
+  // selection is cleared, since it is only meaningful for a viewer-clicked item.
+  const [streamMetadata, setStreamMetadata] = React.useState<Metadata | undefined>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const [policyId, setPolicyId] = React.useState<string | undefined>();
   const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
@@ -77,7 +282,14 @@ export default function SceneViewer({
   // (which replaces the whole page), this keeps the working viewer mounted.
   const [policySwitchError, setPolicySwitchError] = React.useState<string>();
   const { data, mutate } = useSceneViewStates({ viewId });
-  const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const metadataPanel = useMetadataPanelData({
+    selectedItemId,
+    selectedIdentifiers,
+    viewId,
+    policyId,
+    controller: viewerState.ref.current?.sceneItems,
+  });
+  const metadata = metadataPanel.metadata;
   const modelViews = useModelViews({
     itemId: selectedItemId,
     viewerState,
@@ -137,12 +349,22 @@ export default function SceneViewer({
 
     if (detail.buttons !== 2) {
       setSelectedItemId(hit?.itemId?.hex ?? undefined);
+      // Capture the structural identifiers the raycaster hit carries so the
+      // synthetic identifier keys (part id/revision, supplied ids) reappear
+      // alongside the policy-aware metadata, matching the prior server view.
+      setSelectedIdentifiers(hit ? toHitIdentifiers(hit) : undefined);
+      // Capture the raw stream metadata delivered inline with the hit so the
+      // Stream comparison column reflects what the render frame carried.
+      setStreamMetadata(hit ? toMetadata({ hit }) : undefined);
       await selectByHit({ hit, viewer: viewerState.ref.current });
     }
   }
 
   function handleTreeItemSelected(itemId: string): void {
     setSelectedItemId(itemId);
+    setSelectedIdentifiers(undefined);
+    // Tree selection has no render-frame hit, so there is no stream sample.
+    setStreamMetadata(undefined);
   }
 
   function handleViewStateSelected(id: string): void {
@@ -156,14 +378,29 @@ export default function SceneViewer({
     if (scene) setViewId(scene.sceneViewId);
   }
 
+  // Switch the applied property key policy while viewing the scene. This
+  // recreates the stream key with the new policy, reconnects the viewer, and
+  // lets the metadata effect reload the currently-selected item under the new
+  // policy once the new scene view is ready.
   async function handlePolicyChange(newPolicyId?: string): Promise<void> {
     if (newPolicyId === policyId) return;
 
     const sceneId = head(router.query.sceneId);
     if (!sceneId) return;
 
+    // Remember the current view so a failed switch can restore the still-working
+    // viewer instead of tearing it down.
+    const previousViewId = viewId;
+
     setSwitchingPolicy(true);
     setPolicySwitchError(undefined);
+    // Show loading (not stale/empty) in the metadata panel until the new scene
+    // view is ready and the retained item's metadata is refetched.
+    setViewId(undefined);
+    // The captured stream sample is from the pre-switch stream, so drop it; a
+    // fresh sample only arrives when the user re-clicks after reconnecting.
+    setStreamMetadata(undefined);
+
     try {
       const { credentials: nextCredentials, url } = await createPolicySwitch({
         sceneId,
@@ -181,8 +418,10 @@ export default function SceneViewer({
       setPolicyId(newPolicyId);
       setCredentials(nextCredentials);
     } catch (error) {
-      // Keep the existing viewer usable: surface a non-fatal error instead of
-      // the fatal streamKeyError that would replace the page with an alert.
+      // Keep the existing viewer usable: restore the prior scene view (which
+      // re-runs the metadata effect for the retained item) and surface a
+      // non-fatal error instead of replacing the page with a fatal alert.
+      setViewId(previousViewId);
       reportError('Failed to switch the property key policy')(error);
       setPolicySwitchError(
         'Unable to switch the property key policy. The previous policy is still active.'
@@ -191,12 +430,6 @@ export default function SceneViewer({
       setSwitchingPolicy(false);
     }
   }
-
-  React.useEffect(() => {
-    if (selectedItem.data) {
-      setMetadata(toMetadataFromItem(selectedItem.data));
-    }
-  }, [selectedItem.data]);
 
   const featureLines = { width: 0.5, color: '#444444' };
 
@@ -255,6 +488,7 @@ export default function SceneViewer({
               }}
               onViewReset={() => {
                 setSelectedItemId(undefined);
+                setStreamMetadata(undefined);
                 modelViews.actions
                   .unloadModelView()
                   .catch(reportError('Failed to unload the model view'));
@@ -269,6 +503,11 @@ export default function SceneViewer({
           <RightDrawer
             active={openedRightPanel}
             metadata={metadata}
+            unrestrictedMetadata={metadataPanel.unrestrictedMetadata}
+            unrestrictedError={metadataPanel.unrestrictedError}
+            streamMetadata={streamMetadata}
+            metadataStatus={metadataPanel.status}
+            metadataError={metadataPanel.error}
             modelViews={modelViews}
             sceneViewStates={data?.data}
             onViewStateSelected={handleViewStateSelected}
@@ -296,6 +535,83 @@ export default function SceneViewer({
   );
 }
 
+type SceneItemController = NonNullable<HTMLVertexViewerElement['sceneItems']>;
+
+// Structural identifiers the raycaster hit carries client-side. These are not
+// policy-restricted metadata, so they are surfaced as synthetic keys for parity.
+export interface HitIdentifiers {
+  readonly suppliedId?: string;
+  readonly partId?: string;
+  readonly partRevisionId?: string;
+  readonly partRevisionSuppliedId?: string;
+}
+
+export function toHitIdentifiers(hit: vertexvis.protobuf.stream.IHit): HitIdentifiers {
+  return {
+    suppliedId: hit.itemSuppliedId?.value ?? undefined,
+    partId: hit.partId?.hex ?? undefined,
+    partRevisionId: hit.partRevisionId?.hex ?? undefined,
+    partRevisionSuppliedId: hit.suppliedPartRevisionId?.value ?? undefined,
+  };
+}
+
+// Page through every metadata entry for the item via the policy-aware Web SDK.
+// Cursor pagination is inherently sequential (each request needs the prior
+// page's cursor), so the awaits run in series while entries accumulate into a
+// single array — avoiding the repeated copying and unbounded call stack a
+// spread-based recursion would incur. A `const` holder keeps the paging cursor
+// mutable without a `let` (banned in production .tsx).
+async function fetchAllItemMetadataEntries(
+  controller: SceneItemController,
+  itemId: string
+): Promise<DomainPropertyEntry[]> {
+  const entries: DomainPropertyEntry[] = [];
+  const paging: { cursor?: string; done: boolean } = { done: false };
+  while (!paging.done) {
+    const res: SceneItemMetadataResponse =
+      // eslint-disable-next-line no-await-in-loop
+      await controller.listSceneItemMetadata(itemId, {
+        size: 100,
+        cursor: paging.cursor,
+      });
+    entries.push(...res.entries);
+    paging.cursor = res.paging?.next ?? undefined;
+    paging.done = paging.cursor == null;
+  }
+  return entries;
+}
+
+// Fetch metadata for the selected item through the policy-aware Web SDK,
+// paginating over all pages, and merging in the synthetic identifier keys.
+export async function loadItemMetadata({
+  controller,
+  itemId,
+  viewId,
+  identifiers,
+}: {
+  controller: SceneItemController;
+  itemId: string;
+  viewId: string;
+  identifiers?: HitIdentifiers;
+}): Promise<Metadata> {
+  const entries = await fetchAllItemMetadataEntries(controller, itemId);
+
+  const item = await controller
+    .getSceneViewItem(itemId, viewId, {})
+    .catch(() => undefined);
+
+  const metadata = toMetadataFromDomainEntries(entries, {
+    id: item?.id ?? itemId,
+    suppliedId: item?.suppliedId ?? identifiers?.suppliedId,
+    name: item?.name ?? undefined,
+    partId: identifiers?.partId,
+    partRevisionId: identifiers?.partRevisionId,
+    partRevisionSuppliedId: identifiers?.partRevisionSuppliedId,
+  });
+
+  return metadata;
+}
+
 export async function createStreamKey(
   sceneId: string,
   policyId?: string
@@ -314,6 +630,10 @@ export async function createStreamKey(
   return key;
 }
 
+// Core of the in-viewer policy switch: recreate the stream key under the new
+// policy and derive the credentials + shareable URL the viewer reconnects with.
+// Exported so the switch behavior is directly testable without driving the full
+// page (which mounts the VertexViewer web component).
 export async function createPolicySwitch({
   sceneId,
   clientId,
