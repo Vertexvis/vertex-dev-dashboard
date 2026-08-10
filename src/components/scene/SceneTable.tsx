@@ -5,7 +5,12 @@ import {
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
   Table,
   TableBody,
@@ -14,16 +19,18 @@ import {
   TablePagination,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material';
-import { Cursors, SceneData } from '@vertexvis/api-client-node';
+import { Cursors, PropertyKeyPolicyData, SceneData } from '@vertexvis/api-client-node';
 import debounce from 'lodash.debounce';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import useSWR, { SWRResponse } from 'swr';
 
-import { ErrorRes, GetRes } from '../../lib/api';
+import { ErrorRes, GetRes, jsonFetcher } from '../../lib/api';
 import { toLocaleString } from '../../lib/dates';
 import { SwrProps } from '../../lib/paging';
+import { PropertyKeyPolicy, toPolicyPage } from '../../lib/property-key-policies';
 import { reportError } from '../../lib/report-error';
 import { Scene, toScenePage } from '../../lib/scenes';
 import CreateSceneDialog from '../shared/CreateSceneDialog';
@@ -101,6 +108,15 @@ export default function SceneTable({
   const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [selectedPolicyId, setSelectedPolicyId] = React.useState<string | undefined>();
+
+  const { data: policiesData, error: policiesError } = useSWR<
+    GetRes<PropertyKeyPolicyData>
+  >('/api/property-key-policies', jsonFetcher);
+  const policiesLoading = !policiesData && !policiesError;
+  const policies: PropertyKeyPolicy[] = policiesData
+    ? toPolicyPage(policiesData).items
+    : [];
 
   const { data, error, mutate } = useScenes({
     cursor,
@@ -183,9 +199,16 @@ export default function SceneTable({
     onEditClick(s);
   }
 
+  function sceneViewerHref(sceneId: string): string {
+    const base = `/scene-viewer/${encodeURIComponent(sceneId)}`;
+    return selectedPolicyId
+      ? `${base}?policyId=${encodeURIComponent(selectedPolicyId)}`
+      : base;
+  }
+
   function handleViewClick(sceneId: string): void {
     router
-      .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
+      .push(sceneViewerHref(sceneId))
       .catch(reportError('Failed to navigate to the scene viewer'));
   }
 
@@ -259,6 +282,48 @@ export default function SceneTable({
             }}
             sx={{ mt: 0, width: '20rem' }}
           />
+          <FormControl
+            variant="standard"
+            size="small"
+            margin="normal"
+            sx={{ mt: 0, width: '20rem' }}
+            disabled={policiesLoading || !!policiesError}
+          >
+            <InputLabel id="policyFilter-label">Property Key Policy</InputLabel>
+            <Select
+              labelId="policyFilter-label"
+              id="policyFilter"
+              value={selectedPolicyId ?? ''}
+              onChange={(e) => setSelectedPolicyId(e.target.value || undefined)}
+              endAdornment={
+                policiesLoading ? (
+                  <CircularProgress size={16} sx={{ mr: 2 }} />
+                ) : undefined
+              }
+            >
+              <MenuItem value="">
+                <em>None (unrestricted)</em>
+              </MenuItem>
+              {policies.map((policy) => (
+                <MenuItem key={policy.id} value={policy.id}>
+                  {policy.name ?? policy.suppliedId ?? policy.id}{' '}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 0.5 }}
+                  >
+                    ({policy.mode})
+                  </Typography>
+                </MenuItem>
+              ))}
+            </Select>
+            {policiesError && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                Could not load policies
+              </Typography>
+            )}
+          </FormControl>
         </Box>
         <TableContainer>
           <Table>
@@ -303,7 +368,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
+                          href={sceneViewerHref(row.id)}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}
