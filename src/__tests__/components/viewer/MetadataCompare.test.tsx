@@ -1,13 +1,62 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { SceneItemData } from '@vertexvis/api-client-node';
+import { http, HttpResponse } from 'msw';
 import React from 'react';
+import { useSWRConfig } from 'swr';
 
+import { installJsdomMockServer } from '../../../../test/msw/installJsdomMockServer';
+import { server } from '../../../../test/msw/server';
+import { renderWithSWR } from '../../../../test/render/renderWithSWR';
 import { MetadataStatus } from '../../../components/viewer/MetadataStates';
 import { RightDrawer } from '../../../components/viewer/RightDrawer';
 import { Metadata } from '../../../lib/metadata';
 import { ModelViewsState } from '../../../lib/model-views';
-import { loadItemMetadata } from '../../../pages/scene-viewer/[sceneId]';
+import {
+  loadItemMetadata,
+  useMetadataPanelData,
+} from '../../../pages/scene-viewer/[sceneId]';
 
 type Controller = Parameters<typeof loadItemMetadata>[0]['controller'];
+
+function stringEntry(
+  id: string,
+  name: string,
+  value: string
+): {
+  id: string;
+  key: { name: string; category: number };
+  value: { type: string; value: string };
+} {
+  return {
+    id,
+    key: { name, category: 0 },
+    value: { type: 'string', value },
+  };
+}
+
+function sceneItem(id: string, material: string): SceneItemData {
+  return {
+    id,
+    attributes: { metadata: { Material: { value: material } } },
+    relationships: {},
+  } as unknown as SceneItemData;
+}
+
+function deferred<T>(): {
+  readonly promise: Promise<T>;
+  readonly resolve: (value: T) => void;
+} {
+  const holder: { resolve?: (value: T) => void } = {};
+  const promise = new Promise<T>((resolve) => {
+    holder.resolve = resolve;
+  });
+  return {
+    promise,
+    resolve(value: T) {
+      holder.resolve?.(value);
+    },
+  };
+}
 
 const emptyModelViews: ModelViewsState = {
   modelViewList: [],
@@ -637,6 +686,193 @@ describe('RightDrawer resize handle', () => {
     // width should now be ~500px (1600 - 1100), and differ from the default.
     expect(after).not.toBe(before);
     expect(after).toBe('500px');
+  });
+});
+
+function CoordinatedMetadataHarness({
+  itemId,
+  controller,
+}: {
+  readonly itemId: string;
+  readonly controller: Controller;
+}): JSX.Element {
+  const { mutate } = useSWRConfig();
+  const panel = useMetadataPanelData({
+    selectedItemId: itemId,
+    viewId: 'view-1',
+    controller,
+  });
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          void mutate(`/api/scene-items/${itemId}`);
+        }}
+      >
+        Refresh unrestricted metadata
+      </button>
+      <RightDrawer
+        active="properties"
+        metadata={panel.metadata}
+        unrestrictedMetadata={panel.unrestrictedMetadata}
+        unrestrictedError={panel.unrestrictedError}
+        metadataStatus={panel.status}
+        metadataError={panel.error}
+        metadataDiagnostic={panel.diagnostic}
+        modelViews={emptyModelViews}
+        onViewStateSelected={jest.fn()}
+      />
+    </>
+  );
+}
+
+describe('MetadataCompare coordinated source loading', () => {
+  installJsdomMockServer();
+
+  it('keeps loading through a selection change until both sources match the new item', async () => {
+    const unrestrictedB = deferred<SceneItemData>();
+    const restrictedB = deferred<{
+      paging: Record<string, never>;
+      entries: ReturnType<typeof stringEntry>[];
+    }>();
+    server.use(
+      http.get('*/api/scene-items/:id', async ({ params }) => {
+        const itemId = String(params.id);
+        const item =
+          itemId === 'item-a'
+            ? sceneItem(itemId, 'Steel A')
+            : await unrestrictedB.promise;
+        return HttpResponse.json(item);
+      })
+    );
+    const listSceneItemMetadata = jest.fn((itemId: string) =>
+      itemId === 'item-a'
+        ? Promise.resolve({
+            paging: {},
+            entries: [stringEntry('entry-a', 'Material', 'Steel A')],
+          })
+        : restrictedB.promise
+    );
+    const getSceneViewItem = jest.fn((itemId: string) =>
+      Promise.resolve({ id: itemId, name: itemId })
+    );
+    const controller = {
+      listSceneItemMetadata,
+      getSceneViewItem,
+    } as unknown as Controller;
+
+    const result = renderWithSWR(
+      <CoordinatedMetadataHarness itemId="item-a" controller={controller} />
+    );
+    await waitFor(() =>
+      expect(rowForKey('Material')).toHaveAttribute('data-state', 'same')
+    );
+
+    result.rerender(
+      <CoordinatedMetadataHarness itemId="item-b" controller={controller} />
+    );
+
+    // The request identity changes during render, before the loading effect can
+    // run, so stale item A rows never reach the comparison table.
+    expect(screen.getByText('Loading metadata...')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Steel A')).not.toBeInTheDocument();
+
+    await act(async () => {
+      restrictedB.resolve({
+        paging: {},
+        entries: [stringEntry('entry-b', 'Material', 'Steel B')],
+      });
+      await restrictedB.promise;
+    });
+    await waitFor(() =>
+      expect(getSceneViewItem).toHaveBeenCalledWith('item-b', 'view-1', {})
+    );
+
+    // Restricted data alone is not a complete comparison. In particular, it
+    // must not render temporary warning-colored rows against a missing baseline.
+    expect(screen.getByText('Loading metadata...')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    await act(async () => {
+      unrestrictedB.resolve(sceneItem('item-b', 'Steel B'));
+      await unrestrictedB.promise;
+    });
+
+    await waitFor(() =>
+      expect(rowForKey('Material')).toHaveAttribute('data-state', 'same')
+    );
+    expect(screen.getAllByText('Steel B')).toHaveLength(2);
+  });
+
+  it('treats an unrestricted-source error as settled instead of loading forever', async () => {
+    server.use(
+      http.get('*/api/scene-items/:id', () =>
+        HttpResponse.json({ message: 'Unavailable' }, { status: 503 })
+      )
+    );
+    const controller = {
+      listSceneItemMetadata: jest.fn().mockResolvedValue({
+        paging: {},
+        entries: [stringEntry('entry-1', 'Material', 'Steel')],
+      }),
+      getSceneViewItem: jest.fn().mockResolvedValue({ id: 'item-error', name: 'Item' }),
+    } as unknown as Controller;
+
+    renderWithSWR(
+      <CoordinatedMetadataHarness itemId="item-error" controller={controller} />
+    );
+
+    expect(screen.getByText('Loading metadata...')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText(/Unrestricted baseline unavailable/)).toBeInTheDocument()
+    );
+    expect(rowForKey('Material')).toBeInTheDocument();
+    expect(screen.queryByText('Loading metadata...')).not.toBeInTheDocument();
+  });
+
+  it('keeps complete cached results visible during unrestricted revalidation', async () => {
+    const refresh = deferred<SceneItemData>();
+    const requestCount = { current: 0 };
+    server.use(
+      http.get('*/api/scene-items/:id', async () => {
+        requestCount.current += 1;
+        const item =
+          requestCount.current === 1
+            ? sceneItem('item-1', 'Steel')
+            : await refresh.promise;
+        return HttpResponse.json(item);
+      })
+    );
+    const controller = {
+      listSceneItemMetadata: jest.fn().mockResolvedValue({
+        paging: {},
+        entries: [stringEntry('entry-1', 'Material', 'Steel')],
+      }),
+      getSceneViewItem: jest.fn().mockResolvedValue({ id: 'item-1', name: 'Item' }),
+    } as unknown as Controller;
+
+    renderWithSWR(<CoordinatedMetadataHarness itemId="item-1" controller={controller} />);
+    await waitFor(() =>
+      expect(rowForKey('Material')).toHaveAttribute('data-state', 'same')
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Refresh unrestricted metadata' })
+    );
+    await waitFor(() => expect(requestCount.current).toBe(2));
+
+    // SWR still has data for this key while the refresh is in flight, so this
+    // is not a partial comparison and should not replace the table with loading.
+    expect(screen.queryByText('Loading metadata...')).not.toBeInTheDocument();
+    expect(rowForKey('Material')).toHaveAttribute('data-state', 'same');
+
+    await act(async () => {
+      refresh.resolve(sceneItem('item-1', 'Steel'));
+      await refresh.promise;
+    });
+    await waitFor(() => expect(requestCount.current).toBe(2));
   });
 });
 

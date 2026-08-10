@@ -72,6 +72,193 @@ function useSceneItem({
   );
 }
 
+interface MetadataRequest {
+  readonly key: string;
+  readonly itemId: string;
+  readonly viewId: string;
+  readonly policyId?: string;
+  readonly identifiers?: HitIdentifiers;
+}
+
+interface RestrictedMetadataState {
+  readonly requestKey?: string;
+  readonly metadata?: Metadata;
+  readonly status: MetadataStatus;
+  readonly error?: string;
+  readonly diagnostic?: string;
+}
+
+export interface MetadataPanelData {
+  readonly metadata?: Metadata;
+  readonly unrestrictedMetadata?: Metadata;
+  readonly unrestrictedError: boolean;
+  readonly status: MetadataStatus;
+  readonly error?: string;
+  readonly diagnostic?: string;
+}
+
+function useMetadataRequest({
+  selectedItemId,
+  selectedIdentifiers,
+  viewId,
+  policyId,
+}: {
+  readonly selectedItemId?: string;
+  readonly selectedIdentifiers?: HitIdentifiers;
+  readonly viewId?: string;
+  readonly policyId?: string;
+}): MetadataRequest | undefined {
+  const suppliedId = selectedIdentifiers?.suppliedId;
+  const partId = selectedIdentifiers?.partId;
+  const partRevisionId = selectedIdentifiers?.partRevisionId;
+  const partRevisionSuppliedId = selectedIdentifiers?.partRevisionSuppliedId;
+
+  return React.useMemo(() => {
+    if (selectedItemId == null || viewId == null) return undefined;
+
+    const identifiers =
+      suppliedId != null ||
+      partId != null ||
+      partRevisionId != null ||
+      partRevisionSuppliedId != null
+        ? { suppliedId, partId, partRevisionId, partRevisionSuppliedId }
+        : undefined;
+
+    return {
+      key: JSON.stringify({ selectedItemId, viewId, policyId, identifiers }),
+      itemId: selectedItemId,
+      viewId,
+      policyId,
+      identifiers,
+    };
+  }, [
+    selectedItemId,
+    viewId,
+    policyId,
+    suppliedId,
+    partId,
+    partRevisionId,
+    partRevisionSuppliedId,
+  ]);
+}
+
+// Coordinate the two asynchronous metadata sources as one panel result. The
+// restricted state is tagged with its full request identity so a selection
+// change cannot render the previous item's result before the effect starts.
+// The unrestricted SWR source is considered settled when it has either data or
+// an error; `isValidating` is deliberately not used so background revalidation
+// does not blank an already-complete comparison.
+export function useMetadataPanelData({
+  selectedItemId,
+  selectedIdentifiers,
+  viewId,
+  policyId,
+  controller,
+}: {
+  readonly selectedItemId?: string;
+  readonly selectedIdentifiers?: HitIdentifiers;
+  readonly viewId?: string;
+  readonly policyId?: string;
+  readonly controller?: SceneItemController;
+}): MetadataPanelData {
+  const selectedItem = useSceneItem({ itemId: selectedItemId });
+  const unrestrictedMetadata = React.useMemo(
+    () => (selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined),
+    [selectedItem.data]
+  );
+  const unrestrictedError = selectedItemId != null && selectedItem.error != null;
+  const unrestrictedSettled =
+    selectedItemId == null || selectedItem.data != null || unrestrictedError;
+  const request = useMetadataRequest({
+    selectedItemId,
+    selectedIdentifiers,
+    viewId,
+    policyId,
+  });
+  const [restricted, setRestricted] = React.useState<RestrictedMetadataState>({
+    status: 'ready',
+  });
+
+  React.useEffect(() => {
+    if (selectedItemId == null) {
+      setRestricted({ status: 'ready' });
+      return;
+    }
+    if (request == null || controller == null) return;
+
+    const cancelled = { current: false };
+    setRestricted({ requestKey: request.key, status: 'loading' });
+
+    void (async () => {
+      try {
+        const { metadata, entryCount } = await loadItemMetadata({
+          controller,
+          itemId: request.itemId,
+          viewId: request.viewId,
+          identifiers: request.identifiers,
+        });
+        if (cancelled.current) return;
+
+        setRestricted({
+          requestKey: request.key,
+          metadata,
+          status: 'ready',
+          diagnostic: diagnosePolicy({ policyId: request.policyId, entryCount }),
+        });
+      } catch {
+        if (cancelled.current) return;
+        setRestricted({
+          requestKey: request.key,
+          status: 'error',
+          error: 'Unable to load metadata for this item.',
+        });
+      }
+    })();
+
+    return () => {
+      cancelled.current = true;
+    };
+  }, [controller, request, selectedItemId]);
+
+  if (selectedItemId == null) {
+    return {
+      unrestrictedError: false,
+      status: 'ready',
+    };
+  }
+
+  const restrictedIsCurrent = request != null && restricted.requestKey === request.key;
+  if (restrictedIsCurrent && restricted.status === 'error') {
+    return {
+      unrestrictedMetadata,
+      unrestrictedError,
+      status: 'error',
+      error: restricted.error,
+    };
+  }
+  if (
+    request == null ||
+    !restrictedIsCurrent ||
+    restricted.status === 'loading' ||
+    !unrestrictedSettled
+  ) {
+    return {
+      metadata: restrictedIsCurrent ? restricted.metadata : undefined,
+      unrestrictedMetadata,
+      unrestrictedError,
+      status: 'loading',
+    };
+  }
+
+  return {
+    metadata: restricted.metadata,
+    unrestrictedMetadata,
+    unrestrictedError,
+    status: 'ready',
+    diagnostic: restricted.diagnostic,
+  };
+}
+
 export default function SceneViewer({
   clientId,
   networkConfig,
@@ -86,14 +273,10 @@ export default function SceneViewer({
   const [selectedIdentifiers, setSelectedIdentifiers] = React.useState<HitIdentifiers>();
   const [openedLeftPanel, setOpenedLeftPanel] = React.useState<string>();
   const [openedRightPanel, setOpenedRightPanel] = React.useState<string>();
-  const [metadata, setMetadata] = React.useState<Metadata | undefined>();
   // Raw render-frame metadata from the raycaster hit (Stream comparison column).
   // Captured on left-click; cleared on tree-select, policy switch, and when the
   // selection is cleared, since it is only meaningful for a viewer-clicked item.
   const [streamMetadata, setStreamMetadata] = React.useState<Metadata | undefined>();
-  const [metadataStatus, setMetadataStatus] = React.useState<MetadataStatus>('ready');
-  const [metadataError, setMetadataError] = React.useState<string>();
-  const [metadataDiagnostic, setMetadataDiagnostic] = React.useState<string>();
   const [viewId, setViewId] = React.useState<string | undefined>();
   const [policyId, setPolicyId] = React.useState<string | undefined>();
   const [switchingPolicy, setSwitchingPolicy] = React.useState(false);
@@ -101,16 +284,14 @@ export default function SceneViewer({
   // (which replaces the whole page), this keeps the working viewer mounted.
   const [policySwitchError, setPolicySwitchError] = React.useState<string>();
   const { data, mutate } = useSceneViewStates({ viewId });
-  // Unrestricted metadata for the selected item, fetched through the policy-
-  // ignoring REST path purely to feed the comparison's "Unrestricted" column.
-  const selectedItem = useSceneItem({ itemId: selectedItemId });
-  const unrestrictedMetadata = React.useMemo(
-    () => (selectedItem.data ? toMetadataFromItem(selectedItem.data) : undefined),
-    [selectedItem.data]
-  );
-  // Surface a failed unrestricted-baseline fetch so a missing baseline is not
-  // silently read as "no differences" in the comparison.
-  const unrestrictedError = selectedItemId != null && selectedItem.error != null;
+  const metadataPanel = useMetadataPanelData({
+    selectedItemId,
+    selectedIdentifiers,
+    viewId,
+    policyId,
+    controller: viewerState.ref.current?.sceneItems,
+  });
+  const metadata = metadataPanel.metadata;
   const modelViews = useModelViews({
     itemId: selectedItemId,
     viewerState,
@@ -215,7 +396,6 @@ export default function SceneViewer({
     // The captured stream sample is from the pre-switch stream, so drop it; a
     // fresh sample only arrives when the user re-clicks after reconnecting.
     setStreamMetadata(undefined);
-    if (selectedItemId != null) setMetadataStatus('loading');
 
     try {
       const { credentials: nextCredentials, url } = await createPolicySwitch({
@@ -243,62 +423,6 @@ export default function SceneViewer({
       setSwitchingPolicy(false);
     }
   }
-
-  // Load metadata through the policy-aware Web SDK endpoint. With no policy the
-  // endpoint returns the complete unfiltered set, so bare viewing is preserved.
-  React.useEffect(() => {
-    if (selectedItemId == null || viewId == null) {
-      // With an item still selected but no scene view yet (e.g. mid policy
-      // switch, before the new scene view is ready), keep the panel in a loading
-      // state rather than clearing to stale/empty data — the retained item
-      // refetches once the new viewId is set.
-      if (selectedItemId != null) {
-        setMetadataStatus('loading');
-        return;
-      }
-      setMetadata(undefined);
-      setMetadataStatus('ready');
-      setMetadataError(undefined);
-      setMetadataDiagnostic(undefined);
-      return;
-    }
-
-    const controller = viewerState.ref.current?.sceneItems;
-    if (controller == null) return;
-
-    const cancelled = { current: false };
-    setMetadataStatus('loading');
-    setMetadataError(undefined);
-    setMetadataDiagnostic(undefined);
-
-    void (async () => {
-      try {
-        const { metadata: md, entryCount } = await loadItemMetadata({
-          controller,
-          itemId: selectedItemId,
-          viewId,
-          identifiers: selectedIdentifiers,
-        });
-        if (cancelled.current) return;
-
-        setMetadata(md);
-        setMetadataStatus('ready');
-        // Bonus diagnostic (non-blocking): base "no metadata returned" on the
-        // count of real (non-synthetic) entries the endpoint returned, since
-        // identifier keys are always merged in and would mask an empty result.
-        setMetadataDiagnostic(diagnosePolicy({ policyId, entryCount }));
-      } catch {
-        if (cancelled.current) return;
-        setMetadata(undefined);
-        setMetadataStatus('error');
-        setMetadataError('Unable to load metadata for this item.');
-      }
-    })();
-
-    return () => {
-      cancelled.current = true;
-    };
-  }, [selectedItemId, viewId, policyId, selectedIdentifiers, viewerState.ref]);
 
   const featureLines = { width: 0.5, color: '#444444' };
 
@@ -373,12 +497,12 @@ export default function SceneViewer({
           <RightDrawer
             active={openedRightPanel}
             metadata={metadata}
-            unrestrictedMetadata={unrestrictedMetadata}
-            unrestrictedError={unrestrictedError}
+            unrestrictedMetadata={metadataPanel.unrestrictedMetadata}
+            unrestrictedError={metadataPanel.unrestrictedError}
             streamMetadata={streamMetadata}
-            metadataStatus={metadataStatus}
-            metadataError={metadataError}
-            metadataDiagnostic={metadataDiagnostic}
+            metadataStatus={metadataPanel.status}
+            metadataError={metadataPanel.error}
+            metadataDiagnostic={metadataPanel.diagnostic}
             modelViews={modelViews}
             sceneViewStates={data?.data}
             onViewStateSelected={handleViewStateSelected}
