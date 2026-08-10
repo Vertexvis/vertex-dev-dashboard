@@ -76,7 +76,6 @@ interface MetadataRequest {
   readonly key: string;
   readonly itemId: string;
   readonly viewId: string;
-  readonly policyId?: string;
   readonly identifiers?: HitIdentifiers;
 }
 
@@ -85,7 +84,6 @@ interface RestrictedMetadataState {
   readonly metadata?: Metadata;
   readonly status: MetadataStatus;
   readonly error?: string;
-  readonly diagnostic?: string;
 }
 
 export interface MetadataPanelData {
@@ -94,7 +92,6 @@ export interface MetadataPanelData {
   readonly unrestrictedError: boolean;
   readonly status: MetadataStatus;
   readonly error?: string;
-  readonly diagnostic?: string;
 }
 
 function useMetadataRequest({
@@ -128,7 +125,6 @@ function useMetadataRequest({
       key: JSON.stringify({ selectedItemId, viewId, policyId, identifiers }),
       itemId: selectedItemId,
       viewId,
-      policyId,
       identifiers,
     };
   }, [
@@ -191,7 +187,7 @@ export function useMetadataPanelData({
 
     void (async () => {
       try {
-        const { metadata, entryCount } = await loadItemMetadata({
+        const metadata = await loadItemMetadata({
           controller,
           itemId: request.itemId,
           viewId: request.viewId,
@@ -203,7 +199,6 @@ export function useMetadataPanelData({
           requestKey: request.key,
           metadata,
           status: 'ready',
-          diagnostic: diagnosePolicy({ policyId: request.policyId, entryCount }),
         });
       } catch {
         if (cancelled.current) return;
@@ -255,7 +250,6 @@ export function useMetadataPanelData({
     unrestrictedMetadata,
     unrestrictedError,
     status: 'ready',
-    diagnostic: restricted.diagnostic,
   };
 }
 
@@ -341,6 +335,13 @@ export default function SceneViewer({
     detail: TapEventDetails,
     hit?: vertexvis.protobuf.stream.IHit
   ): Promise<void> {
+    console.debug({
+      hitNormal: hit?.hitNormal,
+      hitPoint: hit?.hitPoint,
+      sceneItemId: hit?.itemId?.hex,
+      sceneItemSuppliedId: hit?.itemSuppliedId?.value,
+    });
+
     if (detail.buttons !== 2) {
       setSelectedItemId(hit?.itemId?.hex ?? undefined);
       // Capture the structural identifiers the raycaster hit carries so the
@@ -502,7 +503,6 @@ export default function SceneViewer({
             streamMetadata={streamMetadata}
             metadataStatus={metadataPanel.status}
             metadataError={metadataPanel.error}
-            metadataDiagnostic={metadataPanel.diagnostic}
             modelViews={modelViews}
             sceneViewStates={data?.data}
             onViewStateSelected={handleViewStateSelected}
@@ -578,8 +578,6 @@ async function fetchAllItemMetadataEntries(
 
 // Fetch metadata for the selected item through the policy-aware Web SDK,
 // paginating over all pages, and merging in the synthetic identifier keys.
-// `entryCount` is the number of real (non-synthetic) entries returned, used
-// by the non-blocking policy diagnostic.
 export async function loadItemMetadata({
   controller,
   itemId,
@@ -590,7 +588,7 @@ export async function loadItemMetadata({
   itemId: string;
   viewId: string;
   identifiers?: HitIdentifiers;
-}): Promise<{ metadata: Metadata; entryCount: number }> {
+}): Promise<Metadata> {
   const entries = await fetchAllItemMetadataEntries(controller, itemId);
 
   const item = await controller
@@ -606,7 +604,7 @@ export async function loadItemMetadata({
     partRevisionSuppliedId: identifiers?.partRevisionSuppliedId,
   });
 
-  return { metadata, entryCount: entries.length };
+  return metadata;
 }
 
 export async function createStreamKey(
@@ -652,26 +650,6 @@ export async function createPolicySwitch({
     credentials: { clientId, streamKey, vertexEnv },
     url: encodeCreds({ clientId, sceneId, streamKey, vertexEnv, policyId }),
   };
-}
-
-// Bonus (non-blocking): a subtle diagnostic when the returned metadata looks
-// suspicious for the active policy. This never blocks or breaks the normal flow.
-// TODO(PLAT-8995): compare returned keys against the policy's declared entries
-// (`listPropertyKeyPolicyEntries`) once an entries endpoint is exposed; for now
-// we only flag the case where a policy is active but no metadata came back.
-// Based on `entryCount` (real, non-synthetic entries) — the merged synthetic
-// identifier keys are always present, so counting displayed keys would never fire.
-export function diagnosePolicy({
-  policyId,
-  entryCount,
-}: {
-  policyId?: string;
-  entryCount: number;
-}): string | undefined {
-  if (!policyId) return undefined;
-  return entryCount === 0
-    ? 'Policy applied, but no metadata was returned for this item.'
-    : undefined;
 }
 
 export function encodeCreds({

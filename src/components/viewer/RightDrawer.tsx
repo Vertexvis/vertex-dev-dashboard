@@ -28,7 +28,6 @@ interface Props {
   readonly streamMetadata?: Metadata;
   readonly metadataStatus?: MetadataStatus;
   readonly metadataError?: string;
-  readonly metadataDiagnostic?: string;
   readonly modelViews: ModelViewsState;
   readonly sceneViewStates?: SceneViewStateData[];
   readonly onViewStateSelected: (arg0: string) => void;
@@ -65,7 +64,6 @@ export function RightDrawer({
   streamMetadata,
   metadataStatus,
   metadataError,
-  metadataDiagnostic,
   modelViews,
   sceneViewStates,
   onViewStateSelected,
@@ -182,7 +180,6 @@ export function RightDrawer({
             stream={streamMetadata}
             status={metadataStatus}
             error={metadataError}
-            diagnostic={metadataDiagnostic}
           />
         );
       case 'scene-view-states':

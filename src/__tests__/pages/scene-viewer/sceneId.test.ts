@@ -7,7 +7,6 @@ import { CredsKey, EnvKey, NextIronRequest, TokenKey } from '../../../lib/with-s
 import {
   createPolicySwitch,
   createStreamKey,
-  diagnosePolicy,
   encodeCreds,
   loadItemMetadata,
   serverSidePropsHandler,
@@ -205,7 +204,7 @@ describe('loadItemMetadata', () => {
       getSceneViewItem,
     } as unknown as Controller;
 
-    const { metadata: md, entryCount } = await loadItemMetadata({
+    const md = await loadItemMetadata({
       controller,
       itemId: 'item-1',
       viewId: 'view-1',
@@ -224,8 +223,6 @@ describe('loadItemMetadata', () => {
     expect(md.properties.Material).toBe('Steel');
     expect(md.properties.Weight).toBe('12kg');
     expect(md.properties.VERTEX_SCENE_ITEM_ID).toBe('item-1');
-    // entryCount reflects only the real (non-synthetic) entries returned.
-    expect(entryCount).toBe(2);
   });
 
   it('threads hit identifiers into the synthetic identifier keys', async () => {
@@ -242,7 +239,7 @@ describe('loadItemMetadata', () => {
       getSceneViewItem,
     } as unknown as Controller;
 
-    const { metadata: md } = await loadItemMetadata({
+    const md = await loadItemMetadata({
       controller,
       itemId: 'item-1',
       viewId: 'view-1',
@@ -271,25 +268,6 @@ describe('loadItemMetadata', () => {
     await expect(
       loadItemMetadata({ controller, itemId: 'item-1', viewId: 'view-1' })
     ).rejects.toThrow('metadata unavailable');
-  });
-});
-
-describe('diagnosePolicy', () => {
-  it('returns no diagnostic when no policy is active', () => {
-    expect(diagnosePolicy({ entryCount: 0 })).toBeUndefined();
-    expect(diagnosePolicy({ entryCount: 3 })).toBeUndefined();
-  });
-
-  it('flags an active policy that returned no real metadata entries', () => {
-    // entryCount is 0 even though synthetic identifier keys are always merged,
-    // so the diagnostic can actually fire.
-    expect(diagnosePolicy({ policyId: 'policy-1', entryCount: 0 })).toBe(
-      'Policy applied, but no metadata was returned for this item.'
-    );
-  });
-
-  it('returns no diagnostic when an active policy returned metadata', () => {
-    expect(diagnosePolicy({ policyId: 'policy-1', entryCount: 2 })).toBeUndefined();
   });
 });
 

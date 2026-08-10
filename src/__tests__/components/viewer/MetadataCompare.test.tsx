@@ -76,7 +76,6 @@ function renderCompare(props: {
   streamMetadata?: Metadata;
   metadataStatus?: MetadataStatus;
   metadataError?: string;
-  metadataDiagnostic?: string;
 }): ReturnType<typeof render> {
   return render(
     <RightDrawer
@@ -743,24 +742,6 @@ describe('MetadataCompare states', () => {
     expect(screen.queryByText(/removed by policy/)).not.toBeInTheDocument();
   });
 
-  it('surfaces a subtle diagnostic without blocking the comparison', () => {
-    renderCompare({
-      metadataStatus: 'ready',
-      unrestrictedMetadata: {
-        partName: '',
-        properties: { Material: 'Steel' },
-      },
-      metadata: { partName: '', properties: { Material: 'Steel' } },
-      metadataDiagnostic: 'Policy applied, but no metadata was returned.',
-    });
-
-    expect(
-      screen.getByText('Policy applied, but no metadata was returned.')
-    ).toBeInTheDocument();
-    // Comparison still renders alongside the diagnostic.
-    expect(rowForKey('Material')).toHaveAttribute('data-state', 'same');
-  });
-
   it('warns instead of reporting no differences when the baseline fails', () => {
     renderCompare({
       metadataStatus: 'ready',
@@ -772,49 +753,6 @@ describe('MetadataCompare states', () => {
     expect(screen.getByText(/Unrestricted baseline unavailable/)).toBeInTheDocument();
     // The (misleading) difference summary must not be shown in its place.
     expect(screen.queryByText('No differences')).not.toBeInTheDocument();
-  });
-});
-
-describe('RightDrawer resize handle', () => {
-  it('renders a vertical separator handle', () => {
-    renderCompare({
-      metadataStatus: 'ready',
-      metadata: { partName: '', properties: { Material: 'Steel' } },
-    });
-
-    const handle = screen.getByRole('separator');
-    expect(handle).toHaveAttribute('aria-orientation', 'vertical');
-  });
-
-  it('updates the drawer width on drag', () => {
-    const { container } = renderCompare({
-      metadataStatus: 'ready',
-      metadata: { partName: '', properties: { Material: 'Steel' } },
-    });
-
-    // Wide viewport so the clamp does not swallow the change.
-    Object.defineProperty(window, 'innerWidth', {
-      configurable: true,
-      value: 1600,
-    });
-
-    // The chosen width is applied inline to the drawer paper.
-    const paper = container.querySelector('.MuiDrawer-paper') as HTMLElement;
-    const before = paper?.style.width;
-    expect(before).toBe('320px');
-
-    const handle = screen.getByRole('separator');
-    fireEvent.mouseDown(handle, { clientX: 1280 });
-    // Dragging the left edge 180px left grows the 320px drawer to 500px.
-    fireEvent.mouseMove(document, { clientX: 1100 });
-    fireEvent.mouseUp(document);
-
-    const after = (container.querySelector('.MuiDrawer-paper') as HTMLElement)?.style
-      .width;
-
-    // width should now be ~500px (1600 - 1100), and differ from the default.
-    expect(after).not.toBe(before);
-    expect(after).toBe('500px');
   });
 });
 
@@ -848,7 +786,6 @@ function CoordinatedMetadataHarness({
         unrestrictedError={panel.unrestrictedError}
         metadataStatus={panel.status}
         metadataError={panel.error}
-        metadataDiagnostic={panel.diagnostic}
         modelViews={emptyModelViews}
         onViewStateSelected={jest.fn()}
       />

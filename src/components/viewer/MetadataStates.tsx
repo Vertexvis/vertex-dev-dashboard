@@ -5,10 +5,6 @@ import { Title } from '../shared/Title';
 
 export type MetadataStatus = 'loading' | 'error' | 'ready';
 
-export function NoData(): JSX.Element {
-  return <StateMessage message="No data" />;
-}
-
 export function StateMessage({
   message,
   error = false,

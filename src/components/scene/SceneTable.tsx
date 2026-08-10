@@ -65,13 +65,10 @@ function useScenes({
   suppliedId,
   name,
 }: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
-  const cursorParam = cursor ? `&cursor=${cursor}` : '';
-  const suppliedIdParam = suppliedId
-    ? `&suppliedId=${encodeURIComponent(suppliedId)}`
-    : '';
-  const nameParam = name ? `&name=${encodeURIComponent(name)}` : '';
   return useSWR<GetRes<SceneData>, ErrorRes>(
-    `/api/scenes?pageSize=${pageSize}${cursorParam}${suppliedIdParam}${nameParam}`
+    `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ''}${
+      suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ''
+    }${name ? `&name=${encodeURIComponent(name)}` : ''}`
   );
 }
 
@@ -108,7 +105,7 @@ export default function SceneTable({
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selectedPolicyId, setSelectedPolicyId] = React.useState<string | undefined>();
@@ -139,7 +136,7 @@ export default function SceneTable({
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
   const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedId, 300),
+    () => debounce(setSuppliedIdFilter, 300),
     []
   );
 

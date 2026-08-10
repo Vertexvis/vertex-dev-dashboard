@@ -105,7 +105,6 @@ interface Props {
   readonly stream?: Metadata;
   readonly status?: MetadataStatus;
   readonly error?: string;
-  readonly diagnostic?: string;
 }
 
 // A row's classification given the currently VISIBLE source columns. "removed"
@@ -307,7 +306,6 @@ export function MetadataCompare({
   stream,
   status = 'ready',
   error,
-  diagnostic,
 }: Props): JSX.Element {
   // SSR-safe: first render uses the default so server/client markup match, then
   // the persisted selection is restored after mount.
@@ -413,15 +411,6 @@ export function MetadataCompare({
     <>
       <DrawerTitle />
       {controls}
-      {diagnostic ? (
-        <Typography
-          role="status"
-          sx={{ color: 'warning.main', mx: 2, my: 1 }}
-          variant="caption"
-        >
-          {diagnostic}
-        </Typography>
-      ) : null}
       {streamVisible && !streamAvailable ? <StreamNote /> : null}
       {baselineMissing ? (
         <Typography
