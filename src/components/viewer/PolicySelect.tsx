@@ -5,16 +5,13 @@ import {
   MenuItem,
   Select,
   Typography,
-} from "@mui/material";
-import { PropertyKeyPolicyData } from "@vertexvis/api-client-node";
-import React from "react";
-import useSWR from "swr";
+} from '@mui/material';
+import { PropertyKeyPolicyData } from '@vertexvis/api-client-node';
+import React from 'react';
+import useSWR from 'swr';
 
-import { GetRes } from "../../lib/api";
-import {
-  PropertyKeyPolicy,
-  toPolicyPage,
-} from "../../lib/property-key-policies";
+import { GetRes } from '../../lib/api';
+import { PropertyKeyPolicy, toPolicyPage } from '../../lib/property-key-policies';
 
 interface Props {
   readonly policyId?: string;
@@ -31,7 +28,7 @@ export function PolicySelect({
   disabled = false,
 }: Props): JSX.Element {
   const { data, error } = useSWR<GetRes<PropertyKeyPolicyData>>(
-    "/api/property-key-policies"
+    '/api/property-key-policies'
   );
   const loading = !data && !error;
   const policies: PropertyKeyPolicy[] = data ? toPolicyPage(data).items : [];
@@ -40,27 +37,23 @@ export function PolicySelect({
     <FormControl
       variant="standard"
       size="small"
-      sx={{ minWidth: "14rem" }}
+      sx={{ minWidth: '14rem' }}
       disabled={disabled || loading || !!error}
     >
-      <InputLabel id="viewer-policy-select-label">
-        Property Key Policy
-      </InputLabel>
+      <InputLabel id="viewer-policy-select-label">Property Key Policy</InputLabel>
       <Select
         labelId="viewer-policy-select-label"
         id="viewer-policy-select"
-        value={policyId ?? ""}
+        value={policyId ?? ''}
         onChange={(e) => onChange(e.target.value || undefined)}
-        endAdornment={
-          loading ? <CircularProgress size={16} sx={{ mr: 2 }} /> : undefined
-        }
+        endAdornment={loading ? <CircularProgress size={16} sx={{ mr: 2 }} /> : undefined}
       >
         <MenuItem value="">
           <em>None (unrestricted)</em>
         </MenuItem>
         {policies.map((policy) => (
           <MenuItem key={policy.id} value={policy.id}>
-            {policy.name ?? policy.suppliedId ?? policy.id}{" "}
+            {policy.name ?? policy.suppliedId ?? policy.id}{' '}
             <Typography
               component="span"
               variant="caption"

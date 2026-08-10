@@ -1,9 +1,9 @@
-import { Box, Typography } from "@mui/material";
-import React from "react";
+import { Box, Typography } from '@mui/material';
+import React from 'react';
 
-import { Title } from "../shared/Title";
+import { Title } from '../shared/Title';
 
-export type MetadataStatus = "loading" | "error" | "ready";
+export type MetadataStatus = 'loading' | 'error' | 'ready';
 
 export function NoData(): JSX.Element {
   return <StateMessage message="No data" />;
@@ -21,15 +21,15 @@ export function StateMessage({
       <DrawerTitle />
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexGrow: 1,
         }}
       >
         <Typography
-          role={error ? "alert" : undefined}
-          sx={{ color: error ? "error.main" : undefined, mx: 2, mb: 2 }}
+          role={error ? 'alert' : undefined}
+          sx={{ color: error ? 'error.main' : undefined, mx: 2, mb: 2 }}
           variant="body2"
         >
           {message}
@@ -43,7 +43,7 @@ export function DrawerTitle(): JSX.Element {
   return (
     <Title
       sx={{
-        borderBottom: "1px solid #ccc",
+        borderBottom: '1px solid #ccc',
       }}
     >
       Properties

@@ -119,8 +119,6 @@ export function getPropertyKeyPoliciesApi(client: VertexClient): PropertyKeyPoli
  * as `GetRes<PropertyKeyPolicyData>`. Structurally identical to
  * `toPropertyKeyPolicyPage`; kept as a named alias for those call sites.
  */
-export function toPolicyPage(
-  res: PropertyKeyPolicyPageRes
-): Paged<PropertyKeyPolicy> {
+export function toPolicyPage(res: PropertyKeyPolicyPageRes): Paged<PropertyKeyPolicy> {
   return toPropertyKeyPolicyPage(res);
 }
