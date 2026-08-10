@@ -8,9 +8,28 @@ import {
   createPolicySwitch,
   createStreamKey,
   encodeCreds,
+  loadItemMetadata,
   normalizeOptionalQueryValue,
   serverSidePropsHandler,
 } from '../../../pages/scene-viewer/[sceneId]';
+
+type Controller = Parameters<typeof loadItemMetadata>[0]['controller'];
+
+function stringEntry(
+  id: string,
+  name: string,
+  value: string
+): {
+  id: string;
+  key: { name: string; category: number };
+  value: { type: string; value: string };
+} {
+  return {
+    id,
+    key: { name, category: 0 },
+    value: { type: 'string', value },
+  };
+}
 
 describe('scene viewer route', () => {
   it('does not create a stream key while serving a scene route', () => {
@@ -173,6 +192,94 @@ describe('normalizeOptionalQueryValue', () => {
 
   it('trims usable policy IDs', () => {
     expect(normalizeOptionalQueryValue(' policy-1 ')).toBe('policy-1');
+  });
+});
+
+describe('loadItemMetadata', () => {
+  it('paginates through all metadata pages via the Web SDK', async () => {
+    const listSceneItemMetadata = jest
+      .fn()
+      .mockResolvedValueOnce({
+        paging: { next: 'cursor-2' },
+        entries: [stringEntry('1', 'Material', 'Steel')],
+      })
+      .mockResolvedValueOnce({
+        paging: {},
+        entries: [stringEntry('2', 'Weight', '12kg')],
+      });
+    const getSceneViewItem = jest
+      .fn()
+      .mockResolvedValue({ id: 'item-1', suppliedId: 's-1', name: 'Bracket' });
+
+    const controller = {
+      listSceneItemMetadata,
+      getSceneViewItem,
+    } as unknown as Controller;
+
+    const md = await loadItemMetadata({
+      controller,
+      itemId: 'item-1',
+      viewId: 'view-1',
+    });
+
+    expect(listSceneItemMetadata).toHaveBeenCalledTimes(2);
+    expect(listSceneItemMetadata).toHaveBeenNthCalledWith(1, 'item-1', {
+      size: 100,
+      cursor: undefined,
+    });
+    expect(listSceneItemMetadata).toHaveBeenNthCalledWith(2, 'item-1', {
+      size: 100,
+      cursor: 'cursor-2',
+    });
+    expect(md.partName).toBe('Bracket');
+    expect(md.properties.Material).toBe('Steel');
+    expect(md.properties.Weight).toBe('12kg');
+    expect(md.properties.VERTEX_SCENE_ITEM_ID).toBe('item-1');
+  });
+
+  it('threads hit identifiers into the synthetic identifier keys', async () => {
+    const listSceneItemMetadata = jest.fn().mockResolvedValue({
+      paging: {},
+      entries: [stringEntry('1', 'Material', 'Steel')],
+    });
+    // getSceneViewItem yields no supplied id / name, so the hit identifiers
+    // are what surface the part id / revision synthetic keys.
+    const getSceneViewItem = jest.fn().mockResolvedValue({ id: 'item-1' });
+
+    const controller = {
+      listSceneItemMetadata,
+      getSceneViewItem,
+    } as unknown as Controller;
+
+    const md = await loadItemMetadata({
+      controller,
+      itemId: 'item-1',
+      viewId: 'view-1',
+      identifiers: {
+        suppliedId: 'supplied-1',
+        partId: 'part-1',
+        partRevisionId: 'rev-1',
+        partRevisionSuppliedId: 'rev-supplied-1',
+      },
+    });
+
+    expect(md.properties.VERTEX_SCENE_ITEM_SUPPLIED_ID).toBe('supplied-1');
+    expect(md.properties.VERTEX_PART_ID).toBe('part-1');
+    expect(md.properties.VERTEX_PART_REVISION_ID).toBe('rev-1');
+    expect(md.properties.VERTEX_PART_REVISION_SUPPLIED_ID).toBe('rev-supplied-1');
+  });
+
+  it('rejects when listSceneItemMetadata fails (drives the panel error state)', async () => {
+    const controller = {
+      listSceneItemMetadata: jest
+        .fn()
+        .mockRejectedValue(new Error('metadata unavailable')),
+      getSceneViewItem: jest.fn(),
+    } as unknown as Controller;
+
+    await expect(
+      loadItemMetadata({ controller, itemId: 'item-1', viewId: 'view-1' })
+    ).rejects.toThrow('metadata unavailable');
   });
 });
 
