@@ -70,6 +70,50 @@ describe('PolicySelect', () => {
     expect(screen.getByRole('option', { name: /deny-supplied/i })).toBeInTheDocument();
   });
 
+  it('loads the next cursor page using the explicit selector page size', async () => {
+    const requestedPages: string[] = [];
+    server.use(
+      http.get('*/api/property-key-policies', ({ request }) => {
+        const url = new URL(request.url);
+        requestedPages.push(url.search);
+        if (url.searchParams.get('cursor') === 'page-2') {
+          return HttpResponse.json({
+            cursors: { self: 'page-2' },
+            data: [
+              {
+                type: 'property-key-policy',
+                id: 'policy-51',
+                attributes: {
+                  createdAt: '2026-06-03T00:00:00Z',
+                  mode: 'allowlist',
+                  name: 'Policy on second page',
+                },
+              },
+            ],
+            status: 200,
+          });
+        }
+
+        return HttpResponse.json({
+          ...policiesPage,
+          cursors: { next: 'page-2', self: 'page-1' },
+        });
+      })
+    );
+
+    renderWithSWR(<PolicySelect onChange={jest.fn()} />);
+
+    const nextPage = await screen.findByRole('button', { name: 'Next policy page' });
+    await waitFor(() => expect(nextPage).toBeEnabled());
+    await userEvent.click(nextPage);
+
+    await userEvent.click(screen.getByLabelText('Property Key Policy'));
+    expect(
+      await screen.findByRole('option', { name: /Policy on second page/i })
+    ).toBeInTheDocument();
+    expect(requestedPages).toEqual(['?pageSize=50', '?pageSize=50&cursor=page-2']);
+  });
+
   it('calls onChange with the selected policy id', async () => {
     usePolicies();
     const onChange = jest.fn();
