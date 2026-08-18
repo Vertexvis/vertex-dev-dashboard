@@ -1,7 +1,7 @@
 import { Alert, Snackbar } from '@mui/material';
 import { SceneItemData, SceneViewStateData } from '@vertexvis/api-client-node';
 import { vertexvis } from '@vertexvis/frame-streaming-protos';
-import { Environment, TapEventDetails } from '@vertexvis/viewer';
+import { TapEventDetails } from '@vertexvis/viewer';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import { useRouter } from 'next/router';
 import { withIronSession } from 'next-iron-session';
@@ -32,6 +32,11 @@ import {
 } from '../../lib/with-session';
 
 const ViewerId = 'vertex-viewer-id';
+
+export function normalizeOptionalQueryValue(value?: string): string | undefined {
+  const normalized = value?.trim();
+  return normalized === '' ? undefined : normalized;
+}
 
 function useSceneViewStates({
   viewId,
@@ -85,9 +90,10 @@ export default function SceneViewer({
 
     const cId = head(router.query.clientId) ?? clientId;
     const sk = head(router.query.streamKey);
-    const ve = (head(router.query.vertexEnv) as Environment) ?? vertexEnv;
+    const ve =
+      (head(router.query.vertexEnv) as EnvironmentWithCustom | undefined) ?? vertexEnv;
     const sceneId = head(router.query.sceneId);
-    const pId = head(router.query.policyId);
+    const pId = normalizeOptionalQueryValue(head(router.query.policyId));
 
     setPolicyId(pId);
 
@@ -154,26 +160,30 @@ export default function SceneViewer({
     if (newPolicyId === policyId) return;
 
     const sceneId = head(router.query.sceneId);
-    const cId = credentials?.clientId ?? clientId;
-    const ve = credentials?.vertexEnv ?? vertexEnv;
-    if (!sceneId || !cId || !ve) return;
+    if (!sceneId) return;
 
     setSwitchingPolicy(true);
     setPolicySwitchError(undefined);
     try {
       const { credentials: nextCredentials, url } = await createPolicySwitch({
         sceneId,
-        clientId: cId,
-        vertexEnv: ve,
+        // The API route creates the key with the authenticated session. Use
+        // matching session credentials rather than potentially foreign shared
+        // URL credentials when reconnecting the viewer.
+        clientId,
+        vertexEnv,
         policyId: newPolicyId,
       });
+      const replaced = await router.replace(url, undefined, { shallow: true });
+      if (!replaced) throw new Error('Updating the scene viewer URL was cancelled.');
+
       requestedStreamKeyForScene.current = sceneId;
       setPolicyId(newPolicyId);
       setCredentials(nextCredentials);
-      await router.replace(url, undefined, { shallow: true });
-    } catch {
+    } catch (error) {
       // Keep the existing viewer usable: surface a non-fatal error instead of
       // the fatal streamKeyError that would replace the page with an alert.
+      reportError('Failed to switch the property key policy')(error);
       setPolicySwitchError(
         'Unable to switch the property key policy. The previous policy is still active.'
       );
@@ -203,9 +213,7 @@ export default function SceneViewer({
               <PolicySelect
                 policyId={policyId}
                 onChange={(newPolicyId) => {
-                  handlePolicyChange(newPolicyId).catch(
-                    reportError('Failed to switch the property key policy')
-                  );
+                  void handlePolicyChange(newPolicyId);
                 }}
                 disabled={switchingPolicy}
               />

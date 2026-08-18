@@ -8,6 +8,7 @@ import {
   createPolicySwitch,
   createStreamKey,
   encodeCreds,
+  normalizeOptionalQueryValue,
   serverSidePropsHandler,
 } from '../../../pages/scene-viewer/[sceneId]';
 
@@ -161,6 +162,17 @@ describe('encodeCreds', () => {
     });
 
     expect(url).not.toContain('policyId');
+  });
+});
+
+describe('normalizeOptionalQueryValue', () => {
+  it('normalizes absent and whitespace-only policy IDs to undefined', () => {
+    expect(normalizeOptionalQueryValue()).toBeUndefined();
+    expect(normalizeOptionalQueryValue('  ')).toBeUndefined();
+  });
+
+  it('trims usable policy IDs', () => {
+    expect(normalizeOptionalQueryValue(' policy-1 ')).toBe('policy-1');
   });
 });
 

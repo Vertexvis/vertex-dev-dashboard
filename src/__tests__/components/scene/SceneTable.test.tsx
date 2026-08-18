@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import React from 'react';
@@ -271,6 +271,41 @@ describe('SceneTable', () => {
     await userEvent.click(viewSceneItem);
 
     expect(mockPush).toHaveBeenCalledWith('/scene-viewer/scene-1?policyId=policy-1');
+  });
+
+  it('generates a stream key with the policy explicitly selected in its dialog', async () => {
+    let requestBody: Record<string, unknown> | undefined;
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
+    server.use(
+      http.get('*/api/scenes', () => HttpResponse.json(page)),
+      http.get('*/api/property-key-policies', () => HttpResponse.json(policiesPage)),
+      http.post('*/api/stream-keys', async ({ request }) => {
+        requestBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ key: 'stream-key-1', status: 200 });
+      })
+    );
+
+    renderTable(scene);
+
+    await userEvent.click(await screen.findByLabelText('Actions for Scene One'));
+    await userEvent.click(
+      await screen.findByRole('menuitem', { name: 'Generate stream key' })
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: 'Generate stream key' });
+    await userEvent.click(within(dialog).getByLabelText('Property Key Policy'));
+    await userEvent.click(await screen.findByRole('option', { name: /My Allowlist/i }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Generate' }));
+
+    await waitFor(() =>
+      expect(requestBody).toEqual({
+        id: 'scene-1',
+        propertyKeyPolicyId: 'policy-1',
+      })
+    );
   });
 
   it('disables the policy control and shows a spinner while policies are loading', async () => {

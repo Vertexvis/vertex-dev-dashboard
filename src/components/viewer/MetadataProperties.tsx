@@ -1,5 +1,7 @@
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
   Box,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -82,11 +84,20 @@ function NoData(): JSX.Element {
 function DrawerTitle(): JSX.Element {
   return (
     <Title
+      component="div"
       sx={{
         borderBottom: '1px solid #ccc',
+        alignItems: 'center',
+        display: 'flex',
+        justifyContent: 'space-between',
       }}
     >
-      Properties
+      <span>Properties</span>
+      <Tooltip title="Properties are loaded with your developer-session credentials and remain unrestricted. The selected property key policy restricts only metadata available in the viewer stream.">
+        <IconButton aria-label="About developer properties" size="small">
+          <HelpOutlineIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
     </Title>
   );
 }

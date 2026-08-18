@@ -38,8 +38,6 @@ export function toMetadata({
   if (partRevisionId?.hex) ps[PartRevIdKey] = partRevisionId.hex;
   if (partRevSuppliedId?.value) ps[PartRevSuppliedId] = partRevSuppliedId.value;
 
-  console.log(typeof hit?.metadataProperties);
-
   const md = hit?.metadataProperties;
   if (md) {
     md.filter((p) => p.key).forEach((p) => (ps[p.key as string] = toValue(p)));
