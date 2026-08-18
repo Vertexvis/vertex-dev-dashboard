@@ -278,7 +278,7 @@ describe('MetadataCompare selector help and row legend', () => {
 
     const legend = within(dialog).getByRole('group', { name: 'Row color legend' });
     expect(legend).toHaveTextContent(
-      'Same (no highlight) — Values match across selected columns, or the row is an identifier.'
+      'Same (no highlight) — Values match across selected columns.'
     );
     expect(legend).toHaveTextContent(
       'Differs (orange) — Values differ across selected columns.'
@@ -444,11 +444,11 @@ describe('MetadataCompare diff highlighting', () => {
     expect(screen.getByText('2 properties removed by policy')).toBeInTheDocument();
   });
 
-  it('never flags synthetic identifier keys, even when absent on one side', () => {
+  it('shows synthetic identifiers in the separate identity table', () => {
     renderCompare({
       metadataStatus: 'ready',
       // Identifier present unrestricted but absent restricted (e.g. tree
-      // selection) — must NOT be reported as removed by policy.
+      // selection) belongs in Identity rather than the policy comparison.
       unrestrictedMetadata: {
         partName: '',
         properties: {
@@ -463,15 +463,15 @@ describe('MetadataCompare diff highlighting', () => {
       },
     });
 
-    const idRow = rowForKey('VERTEX_SCENE_ITEM_ID');
-    expect(idRow).toHaveAttribute('data-state', 'same');
-    expect(idRow).toHaveAttribute('data-identifier', 'true');
-    expect(within(idRow).queryByText('Removed by policy')).not.toBeInTheDocument();
+    const identity = screen.getByRole('table', { name: 'Item identity' });
+    expect(within(identity).getByText('Scene item ID')).toBeInTheDocument();
+    expect(within(identity).getByText('item-1')).toBeInTheDocument();
+    expect(within(identity).getByText('Part ID')).toBeInTheDocument();
+    expect(within(identity).getByText('part-1')).toBeInTheDocument();
+    expect(screen.queryByText('VERTEX_SCENE_ITEM_ID')).not.toBeInTheDocument();
+    expect(screen.queryByText('VERTEX_PART_ID')).not.toBeInTheDocument();
 
-    const partRow = rowForKey('VERTEX_PART_ID');
-    expect(partRow).toHaveAttribute('data-state', 'same');
-
-    // No false "removed" noise from identifier keys.
+    // No false "removed" noise from identifier keys in the properties table.
     expect(screen.getByText('No differences')).toBeInTheDocument();
   });
 
