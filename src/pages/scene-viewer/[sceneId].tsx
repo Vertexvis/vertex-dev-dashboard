@@ -211,6 +211,7 @@ export default function SceneViewer({
           <Header
             actions={
               <PolicySelect
+                compact
                 policyId={policyId}
                 onChange={(newPolicyId) => {
                   void handlePolicyChange(newPolicyId);
