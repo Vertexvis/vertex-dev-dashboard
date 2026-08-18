@@ -100,7 +100,7 @@ export default function SceneTable({
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
   const [selectedPolicyId, setSelectedPolicyId] = React.useState<string | undefined>();
@@ -123,10 +123,7 @@ export default function SceneTable({
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
-  const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
-  );
+  const debouncedSetSuppliedId = React.useMemo(() => debounce(setSuppliedId, 300), []);
 
   const debouncedSetNameFilter = React.useMemo(() => debounce(setNameFilter, 300), []);
 
@@ -273,7 +270,7 @@ export default function SceneTable({
             label="Supplied ID Filter"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
+              debouncedSetSuppliedId(e.target.value?.trim() ?? undefined);
             }}
             sx={{ mt: 0, width: '20rem' }}
           />

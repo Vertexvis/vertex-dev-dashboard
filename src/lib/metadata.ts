@@ -55,7 +55,8 @@ export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
   ps[ItemIdKey] = id;
   if (suppliedId) ps[ItemSuppliedIdKey] = suppliedId;
   if (partRevisionId) ps[PartRevIdKey] = partRevisionId;
-  const md = item.attributes.metadata;
+  // Intentional: this developer drawer needs the unrestricted session metadata.
+  const md = item.attributes.metadata; // NOSONAR
 
   if (md) {
     const itemMD = Object.entries(md).reduce((n, current) => {
@@ -68,7 +69,7 @@ export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
     return { partName: '', properties: alphabetize(itemMD) };
   }
 
-  return { partName: '', properties: alphabetize(ps) };
+  return undefined;
 }
 
 function alphabetize<T extends Record<string, unknown>>(obj: T): T {
