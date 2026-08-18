@@ -117,9 +117,21 @@ export interface CompareRow {
   // Value per source, keyed by source id (undefined when absent/empty).
   readonly values: Partial<Record<SourceId, string | undefined>>;
   readonly state: CompareState;
-  // Structural identifier keys are informational and never flagged.
-  readonly identifier: boolean;
 }
+
+interface IdentityRow {
+  readonly key: string;
+  readonly label: string;
+  readonly value: string;
+}
+
+const IdentityLabels: Readonly<Record<string, string>> = {
+  VERTEX_SCENE_ITEM_ID: 'Scene item ID',
+  VERTEX_SCENE_ITEM_SUPPLIED_ID: 'Scene item supplied ID',
+  VERTEX_PART_ID: 'Part ID',
+  VERTEX_PART_REVISION_ID: 'Part revision ID',
+  VERTEX_PART_REVISION_SUPPLIED_ID: 'Part revision supplied ID',
+};
 
 // Accessible, non-color-only label for each highlighted row state.
 const StateLabel: Record<CompareState, string> = {
@@ -140,7 +152,7 @@ const LegendEntries: readonly LegendEntry[] = [
   {
     state: 'same',
     label: 'Same (no highlight)',
-    description: 'Values match across selected columns, or the row is an identifier.',
+    description: 'Values match across selected columns.',
   },
   {
     state: 'differs',
@@ -187,10 +199,9 @@ function sourceMetadata(
   }
 }
 
-// Build one comparison row per key across the union of the SELECTED sources
-// (alphabetical, case-sensitive so `Material` !== `material`). Synthetic
-// identifier keys are structural — always classified as "same" so they never
-// produce false "removed by policy" or "differs" noise.
+// Build one comparison row per ordinary metadata key across the union of the
+// SELECTED sources (alphabetical, case-sensitive so `Material` !== `material`).
+// Structural identifier keys render in the separate Identity table instead.
 export function buildCompareRows({
   columns,
   unrestricted,
@@ -210,7 +221,9 @@ export function buildCompareRows({
 
   const keys = Array.from(
     new Set(propsByColumn.flatMap(({ props }) => Object.keys(props)))
-  ).sort((a, b) => a.localeCompare(b));
+  )
+    .filter((key) => !IdentifierKeys.has(key))
+    .sort((a, b) => a.localeCompare(b));
 
   const unrestrictedVisible = columns.includes('unrestricted');
   const restrictedVisible = columns.includes('restricted');
@@ -220,12 +233,6 @@ export function buildCompareRows({
     propsByColumn.forEach(({ id, props }) => {
       values[id] = props[key];
     });
-    const identifier = IdentifierKeys.has(key);
-
-    if (identifier) {
-      return { key, values, state: 'same', identifier };
-    }
-
     // Prominent case: both policy-comparison columns visible and the key is
     // present unrestricted but absent/empty restricted -> policy stripped it.
     if (
@@ -234,7 +241,7 @@ export function buildCompareRows({
       isPresent(values.unrestricted) &&
       !isPresent(values.restricted)
     ) {
-      return { key, values, state: 'removed', identifier };
+      return { key, values, state: 'removed' };
     }
 
     // Otherwise flag when the values across the visible columns are not all
@@ -251,8 +258,31 @@ export function buildCompareRows({
       key,
       values,
       state: allEqual ? 'same' : 'differs',
-      identifier,
     };
+  });
+}
+
+// Identity values are structural context rather than policy-governed metadata.
+// Prefer the policy-aware response, then a viewer hit, then the unrestricted
+// response; later sources fill only identifiers unavailable from earlier ones.
+function buildIdentityRows({
+  unrestricted,
+  restricted,
+  stream,
+}: {
+  unrestricted?: Metadata;
+  restricted?: Metadata;
+  stream?: Metadata;
+}): IdentityRow[] {
+  const propertiesByPriority = [restricted, stream, unrestricted].map(
+    (metadata) => metadata?.properties ?? {}
+  );
+
+  return Array.from(IdentifierKeys).flatMap((key) => {
+    const value = propertiesByPriority
+      .map((properties) => properties[key])
+      .find(isPresent);
+    return value == null ? [] : [{ key, label: IdentityLabels[key] ?? key, value }];
   });
 }
 
@@ -371,6 +401,7 @@ export function MetadataCompare({
 
   const visibleSources = Sources.filter((s) => columns.includes(s.id));
   const rows = buildCompareRows({ columns, unrestricted, restricted, stream });
+  const identityRows = buildIdentityRows({ unrestricted, restricted, stream });
 
   const comparingPolicy =
     columns.includes('unrestricted') && columns.includes('restricted');
@@ -387,6 +418,7 @@ export function MetadataCompare({
     return (
       <>
         <DrawerTitle />
+        <IdentityTable rows={identityRows} />
         {controls}
         {streamVisible && !streamAvailable ? <StreamNote /> : null}
         <EmptyMetadataState />
@@ -410,6 +442,7 @@ export function MetadataCompare({
   return (
     <>
       <DrawerTitle />
+      <IdentityTable rows={identityRows} />
       {controls}
       {streamVisible && !streamAvailable ? <StreamNote /> : null}
       {baselineMissing ? (
@@ -487,6 +520,32 @@ function EmptyMetadataState(): JSX.Element {
         No data
       </Typography>
     </Box>
+  );
+}
+
+function IdentityTable({
+  rows,
+}: {
+  readonly rows: readonly IdentityRow[];
+}): JSX.Element | null {
+  if (rows.length === 0) return null;
+
+  return (
+    <TableContainer sx={{ flex: '0 0 auto', px: 1.5, pt: 1 }}>
+      <Typography variant="subtitle2">Identity</Typography>
+      <Table aria-label="Item identity" size="small">
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.key}>
+              <TableCell sx={{ pl: 0 }}>
+                <Typography variant="subtitle2">{row.label}</Typography>
+              </TableCell>
+              <ValueCell value={row.value} />
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -622,16 +681,11 @@ function CompareTableRow({
   readonly row: CompareRow;
   readonly columns: readonly SourceId[];
 }): JSX.Element {
-  // Identifier keys are informational; never highlight them.
-  const highlighted = !row.identifier && row.state !== 'same';
+  const highlighted = row.state !== 'same';
   const bg = highlighted ? stateBackground(row.state) : undefined;
 
   return (
-    <TableRow
-      data-state={row.state}
-      data-identifier={row.identifier ? 'true' : undefined}
-      sx={bg ? { backgroundColor: bg } : undefined}
-    >
+    <TableRow data-state={row.state} sx={bg ? { backgroundColor: bg } : undefined}>
       <TableCell>
         <Typography
           sx={{
