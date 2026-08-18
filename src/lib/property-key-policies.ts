@@ -113,12 +113,3 @@ export function toPropertyKeyPolicyKey(
 export function getPropertyKeyPoliciesApi(client: VertexClient): PropertyKeyPoliciesApi {
   return new PropertyKeyPoliciesApi(client.config, undefined, client.axiosInstance);
 }
-
-/**
- * Page mapper used by the viewer and scene table, which fetch the policy list
- * as `GetRes<PropertyKeyPolicyData>`. Structurally identical to
- * `toPropertyKeyPolicyPage`; kept as a named alias for those call sites.
- */
-export function toPolicyPage(res: PropertyKeyPolicyPageRes): Paged<PropertyKeyPolicy> {
-  return toPropertyKeyPolicyPage(res);
-}
