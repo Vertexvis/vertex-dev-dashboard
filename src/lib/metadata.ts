@@ -3,6 +3,10 @@ import { vertexvis } from '@vertexvis/frame-streaming-protos';
 
 export interface Metadata {
   readonly partName?: string;
+  // Intrinsic item identity (id, supplied id, source id). Client-injected and
+  // not governed by property key policies, so kept separate from properties.
+  // PLAT-9087 renders these in their own drawer table.
+  readonly identifiers: Properties;
   readonly properties: Properties;
 }
 
@@ -23,7 +27,7 @@ export function toMetadata({
 }): Metadata | undefined {
   if (hit == null) return;
 
-  const ps: Properties = {};
+  const ids: Properties = {};
   const {
     itemId,
     itemSuppliedId,
@@ -32,44 +36,49 @@ export function toMetadata({
     suppliedPartRevisionId: partRevSuppliedId,
   } = hit;
 
-  if (itemId?.hex) ps[ItemIdKey] = itemId.hex;
-  if (itemSuppliedId?.value) ps[ItemSuppliedIdKey] = itemSuppliedId.value;
-  if (partId?.hex) ps[PartIdKey] = partId.hex;
-  if (partRevisionId?.hex) ps[PartRevIdKey] = partRevisionId.hex;
-  if (partRevSuppliedId?.value) ps[PartRevSuppliedId] = partRevSuppliedId.value;
+  if (itemId?.hex) ids[ItemIdKey] = itemId.hex;
+  if (itemSuppliedId?.value) ids[ItemSuppliedIdKey] = itemSuppliedId.value;
+  if (partId?.hex) ids[PartIdKey] = partId.hex;
+  if (partRevisionId?.hex) ids[PartRevIdKey] = partRevisionId.hex;
+  if (partRevSuppliedId?.value) ids[PartRevSuppliedId] = partRevSuppliedId.value;
 
+  const ps: Properties = {};
   const md = hit?.metadataProperties;
   if (md) {
     md.filter((p) => p.key).forEach((p) => (ps[p.key as string] = toValue(p)));
   }
 
-  return { partName: ps.Name, properties: alphabetize(ps) };
+  return {
+    partName: ps.Name,
+    identifiers: alphabetize(ids),
+    properties: alphabetize(ps),
+  };
 }
 
-export function toMetadataFromItem(item: SceneItemData): Metadata | undefined {
-  const ps: Properties = {};
-  const id = item.id;
+export function toMetadataFromItem(item: SceneItemData): Metadata {
+  const ids: Properties = {};
   const suppliedId = item.attributes.suppliedId;
   const partRevisionId = item.relationships.source?.data.id;
 
-  ps[ItemIdKey] = id;
-  if (suppliedId) ps[ItemSuppliedIdKey] = suppliedId;
-  if (partRevisionId) ps[PartRevIdKey] = partRevisionId;
+  ids[ItemIdKey] = item.id;
+  if (suppliedId) ids[ItemSuppliedIdKey] = suppliedId;
+  if (partRevisionId) ids[PartRevIdKey] = partRevisionId;
+
   // Intentional: this developer drawer needs the unrestricted session metadata.
   const md = item.attributes.metadata; // NOSONAR
-
+  const ps: Properties = {};
   if (md) {
-    const itemMD = Object.entries(md).reduce((n, current) => {
-      return {
-        ...n,
-        [current[0]]: (current[1] as MetadataStringType).value || '',
-      };
-    }, ps);
-
-    return { partName: '', properties: alphabetize(itemMD) };
+    Object.entries(md).forEach(([key, value]) => {
+      ps[key] = (value as MetadataStringType).value || '';
+    });
   }
 
-  return undefined;
+  // Metadata-free items still carry intrinsic identifiers via `identifiers`.
+  return {
+    partName: '',
+    identifiers: alphabetize(ids),
+    properties: alphabetize(ps),
+  };
 }
 
 function alphabetize<T extends Record<string, unknown>>(obj: T): T {

@@ -61,7 +61,9 @@ export function PolicySelect({
   }, [pageCursors, setCursors]);
 
   const controlsDisabled = disabled || loading || error != null;
-  const paginationDisabled = controlsDisabled || isValidating;
+  const paginationDisabled = disabled || loading || isValidating;
+  const previousDisabled = paginationDisabled || currentPage === 0;
+  const nextDisabled = paginationDisabled || error != null || cursors?.next == null;
   const selectorWidth = width ?? (compact ? '11rem' : '14rem');
   const label = compact ? 'Policy' : 'Property Key Policy';
 
@@ -69,7 +71,7 @@ export function PolicySelect({
     <Box sx={{ display: 'flex', flexShrink: 0 }}>
       <IconButton
         aria-label="Previous policy page"
-        disabled={paginationDisabled || currentPage === 0}
+        disabled={previousDisabled}
         onClick={() => handlePageChange(currentPage - 1)}
         size="small"
       >
@@ -77,7 +79,7 @@ export function PolicySelect({
       </IconButton>
       <IconButton
         aria-label="Next policy page"
-        disabled={paginationDisabled || cursors?.next == null}
+        disabled={nextDisabled}
         onClick={() => handlePageChange(currentPage + 1)}
         size="small"
       >
@@ -88,7 +90,7 @@ export function PolicySelect({
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
       <Button
         aria-label="Previous policy page"
-        disabled={paginationDisabled || currentPage === 0}
+        disabled={previousDisabled}
         onClick={() => handlePageChange(currentPage - 1)}
         size="small"
       >
@@ -96,7 +98,7 @@ export function PolicySelect({
       </Button>
       <Button
         aria-label="Next policy page"
-        disabled={paginationDisabled || cursors?.next == null}
+        disabled={nextDisabled}
         onClick={() => handlePageChange(currentPage + 1)}
         size="small"
       >

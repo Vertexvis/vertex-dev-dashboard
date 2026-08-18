@@ -22,7 +22,10 @@ interface Props {
 export function MetadataProperties({ metadata }: Props): JSX.Element {
   if (metadata == null) return <NoData />;
 
-  const propKeys = Object.keys(metadata.properties);
+  // PLAT-9087 will split identifiers into their own table; until then render the
+  // intrinsic identifiers and policy-governed properties as one combined list.
+  const properties = { ...metadata.identifiers, ...metadata.properties };
+  const propKeys = Object.keys(properties).sort((a, b) => a.localeCompare(b));
   if (propKeys.length === 0) return <NoData />;
 
   return (
@@ -35,11 +38,7 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
               <TableRow key={k}>
                 <TableCell>
                   <Typography variant="subtitle2">{k}</Typography>
-                  <Tooltip
-                    title={metadata.properties[k]}
-                    placement="left"
-                    enterDelay={500}
-                  >
+                  <Tooltip title={properties[k]} placement="left" enterDelay={500}>
                     <Typography
                       sx={{
                         overflow: 'hidden',
@@ -48,7 +47,7 @@ export function MetadataProperties({ metadata }: Props): JSX.Element {
                       }}
                       variant="body2"
                     >
-                      {metadata.properties[k]}
+                      {properties[k]}
                     </Typography>
                   </Tooltip>
                 </TableCell>
