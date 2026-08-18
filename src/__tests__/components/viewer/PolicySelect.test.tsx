@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import React from 'react';
@@ -70,7 +70,15 @@ describe('PolicySelect', () => {
     expect(screen.getByRole('option', { name: /deny-supplied/i })).toBeInTheDocument();
   });
 
-  it('loads the next cursor page using the explicit selector page size', async () => {
+  // The MUI menu's scroll container is the Paper that wraps the listbox; the
+  // component attaches its load-more handler there.
+  function menuScrollContainer(): HTMLElement {
+    const paper = screen.getByRole('listbox').closest('.MuiPaper-root');
+    if (paper == null) throw new Error('Menu paper not found');
+    return paper as HTMLElement;
+  }
+
+  it('loads the next page automatically when scrolling to the bottom of the list', async () => {
     const requestedPages: string[] = [];
     server.use(
       http.get('*/api/property-key-policies', ({ request }) => {
@@ -103,85 +111,43 @@ describe('PolicySelect', () => {
 
     renderWithSWR(<PolicySelect onChange={jest.fn()} />);
 
-    const nextPage = await screen.findByRole('button', { name: 'Next policy page' });
-    await waitFor(() => expect(nextPage).toBeEnabled());
-    await userEvent.click(nextPage);
-
-    await userEvent.click(screen.getByLabelText('Property Key Policy'));
-    expect(
-      await screen.findByRole('option', { name: /Policy on second page/i })
-    ).toBeInTheDocument();
-    expect(requestedPages).toEqual(['?pageSize=50', '?pageSize=50&cursor=page-2']);
-  });
-
-  it('replays the stored cursor when navigating back to a previous page', async () => {
-    const requestedPages: string[] = [];
-    server.use(
-      http.get('*/api/property-key-policies', ({ request }) => {
-        const url = new URL(request.url);
-        requestedPages.push(url.search);
-        if (url.searchParams.get('cursor') === 'page-2') {
-          return HttpResponse.json({
-            cursors: { self: 'page-2' },
-            data: [
-              {
-                type: 'property-key-policy',
-                id: 'policy-51',
-                attributes: {
-                  createdAt: '2026-06-03T00:00:00Z',
-                  mode: 'allowlist',
-                  name: 'Policy on second page',
-                },
-              },
-            ],
-            status: 200,
-          });
-        }
-
-        // The initial load (no cursor) and the back-navigation replay
-        // (cursor=page-1, the stored self cursor) both serve the first page.
-        return HttpResponse.json({
-          ...policiesPage,
-          cursors: { next: 'page-2', self: 'page-1' },
-        });
-      })
-    );
-
-    renderWithSWR(<PolicySelect onChange={jest.fn()} />);
-
-    const previousPage = await screen.findByRole('button', {
-      name: 'Previous policy page',
-    });
-    const nextPage = screen.getByRole('button', { name: 'Next policy page' });
-
-    // Previous is disabled on the first page.
-    expect(previousPage).toBeDisabled();
-    await waitFor(() => expect(nextPage).toBeEnabled());
-    await userEvent.click(nextPage);
-
-    // Second page loaded; Previous is now available.
-    await waitFor(() => expect(previousPage).toBeEnabled());
-    await userEvent.click(screen.getByLabelText('Property Key Policy'));
-    expect(
-      await screen.findByRole('option', { name: /Policy on second page/i })
-    ).toBeInTheDocument();
-    await userEvent.keyboard('{Escape}');
-
-    // Navigate back: the first page's stored self cursor is replayed.
-    await userEvent.click(previousPage);
     await userEvent.click(await screen.findByLabelText('Property Key Policy'));
-    expect(
-      await screen.findByRole('option', { name: /My Allowlist/i })
-    ).toBeInTheDocument();
+    await screen.findByRole('option', { name: /My Allowlist/i });
 
-    expect(requestedPages).toEqual([
-      '?pageSize=50',
-      '?pageSize=50&cursor=page-2',
-      '?pageSize=50&cursor=page-1',
-    ]);
+    // In jsdom the scroll metrics are all 0, so any scroll event lands within
+    // the load-more threshold and triggers the next page fetch.
+    fireEvent.scroll(menuScrollContainer());
+
+    expect(
+      await screen.findByRole('option', { name: /Policy on second page/i })
+    ).toBeInTheDocument();
+    expect(requestedPages[0]).toBe('?pageSize=50');
+    await waitFor(() => expect(requestedPages).toContain('?pageSize=50&cursor=page-2'));
   });
 
-  it('keeps Previous enabled when a later page fails to load', async () => {
+  it('does not request another page once the last page has no next cursor', async () => {
+    const requestedPages: string[] = [];
+    server.use(
+      http.get('*/api/property-key-policies', ({ request }) => {
+        requestedPages.push(new URL(request.url).search);
+        // Single page with no `next` cursor: the list is complete.
+        return HttpResponse.json({ ...policiesPage, cursors: { self: 'page-1' } });
+      })
+    );
+
+    renderWithSWR(<PolicySelect onChange={jest.fn()} />);
+
+    await userEvent.click(await screen.findByLabelText('Property Key Policy'));
+    await screen.findByRole('option', { name: /My Allowlist/i });
+
+    fireEvent.scroll(menuScrollContainer());
+    fireEvent.scroll(menuScrollContainer());
+
+    // No `next` cursor means no further requests, regardless of scrolling.
+    await waitFor(() => expect(requestedPages).toEqual(['?pageSize=50']));
+  });
+
+  it('shows the error caption when a later page fails to load', async () => {
     server.use(
       http.get('*/api/property-key-policies', ({ request }) => {
         const url = new URL(request.url);
@@ -196,18 +162,16 @@ describe('PolicySelect', () => {
 
     renderWithSWR(<PolicySelect onChange={jest.fn()} />);
 
-    const nextPage = await screen.findByRole('button', { name: 'Next policy page' });
-    const previousPage = screen.getByRole('button', { name: 'Previous policy page' });
-    await waitFor(() => expect(nextPage).toBeEnabled());
-    await userEvent.click(nextPage);
+    await userEvent.click(await screen.findByLabelText('Property Key Policy'));
+    await screen.findByRole('option', { name: /My Allowlist/i });
 
-    // The second page request failed, but the user can still page back to the
-    // already-loaded first page; only forward navigation is blocked.
+    fireEvent.scroll(menuScrollContainer());
+
     await waitFor(() =>
       expect(screen.getByText('Could not load policies')).toBeInTheDocument()
     );
-    expect(previousPage).toBeEnabled();
-    expect(nextPage).toBeDisabled();
+    // The already-loaded first page stays visible; only forward loading stops.
+    expect(screen.getByRole('option', { name: /My Allowlist/i })).toBeInTheDocument();
   });
 
   it('calls onChange with the selected policy id', async () => {
