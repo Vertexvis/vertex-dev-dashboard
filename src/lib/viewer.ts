@@ -17,7 +17,7 @@ export function useViewer(): ViewerState {
   const [isReady, setIsReady] = React.useState(false);
 
   const actions = useViewerActions({
-    element: viewerRef.current,
+    elementRef: viewerRef,
   });
 
   React.useEffect(() => {
@@ -30,7 +30,8 @@ export function useViewer(): ViewerState {
 }
 
 interface UseViewerActionsProps {
-  element?: HTMLVertexViewerElement | null;
+  // Holds ref bc otherwise functions could close over a viewer that later unmounts
+  elementRef: React.MutableRefObject<HTMLVertexViewerElement | null>;
 }
 
 export interface ViewerActions {
@@ -47,7 +48,7 @@ export interface ViewerActions {
   reset: () => Promise<void>;
 }
 
-function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
+function useViewerActions({ elementRef }: UseViewerActionsProps): ViewerActions {
   async function updateVisibility(
     scene: Scene,
     visible: boolean,
@@ -86,7 +87,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
 
   return {
     showOnly: async (itemId) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await scene
@@ -98,7 +99,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     showOnlySelected: async () => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await scene
@@ -110,7 +111,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     setVisibility: async (itemId, visible) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) =>
@@ -119,21 +120,21 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     setVisibilityAll: async (visible) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) => op.where((q) => q.all()));
       }
     },
     setVisibilitySelected: async (visible) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await updateVisibility(scene, visible, (op) => op.where((q) => q.withSelected()));
       }
     },
     setSelection: async (itemId, selected) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await updateSelection(scene, selected, (op) =>
@@ -142,7 +143,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     fit: async (itemId) => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await scene
@@ -154,6 +155,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     fitSelected: async () => {
+      const element = elementRef.current;
       const scene = await element?.scene();
       const bounds =
         element?.frame?.scene.sceneViewSummary.selectedVisibleSummary?.boundingBox;
@@ -166,7 +168,7 @@ function useViewerActions({ element }: UseViewerActionsProps): ViewerActions {
       }
     },
     reset: async () => {
-      const scene = await element?.scene();
+      const scene = await elementRef.current?.scene();
 
       if (scene != null) {
         await scene.reset({ includeCamera: true });
