@@ -271,7 +271,9 @@ function onTap<P extends ViewerProps>(
         const raycaster = scene?.raycaster();
 
         if (raycaster != null) {
-          const res = await raycaster.hitItems(e.detail.position);
+          const res = await raycaster.hitItems(e.detail.position, {
+            includeMetadata: true,
+          });
           const hit = (res?.hits ?? [])[0];
           console.debug(hit);
           setHit(hit);
