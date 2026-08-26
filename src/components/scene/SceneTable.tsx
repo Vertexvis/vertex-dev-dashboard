@@ -15,17 +15,22 @@ import {
   TableRow,
   TextField,
 } from '@mui/material';
-import { Cursors, SceneData } from '@vertexvis/api-client-node';
-import debounce from 'lodash.debounce';
+import { SceneData } from '@vertexvis/api-client-node';
 import { useRouter } from 'next/router';
+import { debounce, Nullable, useQueryStates } from 'nuqs';
 import React, { useEffect } from 'react';
-import useSWR, { SWRResponse } from 'swr';
+import useSWR from 'swr';
 
 import { ErrorRes, GetRes } from '../../lib/api';
 import { toLocaleString } from '../../lib/dates';
+import { useUrlCursorPaging } from '../../lib/nuqs-table-state';
 import { SwrProps } from '../../lib/paging';
-import { reportError } from '../../lib/report-error';
 import { Scene, toScenePage } from '../../lib/scenes';
+import {
+  sceneTableParsers,
+  SceneTableState,
+  sceneTableUrlKeys,
+} from '../../lib/scenes-nuqs-state';
 import CreateSceneDialog from '../shared/CreateSceneDialog';
 import { formatCursorPaginationLabel } from '../shared/cursor-pagination';
 import { DataLoadError } from '../shared/DataLoadError';
@@ -43,6 +48,8 @@ interface Props {
   readonly invalidationCount: number;
 }
 
+const FilterDebounceMs = 300;
+
 const headCells: readonly HeadCell[] = [
   { id: 'name', disablePadding: true, label: 'Name' },
   { id: 'supplied-id', label: 'Supplied ID' },
@@ -57,7 +64,7 @@ function useScenes({
   pageSize,
   suppliedId,
   name,
-}: SwrProps): SWRResponse<GetRes<SceneData>, ErrorRes> {
+}: SwrProps): ReturnType<typeof useSWR> {
   return useSWR<GetRes<SceneData>, ErrorRes>(
     `/api/scenes?pageSize=${pageSize}${cursor ? `&cursor=${cursor}` : ''}${
       suppliedId ? `&suppliedId=${encodeURIComponent(suppliedId)}` : ''
@@ -88,49 +95,58 @@ export default function SceneTable({
   invalidationCount,
 }: Props): JSX.Element {
   const pageSize = DefaultPageSize;
-  const [curPage, setCurPage] = React.useState(0);
+  const [state, setState] = useQueryStates(sceneTableParsers, {
+    urlKeys: sceneTableUrlKeys,
+  });
   const [showMergeScene, setShowMergeScene] = React.useState(false);
-  const [cursor, setCursor] = React.useState<string | undefined>();
-  const [cursors, setCursors] = React.useState<Cursors | undefined>();
   const [keyLoadingSceneId, setKeyLoadingSceneId] = React.useState<string | undefined>();
-  const [prev, setPrev] = React.useState<Record<number, string | undefined>>({});
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
-  const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
 
   const { data, error, mutate } = useScenes({
-    cursor,
+    cursor: state.cursor ?? undefined,
     pageSize,
-    suppliedId,
-    name: nameFilter,
+    suppliedId: state.suppliedId?.trim() || undefined,
+    name: state.name?.trim() || undefined,
   });
 
   useEffect(() => {
-    mutate().catch(reportError('Failed to refresh scenes'));
+    void mutate();
   }, [invalidationCount, mutate]);
 
   const router = useRouter();
   const page = data ? toScenePage(data) : undefined;
   const pageLength = page ? page.items.length : 0;
+  const paging = useUrlCursorPaging({
+    cursor: state.cursor,
+    cursors: page?.cursors ?? undefined,
+    loaded: page != null,
+    page: state.page,
+    searchKey: JSON.stringify({
+      name: state.name,
+      suppliedId: state.suppliedId,
+    }),
+    setPaging: (patch) => void setState(patch, { history: 'push' }),
+  });
+  const { paginationCursors } = paging;
   const emptyRows =
-    cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
+    paginationCursors?.next == null && paginationCursors?.self == null
+      ? 0
+      : pageSize - pageLength;
 
-  const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
-  );
+  function handleFilterChange(field: 'name' | 'suppliedId', value: string): void {
+    const patch: Partial<Nullable<SceneTableState>> = {
+      cursor: null,
+      page: null,
+    };
+    patch[field] = value === '' ? null : value;
 
-  const debouncedSetNameFilter = React.useMemo(() => debounce(setNameFilter, 300), []);
-
-  React.useEffect(() => {
-    if (page == null) return;
-
-    setCursors(page.cursors ?? undefined);
-  }, [page]);
+    paging.resetPagingCache();
+    void setState(patch, { limitUrlUpdates: debounce(FilterDebounceMs) });
+  }
 
   React.useEffect(() => {
     if (scene != null) setActiveSceneId(scene.id);
@@ -157,18 +173,6 @@ export default function SceneTable({
     onClick(s);
   }
 
-  function handleChangePage(
-    _: React.MouseEvent<HTMLButtonElement> | null,
-    num: number
-  ): void {
-    if (curPage < num) {
-      setPrev({ ...prev, [num - 1]: cursors?.self });
-      setCursor(cursors?.next);
-    }
-    if (curPage > num) setCursor(prev[num]);
-    setCurPage(num);
-  }
-
   async function handleDelete(): Promise<void> {
     setSelected(new Set());
     await fetch('/api/scenes', {
@@ -184,9 +188,7 @@ export default function SceneTable({
   }
 
   function handleViewClick(sceneId: string): void {
-    router
-      .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
-      .catch(reportError('Failed to navigate to the scene viewer'));
+    void router.push(`/scene-viewer/${encodeURIComponent(sceneId)}`);
   }
 
   async function handleGetStreamKey(sceneId: string): Promise<void> {
@@ -211,9 +213,7 @@ export default function SceneTable({
       <Paper sx={{ m: 2 }}>
         <TableToolbar
           numSelected={selected.size}
-          onDelete={() => {
-            handleDelete().catch(reportError('Failed to delete scenes'));
-          }}
+          onDelete={() => void handleDelete()}
           title="Scenes"
           customActions={[
             <React.Fragment key="merge">
@@ -242,10 +242,9 @@ export default function SceneTable({
             id="nameFilter"
             label="Name Filter"
             type="text"
-            onChange={(e) => {
-              debouncedSetNameFilter(e.target.value?.trim() ?? undefined);
-            }}
+            onChange={(e) => handleFilterChange('name', e.target.value)}
             sx={{ mt: 0, width: '20rem' }}
+            value={state.name ?? ''}
           />
           <TextField
             variant="standard"
@@ -254,10 +253,9 @@ export default function SceneTable({
             id="suppliedIdFilter"
             label="Supplied ID Filter"
             type="text"
-            onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
-            }}
+            onChange={(e) => handleFilterChange('suppliedId', e.target.value)}
             sx={{ mt: 0, width: '20rem' }}
+            value={state.suppliedId ?? ''}
           />
         </Box>
         <TableContainer>
@@ -327,7 +325,7 @@ export default function SceneTable({
                             {
                               disabled: keyLoadingSceneId === row.id,
                               label: 'Generate stream key',
-                              onClick: () => handleGetStreamKey(row.id),
+                              onClick: () => void handleGetStreamKey(row.id),
                             },
                             {
                               label: 'View scene',
@@ -361,17 +359,18 @@ export default function SceneTable({
           labelDisplayedRows={(displayedRows) =>
             formatCursorPaginationLabel(
               displayedRows,
-              cursors?.next != null,
+              paginationCursors?.next != null,
               pageLength,
               page != null
             )
           }
           rowsPerPage={pageSize}
-          page={curPage}
-          onPageChange={handleChangePage}
+          page={state.page}
+          onPageChange={paging.handleChangePage}
           slotProps={{
             actions: {
-              nextButton: { disabled: cursors?.next == null },
+              nextButton: { disabled: paging.nextDisabled },
+              previousButton: { disabled: paging.previousDisabled },
             },
           }}
         />
