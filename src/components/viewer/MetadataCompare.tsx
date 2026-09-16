@@ -103,13 +103,18 @@ interface Props {
   // Stream = the raw render-frame metadata delivered inline with the raycaster
   // hit (`toMetadata({ hit })`). Only available after clicking an item.
   readonly stream?: Metadata;
+  // True when a property key policy is applied to the current stream key. Only
+  // then can a key missing from Restricted be attributed to the policy; with no
+  // policy active a REST/Web SDK discrepancy is reported as a plain difference.
+  readonly policyActive?: boolean;
   readonly status?: MetadataStatus;
   readonly error?: string;
 }
 
 // A row's classification given the currently VISIBLE source columns. "removed"
 // is the prominent case (the policy stripped a key that the unrestricted source
-// still exposes) and only applies when both those columns are visible.
+// still exposes) and only applies when both those columns are visible and a
+// policy is active.
 export type CompareState = 'same' | 'differs' | 'removed';
 
 export interface CompareRow {
@@ -163,7 +168,7 @@ const LegendEntries: readonly LegendEntry[] = [
     state: 'removed',
     label: 'Removed by policy (red)',
     description:
-      'With Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.',
+      'With a policy active and Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.',
   },
 ];
 
@@ -207,11 +212,13 @@ export function buildCompareRows({
   unrestricted,
   restricted,
   stream,
+  policyActive = false,
 }: {
   columns: readonly SourceId[];
   unrestricted?: Metadata;
   restricted?: Metadata;
   stream?: Metadata;
+  policyActive?: boolean;
 }): CompareRow[] {
   const sources = { unrestricted, restricted, stream };
   const propsByColumn = columns.map((id) => ({
@@ -225,8 +232,10 @@ export function buildCompareRows({
     .filter((key) => !IdentifierKeys.has(key))
     .sort((a, b) => a.localeCompare(b));
 
-  const unrestrictedVisible = columns.includes('unrestricted');
-  const restrictedVisible = columns.includes('restricted');
+  // Only attribute a missing restricted key to the policy when one is active;
+  // otherwise both paths should agree and any gap is just a difference.
+  const comparingPolicy =
+    policyActive && columns.includes('unrestricted') && columns.includes('restricted');
 
   return keys.map((key) => {
     const values: Partial<Record<SourceId, string | undefined>> = {};
@@ -236,8 +245,7 @@ export function buildCompareRows({
     // Prominent case: both policy-comparison columns visible and the key is
     // present unrestricted but absent/empty restricted -> policy stripped it.
     if (
-      unrestrictedVisible &&
-      restrictedVisible &&
+      comparingPolicy &&
       isPresent(values.unrestricted) &&
       !isPresent(values.restricted)
     ) {
@@ -274,13 +282,13 @@ function buildIdentityRows({
   restricted?: Metadata;
   stream?: Metadata;
 }): IdentityRow[] {
-  const propertiesByPriority = [restricted, stream, unrestricted].map(
-    (metadata) => metadata?.properties ?? {}
+  const identifiersByPriority = [restricted, stream, unrestricted].map(
+    (metadata) => metadata?.identifiers ?? {}
   );
 
   return Array.from(IdentifierKeys).flatMap((key) => {
-    const value = propertiesByPriority
-      .map((properties) => properties[key])
+    const value = identifiersByPriority
+      .map((identifiers) => identifiers[key])
       .find(isPresent);
     return value == null ? [] : [{ key, label: IdentityLabels[key] ?? key, value }];
   });
@@ -334,6 +342,7 @@ export function MetadataCompare({
   unrestrictedError,
   restricted,
   stream,
+  policyActive = false,
   status = 'ready',
   error,
 }: Props): JSX.Element {
@@ -400,11 +409,17 @@ export function MetadataCompare({
   }
 
   const visibleSources = Sources.filter((s) => columns.includes(s.id));
-  const rows = buildCompareRows({ columns, unrestricted, restricted, stream });
+  const rows = buildCompareRows({
+    columns,
+    unrestricted,
+    restricted,
+    stream,
+    policyActive,
+  });
   const identityRows = buildIdentityRows({ unrestricted, restricted, stream });
 
   const comparingPolicy =
-    columns.includes('unrestricted') && columns.includes('restricted');
+    policyActive && columns.includes('unrestricted') && columns.includes('restricted');
   const streamVisible = columns.includes('stream');
   const streamAvailable = stream != null;
   // When the unrestricted column is shown but its baseline failed to load, the

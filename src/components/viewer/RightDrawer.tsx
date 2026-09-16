@@ -26,6 +26,9 @@ interface Props {
   // (`toMetadata({ hit })`) — the STREAM column of the comparison. Only present
   // after clicking an item in the viewer.
   readonly streamMetadata?: Metadata;
+  // True when a property key policy is applied, so the comparison may attribute
+  // missing restricted keys to the policy rather than a generic difference.
+  readonly policyActive?: boolean;
   readonly metadataStatus?: MetadataStatus;
   readonly metadataError?: string;
   readonly modelViews: ModelViewsState;
@@ -62,6 +65,7 @@ export function RightDrawer({
   unrestrictedMetadata,
   unrestrictedError,
   streamMetadata,
+  policyActive,
   metadataStatus,
   metadataError,
   modelViews,
@@ -178,6 +182,7 @@ export function RightDrawer({
             unrestrictedError={unrestrictedError}
             restricted={metadata}
             stream={streamMetadata}
+            policyActive={policyActive}
             status={metadataStatus}
             error={metadataError}
           />

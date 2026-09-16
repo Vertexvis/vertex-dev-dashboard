@@ -66,11 +66,12 @@ function useSceneItem({
   itemId,
 }: {
   itemId?: string;
-}): SWRResponse<SceneItemData, ErrorRes> {
+}): SWRResponse<SceneItemData, Error> {
   // Throwing fetcher so an HTTP failure populates `error` (rather than landing an
   // ErrorRes in `data`, which would both mask the failure and crash
   // `toMetadataFromItem`); its state feeds the comparison's baseline warning.
-  return useSWR<SceneItemData, ErrorRes>(
+  // `jsonFetcher` throws a plain Error (with `status` attached), not an ErrorRes.
+  return useSWR<SceneItemData, Error>(
     itemId ? `/api/scene-items/${itemId}` : null,
     jsonFetcher
   );
@@ -506,6 +507,7 @@ export default function SceneViewer({
             unrestrictedMetadata={metadataPanel.unrestrictedMetadata}
             unrestrictedError={metadataPanel.unrestrictedError}
             streamMetadata={streamMetadata}
+            policyActive={policyId != null}
             metadataStatus={metadataPanel.status}
             metadataError={metadataPanel.error}
             modelViews={modelViews}

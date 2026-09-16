@@ -1,4 +1,11 @@
-import { MetadataStringType, SceneItemData } from '@vertexvis/api-client-node';
+import {
+  MetadataDateType,
+  MetadataFloatType,
+  MetadataLongType,
+  MetadataNullType,
+  MetadataStringType,
+  SceneItemData,
+} from '@vertexvis/api-client-node';
 import { vertexvis } from '@vertexvis/frame-streaming-protos';
 import { DomainPropertyEntry, DomainPropertyValue } from '@vertexvis/viewer';
 
@@ -83,7 +90,7 @@ export function toMetadataFromItem(item: SceneItemData): Metadata {
   const ps: Properties = {};
   if (md) {
     Object.entries(md).forEach(([key, value]) => {
-      ps[key] = (value as MetadataStringType).value || '';
+      ps[key] = toRestValue(value);
     });
   }
 
@@ -93,6 +100,20 @@ export function toMetadataFromItem(item: SceneItemData): Metadata {
     identifiers: alphabetize(ids),
     properties: alphabetize(ps),
   };
+}
+
+type RestMetadataValue =
+  | MetadataLongType
+  | MetadataFloatType
+  | MetadataDateType
+  | MetadataStringType
+  | MetadataNullType;
+
+// REST values are typed (long/float/date/string/null). Stringify by presence,
+// not truthiness, so a numeric 0 survives instead of collapsing to '' and
+// rendering as a false "removed by policy" row against the Web SDK's "0".
+function toRestValue(value: RestMetadataValue): string {
+  return 'value' in value && value.value != null ? String(value.value) : '';
 }
 
 export interface DomainMetadataIdentifiers {

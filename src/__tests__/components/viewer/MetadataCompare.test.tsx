@@ -74,14 +74,17 @@ function renderCompare(props: {
   unrestrictedMetadata?: Metadata;
   unrestrictedError?: boolean;
   streamMetadata?: Metadata;
+  policyActive?: boolean;
   metadataStatus?: MetadataStatus;
   metadataError?: string;
 }): ReturnType<typeof render> {
+  // Default to an active policy: most cases exercise the policy comparison.
   return render(
     <RightDrawer
       active="properties"
       modelViews={emptyModelViews}
       onViewStateSelected={jest.fn()}
+      policyActive
       {...props}
     />
   );
@@ -284,7 +287,7 @@ describe('MetadataCompare selector help and row legend', () => {
       'Differs (orange) — Values differ across selected columns.'
     );
     expect(legend).toHaveTextContent(
-      'Removed by policy (red) — With Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.'
+      'Removed by policy (red) — With a policy active and Unrestricted and Restricted selected, the property exists in Unrestricted but is missing or empty in Restricted.'
     );
   });
 
@@ -375,6 +378,26 @@ describe('MetadataCompare diff highlighting', () => {
     expect(screen.getByText('1 property removed by policy')).toBeInTheDocument();
   });
 
+  it('reports a missing restricted key as a plain difference when no policy is active', () => {
+    renderCompare({
+      metadataStatus: 'ready',
+      policyActive: false,
+      unrestrictedMetadata: {
+        partName: '',
+        properties: { Material: 'Steel', Cost: '100' },
+      },
+      // "None (unrestricted)": nothing can have stripped "Cost", so the gap is a
+      // REST vs Web SDK discrepancy rather than a policy removal.
+      metadata: { partName: '', properties: { Material: 'Steel' } },
+    });
+
+    const row = rowForKey('Cost');
+    expect(row).toHaveAttribute('data-state', 'differs');
+    expect(within(row).getByText('Differs')).toBeInTheDocument();
+    expect(screen.queryByText(/removed by policy/)).not.toBeInTheDocument();
+    expect(screen.getByText('1 difference')).toBeInTheDocument();
+  });
+
   it('flags differing values across visible columns as differs', () => {
     renderCompare({
       metadataStatus: 'ready',
@@ -447,18 +470,18 @@ describe('MetadataCompare diff highlighting', () => {
   it('shows synthetic identifiers in the separate identity table', () => {
     renderCompare({
       metadataStatus: 'ready',
-      // Identifier present unrestricted but absent restricted (e.g. tree
-      // selection) belongs in Identity rather than the policy comparison.
+      // Identifiers are surfaced via `Metadata.identifiers` (never
+      // `properties`), so they belong in Identity rather than the policy
+      // comparison. Part ID is only known unrestricted (e.g. tree selection);
+      // the item id is known to both and the policy-aware value wins.
       unrestrictedMetadata: {
         partName: '',
-        properties: {
-          VERTEX_SCENE_ITEM_ID: 'item-1',
-          VERTEX_PART_ID: 'part-1',
-          Material: 'Steel',
-        },
+        identifiers: { VERTEX_SCENE_ITEM_ID: 'item-1-rest', VERTEX_PART_ID: 'part-1' },
+        properties: { Material: 'Steel' },
       },
       metadata: {
         partName: '',
+        identifiers: { VERTEX_SCENE_ITEM_ID: 'item-1' },
         properties: { Material: 'Steel' },
       },
     });
@@ -466,6 +489,7 @@ describe('MetadataCompare diff highlighting', () => {
     const identity = screen.getByRole('table', { name: 'Item identity' });
     expect(within(identity).getByText('Scene item ID')).toBeInTheDocument();
     expect(within(identity).getByText('item-1')).toBeInTheDocument();
+    expect(within(identity).queryByText('item-1-rest')).not.toBeInTheDocument();
     expect(within(identity).getByText('Part ID')).toBeInTheDocument();
     expect(within(identity).getByText('part-1')).toBeInTheDocument();
     expect(screen.queryByText('VERTEX_SCENE_ITEM_ID')).not.toBeInTheDocument();
@@ -784,6 +808,7 @@ function CoordinatedMetadataHarness({
         metadata={panel.metadata}
         unrestrictedMetadata={panel.unrestrictedMetadata}
         unrestrictedError={panel.unrestrictedError}
+        policyActive
         metadataStatus={panel.status}
         metadataError={panel.error}
         modelViews={emptyModelViews}

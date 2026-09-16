@@ -151,7 +151,7 @@ describe('toMetadataFromItem (unrestricted, server REST path)', () => {
     id?: string;
     suppliedId?: string;
     partRevisionId?: string;
-    metadata?: Record<string, { value?: string }>;
+    metadata?: Record<string, { value?: string | number }>;
   }): SceneItemData {
     return {
       id,
@@ -193,6 +193,24 @@ describe('toMetadataFromItem (unrestricted, server REST path)', () => {
     expect(md?.properties.Cost).toBe('100');
     // Case-sensitive keys are preserved as distinct properties.
     expect(md?.properties.material).toBe('aluminum');
+  });
+
+  it('preserves numeric zero and blanks null values', () => {
+    const md = toMetadataFromItem(
+      sceneItem({
+        id: 'item-uuid',
+        metadata: {
+          Quantity: { value: 0 },
+          Weight: { value: 12.5 },
+          Note: {},
+        },
+      })
+    );
+
+    // A 0 must not collapse to '' (which the comparison reads as removed).
+    expect(md.properties.Quantity).toBe('0');
+    expect(md.properties.Weight).toBe('12.5');
+    expect(md.properties.Note).toBe('');
   });
 
   it('alphabetizes the resulting keys', () => {
