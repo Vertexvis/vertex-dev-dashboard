@@ -2,11 +2,16 @@
 import { Box, Button } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import React from 'react';
 
 import { reportError } from '../../lib/report-error';
 import { AppLink } from './AppLink';
 
-export function Header(): JSX.Element {
+interface Props {
+  readonly actions?: React.ReactNode;
+}
+
+export function Header({ actions }: Props): JSX.Element {
   const router = useRouter();
 
   async function handleSignOut(): Promise<void> {
@@ -30,7 +35,8 @@ export function Header(): JSX.Element {
         </AppLink>
         <p>Vertex Developer Dashboard</p>
       </Box>
-      <Box sx={{ ml: 'auto' }}>
+      <Box sx={{ alignItems: 'center', display: 'flex', gap: 2, ml: 'auto' }}>
+        {actions}
         <Button
           onClick={() => {
             handleSignOut().catch(reportError('Failed to sign out'));

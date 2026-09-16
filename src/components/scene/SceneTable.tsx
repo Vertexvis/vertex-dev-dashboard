@@ -35,6 +35,8 @@ import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { SkeletonBody } from '../shared/SkeletonBody';
 import { HeadCell, TableHead } from '../shared/TableHead';
 import { TableToolbar } from '../shared/TableToolbar';
+import { PolicySelect } from '../viewer/PolicySelect';
+import { GenerateStreamKeyDialog } from './GenerateStreamKeyDialog';
 
 interface Props {
   readonly onClick: (s: Scene) => void;
@@ -98,9 +100,11 @@ export default function SceneTable({
   const [activeSceneId, setActiveSceneId] = React.useState<string | undefined>(
     () => scene?.id
   );
-  const [suppliedId, setSuppliedIdFilter] = React.useState<string | undefined>();
+  const [suppliedId, setSuppliedId] = React.useState<string | undefined>();
   const [nameFilter, setNameFilter] = React.useState<string | undefined>();
   const [toastMsg, setToastMsg] = React.useState<string | undefined>();
+  const [selectedPolicyId, setSelectedPolicyId] = React.useState<string | undefined>();
+  const [streamKeySceneId, setStreamKeySceneId] = React.useState<string | undefined>();
 
   const { data, error, mutate } = useScenes({
     cursor,
@@ -119,10 +123,7 @@ export default function SceneTable({
   const emptyRows =
     cursors?.next == null && cursors?.self == null ? 0 : pageSize - pageLength;
 
-  const debouncedSetSuppliedIdFilter = React.useMemo(
-    () => debounce(setSuppliedIdFilter, 300),
-    []
-  );
+  const debouncedSetSuppliedId = React.useMemo(() => debounce(setSuppliedId, 300), []);
 
   const debouncedSetNameFilter = React.useMemo(() => debounce(setNameFilter, 300), []);
 
@@ -183,26 +184,40 @@ export default function SceneTable({
     onEditClick(s);
   }
 
+  function sceneViewerHref(sceneId: string): string {
+    const base = `/scene-viewer/${encodeURIComponent(sceneId)}`;
+    return selectedPolicyId
+      ? `${base}?policyId=${encodeURIComponent(selectedPolicyId)}`
+      : base;
+  }
+
   function handleViewClick(sceneId: string): void {
     router
-      .push(`/scene-viewer/${encodeURIComponent(sceneId)}`)
+      .push(sceneViewerHref(sceneId))
       .catch(reportError('Failed to navigate to the scene viewer'));
   }
 
-  async function handleGetStreamKey(sceneId: string): Promise<void> {
+  async function handleGetStreamKey(sceneId: string, policyId?: string): Promise<void> {
     setKeyLoadingSceneId(sceneId);
-    const b = await fetch('/api/stream-keys', {
-      body: JSON.stringify({ id: sceneId }),
-      method: 'POST',
-    });
-    const { key } = await b.json();
     try {
+      const response = await fetch('/api/stream-keys', {
+        body: JSON.stringify({
+          id: sceneId,
+          ...(policyId != null ? { propertyKeyPolicyId: policyId } : {}),
+        }),
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Stream-key creation failed.');
+
+      const { key } = (await response.json()) as { key?: string };
+      if (!key) throw new Error('Created scene stream key was empty.');
       await navigator.clipboard.writeText(key);
       setToastMsg(`Stream key "${key}" copied to clipboard.`);
-    } catch (e) {
-      console.error('Error copying stream key to clipboard', e);
+    } catch (error) {
+      reportError('Failed to generate and copy the stream key')(error);
     } finally {
       setKeyLoadingSceneId(undefined);
+      setStreamKeySceneId(undefined);
     }
   }
 
@@ -255,9 +270,14 @@ export default function SceneTable({
             label="Supplied ID Filter"
             type="text"
             onChange={(e) => {
-              debouncedSetSuppliedIdFilter(e.target.value?.trim() ?? undefined);
+              debouncedSetSuppliedId(e.target.value?.trim() ?? undefined);
             }}
             sx={{ mt: 0, width: '20rem' }}
+          />
+          <PolicySelect
+            policyId={selectedPolicyId}
+            onChange={setSelectedPolicyId}
+            width="20rem"
           />
         </Box>
         <TableContainer>
@@ -303,7 +323,7 @@ export default function SceneTable({
                       </TableCell>
                       <TableCell component="th" scope="row" padding="none">
                         <ResourceLink
-                          href={`/scene-viewer/${encodeURIComponent(row.id)}`}
+                          href={sceneViewerHref(row.id)}
                           primaryActionLabel={`Open ${row.name}`}
                         >
                           {row.name}
@@ -327,7 +347,7 @@ export default function SceneTable({
                             {
                               disabled: keyLoadingSceneId === row.id,
                               label: 'Generate stream key',
-                              onClick: () => handleGetStreamKey(row.id),
+                              onClick: () => setStreamKeySceneId(row.id),
                             },
                             {
                               label: 'View scene',
@@ -385,6 +405,17 @@ export default function SceneTable({
           {toastMsg}
         </Alert>
       </Snackbar>
+      <GenerateStreamKeyDialog
+        defaultPolicyId={selectedPolicyId}
+        loading={streamKeySceneId != null && keyLoadingSceneId === streamKeySceneId}
+        onClose={() => setStreamKeySceneId(undefined)}
+        onGenerate={(policyId) => {
+          if (streamKeySceneId != null) {
+            void handleGetStreamKey(streamKeySceneId, policyId);
+          }
+        }}
+        open={streamKeySceneId != null}
+      />
       <CreateSceneDialog
         open={showMergeScene}
         onClose={() => setShowMergeScene(false)}
